@@ -2,7 +2,8 @@
  * Reflections project: A wrist watch
  * Seuss Display: The watch display uses a breadboard with ESP32, OLED display, audio
  * player/recorder, SD card, GPS, and accelerometer/compass
- * Licensed under GPL v3 
+ * Repository and community discussions at https://github.com/frankcohen/ReflectionsOS
+ * Licensed under GPL v3
  * (c) Frank Cohen, All rights reserved. fcohen@votsh.com
  * Read the license in the license.txt file that comes with this code.
  * January 2, 2021
@@ -19,61 +20,169 @@ Thank you Pawel A. Hernik (https://youtu.be/o3AqITHf0mo) for tips on how to driv
 video to the display.
 */
 
-SdFs sd;
-cid_t m_cid;
-csd_t m_csd;
-uint32_t m_eraseSize;
-uint32_t m_ocr;
-static ArduinoOutStream cout(Serial);
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
+#include <Arduino_GFX.h>
+
+// #include <Arduino_ST7735_STM.h> // Hardware-specific library for ST7789, https://github.com/cbm80amiga/Arduino_ST7735_STM
+#include <Adafruit_ST7789.h>
 
 #define SerialSpeed 115200  // Serial monitor speed
 
 // Chip Select for devices on the SPI bus, the following are
 // the GPIO numbers (not the pin numbers)
 
-#define DisplayCS 33      //TFT display on Adafruit's ST7789 Card
-#define AudioCS 16        //Adafruit's vs1053 Breakout Board
-#define AudioXDCS 17      //vs1053 chip on Adafruit's Breakout Board
-#define AudioSDCardCS 32  //MicroSD memory card on Adafruit's vs1053 Breakout Board
-#define SDcardCS 27       //MicroSD memory card on Adafruit's Micro SD Breakout Board
+#define DisplayCS 32     //TFT display on Adafruit's ST7789 card
+#define DisplaySDCS 4    //SD card on the Adafruit ST7789 card
+#define DisplayRST 17    //Reset for Adafruit's ST7789 card
+#define DisplayDC 16     //DC for Adafruit's ST7789 card
+
+#define SDcardCS 4       //MicroSD memory card on Adafruit's Micro SD Breakout Board
 
 // Devices attached to VSPI ON ESP32
 #define SPIMOSI 23
 #define SPIMISO 19
 #define SPICLK 18
 
-// Audio player/recorder VS1053
-#define AudioReset 25
-#define AudioDREQ 4
-
 // Additional devices and buses
-// GPS, RX/TX bus
+// GPS
+#define GPSTX 1
+#define GPSRX 3
+
 // MEMS accelerometer, magnetometer and gyroscope, I2C bus
+#define CompassSCL 22
+#define CompassSDA 21
 
-Adafruit_VS1053_FilePlayer musicPlayer = 
-  // create breakout-example object!
-  Adafruit_VS1053_FilePlayer(AudioReset, AudioCS, AudioXDCS, AudioDREQ, AudioSDCardCS);
+#define SCR_WD 240
+#define SCR_HT 240
 
+Adafruit_ST7789 lcd = Adafruit_ST7789(DisplayCS, DisplayDC, SPIMOSI, SPICLK, DisplayRST);
 
-void setup() {
-  
+//Arduino_HWSPI *bus = new Arduino_HWSPI(DisplayDC /* DC */, DisplayCS /* CS */, SPICLK, SPIMOSI, SPIMISO);
+//Arduino_ST7789 *lcd = new Arduino_ST7789(bus, -1 /* RST */, 2 /* rotation */, true /* IPS */, 240 /* width */, 240 /* height */, 0 /* col offset 1 */, 80 /* row offset 1 */);
+
+void setup() 
+{
   Serial.begin( SerialSpeed );
-  // Wait for USB Serial
-  while (!Serial) {
-    SysCall::yield();
+
+  Serial.println( F("Reflections: Seuss Display" ) );
+  Serial.println( F("Frank Cohen, fcohen@votsh.com, January 1, 2021") );
+  Serial.println( F("GPL v3 license" ) );
+  Serial.println( F("https://github.com/frankcohen/ReflectionsOS") );
+  
+  enableOneSPI( SDcardCS );
+
+  if (!SD.begin( SDcardCS )) {
+    Serial.println("SD begin failed");
   }
 
-  Serial.println( F("Reflections: Seuss Display" ));
-  Serial.println( F("Frank Cohen, fcohen@votsh.com, January 1, 2021"));
-  Serial.println( F("GPL v3 license" ));
-  
-  //enableOneSPI( AudioCS );
-  disableSPIDevice( DisplayCS );
-  disableSPIDevice( AudioCS );
-  disableSPIDevice( AudioXDCS );
-  disableSPIDevice( AudioSDCardCS );
-  disableSPIDevice( SDcardCS );
+  Serial.println("Showing video");
+  showVideo("StartupR.mov", 0, 0, 200, 120, 30, 1); 
+
+  Serial.println("Setup complete");
 }
+
+/*
+ * Configure SPI bus to send data to the display
+ */
+ 
+void lcdSPI()
+{
+  SPI.beginTransaction(SPISettings(36000000, MSBFIRST, SPI_MODE3));
+}
+
+/*
+ * Enable the fash bus to move data
+ */
+#define SD_SPEED 36
+#define SD_SCK_MHZ(maxMhz) (1000000UL*(maxMhz))
+
+void sdSPI()
+{
+  SPI.beginTransaction( SPISettings( SD_SCK_MHZ(SD_SPEED), MSBFIRST, SPI_MODE3) );
+}
+
+/*
+ * Play video from SD card to display
+ */
+ 
+#define NLINES 200
+uint16_t buf[200*NLINES]; 
+char txt[30];
+int statMode=0, prevStat=0;
+
+// Params:
+// name - file name
+// x,y - start x,y on the screen
+// wd,ht - width, height of the video (raw data has no header with such info)
+// nl - num lines read in one operation (nl*wd*2 bytes are loaded)
+// skipFr - num frames to skip
+
+void showVideo(char *name, int x, int y, int wd, int ht, int nl, int skipFr)
+{
+  File file;
+
+  lcd.setTextColor(YELLOW,BLACK);
+  
+  file = SD.open(name, FILE_READ);
+  if ( !file )
+  {
+    lcdSPI(); lcd.fillScreen(YELLOW);
+    Serial.println( F("File open failed") );
+  }
+  
+  while(file.available()) 
+  {
+    for(int i=0;i<ht/nl;i++) {
+      
+      int rd = file.read( (uint8_t *) buf, (long) wd*2*nl);
+      lcdSPI();
+      for(int j=0;j<nl;j++)
+      {
+        lcd.drawImage(0,i*nl+j+(statMode>0?0:4),lcd.width(),1,buf+20+j*wd);
+      }
+    }
+  }
+
+  file.close();
+}
+
+/*
+ * List files from SD card to the serial monitor
+ */
+
+void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
+    Serial.printf("Listing directory: %s\n", dirname);
+
+    File root = fs.open(dirname);
+    if(!root){
+        Serial.println("Failed to open directory");
+        return;
+    }
+    if(!root.isDirectory()){
+        Serial.println("Not a directory");
+        return;
+    }
+
+    File file = root.openNextFile();
+    while(file){
+        if(file.isDirectory()){
+            Serial.print("  DIR : ");
+            Serial.println(file.name());
+            if(levels){
+                listDir(fs, file.name(), levels -1);
+            }
+        } else {
+            Serial.print("  FILE: ");
+            Serial.print(file.name());
+            Serial.print("  SIZE: ");
+            Serial.println(file.size());
+        }
+        file = root.openNextFile();
+    }
+}
+
 
 void clearSerialInput() {
   uint32_t m = micros();
@@ -87,14 +196,23 @@ void clearSerialInput() {
 /*
  * Disable all the SPI devices and enable one of them
  */
- 
+
 void enableOneSPI( int deviceCS )
 {
   if ( deviceCS != DisplayCS ) { disableSPIDevice( DisplayCS ); }
+  if ( deviceCS != DisplaySDCS ) { disableSPIDevice( DisplaySDCS ); }
+  if ( deviceCS != DisplayRST ) { disableSPIDevice( DisplayRST ); }
+  if ( deviceCS != DisplayDC ) { disableSPIDevice( DisplayDC ); }
+/*
   if ( deviceCS != AudioCS ) { disableSPIDevice( AudioCS ); }
   if ( deviceCS != AudioXDCS ) { disableSPIDevice( AudioXDCS ); }
-  if ( deviceCS != AudioSDCardCS ) { disableSPIDevice( AudioSDCardCS ); }
-  if ( deviceCS != SDcardCS ) { disableSPIDevice( SDcardCS ); }  
+  if ( deviceCS != AudioSDCS ) { disableSPIDevice( AudioSDCS ); }
+  if ( deviceCS != AudioRST ) { disableSPIDevice( AudioRST ); }
+*/
+  if ( deviceCS != SDcardCS ) { disableSPIDevice( SDcardCS ); }
+
+  Serial.print( F("\nEnabling SPI device on pin ") );
+  Serial.println( deviceCS );
 
   pinMode(deviceCS, OUTPUT);
   digitalWrite(deviceCS, LOW);
@@ -102,61 +220,12 @@ void enableOneSPI( int deviceCS )
 
 void disableSPIDevice( int deviceCS )
 {
-    // Serial.print( F("\nDisabling SPI device on pin ") );
-    // Serial.println( deviceCS );
+    Serial.print( F("\nDisabling SPI device on pin ") );
+    Serial.println( deviceCS );
     pinMode(deviceCS, OUTPUT);
     digitalWrite(deviceCS, HIGH);
 }
 
-void errorPrint() {
-  if (sd.sdErrorCode()) {
-    cout << F("SD errorCode: ") << hex << showbase;
-    printSdErrorSymbol(&Serial, sd.sdErrorCode());
-    cout << F(" = ") << int(sd.sdErrorCode()) << endl;
-    cout << F("SD errorData = ") << int(sd.sdErrorData()) << endl;
-  }
-}
-
-void printCardLS()
-{ 
-  Serial.println( F("\nList of files on the SD card\n") );
-    if ( !sd.ls("/", LS_SIZE | LS_R ) ) {
-      Serial.println( "List failed");    
-      errorPrint();
-    }
-}
-
-#define MusicCS 16
-#define MusicXDCS 17
-#define MusicSDCS 32
-#define MusicRST 25
-#define MusicDREQ 4
-
-#define SPICLK 18
-#define SPIMOSI 23
-#define SPIMISO 19
-#define SPIRST 25
-
-void playMusicTrack( String trackname )
-{
-  Adafruit_VS1053_FilePlayer musicPlayer = 
-      Adafruit_VS1053_FilePlayer( SPIMOSI, SPIMISO, SPICLK, SPIRST, 
-      MusicCS, MusicXDCS, MusicDREQ, MusicSDCS );
-     
-  if (! musicPlayer.begin() )
-  {
-    Serial.println( "Music player did not initialize" );
-    return;        
-  }
-
-  musicPlayer.setVolume(20,20);
-
-  musicPlayer.sineTest(0x44, 500); // Make a tone to indicate VS1053 is working 
-  
-  musicPlayer.playFullFile( "/track003.ogg" );
-  
-  delay(5000);
-}
 
 void loop() {
 
@@ -185,12 +254,13 @@ void loop() {
     playMusicTrack( "/track001.mp3" );
     
   }  
-*/
     playMusicTrack( "/track001.mp3" );
 
   Serial.println( F("\nRepeat?\n") );
   while (!Serial.available()) {
     SysCall::yield();
   }
+*/
+
 
 }
