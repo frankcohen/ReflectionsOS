@@ -2,7 +2,7 @@
  * Reflections project: A wrist watch
  * Seuss Display: The watch display uses a breadboard with ESP32, OLED display, audio
  * player/recorder, SD card, GPS, and accelerometer/compass
- * Repository and community discussions at https://github.com/frankcohen/ReflectionsOS
+ * Wiring, repository and community discussions at https://github.com/frankcohen/ReflectionsOS
  * Licensed under GPL v3
  * (c) Frank Cohen, All rights reserved. fcohen@votsh.com
  * Read the license in the license.txt file that comes with this code.
