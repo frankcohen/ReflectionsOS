@@ -24,9 +24,18 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <Arduino_GFX_Library.h>
+#include <FastLED.h>
 
 #define displaywidth 240
 #define displayheight 240
+
+#define DATA_PIN    27
+//#define CLK_PIN   4
+#define LED_TYPE    WS2811
+#define COLOR_ORDER GRB
+#define NUM_LEDS    24
+CRGB leds[NUM_LEDS];
+#define BRIGHTNESS          96
 
 float ballX = displaywidth / 2;
 float ballY = displayheight / 2;
@@ -267,6 +276,19 @@ void smartdelay( long interval )
 
 void setup() {
   Serial.begin(115200);
+
+  FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+
+  // set master brightness control
+  FastLED.setBrightness(BRIGHTNESS);
+
+  for ( int i=0; i<NUM_LEDS; i++ )
+  {
+    leds[i] = CRGB::White;
+  }
+  FastLED.show();  
+
 
   readytostart = true; 
 

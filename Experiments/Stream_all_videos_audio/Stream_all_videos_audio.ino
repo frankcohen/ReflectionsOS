@@ -29,6 +29,7 @@
 #include <SD.h>
 #include <SD_MMC.h>
 #include <Arduino_GFX_Library.h>
+#include <FastLED.h>
 
 #include "AudioFileSourceSD.h"
 #include "AudioGeneratorWAV.h"
@@ -36,6 +37,14 @@
 
 // For this sketch, you need connected SD card with '.wav' music files in the root
 // directory. 
+
+#define DATA_PIN    27
+//#define CLK_PIN   4
+#define LED_TYPE    WS2811
+#define COLOR_ORDER GRB
+#define NUM_LEDS    24
+CRGB leds[NUM_LEDS];
+#define BRIGHTNESS          200
 
 #define SPI_SPEED SD_SCK_MHZ(40)
 
@@ -47,7 +56,7 @@ AudioOutputI2S *output;
 #define MJPEG_FILENAME ".mjpeg"
 #define MJPEG_BUFFER_SIZE (240 * 240 * 2 / 4)
 
-#define TFT_BRIGHTNESS 200  // Hearing static over the I2S speaker when brightness > 200
+#define TFT_BRIGHTNESS 250  // Hearing static over the I2S speaker when brightness > 200
 
 #define SCK 18
 #define MOSI 23
@@ -175,14 +184,29 @@ void setup()
   gfx->begin();
   gfx->fillScreen(YELLOW);
 
-#ifdef TFT_BL
-Serial.println( "TFT_BL setting");
+  FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 
+  // set master brightness control
+  FastLED.setBrightness(BRIGHTNESS);
+
+  for ( int i=0; i<NUM_LEDS; i++ )
+  {
+    leds[i] = CRGB::White;
+  }
+  FastLED.show();  
+
+/*
+
+#ifdef TFT_BL
+  Serial.println( "TFT_BL setting");
   ledcAttachPin(TFT_BL, 1);     // assign TFT_BL pin to channel 1
   ledcSetup(1, 12000, 8);       // 12 kHz PWM, 8-bit resolution
   ledcWrite(1, TFT_BRIGHTNESS); // brightness 0 - 255
 #endif
-
+/*
+ * 
+ */
   enableOneSPI( DisplaySDCS );
 
   // NOTE: SD.begin(...) should be called AFTER AudioOutputSPDIF() 
@@ -195,6 +219,7 @@ Serial.println( "TFT_BL setting");
     Serial.print( DisplaySDCS );
     Serial.println( " failed to start"); 
     gfx->println(F("ERROR: SD card mount failed"));
+    gfx->fillScreen(BLUE);    
     while(1);
   }
   else
@@ -205,58 +230,62 @@ Serial.println( "TFT_BL setting");
 
 void loop()
 {
+
   if ( sdCardValid )
   {
 
-  if ((wav) && (wav->isRunning())) {
-    if (!wav->loop()) wav->stop();
-  } 
-  else
-  {
-    File audiofile = SD.open("/Duet.wav");
-    if (audiofile) {
-        source->close();
-        if (source->open(audiofile.name())) { 
-          Serial.printf_P(PSTR("Playing '%s' from SD card...\n"), audiofile.name());
-          wav->begin(source, output);
-        } 
-        else
-        {
-          Serial.printf_P(PSTR("Error opening '%s'\n"), audiofile.name());
-        }
-      } 
-    }
-    
-    dir = SD.open("/");
-    if ( ! dir )
-    {
-      Serial.println( "No result for opening the directory" );
-    }
+    if ((wav) && (wav->isRunning())) {
+      if (!wav->loop()) wav->stop();
+    } 
     else
     {
-      File file = dir.openNextFile();
-                                                                  
-      while ( file )
-      {
-        //Serial.print( "file=");
-        //Serial.println( file.name() );
-        
-        if (file)
-        {      
-          if (String(file.name()).endsWith( MJPEG_FILENAME )) 
+      File audiofile = SD.open("/Duet.wav");
+      if (audiofile) {
+          source->close();
+          if (source->open(audiofile.name())) { 
+            Serial.printf_P(PSTR("Playing '%s' from SD card...\n"), audiofile.name());
+            wav->begin(source, output);
+          } 
+          else
           {
-            streamVideo( file );
+            Serial.printf_P(PSTR("Error opening '%s'\n"), audiofile.name());
           }
-        }
-        else
-        {
-          Serial.print( "File did not open " );
-          Serial.println( file.name() );
-        }
-
-        file = dir.openNextFile();
+        } 
       }
-    }
+      
+      dir = SD.open("/");
+      if ( ! dir )
+      {
+        Serial.println( "No result for opening the directory" );
+      }
+      else
+      {
+        File file = dir.openNextFile();
+                                                                    
+        while ( file )
+        {
+          //Serial.print( "file=");
+          //Serial.println( file.name() );
+          
+          if (file)
+          {      
+            if (String(file.name()).endsWith( MJPEG_FILENAME )) 
+            {
+              streamVideo( file );
+            }
+          }
+          else
+          {
+            Serial.print( "File did not open " );
+            Serial.println( file.name() );
+          }
+  
+          file = dir.openNextFile();
+        }
+      }
+  }
+  else
+  {
   }
   smartDelay(2000);
 }
