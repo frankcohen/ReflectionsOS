@@ -54,6 +54,7 @@
 var http = require('http');
 var formidable = require('formidable');
 var fs = require('fs');
+const { exec } = require("child_process");
 const url = require('url');
 const pathToFiles = '/opt/bitnami/projects/reflections/files/';
 
@@ -64,28 +65,30 @@ http.createServer(function(req, res) {
   if (feature == '/fileupload') {
     var form = new formidable.IncomingForm();
     form.parse(req, function(err, fields, files) {
+	    
       var oldpath = files.filetoupload.path;
       var newpath = pathToFiles + files.filetoupload.name;
-      fs.rename(oldpath, newpath, function(err) {
-        if (err) throw err;
-        res.write('File uploaded and moved!');
-        res.end();
-      });
+      
+      exec("xxd -e -g2 " + oldpath + " | xxd -r > " + newpath );  
+      res.write('File uploaded and moved.');
+      res.end();
     });
   } else if (feature == '/onefilename') {
 
 		// Called with http://server-ip/onefilename to browse a single file on the server
 
     const baseUrl = pathToFiles;
-    fs.readdir(baseUrl, function(err, files) {
-      if (err) {
-        res.status(500).send({
-          message: "Unable to scan files",
-        });
+    fs.readdir(baseUrl, (err, files) => {
+      if (err || files.length==0)
+      {
+        res.end( "nofiles" );
+      }
+      else
+      {
+        res.write(files[0]);
+	res.end();
       }
 
-      res.write(files[0]);
-      res.end();
     });
 
   } else if (feature == '/download') {
@@ -118,11 +121,11 @@ http.createServer(function(req, res) {
 
         res.writeHead(200, {
           "content-disposition": "attachment;filename=" + fileName,
-          'content-type': 'image/png',
+          'content-type': 'application/octet-stream',
           'content-length': file.length
         });
 
-        res.write(file);
+        res.write(file,"binary");
         res.end();
       });
     });
