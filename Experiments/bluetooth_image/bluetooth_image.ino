@@ -13,6 +13,8 @@
  * Notes
  *
  * Please refer this android app, https://community.appinventor.mit.edu/t/bluetooth-hc06-send-receive-image-jpg-file-to-from-arduino-sdcard-reader/2150
+ * While using this app from above link for testing, ensure editing your current ESP's mac address. 
+ *
  *
  * Please refer this for sd card module connection to ESP32, https://acoptex.com/project/1285/basics-project-072y-esp32-development-board-with-sd-card-module-at-acoptexcom/#sthash.Jx6nGfTR.ktwnfALS.dpbs
  * I have used HSPI pins for sd card module interface with ESP32
