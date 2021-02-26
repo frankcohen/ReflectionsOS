@@ -17,7 +17,7 @@
  * Please refer this for sd card module connection to ESP32, https://acoptex.com/project/1285/basics-project-072y-esp32-development-board-with-sd-card-module-at-acoptexcom/#sthash.Jx6nGfTR.ktwnfALS.dpbs
  * I have used HSPI pins for sd card module interface with ESP32
  *
- * Include library from  
+ * I have used esp32-micro-sdcard-master library (from libraries folder).
 */
 
 #include <mySD.h>
