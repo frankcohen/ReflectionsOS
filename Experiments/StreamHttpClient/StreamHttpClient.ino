@@ -135,7 +135,7 @@ boolean getFileSaveToSDCard()
   Serial.println( len );
 
   // create buffer for read
-  uint8_t buff[128] = { 0 };
+  uint8_t buff[128+2] = { 0 };  // extra 2 for the endian coorector from node.js, ugh
 
   // get tcp stream
   WiFiClient * stream = http.getStreamPtr();
@@ -167,6 +167,16 @@ boolean getFileSaveToSDCard()
 
       if(size) {
           int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
+          
+          // Rewind the endian bend caused by Frank in the node.js service
+          int d = 0;
+          for ( int a = 0; a<130; a=a+2 )
+          {
+            d = buff[ a ];
+            buff[ a ] = buff[ a+1 ];             
+            buff[ a+1 ] = d;
+          }
+
           bytesReceived += c;          
           myFile.write( buff, c );
           
@@ -179,28 +189,6 @@ boolean getFileSaveToSDCard()
 
   myFile.close();
   http.end();
-
-  // Fix bad endianness from your node.js script
-  Serial.println( "Fixing bad endianness from node" );
-  
-  byte mybuf[3];
-  byte swap;
-  File file1 = SD.open("/" + fileName );
-  File file2 = SD.open("/" + fileName + "2", FILE_WRITE);
-  int flen = file1.size();
-  while ( flen )
-  {
-    file1.read( mybuf, 2 );
-    swap = mybuf[0];
-    mybuf[0] = mybuf[1];
-    mybuf[1] = swap;
-    file2.write( mybuf, 2 );
-    flen = flen - 2;    
-  }
-  file1.close();
-  file2.close();
-  SD.remove( "/" + fileName );
-  SD.rename("/" + fileName + "2", "/" + fileName );
 
   Serial.print( "Bytes received " );
   Serial.print( bytesReceived );
@@ -484,9 +472,10 @@ void loop() {
           {
             return;
           }
+
         }
       }
-    }
+    }    
 
     smartDelay( 5000 );
 }
