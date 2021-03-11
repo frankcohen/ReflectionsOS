@@ -90,6 +90,11 @@ class MyHandler(BaseHTTPRequestHandler):
 
 
     def do_POST(self):
+
+        # Create the files directory, if it doesn't already exist
+        if ( ! os.path.isdir("./files"):
+            os.mkdir("./files")
+
         content_type = self.headers['content-type']
         if not content_type:
             print("Content-Type header doesn't contain boundary")
@@ -104,7 +109,7 @@ class MyHandler(BaseHTTPRequestHandler):
         fn = re.findall(r'Content-Disposition.*name="file"; filename="(.*)"', line.decode())
         if not fn:
             return (False, "Can't find out file name...")
-        path = "."  # self.translate_path(self.path)
+        path = "./files/"  # self.translate_path(self.path)
         fn = os.path.join(path, fn[0])
         line = self.rfile.readline()
         remainbytes -= len(line)
