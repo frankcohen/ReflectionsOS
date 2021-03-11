@@ -47,6 +47,7 @@ class MyHandler(BaseHTTPRequestHandler):
 
                 f = open( "./files/" + self.myparams[ "file" ], 'rb' )
                 self.wfile.write( f.read() )
+                return
 
             elif ( self.path.find( 'onefilename' ) != -1):
 
@@ -56,6 +57,7 @@ class MyHandler(BaseHTTPRequestHandler):
 
                 self.entries = os.listdir('./files/')
                 self.wfile.write( self.entries[0].encode() )
+                return
 
             elif ( self.path.find( 'delete' ) != -1):
 
@@ -66,6 +68,7 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.wfile.write( "removed".encode() )
 
                 os.remove( "./files/" + self.myparams[ "file" ] )
+                return
 
             else : # default: just send the file
 
