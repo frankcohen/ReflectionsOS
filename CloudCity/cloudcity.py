@@ -45,7 +45,7 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_header('content-length', os.path.getsize( self.myparams["file"] ) )
                 self.end_headers()
 
-                f = open( self.myparams[ "file" ], 'rb' )
+                f = open( "./files/" + self.myparams[ "file" ], 'rb' )
                 self.wfile.write( f.read() )
 
             elif ( self.path.find( 'onefilename' ) != -1):
@@ -54,7 +54,7 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_header('content-type', 'text/html')
                 self.end_headers()
 
-                self.entries = os.listdir('.')
+                self.entries = os.listdir('./files/')
                 self.wfile.write( self.entries[0].encode() )
 
             elif ( self.path.find( 'delete' ) != -1):
@@ -65,14 +65,13 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write( "removed".encode() )
 
-                os.remove( self.myparams[ "file" ] )
+                os.remove( "./files/" + self.myparams[ "file" ] )
 
             else : # default: just send the file
 
                 filepath = self.path[1:] # remove leading '/'
 
-                f = open( os.path.join(CWD, filepath), 'rb' )
-                #note that this potentially makes every file on your computer readable by the internet
+                f = open( "./files/" + os.path.join(CWD, filepath), 'rb' )
 
                 self.send_response(200)
                 self.send_header('Content-type',	'application/octet-stream')
