@@ -13,7 +13,8 @@ import os # os. path
 CWD = os.path.abspath('.')
 ## print CWD
 
-PORT = 8080
+PORT = 80
+HOST = "0.0.0.0"
 UPLOAD_PAGE = 'upload.html' # must contain a valid link with address and port of the server     s
 
 
@@ -140,7 +141,7 @@ class MyHandler(BaseHTTPRequestHandler):
 def main():
 
     try:
-        server = HTTPServer(('127.0.0.1', PORT), MyHandler)
+        server = HTTPServer((HOST, PORT), MyHandler)
         print ('started httpserver...')
         server.serve_forever()
     except KeyboardInterrupt:
