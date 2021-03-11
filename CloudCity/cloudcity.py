@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Copyright Jon Berg , turtlemeat.com
 # Modified by nikomu @ code.google.com
@@ -92,7 +92,7 @@ class MyHandler(BaseHTTPRequestHandler):
     def do_POST(self):
 
         # Create the files directory, if it doesn't already exist
-        if ( ! os.path.isdir("./files"):
+        if not os.path.isdir("./files"):
             os.mkdir("./files")
 
         content_type = self.headers['content-type']
