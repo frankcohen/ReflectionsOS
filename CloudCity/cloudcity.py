@@ -42,7 +42,7 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('content-type', 'application/octet-stream')
                 self.send_header('content-disposition', 'attachment;filename=' + self.myparams["file"] )
-                self.send_header('content-length', os.path.getsize( self.myparams["file"] ) )
+                self.send_header('content-length', "./files/" + os.path.getsize( self.myparams["file"] ) )
                 self.end_headers()
 
                 f = open( "./files/" + self.myparams[ "file" ], 'rb' )
