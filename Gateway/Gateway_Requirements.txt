@@ -1,0 +1,59 @@
+I have this very fun side-job of developing a men's wrist watch. See my previous
+invention http://starlingwatch.com/. The wrist watch is a new project. It is
+Internet ready and gets its programming from a Cloud based service. It seems to
+me that everyone with the wrist watch will also be carrying an Android or iOS
+mobile device. My goal is to produce a gateway app that the wrist watch
+(an ESP32 using Bluetooth Classic) uses to get the media files from the Cloud.
+The media files are binary and are 1 to 40 MB in size. I have a budget to
+spend on this. This is part of my Reflections project
+https://github.com/frankcohen/ReflectionsOS and your work will be part of my
+open source distribution. -Frank Cohen, 2021
+
+Here are the requirements:
+Software development of a utility to do binary file transfers from an
+Android app to an ESP32 over Bluetooth and stored on an SD card.
+
+ESP32 sketch
+Implements the following commands:
+1) DownloadFile - identifies a binary file using an 8.3 file name, receives the
+file, and streams to the SD card
+2) UploadFile - identifies a binary file using an 8.3 file name stored on the
+SD card and uploads to the connected Android device.
+3) Connect - identifies and connects over Bluetooth to a named device
+4) Disconnect - disconnects from a Bluetooth named device
+Logs all commands, debug info, and errors to a file on the SD card: /errors.txt
+Implements streaming for maximum of 1,024 bytes of ESP32 memory (Malloc) used
+Implemented in C or C++, uses Arduino SD library (not SDFat)
+https://www.arduino.cc/en/reference/SD
+
+Android app
+Launch the app once and it continues to run, serving files to the ESP32 without
+user intervention.
+Provides a user interface with these elements:
+1) Status - connected/disconnected
+2) Log - a text area showing a scrollable list of commands being executed,
+debug info, and errors
+All files send/received are stored in:
+File Manager -> Storage -> Internal Storage -> Download
+Implements streaming protocol so maximum Android memory used is 1 Mbyte
+
+General requirements
+Communicates over Bluetooth Classic or BLE
+Does not require security certificates on ESP32 or Android
+File transfer in the clear
+The files are delivered asynchronously. There is no requirement for
+real-time streaming.
+
+Acceptance
+All deliverables made by push to https://github.com/frankcohen/ReflectionsOS/gateway
+Frank will test the software on Arduino IDE 1.8.13 and an ESP32 Development board
+and wiring defined in:
+https://github.com/frankcohen/ReflectionsOS/blob/main/Seuss%20Display%20Prototype%20wiring.pdf
+and a OnePlus 7 phone running Android 10 and Oxygen OS 10.3.8.GM57AA
+Frank must be able to build the Android app from source code on a
+laptop running MacOS 11.2.3 or Windows 10
+Frank must be able to transfer a 2 Mbyte binary file in 1 minute measured from
+the ESP32 SD card
+Frank will confirm the file transferred correctly using a CRC checksum
+
+-Frank Cohen, Reflections Project, March 24, 2021
