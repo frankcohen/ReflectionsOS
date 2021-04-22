@@ -1,0 +1,3 @@
+com/guru4all/esp_ble/MainActivity2.java
+ com.guru4all.esp_ble.MainActivity2
+ com.guru4all.esp_ble.MainActivity2$1

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <Switch
+        android:id="@+id/switch1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="BLUETOOTH"
+        android:paddingStart="50dp"
+        android:paddingEnd="50dp"
+        android:paddingTop="25dp"
+        android:paddingBottom="25dp"
+        android:textSize="20sp"
+        tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+
+    <Switch
+        android:layout_below="@+id/switch1"
+        android:id="@+id/switch2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="SERVICE"
+        android:paddingStart="50dp"
+        android:paddingEnd="50dp"
+        android:paddingTop="25dp"
+        android:paddingBottom="25dp"
+        android:textSize="20sp"
+        tools:ignore="HardcodedText,UseSwitchCompatOrMaterialXml" />
+
+    <LinearLayout
+        android:layout_below="@+id/switch2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="20dp"
+        android:paddingBottom="25dp"
+        android:id="@+id/flayout">
+
+        <TextView
+            android:id="@+id/filename"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:textAlignment="center"
+            android:text="File Name : "
+            android:textSize="15sp"
+            tools:ignore="HardcodedText" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linear1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_below="@+id/flayout"
+        android:paddingBottom="5dp">
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="0.5" />
+
+        <Button
+            android:id="@+id/button1"
+            android:layout_weight="0.3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="DELETE"
+            android:textSize="15sp"
+            tools:ignore="HardcodedText" />
+
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="0.5" />
+
+        <Button
+            android:id="@+id/button2"
+            android:layout_weight="0.3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="DOWNLOAD"
+            android:textSize="15sp"
+            tools:ignore="HardcodedText" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="0.5" />
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_below="@+id/linear1"
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text=""
+        android:scrollbars="vertical"
+        android:textSize="10sp"
+        android:paddingTop="25dp"
+        android:paddingStart="15dp"
+        android:paddingEnd="15dp"
+        android:paddingBottom="15dp"
+        android:gravity="bottom"
+        tools:ignore="SmallSp" />
+
+</RelativeLayout>

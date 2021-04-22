@@ -1,0 +1,106 @@
+[
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xxxhdpi_logo.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-xxxhdpi\\logo.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi_ic_launcher_foreground.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher_foreground.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-hdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-hdpi_ic_launcher_foreground.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher_foreground.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-mdpi_ic_launcher_foreground.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher_foreground.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\drawable-anydpi-v24_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\generated\\res\\pngs\\release\\drawable-anydpi-v24\\ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xxhdpi_logo.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-xxhdpi\\logo.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-hdpi_logo.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-hdpi\\logo.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi_logo.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-xhdpi\\logo.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xxhdpi_ic_launcher_foreground.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher_foreground.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\drawable_ic_launcher_background.xml.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\drawable\\ic_launcher_background.xml"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\layout_activity_main2.xml.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\layout\\activity_main2.xml"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-anydpi-v26\\ic_launcher_round.xml"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-mdpi_logo.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-mdpi\\logo.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xxxhdpi_ic_launcher_foreground.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher_foreground.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\res\\merged\\release\\mipmap-mdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher.png"
+    }
+]

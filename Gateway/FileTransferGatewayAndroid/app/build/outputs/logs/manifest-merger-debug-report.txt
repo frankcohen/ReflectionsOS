@@ -1,0 +1,198 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:2:1-29:12
+MERGED from [com.google.android.material:material:1.3.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/723282c7994550298e26d567cb0e519b/material-1.3.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.4] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9570f34841c72a34d773388f89286f55/constraintlayout-2.0.4/AndroidManifest.xml:2:1-11:12
+MERGED from [androidx.appcompat:appcompat:1.2.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/0cb9ff486f5edb59977e253831b932c8/appcompat-1.2.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/5dbc57b58024a8f25b5db3778841ef05/cursoradapter-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/939730d5a02951a4e6900dbf39441da5/jetified-viewpager2-1.0.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.fragment:fragment:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9a6fa3c553e02b3a07c8a8565588eb54/fragment-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.appcompat:appcompat-resources:1.2.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/47185ad723d232e6208c03e6fdcb34a4/jetified-appcompat-resources-1.2.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/f76237f51a0f7e63bcb3c74d5b185ef8/drawerlayout-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.cardview:cardview:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/18765b93ee4c46f41bb1a4f0caf56779/cardview-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/4535ee444820ae18ff97d0ebf60d51c6/coordinatorlayout-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.transition:transition:1.2.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/3291651d58b009a1c2860d547f248169/transition-1.2.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/666ad058b1d9c3d7c4bdf80afbc3e64c/vectordrawable-animated-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/a9578e6bb35b0664a235fe136bea7086/vectordrawable-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/7dc97d5beadbae66ede9b95e497a48ab/dynamicanimation-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/84abe344207c34d4a56c6167bf93e6d4/viewpager-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/3c5e939b0e6b29bdf460a7fe7fc8149e/legacy-support-core-utils-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.loader:loader:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/f2d63b2c28ee1d548ef27f10c2385caa/loader-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.activity:activity:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/36dcb862f7bd88dade6a96bc3b9a35c6/jetified-activity-1.0.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.recyclerview:recyclerview:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/8eb429c297537d6ea02c3f7824ce56bd/recyclerview-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.customview:customview:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9f97f489f2a5c174c803b63b463795b0/customview-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.core:core:1.3.1] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/b234a824af7fd98a5c54fc0522824a91/core-1.3.1/AndroidManifest.xml:17:1-26:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/90ecde5404179819368e2359ab771b50/versionedparcelable-1.1.0/AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/dade9b59ee5981570bbd8ef7443af33a/lifecycle-runtime-2.1.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/27ffe024b65d36df19e13f551b6b146c/lifecycle-viewmodel-2.1.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/512febfd0468b29d551bd267612a464f/jetified-savedstate-1.0.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/722883bbeda4a23af2c332d7342ff3d3/interpolator-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.documentfile:documentfile:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/fb5e65a69b576ac546080993fe26d407/documentfile-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/7b69e6173655717e69f5c7f6f1302d3b/localbroadcastmanager-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.print:print:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/8fe2a3deec1ef3dd659aa5f55d73edd7/print-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/227916b3f0008a165e996ac0bce20467/lifecycle-livedata-2.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/96d0ad977091c6484e2db42674538c87/lifecycle-livedata-core-2.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.arch.core:core-runtime:2.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9a82a1a22af6402c2242c9ee80e8919f/core-runtime-2.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.annotation:annotation-experimental:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/adf8d4ec58c98f5b37616cb4b06b74f4/jetified-annotation-experimental-1.0.0/AndroidManifest.xml:17:1-24:12
+INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:2:1-29:12
+INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:2:1-29:12
+	package
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:3:5-35
+		INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+	android:versionName
+		INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:2:1-29:12
+		INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+	android:versionCode
+		INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:2:1-29:12
+		INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:2:11-69
+uses-permission#android.permission.BLUETOOTH
+ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:5:5-68
+	android:name
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:5:22-65
+uses-permission#android.permission.BLUETOOTH_ADMIN
+ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:6:5-74
+	android:name
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:6:22-71
+uses-permission#android.permission.ACCESS_FINE_LOCATION
+ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:7:5-79
+	android:name
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:7:22-76
+uses-permission#android.permission.READ_EXTERNAL_STORAGE
+ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:8:5-80
+	android:name
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:8:22-77
+uses-permission#android.permission.WRITE_EXTERNAL_STORAGE
+ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:9:5-81
+	android:name
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:9:22-78
+application
+ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:11:5-27:19
+MERGED from [com.google.android.material:material:1.3.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/723282c7994550298e26d567cb0e519b/material-1.3.0/AndroidManifest.xml:22:5-20
+MERGED from [com.google.android.material:material:1.3.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/723282c7994550298e26d567cb0e519b/material-1.3.0/AndroidManifest.xml:22:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.4] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9570f34841c72a34d773388f89286f55/constraintlayout-2.0.4/AndroidManifest.xml:9:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.4] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9570f34841c72a34d773388f89286f55/constraintlayout-2.0.4/AndroidManifest.xml:9:5-20
+MERGED from [androidx.core:core:1.3.1] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/b234a824af7fd98a5c54fc0522824a91/core-1.3.1/AndroidManifest.xml:24:5-89
+MERGED from [androidx.core:core:1.3.1] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/b234a824af7fd98a5c54fc0522824a91/core-1.3.1/AndroidManifest.xml:24:5-89
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/90ecde5404179819368e2359ab771b50/versionedparcelable-1.1.0/AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/90ecde5404179819368e2359ab771b50/versionedparcelable-1.1.0/AndroidManifest.xml:24:5-25:19
+	android:appComponentFactory
+		ADDED from [androidx.core:core:1.3.1] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/b234a824af7fd98a5c54fc0522824a91/core-1.3.1/AndroidManifest.xml:24:18-86
+	android:supportsRtl
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:16:9-35
+	android:label
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:14:9-41
+	android:roundIcon
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:15:9-54
+	android:icon
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:13:9-43
+	android:allowBackup
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:12:9-35
+	android:theme
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:17:9-45
+activity#com.guru4all.esp_ble.MainActivity2
+ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:18:9-24:20
+	android:name
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:18:19-48
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:19:13-23:29
+action#android.intent.action.MAIN
+ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:20:17-69
+	android:name
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:20:25-66
+category#android.intent.category.LAUNCHER
+ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:22:17-77
+	android:name
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:22:27-74
+activity#com.guru4all.esp_ble.MainActivity
+ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:25:9-26:20
+	android:name
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:25:19-47
+uses-sdk
+INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+MERGED from [com.google.android.material:material:1.3.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/723282c7994550298e26d567cb0e519b/material-1.3.0/AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.material:material:1.3.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/723282c7994550298e26d567cb0e519b/material-1.3.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.4] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9570f34841c72a34d773388f89286f55/constraintlayout-2.0.4/AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.4] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9570f34841c72a34d773388f89286f55/constraintlayout-2.0.4/AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.appcompat:appcompat:1.2.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/0cb9ff486f5edb59977e253831b932c8/appcompat-1.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.appcompat:appcompat:1.2.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/0cb9ff486f5edb59977e253831b932c8/appcompat-1.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/5dbc57b58024a8f25b5db3778841ef05/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/5dbc57b58024a8f25b5db3778841ef05/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/939730d5a02951a4e6900dbf39441da5/jetified-viewpager2-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/939730d5a02951a4e6900dbf39441da5/jetified-viewpager2-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9a6fa3c553e02b3a07c8a8565588eb54/fragment-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9a6fa3c553e02b3a07c8a8565588eb54/fragment-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.appcompat:appcompat-resources:1.2.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/47185ad723d232e6208c03e6fdcb34a4/jetified-appcompat-resources-1.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.appcompat:appcompat-resources:1.2.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/47185ad723d232e6208c03e6fdcb34a4/jetified-appcompat-resources-1.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/f76237f51a0f7e63bcb3c74d5b185ef8/drawerlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/f76237f51a0f7e63bcb3c74d5b185ef8/drawerlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/18765b93ee4c46f41bb1a4f0caf56779/cardview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/18765b93ee4c46f41bb1a4f0caf56779/cardview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/4535ee444820ae18ff97d0ebf60d51c6/coordinatorlayout-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/4535ee444820ae18ff97d0ebf60d51c6/coordinatorlayout-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.transition:transition:1.2.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/3291651d58b009a1c2860d547f248169/transition-1.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.transition:transition:1.2.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/3291651d58b009a1c2860d547f248169/transition-1.2.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/666ad058b1d9c3d7c4bdf80afbc3e64c/vectordrawable-animated-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/666ad058b1d9c3d7c4bdf80afbc3e64c/vectordrawable-animated-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/a9578e6bb35b0664a235fe136bea7086/vectordrawable-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/a9578e6bb35b0664a235fe136bea7086/vectordrawable-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/7dc97d5beadbae66ede9b95e497a48ab/dynamicanimation-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/7dc97d5beadbae66ede9b95e497a48ab/dynamicanimation-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/84abe344207c34d4a56c6167bf93e6d4/viewpager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/84abe344207c34d4a56c6167bf93e6d4/viewpager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/3c5e939b0e6b29bdf460a7fe7fc8149e/legacy-support-core-utils-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/3c5e939b0e6b29bdf460a7fe7fc8149e/legacy-support-core-utils-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/f2d63b2c28ee1d548ef27f10c2385caa/loader-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/f2d63b2c28ee1d548ef27f10c2385caa/loader-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/36dcb862f7bd88dade6a96bc3b9a35c6/jetified-activity-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.activity:activity:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/36dcb862f7bd88dade6a96bc3b9a35c6/jetified-activity-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.recyclerview:recyclerview:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/8eb429c297537d6ea02c3f7824ce56bd/recyclerview-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.recyclerview:recyclerview:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/8eb429c297537d6ea02c3f7824ce56bd/recyclerview-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9f97f489f2a5c174c803b63b463795b0/customview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9f97f489f2a5c174c803b63b463795b0/customview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.3.1] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/b234a824af7fd98a5c54fc0522824a91/core-1.3.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.core:core:1.3.1] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/b234a824af7fd98a5c54fc0522824a91/core-1.3.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/90ecde5404179819368e2359ab771b50/versionedparcelable-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/90ecde5404179819368e2359ab771b50/versionedparcelable-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/dade9b59ee5981570bbd8ef7443af33a/lifecycle-runtime-2.1.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/dade9b59ee5981570bbd8ef7443af33a/lifecycle-runtime-2.1.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/27ffe024b65d36df19e13f551b6b146c/lifecycle-viewmodel-2.1.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.1.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/27ffe024b65d36df19e13f551b6b146c/lifecycle-viewmodel-2.1.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/512febfd0468b29d551bd267612a464f/jetified-savedstate-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.savedstate:savedstate:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/512febfd0468b29d551bd267612a464f/jetified-savedstate-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/722883bbeda4a23af2c332d7342ff3d3/interpolator-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/722883bbeda4a23af2c332d7342ff3d3/interpolator-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/fb5e65a69b576ac546080993fe26d407/documentfile-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/fb5e65a69b576ac546080993fe26d407/documentfile-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/7b69e6173655717e69f5c7f6f1302d3b/localbroadcastmanager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/7b69e6173655717e69f5c7f6f1302d3b/localbroadcastmanager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/8fe2a3deec1ef3dd659aa5f55d73edd7/print-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/8fe2a3deec1ef3dd659aa5f55d73edd7/print-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/227916b3f0008a165e996ac0bce20467/lifecycle-livedata-2.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/227916b3f0008a165e996ac0bce20467/lifecycle-livedata-2.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/96d0ad977091c6484e2db42674538c87/lifecycle-livedata-core-2.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/96d0ad977091c6484e2db42674538c87/lifecycle-livedata-core-2.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9a82a1a22af6402c2242c9ee80e8919f/core-runtime-2.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/9a82a1a22af6402c2242c9ee80e8919f/core-runtime-2.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/adf8d4ec58c98f5b37616cb4b06b74f4/jetified-annotation-experimental-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.annotation:annotation-experimental:1.0.0] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/adf8d4ec58c98f5b37616cb4b06b74f4/jetified-annotation-experimental-1.0.0/AndroidManifest.xml:20:5-22:41
+INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+		ADDED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml

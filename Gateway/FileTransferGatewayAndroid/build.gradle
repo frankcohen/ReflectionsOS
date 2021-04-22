@@ -1,0 +1,40 @@
+// * Transfer files between Seuss display board and Android mobile device using Bluetooth classic
+// * This is the ESP32 side of the Gateway, it runs on the Seuss Display Board
+// *
+// * Board wiring directions and code at https://github.com/frankcohen/ReflectionsOS
+// *
+// * Reflections project: A wrist watch
+// * Seuss Display: The watch display uses a breadboard with ESP32, OLED display, audio
+// * player/recorder, SD card, GPS, and accelerometer/compass
+// * Repository and community discussions at https://github.com/frankcohen/ReflectionsOS
+// * Licensed under GPL v3
+// * (c) Frank Cohen, All rights reserved. fcohen@votsh.com
+// * Read the license in the license.txt file that comes with this code.
+
+//   Thanks to Manoj Mishra for coding the Bluetooth file transfer protocol on Android and ESP32.
+//   Contact Manoj at: Manoj Mishra, Indore, India, http://nevalosstechnologies.com/
+
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:4.1.3"
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

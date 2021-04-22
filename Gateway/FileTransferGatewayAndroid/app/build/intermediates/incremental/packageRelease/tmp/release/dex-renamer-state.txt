@@ -1,0 +1,4 @@
+#Fri Apr 16 08:47:03 IST 2021
+base.0=C\:\\Users\\RTP\\AndroidStudioProjects\\ESP_BLE\\app\\build\\intermediates\\dex\\release\\mergeDexRelease\\classes.dex
+path.0=classes.dex
+renamed.0=classes.dex

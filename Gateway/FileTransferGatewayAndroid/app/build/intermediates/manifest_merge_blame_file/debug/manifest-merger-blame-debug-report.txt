@@ -1,0 +1,66 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.guru4all.esp_ble"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="21"
+8-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+9        android:targetSdkVersion="30" />
+9-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml
+10
+11    <uses-permission android:name="android.permission.BLUETOOTH" />
+11-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:5:5-68
+11-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:5:22-65
+12    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+12-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:6:5-74
+12-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:6:22-71
+13    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+13-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:7:5-79
+13-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:7:22-76
+14    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+14-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:8:5-80
+14-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:8:22-77
+15    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+15-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:9:5-81
+15-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:9:22-78
+16
+17    <application
+17-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:11:5-27:19
+18        android:allowBackup="true"
+18-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:12:9-35
+19        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+19-->[androidx.core:core:1.3.1] /Users/frankcohen/.gradle/caches/transforms-2/files-2.1/b234a824af7fd98a5c54fc0522824a91/core-1.3.1/AndroidManifest.xml:24:18-86
+20        android:debuggable="true"
+21        android:icon="@mipmap/ic_launcher"
+21-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:13:9-43
+22        android:label="@string/app_name"
+22-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:14:9-41
+23        android:roundIcon="@mipmap/ic_launcher_round"
+23-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:15:9-54
+24        android:supportsRtl="true"
+24-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:16:9-35
+25        android:theme="@style/Theme.ESP_BLE" >
+25-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:17:9-45
+26        <activity android:name="com.guru4all.esp_ble.MainActivity2" >
+26-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:18:9-24:20
+26-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:18:19-48
+27            <intent-filter>
+27-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:19:13-23:29
+28                <action android:name="android.intent.action.MAIN" />
+28-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:20:17-69
+28-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:20:25-66
+29
+30                <category android:name="android.intent.category.LAUNCHER" />
+30-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:22:17-77
+30-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:22:27-74
+31            </intent-filter>
+32        </activity>
+33        <activity android:name="com.guru4all.esp_ble.MainActivity" >
+33-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:25:9-26:20
+33-->/Users/frankcohen/Frank/Votsh/Models/Reflections/Shows/Bluetooth file transfer gateway/Fiverr manojmishra/v4/ESP_BLE/app/src/main/AndroidManifest.xml:25:19-47
+34        </activity>
+35    </application>
+36
+37</manifest>
