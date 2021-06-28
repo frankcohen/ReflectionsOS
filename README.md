@@ -5,12 +5,15 @@ Many times I imagine making a mobile application connected to the Internet. For 
 
 I love working with a group of creative makers. Please feel free to let me know your feedback and ideas. Thanks, in advance!
 
-The wrist watch is a way for me to play home videos of my children on my wrist - my Reflections project. I published 3 articles on the technology needed to make Reflections:
+The wrist watch is a way for me to enjoy home videos of my children on my wrist - my Reflections project. I published 3 articles on the technology needed to make Reflections:
 
 https://www.reddit.com/r/arduino/comments/mjygkl/using_tar_files_in_esp32_with_sd_applications_for
 
 https://www.reddit.com/r/arduino/comments/mx7x31/file_transfer_using_bluetooth_classic_esp32_sd
 
-https://www.reddit.com/r/arduino/comments/mbdj53/json_procedural_scripting_using_arduinojson_and -Frank
+https://www.reddit.com/r/arduino/comments/mbdj53/json_procedural_scripting_using_arduinojson_and
+
+I used the EleksTube IPS clock for experimentation. It is an ESP32 device featuring 6 TFT displays. See
+https://github.com/frankcohen/EleksTubeIPSHack
 
 -Frank
