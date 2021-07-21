@@ -1,0 +1,72 @@
+{
+	"ReflectionsShow":
+	{
+		"title": "Demo reel 3",
+		"showname": "demo3",
+    "version": "1",
+		"events": {
+      "1": {
+         "type": "event",
+         "name": "First try",
+         "comment": "Plays a sequence upon startup",
+         "sequence": [
+           {
+             "playaudio_until_end": "ClosureFirstSnow.m4a"
+             "playvideo": "IronFireworks2.mpeg",
+             "playvideo": "Little-Kids2.mpeg",
+             "playvideo": "Candle.mpeg",
+             "playvideo": "Candle.mpeg"
+           },
+           {
+              "playvideo": "Stars2.mpeg",
+              "playaudio_until_end": "SpareMe.mp3"
+           }
+         ]
+        },
+      "2": {
+
+
+
+
+
+			"event": {
+				"Name": "Grim Grinning Ghosts from Disneyland Haunted Mansion",
+				"trigger": "OnStart",
+				"comment": "Plays a sequence once upon startup",
+				"sequence": {
+					"PlayAtOnce": {
+						"comment": "PlayAtOnce plays from the same starting time, and stops when either ends.",
+						"playvideo": "sample1.mpg",
+						"playaudio": "sample.wav"
+					},
+					"PlayAtOnce2": {
+						"playvideo": "sample1.mpg",
+						"playaudio": "sample.wav"
+					}
+				}
+			},
+			"event2": {
+				"trigger": "OnHour",
+				"comment": "Plays time announcement on the hour",
+				"sequence": {
+					"PlayAtOnce": {
+						"playvideo": "sample.m4v",
+						"playaudio": "sample.wav"
+					}
+				}
+			},
+
+
+ReflectionsWaves2021
+Stars2
+Kermit2
+
+			"event3": {
+				"trigger": "ButtonPressed",
+				"RunAndReturn": "button",
+				"comment": "This runs the show file and then returns to this show",
+				"Arguments": "$trigger"
+			}
+		}
+	}
+}
