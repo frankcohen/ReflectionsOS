@@ -4,7 +4,7 @@
 		"showname": "demo3",
 		"version": "1",
 		"events": {
-			
+
 			"1": {
 				"type": "OnStart",
 				"name": "Startup sequence",
@@ -13,8 +13,7 @@
 					"playaudio": "startup.m4a",
 					"playvideo": "ReflectionsWaves2021.mjpeg"
 				}]
-			}
-		},
+			},
 
 		"2": {
 			"type": "OnHour",
@@ -76,6 +75,7 @@
 				"stopaudio": ""
 			}]
 		}
+  }
 
 	}
 }
