@@ -50,7 +50,7 @@ void loop() {
         playMedia("/DemoReel3", onHourVID, onHourAUD);
       }
 
-      playMedia("/DemoReel3", EventVID[i][j]);
+      playMedia("/DemoReel3", EventVID[i][j], EventAUD[i][j]);
     }
   }
 

@@ -14,7 +14,7 @@
 #define BUTTON_RIGHT  39
 
 WiFiMulti wifiMulti;
-bool eof = false;
+bool endFlag = false;
 #define MJPEG_FILENAME ".mjpeg"
 #define MJPEG_BUFFER_SIZE (240 * 240 / 3)
 
@@ -37,6 +37,7 @@ bool eof = false;
 Audio audio;
 TaskHandle_t AudioTaskHandle;
 bool notify = false;
+bool syncFlag = false;
 char message[300];
 
 void AudioTask( void * pvParameters ) {
@@ -46,17 +47,22 @@ void AudioTask( void * pvParameters ) {
       
   for(;;){
     
-    if(!notify && (audio.getAudioCurrentTime() <= audio.getAudioFileDuration()-2) && !eof){
+    if(!notify && (audio.getAudioCurrentTime() <= audio.getAudioFileDuration()-2) && !endFlag){
       audio.loop();
     } else if (notify) {
       audio.stopSong();
       audio.connecttoFS(SD, message);
       audio.loop();
       notify = false; 
-      eof = false;
-    } else {
+      endFlag = false;
+      syncFlag = true;
+    } else if(!endFlag && syncFlag) {
       Serial.println("Audio Task");
-      eof = true;
+      endFlag = true;
+      syncFlag = false;
+      delay(1);
+    } else {
+      delay(1);
     }
     
   }
@@ -64,10 +70,6 @@ void AudioTask( void * pvParameters ) {
 
 void audio_info(const char *info){
      Serial.print("info        "); Serial.println(info);
- }
-
- void audio_eof_mp3(const char *info){
-  eof = true;
  }
 
 // ST7789 Display
@@ -87,8 +89,8 @@ char EventAUD[5][5][30];
 int  numSeq[] = {0, 0, 0, 0, 0};  //Number of sequences
 int  numEvents = 0;               //Number of event type = event
 bool test_succeeded = false;
-const char* ssid                = "SSID";
-const char* password            = "PASSWORD";
+const char* ssid                = "D-Link";
+const char* password            = "golikuttan7577";
 const char* ntpServer           = "pool.ntp.org";
 const long  gmtOffset_sec       = 19800;
 const int   daylightOffset_sec  = 0;
@@ -342,14 +344,14 @@ void streamVideo( File vFile ) {
     } else {
       // Stream video to display
 
-      bool done = false;
-      while (mjpeg.readMjpegBuf() && !done) {
+      while (mjpeg.readMjpegBuf()) {
         // Play video
         mjpeg.drawJpg();
 
-        if(eof) {
+        if(endFlag) {
           Serial.println("Here");
-          done = true;
+          endFlag = false;
+          break;
         }
 
         if(keepAlive(timeinfo)) {
