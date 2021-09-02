@@ -4,7 +4,7 @@
 		"showname": "demo3",
 		"version": "1",
 		"events": {
-
+			
 			"1": {
 				"type": "OnStart",
 				"name": "Startup sequence",
@@ -15,67 +15,66 @@
 				}]
 			},
 
-		"2": {
-			"type": "OnHour",
-			"name": "Hourly",
-			"comment": "Plays time announcement on the hour",
-			"sequence": [{
-				"playaudio": "ClosureFirstSnow.m4a",
-				"playvideo": "Stars2.mjpeg"
-			}]
-		},
-
-		"3": {
-			"type": "ButtonOnePressed",
-			"name": "ButtonOne",
-			"comment": "Button One pressed",
-			"sequence": [{
-				"playaudio": "ClosureFirstSnow.m4a",
-				"playvideo": "Stars2.mjpeg"
-			}]
-		},
-
-		"4": {
-			"type": "ButtonThreePressed",
-			"name": "ButtonThree",
-			"comment": "Button Three pressed",
-			"sequence": [{
-				"playaudio": "SpareMe.m4a",
-				"playvideo": "Kermit2.mjpeg"
-			}]
-		},
-
-		"5": {
-			"type": "event",
-			"name": "First sequence playing",
-			"comment": "Plays audio while serially playing videos",
-			"sequence": [{
-				"playaudio": "ClosureFirstSnow.m4a",
-				"playvideo": "IronFireworks2.mjpeg"
-			}, {
-				"playvideo": "Stars2.mjpeg"
-			}, {
-				"playvideo": "Little-Kids2.mjpeg"
-			}]
-		},
-
-		"6": {
-			"type": "event",
-			"name": "Second sequence",
-			"comment": "Plays alternate audio while playing new videos",
-			"sequence": [{
-				"playaudio": "SpareMe.m4a",
-				"playvideo": "Kermit2.mjpeg"
+			"2": {
+				"type": "OnHour",
+				"name": "Hourly",
+				"comment": "Plays time announcement on the hour",
+				"sequence": [{
+					"playaudio": "ClosureFirstSnow.m4a",
+					"playvideo": "Stars2.mjpeg"
+				}]
 			},
-			{
-				"playaudio": "ClosureFirstSnow.m4a",
-				"playvideo": "Stars2.mjpeg"
+
+			"3": {
+				"type": "ButtonOnePressed",
+				"name": "ButtonOne",
+				"comment": "Button One pressed",
+				"sequence": [{
+					"playaudio": "ClosureFirstSnow.m4a",
+					"playvideo": "Stars2.mjpeg"
+				}]
 			},
-			{
-				"stopaudio": ""
-			}]
+
+			"4": {
+				"type": "ButtonThreePressed",
+				"name": "ButtonThree",
+				"comment": "Button Three pressed",
+				"sequence": [{
+					"playaudio": "SpareMe.m4a",
+					"playvideo": "Kermit2.mjpeg"
+				}]
+			},
+
+			"5": {
+				"type": "event",
+				"name": "First sequence playing",
+				"comment": "Plays audio while serially playing videos",
+				"sequence": [{
+					"playaudio": "ClosureFirstSnow.m4a",
+					"playvideo": "IronFireworks2.mjpeg"
+				}, {
+					"playvideo": "Stars2.mjpeg"
+				}, {
+					"playvideo": "Little-Kids2.mjpeg"
+				}]
+			},
+
+			"6": {
+				"type": "event",
+				"name": "Second sequence",
+				"comment": "Plays alternate audio while playing new videos",
+				"sequence": [{
+					"playaudio": "SpareMe.m4a",
+					"playvideo": "Kermit2.mjpeg"
+				},
+				{
+					"playaudio": "ClosureFirstSnow.m4a",
+					"playvideo": "Stars2.mjpeg"
+				},
+				{
+					"stopaudio": ""
+				}]
+			}
 		}
-  }
-
 	}
 }

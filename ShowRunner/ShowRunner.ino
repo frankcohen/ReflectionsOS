@@ -13,7 +13,7 @@ void setup() {
 
   initDisplay();
   
-  //extractTar();
+  extractTar();
 
   enableOneSPI( DisplaySDCS );
 

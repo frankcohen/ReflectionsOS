@@ -89,8 +89,8 @@ char EventAUD[5][5][30];
 int  numSeq[] = {0, 0, 0, 0, 0};  //Number of sequences
 int  numEvents = 0;               //Number of event type = event
 bool test_succeeded = false;
-const char* ssid                = "D-Link";
-const char* password            = "golikuttan7577";
+const char* ssid                = "SSID";
+const char* password            = "PSWD";
 const char* ntpServer           = "pool.ntp.org";
 const long  gmtOffset_sec       = 19800;
 const int   daylightOffset_sec  = 0;
