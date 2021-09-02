@@ -260,6 +260,8 @@ void parseJson() {
         if(step["playaudio"]){
           sprintf(EventAUD[numEvents][seqIndex], "%s", step["playaudio"].as<char*>());
           Serial.printf("Event %d Sequence %d Audio: %s\n", numEvents, seqIndex, EventAUD[numEvents][seqIndex]);
+        } else {
+          sprintf(EventAUD[numEvents][seqIndex], "~Continue~");
         }
 
         if(step["playvideo"]){
@@ -282,7 +284,7 @@ void InitializeAudioTask() {
                     "AudioTask", /* name of task. */
                     3000,      /* Stack size of task */
                     NULL,        /* parameter of the task */
-                    2,           /* priority of the task */
+                    1,           /* priority of the task */
                     &AudioTaskHandle,      /* Task handle to keep track of created task */
                     1);          /* pin task to core 1 */                  
   delay(500);
@@ -349,12 +351,14 @@ void streamVideo( File vFile ) {
         mjpeg.drawJpg();
 
         if(endFlag) {
-          Serial.println("Here");
           endFlag = false;
+          vFile.close();
+          Serial.println(ESP.getFreeHeap());
           break;
         }
 
         if(keepAlive(timeinfo)) {
+          vFile.close();
           break;
         }
         
@@ -378,8 +382,11 @@ void playMedia(char* destination, char* videoFile, char* audioFile = "SpareMe.m4
   } else {
     File videoFile = SD.open(videoNamebuff);
 
-    sprintf(message, audioNamebuff);
-    notify = true;
+    if(strcmp(audioFile, "~Continue~")) {
+      sprintf(message, audioNamebuff);
+      notify = true;
+    }
+
     streamVideo(videoFile);
 
   }
