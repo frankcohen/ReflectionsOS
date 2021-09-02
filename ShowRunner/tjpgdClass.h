@@ -11,8 +11,8 @@
 /* System Configurations */
 
 #define	TJPGD_SZBUF		1426	/* Size of stream input buffer */
-#define JD_FORMAT		0	/* Output pixel format 0:RGB888 (3 BYTE/pix), 1:RGB565 (1 WORD/pix) */
-#define JD_TBLCLIP		0	/* Use table for saturation (might be a bit faster but increases 1K bytes of code size) */
+#define JD_FORMAT			0			/* Output pixel format 0:RGB888 (3 BYTE/pix), 1:RGB565 (1 WORD/pix) */
+#define JD_TBLCLIP		0			/* Use table for saturation (might be a bit faster but increases 1K bytes of code size) */
 
 /*---------------------------------------------------------------------------*/
 
