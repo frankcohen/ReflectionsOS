@@ -39,6 +39,35 @@ TaskHandle_t AudioTaskHandle;
 bool notify = false;
 bool syncFlag = false;
 char message[300];
+char onStartVID[30];
+char onStartAUD[30];
+char onHourVID[50];
+char onHourAUD[50];
+char ButtonOnePressedVID[30];
+char ButtonOnePressedAUD[30];
+char ButtonThreePressedVID[30];
+char ButtonThreePressedAUD[30];
+char EventVID[5][5][30];          //Index 1-> Event index; Index 2-> Sequence index; Index 3 -> String index
+char EventAUD[5][5][30];
+int  numSeq[] = {0, 0, 0, 0, 0};  //Number of sequences
+int  numEvents = 0;               //Number of event type = event
+bool test_succeeded = false;
+const char* ssid                = "SSID";
+const char* password            = "PSWD";
+const char* ntpServer           = "pool.ntp.org";
+const long  gmtOffset_sec       = 19800;
+const int   daylightOffset_sec  = 0;
+
+
+#include "MjpegClass.h"
+static MjpegClass mjpeg;
+boolean sdCardValid = false;
+boolean firstTime = true;
+uint8_t *mjpeg_buf;
+File dir;
+bool interrupted1 = false;
+bool interrupted3 = false;
+bool interruptedT = false;
 
 void AudioTask( void * pvParameters ) {
     audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
@@ -75,36 +104,6 @@ void audio_info(const char *info){
 // ST7789 Display
 Arduino_HWSPI *bus = new Arduino_HWSPI(DisplayDC /* DC */, DisplayCS /* CS */, SCK, MOSI, MISO);
 Arduino_ST7789 *gfx = new Arduino_ST7789(bus, -1 /* RST */, 2 /* rotation */, true /* IPS */, 240 /* width */, 240 /* height */, 0 /* col offset 1 */, 80 /* row offset 1 */);
-
-char onStartVID[30];
-char onStartAUD[30];
-char onHourVID[50];
-char onHourAUD[50];
-char ButtonOnePressedVID[30];
-char ButtonOnePressedAUD[30];
-char ButtonThreePressedVID[30];
-char ButtonThreePressedAUD[30];
-char EventVID[5][5][30];          //Index 1-> Event index; Index 2-> Sequence index; Index 3 -> String index
-char EventAUD[5][5][30];
-int  numSeq[] = {0, 0, 0, 0, 0};  //Number of sequences
-int  numEvents = 0;               //Number of event type = event
-bool test_succeeded = false;
-const char* ssid                = "SSID";
-const char* password            = "PSWD";
-const char* ntpServer           = "pool.ntp.org";
-const long  gmtOffset_sec       = 19800;
-const int   daylightOffset_sec  = 0;
-
-
-#include "MjpegClass.h"
-static MjpegClass mjpeg;
-boolean sdCardValid = false;
-boolean firstTime = true;
-uint8_t *mjpeg_buf;
-File dir;
-bool interrupted1 = false;
-bool interrupted3 = false;
-bool interruptedT = false;
 
 bool test_tarExpander() {
   bool ret = false;
