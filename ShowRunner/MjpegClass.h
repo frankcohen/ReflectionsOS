@@ -156,7 +156,7 @@ public:
     TJpgD::JRESULT jres = _jdec.prepare(jpgRead, this);
     if (jres != TJpgD::JDR_OK)
     {
-      // Serial.printf("prepare failed! %d\r\n", jres);
+      Serial.printf("prepare failed! %d\r\n", jres);
       return false;
     }
 
