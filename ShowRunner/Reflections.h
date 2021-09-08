@@ -1,3 +1,16 @@
+/*
+ * Reflections project: A wrist watch
+ * Seuss Display: The watch display uses a breadboard with ESP32, OLED display, audio
+ * player/recorder, SD card, GPS, and accelerometer/compass
+ * Repository and community discussions at https://github.com/frankcohen/ReflectionsOS
+ * Licensed under GPL v3
+ * (c) Frank Cohen, All rights reserved. fcohen@votsh.com
+ * Read the license in the license.txt file that comes with this code.
+ * September 5, 2021
+*/
+
+#include "Utils.h"
+#include "settings.h"
 #define DEST_FS_USES_SD
 #include <SD.h>
 #include <Arduino_GFX_Library.h>
@@ -10,29 +23,17 @@
 #include <wifiMulti.h>
 #include <HTTPClient.h>
 
-#define BUTTON_LEFT   36
-#define BUTTON_RIGHT  39
-
 WiFiMulti wifiMulti;
+
 bool endFlag = false;
 #define MJPEG_FILENAME ".mjpeg"
 #define MJPEG_BUFFER_SIZE (240 * 240 / 3)
 
 #define TFT_BRIGHTNESS 250  // Hearing static over the I2S speaker when brightness > 200
 
-#define SCK     18
-#define MOSI    23
-#define MISO    19
-#define SS      5
-
-#define DisplayCS   15   //TFT display on Adafruit's ST7789 card
-#define DisplaySDCS 5    //SD card on the Adafruit ST7789 card
-#define DisplayRST  2    //Reset for Adafruit's ST7789 card
-#define DisplayDC   4    //DC for Adafruit's ST7789 card
-
-#define I2S_DOUT      33
-#define I2S_BCLK      26
-#define I2S_LRC       25
+// ST7789 Display
+Arduino_HWSPI *bus = new Arduino_HWSPI(DisplayDC /* DC */, DisplayCS /* CS */, SCK, MOSI, MISO);
+Arduino_ST7789 *gfx = new Arduino_ST7789(bus, -1 /* RST */, 2 /* rotation */, true /* IPS */, 240 /* width */, 240 /* height */, 0 /* col offset 1 */, 80 /* row offset 1 */);
 
 Audio audio;
 TaskHandle_t AudioTaskHandle;
@@ -52,8 +53,8 @@ char EventAUD[5][5][30];
 int  numSeq[] = {0, 0, 0, 0, 0};  //Number of sequences
 int  numEvents = 0;               //Number of event type = event
 bool test_succeeded = false;
-const char* ssid                = "SSID";
-const char* password            = "PSWD";
+const char* ssid                = SECRET_SSID;
+const char* password            = SECRET_PASSWORD;
 const char* ntpServer           = "pool.ntp.org";
 const long  gmtOffset_sec       = 19800;
 const int   daylightOffset_sec  = 0;
@@ -69,41 +70,52 @@ bool interrupted1 = false;
 bool interrupted3 = false;
 bool interruptedT = false;
 
+
+// Backlight
+#include <FastLED.h>
+CRGB leds[NUM_LEDS];
+#define LED_TYPE    WS2811
+#define COLOR_ORDER GRB
+#define BRIGHTNESS  250   // Backlight brightness using WS2812 Neopixel LED units
+
 void AudioTask( void * pvParameters ) {
-    audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-    audio.setVolume(21);
-    audio.connecttoFS(SD, "/DemoReel3/startup.m4a");
-      
-  for(;;){
-    
-    if(!notify && (audio.getAudioCurrentTime() <= audio.getAudioFileDuration()-2) && !endFlag){
+  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+  audio.setVolume(50);
+  audio.connecttoFS(SD, "/DemoReel3/startup.m4a");
+  
+  for(;;)
+  {
+    if(!notify && (audio.getAudioCurrentTime() <= audio.getAudioFileDuration()-2) && !endFlag)
+    {
       audio.loop();
-    } else if (notify) {
-      audio.stopSong();
-      audio.connecttoFS(SD, message);
-      audio.loop();
-      notify = false; 
-      endFlag = false;
-      syncFlag = true;
-    } else if(!endFlag && syncFlag) {
-      Serial.println("Audio Task");
-      endFlag = true;
-      syncFlag = false;
-      delay(1);
-    } else {
-      delay(1);
     }
-    
+    else if (notify) 
+    {
+        audio.stopSong();
+        audio.connecttoFS(SD, message);
+        audio.loop();
+        notify = false; 
+        endFlag = false;
+        syncFlag = true;
+    } 
+    else if (!endFlag && syncFlag) 
+    {
+        Serial.println("Audio Task");
+        endFlag = true;
+        syncFlag = false;
+        delay( 1 );
+    } 
+    else
+    {
+      delay(1 );
+    }
   }
+  
 }
 
 void audio_info(const char *info){
      Serial.print("info        "); Serial.println(info);
  }
-
-// ST7789 Display
-Arduino_HWSPI *bus = new Arduino_HWSPI(DisplayDC /* DC */, DisplayCS /* CS */, SCK, MOSI, MISO);
-Arduino_ST7789 *gfx = new Arduino_ST7789(bus, -1 /* RST */, 2 /* rotation */, true /* IPS */, 240 /* width */, 240 /* height */, 0 /* col offset 1 */, 80 /* row offset 1 */);
 
 bool test_tarExpander() {
   bool ret = false;
@@ -130,23 +142,11 @@ bool test_tarExpander() {
   return ret;
 } 
 
-void disableSPIDevice( int deviceCS )
-{
-    //Serial.print( F("Disabling SPI device on pin ") );
-    //Serial.println( deviceCS );
-    pinMode(deviceCS, OUTPUT);
-    digitalWrite(deviceCS, HIGH);
-}
-
-static void smartDelay(unsigned long ms) {
-  unsigned long start = millis();
-  do {
-    // feel free to do something here
-  } while (millis() - start < ms);
-}
-
 void initWiFi(const char* _ssid, const char* _pswd) {
   Serial.printf("Connecting to %s ", _ssid);
+  Serial.println();
+  // Serial.printf("password %s ", _pswd);
+  // Serial.println();
   wifiMulti.addAP(_ssid, _pswd);
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -154,7 +154,46 @@ void initWiFi(const char* _ssid, const char* _pswd) {
       Serial.print(".");
       wifiMulti.run();
   }
-  Serial.println("CONNECTED");
+  Serial.println("Connected");
+}
+
+void backlighton()
+{
+        for ( int i=0; i<NUM_LEDS; i++ )
+        {
+                leds[i] = CRGB::Black;
+        }
+
+        leds[3] = CRGB::White;
+        leds[2] = CRGB::White;
+        leds[1] = CRGB::White;
+
+        leds[9] = CRGB::White;
+        leds[8] = CRGB::White;
+        leds[7] = CRGB::White;
+
+        leds[15] = CRGB::White;
+        leds[14] = CRGB::White;
+        leds[13] = CRGB::White;
+
+        FastLED.show();
+}
+
+void backlightoff()
+{
+        for ( int i=0; i<NUM_LEDS; i++ )
+        {
+                leds[i] = CRGB::Black;
+        }
+        FastLED.show();
+}
+
+void initBacklight()
+{
+  // Turn backlight on
+  FastLED.addLeds<LED_TYPE,LED_DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.setBrightness(BRIGHTNESS);
+  backlighton();
 }
 
 void initDisplay() {
@@ -163,19 +202,19 @@ void initDisplay() {
 }
 
 void extractTar() {
-  Serial.println("EXTRACTING FILE");
+  Serial.println("Extracting show file");
 
   if (!tarGzFS.begin()) {
-    Serial.printf("%s Mount Failed, halting\n", FS_NAME );
+    Serial.printf("%s TarGZ Library begin Failed, halting\n", FS_NAME );
     while(1) yield();
   } else {
-    Serial.printf("%s Mount Successful\n", FS_NAME);
+    Serial.printf("%s TarGZ library mount Successful\n", FS_NAME);
   }
 
   test_succeeded = test_tarExpander();
 
   if( test_succeeded ) {
-    Serial.printf("FILES EXTRACTED\n");
+    Serial.printf("Files Extracted\n");
   }
 }
 
@@ -292,6 +331,7 @@ void InitializeAudioTask() {
 
 bool keepAlive(struct tm timeinfo) {
 
+/*
   if(digitalRead(BUTTON_LEFT) == LOW){
     delay(500);
     Serial.println(timeinfo.tm_min);
@@ -308,6 +348,8 @@ bool keepAlive(struct tm timeinfo) {
   } else if(timeinfo.tm_min != 0){
     interruptedT = false;
   }
+*/
+
   return false;
 }
 
@@ -316,7 +358,6 @@ bool keepAlive(struct tm timeinfo) {
  */
  
 void streamVideo( File vFile ) {
-
 
   struct tm timeinfo;
   if(!getLocalTime(&timeinfo)) {
@@ -328,7 +369,9 @@ void streamVideo( File vFile ) {
   if (!vFile || vFile.isDirectory()) {
     Serial.println(F("ERROR: Failed to open " MJPEG_FILENAME " file for reading"));
     gfx->println(F("ERROR: Failed to open " MJPEG_FILENAME " file for reading"));
-  } else {
+  } 
+  else
+  {
     Serial.print( "Opened " );
     Serial.println( vFile.name() );
 
@@ -339,33 +382,39 @@ void streamVideo( File vFile ) {
     } else {
       mjpeg.setup(vFile /* file */, mjpeg_buf /* buffer */, gfx /* driver */, true /* multitask */, firstTime );
     }
-    
+
     if (!mjpeg_buf) {
       Serial.println(F("mjpeg_buf malloc failed!"));
-    } else {
-      // Stream video to display
-
-      while (mjpeg.readMjpegBuf()) {
-        // Play video
-        mjpeg.drawJpg();
-
-        if(endFlag) {
-          endFlag = false;
-          vFile.close();
-          Serial.println(ESP.getFreeHeap());
-          break;
-        }
-
-        if(keepAlive(timeinfo)) {
-          vFile.close();
-          break;
-        }
-        
-      }
-
-      Serial.println(F("MJPEG video end"));
-      vFile.close();
+      while(1);
     }
+    
+    endFlag = false;
+    long cnt = 0;
+    
+    // Stream video to display
+
+    while (mjpeg.readMjpegBuf()) {
+      // Play video
+      mjpeg.drawJpg();
+      cnt++;
+
+      if(endFlag) {
+        endFlag = false;
+        vFile.close();
+        Serial.print( "endFlag detected, heap size = " );
+        Serial.println(ESP.getFreeHeap());
+        break;
+      }
+      
+      if(keepAlive(timeinfo)) {
+        vFile.close();
+        break;
+      }
+      
+    }
+      Serial.print(F("MJPEG video end. Frames = "));
+      Serial.println( cnt );
+      vFile.close();
   }
 }
 
@@ -389,16 +438,4 @@ void playMedia(char* destination, char* videoFile, char* audioFile = "SpareMe.m4
     streamVideo(videoFile);
 
   }
-}
-
-void enableOneSPI( int deviceCS ) {
-  if ( deviceCS != DisplayCS ) { disableSPIDevice( DisplayCS ); }
-  if ( deviceCS != DisplaySDCS ) { disableSPIDevice( DisplaySDCS ); }
-  if ( deviceCS != DisplayRST ) { disableSPIDevice( DisplayRST ); }
-  if ( deviceCS != DisplayDC ) { disableSPIDevice( DisplayDC ); }
-  //Serial.print( F("Enabling SPI device on GPIO ") );
-  //Serial.println( deviceCS );
-
-  pinMode(deviceCS, OUTPUT);
-  digitalWrite(deviceCS, LOW);
 }

@@ -1,3 +1,14 @@
+/*
+ * Reflections project: A wrist watch
+ * Seuss Display: The watch display uses a breadboard with ESP32, OLED display, audio
+ * player/recorder, SD card, GPS, and accelerometer/compass
+ * Repository and community discussions at https://github.com/frankcohen/ReflectionsOS
+ * Licensed under GPL v3
+ * (c) Frank Cohen, All rights reserved. fcohen@votsh.com
+ * Read the license in the license.txt file that comes with this code.
+ * September 5, 2021 Happy Valentines Day
+*/
+
 #ifndef _MJPEGCLASS_H_
 #define _MJPEGCLASS_H_
 
@@ -52,7 +63,7 @@ public:
     }
     else
     {
-      Serial.println( "Did not allocate buffers, this is not the first time through." );
+      //Serial.println( "Did not allocate buffers, this is not the first time through." );
       _inputindex = 0;
     }
 
