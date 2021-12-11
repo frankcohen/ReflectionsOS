@@ -25,14 +25,18 @@ bool endFlag = false;
 #define MISO    19
 #define SS      5
 
-#define DisplayCS   15   //TFT display on Adafruit's ST7789 card
-#define DisplaySDCS 5    //SD card on the Adafruit ST7789 card
-#define DisplayRST  2    //Reset for Adafruit's ST7789 card
-#define DisplayDC   4    //DC for Adafruit's ST7789 card
+#define DisplayCS   5   //TFT display on Adafruit's ST7789 card
+#define DisplaySDCS 4    //SD card on the Adafruit ST7789 card
+#define DisplayRST  17    //Reset for Adafruit's ST7789 card
+#define DisplayDC   16   //DC for Adafruit's ST7789 card
 
 #define I2S_DOUT      33
 #define I2S_BCLK      26
 #define I2S_LRC       25
+
+// ST7789 Display
+Arduino_HWSPI *bus = new Arduino_HWSPI(DisplayDC /* DC */, DisplayCS /* CS */, SCK, MOSI, MISO);
+Arduino_ST7789 *gfx = new Arduino_ST7789(bus, -1 /* RST */, 2 /* rotation */, true /* IPS */, 240 /* width */, 240 /* height */, 0 /* col offset 1 */, 80 /* row offset 1 */);
 
 Audio audio;
 TaskHandle_t AudioTaskHandle;
@@ -52,8 +56,8 @@ char EventAUD[5][5][30];
 int  numSeq[] = {0, 0, 0, 0, 0};  //Number of sequences
 int  numEvents = 0;               //Number of event type = event
 bool test_succeeded = false;
-const char* ssid                = "SSID";
-const char* password            = "PSWD";
+const char* ssid                = "Sx3K";
+const char* password            = "golikuttan7577";
 const char* ntpServer           = "pool.ntp.org";
 const long  gmtOffset_sec       = 19800;
 const int   daylightOffset_sec  = 0;
@@ -101,9 +105,6 @@ void audio_info(const char *info){
      Serial.print("info        "); Serial.println(info);
  }
 
-// ST7789 Display
-Arduino_HWSPI *bus = new Arduino_HWSPI(DisplayDC /* DC */, DisplayCS /* CS */, SCK, MOSI, MISO);
-Arduino_ST7789 *gfx = new Arduino_ST7789(bus, -1 /* RST */, 2 /* rotation */, true /* IPS */, 240 /* width */, 240 /* height */, 0 /* col offset 1 */, 80 /* row offset 1 */);
 
 bool test_tarExpander() {
   bool ret = false;
@@ -277,18 +278,18 @@ void parseJson() {
   file.close();
 }
 
-void InitializeAudioTask() {
-  xTaskCreatePinnedToCore(
-                    AudioTask,   /* Task function. */
-                    "AudioTask", /* name of task. */
-                    3000,      /* Stack size of task */
-                    NULL,        /* parameter of the task */
-                    1,           /* priority of the task */
-                    &AudioTaskHandle,      /* Task handle to keep track of created task */
-                    1);          /* pin task to core 1 */                  
-  delay(500);
-  Serial.println("Task created");
-}
+//void InitializeAudioTask() {
+//  xTaskCreatePinnedToCore(
+//                    AudioTask,   /* Task function. */
+//                    "AudioTask", /* name of task. */
+//                    3000,      /* Stack size of task */
+//                    NULL,        /* parameter of the task */
+//                    1,           /* priority of the task */
+//                    &AudioTaskHandle,      /* Task handle to keep track of created task */
+//                    1);          /* pin task to core 1 */                  
+//  delay(500);
+//  Serial.println("Task created");
+//}
 
 bool keepAlive(struct tm timeinfo) {
 
@@ -352,7 +353,6 @@ void streamVideo( File vFile ) {
         if(endFlag) {
           endFlag = false;
           vFile.close();
-          Serial.println(ESP.getFreeHeap());
           break;
         }
 
@@ -381,10 +381,10 @@ void playMedia(char* destination, char* videoFile, char* audioFile = "SpareMe.m4
   } else {
     File videoFile = SD.open(videoNamebuff);
 
-    if(strcmp(audioFile, "~Continue~")) {
-      sprintf(message, audioNamebuff);
-      notify = true;
-    }
+//    if(strcmp(audioFile, "~Continue~")) {
+//      sprintf(message, audioNamebuff);
+//      notify = true;
+//    }
 
     streamVideo(videoFile);
 

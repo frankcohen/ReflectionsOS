@@ -8,27 +8,27 @@ void setup() {
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
   Serial.println("SD MJPEG Video");
-  
-  enableOneSPI( DisplayCS );
 
-  initDisplay();
-  
-  extractTar();
-
-  enableOneSPI( DisplaySDCS );
-
-  if (!SD.begin(/*DisplaySDCS, SPI, 80000000*/)) /* SPI bus mode */{
+  if (!SD.begin(DisplaySDCS)) /* SPI bus mode */{
     SDfailedInit();
   }
   else {
     sdCardValid = true;    
   }
+  
+  //enableOneSPI( DisplayCS );
+
+  initDisplay();
+  
+  extractTar();
+
+  //enableOneSPI( DisplaySDCS );
 
   parseJson();
   pinMode(BUTTON_LEFT, INPUT);
   pinMode(BUTTON_RIGHT, INPUT);
 
-  InitializeAudioTask();
+  //InitializeAudioTask();
 
   //Startup Sequence
   playMedia("/DemoReel3", onStartVID, onStartAUD);
