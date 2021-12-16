@@ -2,8 +2,10 @@
 
 void setup() {
   Serial.begin(115200);
+  pinMode(BUTTON_LEFT, INPUT);
+  pinMode(BUTTON_RIGHT, INPUT);
 
-  initWiFi(ssid, password);
+  //initWiFi(ssid, password);
   
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
@@ -20,7 +22,7 @@ void setup() {
 
   initDisplay();
   
-  extractTar();
+  //extractTar();
 
   //enableOneSPI( DisplaySDCS );
 
@@ -28,7 +30,7 @@ void setup() {
   pinMode(BUTTON_LEFT, INPUT);
   pinMode(BUTTON_RIGHT, INPUT);
 
-  //InitializeAudioTask();
+  InitializeAudioTask();
 
   //Startup Sequence
   playMedia("/DemoReel3", onStartVID, onStartAUD);

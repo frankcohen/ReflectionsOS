@@ -38,7 +38,7 @@ bool endFlag = false;
 Arduino_HWSPI *bus = new Arduino_HWSPI(DisplayDC /* DC */, DisplayCS /* CS */, SCK, MOSI, MISO);
 Arduino_ST7789 *gfx = new Arduino_ST7789(bus, -1 /* RST */, 2 /* rotation */, true /* IPS */, 240 /* width */, 240 /* height */, 0 /* col offset 1 */, 80 /* row offset 1 */);
 
-Audio audio;
+Audio audio(true, I2S_DAC_CHANNEL_LEFT_EN);
 TaskHandle_t AudioTaskHandle;
 bool notify = false;
 bool syncFlag = false;
@@ -56,8 +56,8 @@ char EventAUD[5][5][30];
 int  numSeq[] = {0, 0, 0, 0, 0};  //Number of sequences
 int  numEvents = 0;               //Number of event type = event
 bool test_succeeded = false;
-const char* ssid                = "Sx3K";
-const char* password            = "golikuttan7577";
+const char* ssid                = "GNXS-2.4G-36F1E4";
+const char* password            = "mangalam123";
 const char* ntpServer           = "pool.ntp.org";
 const long  gmtOffset_sec       = 19800;
 const int   daylightOffset_sec  = 0;
@@ -74,14 +74,15 @@ bool interrupted3 = false;
 bool interruptedT = false;
 
 void AudioTask( void * pvParameters ) {
-    audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-    audio.setVolume(21);
+    //audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+    //audio.setVolume(21);
     audio.connecttoFS(SD, "/DemoReel3/startup.m4a");
       
   for(;;){
     
     if(!notify && (audio.getAudioCurrentTime() <= audio.getAudioFileDuration()-2) && !endFlag){
       audio.loop();
+      
     } else if (notify) {
       audio.stopSong();
       audio.connecttoFS(SD, message);
@@ -277,28 +278,28 @@ void parseJson() {
   Serial.println("done");
   file.close();
 }
-
-//void InitializeAudioTask() {
-//  xTaskCreatePinnedToCore(
-//                    AudioTask,   /* Task function. */
-//                    "AudioTask", /* name of task. */
-//                    3000,      /* Stack size of task */
-//                    NULL,        /* parameter of the task */
-//                    1,           /* priority of the task */
-//                    &AudioTaskHandle,      /* Task handle to keep track of created task */
-//                    1);          /* pin task to core 1 */                  
-//  delay(500);
-//  Serial.println("Task created");
-//}
+//
+void InitializeAudioTask() {
+  xTaskCreatePinnedToCore(
+                    AudioTask,   /* Task function. */
+                    "AudioTask", /* name of task. */
+                    3500,      /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &AudioTaskHandle,      /* Task handle to keep track of created task */
+                    1);          /* pin task to core 1 */                  
+  delay(500);
+  Serial.println("Task created");
+}
 
 bool keepAlive(struct tm timeinfo) {
 
-  if(digitalRead(BUTTON_LEFT) == LOW){
+  if(digitalRead(BUTTON_LEFT) == HIGH){
     delay(500);
     Serial.println(timeinfo.tm_min);
     interrupted1 = true;
     return true;
-  } else if(digitalRead(BUTTON_RIGHT) == LOW){
+  } else if(digitalRead(BUTTON_RIGHT) == HIGH){
     delay(500);
     interrupted3 = true;
     return true;
@@ -349,7 +350,7 @@ void streamVideo( File vFile ) {
       while (mjpeg.readMjpegBuf()) {
         // Play video
         mjpeg.drawJpg();
-
+        
         if(endFlag) {
           endFlag = false;
           vFile.close();
@@ -381,10 +382,10 @@ void playMedia(char* destination, char* videoFile, char* audioFile = "SpareMe.m4
   } else {
     File videoFile = SD.open(videoNamebuff);
 
-//    if(strcmp(audioFile, "~Continue~")) {
-//      sprintf(message, audioNamebuff);
-//      notify = true;
-//    }
+    if(strcmp(audioFile, "~Continue~")) {
+      sprintf(message, audioNamebuff);
+      notify = true;
+    }
 
     streamVideo(videoFile);
 
