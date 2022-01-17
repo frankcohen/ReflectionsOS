@@ -19,8 +19,11 @@
 /* Arduino_GFX */
 #include <Arduino_GFX_Library.h>
 
-Arduino_HWSPI *bus = new Arduino_HWSPI(DisplayDC /* DC */, DisplayCS /* CS */, SCK, MOSI, MISO);
-Arduino_ST7789 *gfx = new Arduino_ST7789(bus, -1 /* RST */, 2 /* rotation */, true /* IPS */, 240 /* width */, 240 /* height */, 0 /* col offset 1 */, 80 /* row offset 1 */);
+//Arduino_HWSPI *bus = new Arduino_HWSPI(DisplayDC /* DC */, DisplayCS /* CS */, SCK, MOSI, MISO);
+//Arduino_ST7789 *gfx = new Arduino_ST7789(bus, -1 /* RST */, 2 /* rotation */, true /* IPS */, 240 /* width */, 240 /* height */, 0 /* col offset 1 */, 80 /* row offset 1 */);
+
+Arduino_DataBus *bus = new Arduino_ESP32SPI(16 /* DC */, 32 /* CS */, 18 /* SCK */, 23 /* MOSI */, -1 /* MISO */, VSPI /* spi_num */);
+Arduino_GFX *gfx = new Arduino_GC9A01(bus, 17, 0 /* rotation */, false /* IPS */);
 
 /* MP3 Audio */
 #include <AudioFileSourceFS.h>
@@ -226,8 +229,8 @@ void setup()
   delay(60000);
   ledcDetachPin(TFT_BL);
 #endif
-  gfx->displayOff();
-  esp_deep_sleep_start();
+//  gfx->displayOff();
+//  esp_deep_sleep_start();
 }
 
 void loop()

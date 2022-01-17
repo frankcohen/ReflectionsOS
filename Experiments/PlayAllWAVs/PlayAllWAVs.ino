@@ -21,8 +21,13 @@ void setup() {
 
   audioLogger = &Serial;  
   source = new AudioFileSourceSD();
+
   output = new AudioOutputI2S();
+  output -> SetPinout( 26 /* bclkPin */, 25 /* wclkPin */, 27 /* doutPin */);  
+  output -> SetGain( 0.200 );
+  
   wav = new AudioGeneratorWAV();
+  wav->begin(source, output);
 
   // NOTE: SD.begin(...) should be called AFTER AudioOutputSPDIF() 
   //       to takover the the SPI pins if they share some with I2S
@@ -42,7 +47,9 @@ void loop() {
   else 
   {
     File file = dir.openNextFile();
-    if (file) {      
+    if (file) {
+      Serial.printf_P(PSTR("Found '%s' from SD card...\n"), file.name());
+      
       if (String(file.name()).endsWith(".wav")) {
         source->close();
         if (source->open(file.name())) { 

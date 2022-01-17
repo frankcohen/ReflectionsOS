@@ -72,8 +72,11 @@ long currentMillis = 0;
 #define TFT_BL 33        // Just so it doesn't conflict with something else
 
 // ST7789 Display
-Arduino_HWSPI *bus = new Arduino_HWSPI(DisplayDC /* DC */, DisplayCS /* CS */, SCK, MOSI, MISO);
-Arduino_ST7789 *gfx = new Arduino_ST7789(bus, -1 /* RST */, 2 /* rotation */, true /* IPS */, 240 /* width */, 240 /* height */, 0 /* col offset 1 */, 80 /* row offset 1 */);
+//Arduino_HWSPI *bus = new Arduino_HWSPI(DisplayDC /* DC */, DisplayCS /* CS */, SCK, MOSI, MISO);
+//Arduino_ST7789 *gfx = new Arduino_ST7789(bus, -1 /* RST */, 2 /* rotation */, true /* IPS */, 240 /* width */, 240 /* height */, 0 /* col offset 1 */, 80 /* row offset 1 */);
+
+Arduino_DataBus *bus = new Arduino_ESP32SPI(16 /* DC */, 32 /* CS */, 18 /* SCK */, 23 /* MOSI */, -1 /* MISO */, VSPI /* spi_num */);
+Arduino_GFX *gfx = new Arduino_GC9A01(bus, 17, 0 /* rotation */, false /* IPS */);
 
 // BNO055 Accelerometer, Compass, Gyro Breakout Board
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
@@ -232,7 +235,6 @@ void moveBall( float ytiltloc, float ztiltloc )
   if ( nextY> ( displayheight - ( ballSize * 2) ) ) { velocityY = 0; }
   if ( nextY < 0 ) { velocityY = 0; }
 
-  /*
   Serial.print( "ytiltloc = " );
   Serial.print( ytiltloc );
   Serial.print( " ztiltloc = " );
@@ -245,7 +247,6 @@ void moveBall( float ytiltloc, float ztiltloc )
   Serial.print( ballX );  
   Serial.print( " ballY = " );
   Serial.println( ballY );  
-  */
   
   ballX += velocityX;
   ballY += velocityY;
