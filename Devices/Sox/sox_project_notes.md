@@ -1,6 +1,6 @@
 Sox project notes
 
-I need the EasyEDA skematic and layout for the Sox board
+I need the EasyEDA schematic and layout for the Sox board
 This is a 36 mm round board, probably 4 or more layers,
 ESP32 Arduino-compatible design. Components are mounted top and bottom.
 
