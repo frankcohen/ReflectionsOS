@@ -35,7 +35,7 @@ All components are on 3.3.
 
 6) The board needs a uart, using the same provided on the HiLetGo ESP32 dev board
 CP2102-GM. https://lcsc.com/product-detail/USB-ICs_SILICON-LABS-CP2102-GMR_C6568.html
-USB connector at 180 degrees from ESP32 antennae for layout.
+USB connector at 180 degrees from ESP32 antennae for layout. Use Micro-USB A.
 
 7) GPS module uses AT6558 running 3.3 volts. Breadboard shows connected to 5 volts
 due to a requirement of the GPS breakout board. The breadboard uses the GPS + BDS
