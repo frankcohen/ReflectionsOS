@@ -68,4 +68,8 @@ be verified by connecting a USB cable to a laptop running Arduino IDE 1.8 or lat
 and flash a testing sketch.
 https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/bootloader.html
 
+Changes to above:
+Jan 19, 2022 - Mohammed using IMU LSM6DS3TR
+https://lcsc.com/product-detail/Attitude-Sensors_STMicroelectronics-LSM6DS3TR-C_C967633.html
+
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
