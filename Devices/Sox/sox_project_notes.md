@@ -46,12 +46,15 @@ turning the board on and off. Push and hold for 3 seconds to turn on or off.
 
 7) The board needs a uart, using the same provided on the HiLetGo ESP32 dev board
 CP2102-GM. https://lcsc.com/product-detail/USB-ICs_SILICON-LABS-CP2102-GMR_C6568.html
-USB connector at 180 degrees from ESP32 antennae for layout. Use Micro-USB A.
+USB connector at 180 degrees from ESP32 antennae for layout. Use Micro-USB C
+to allow for battery charging during operation.
+
+```.
 
 8) GPS module uses AT6558 running 3.3 volts. Breadboard shows connected to 5 volts
 due to a requirement of the GPS breakout board. The breadboard uses the GPS + BDS
 BeiDou Dual Module Flight Control Wiki - DFRobot breakout board. The board uses
-only the AT6558 chip. And the board needs to provide an IPEX connector for the usb antenna.
+only the AT6558 chip. And the board needs to provide an IPEX connector for the GPS antenna.
 When I put the board into a wrist watch enclosure the GPS antenna will go into the wrist band.
 https://www.digikey.com/en/products/detail/suntsu-electronics,-inc./SCNRF-6AAN-P1FS/14291136?utm_adgroup=Suntsu%20Electronics%20Inc&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_DK%2BSupplier_Other&utm_term=&utm_content=Suntsu%20Electronics%20Inc&gclid=CjwKCAiAxJSPBhAoEiwAeO_fP0jt6Ce-0s7Bdl8Msl-FxEtlkEP35RCr5qoYZS6azBifDDCklZcshhoCEmIQAvD_BwE
 
@@ -92,6 +95,6 @@ Jan 20, 2022 - Avinadad is basing higher pull-up resistors for I2C to lower the
 battery drain. The board is not user expandable to add more devices to the I2C bus.
 The board needs to operate while USB is connected and charging the battery.
 I anticipate users plugging in a USB powerbank to keep the watch going as
-they play games on it.
+they play games on it. To support this requires USB-C.
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
