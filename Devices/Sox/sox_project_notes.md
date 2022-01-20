@@ -53,7 +53,7 @@ When I put the board into a wrist watch enclosure the GPS antenna will go into t
 https://www.digikey.com/en/products/detail/suntsu-electronics,-inc./SCNRF-6AAN-P1FS/14291136?utm_adgroup=Suntsu%20Electronics%20Inc&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_DK%2BSupplier_Other&utm_term=&utm_content=Suntsu%20Electronics%20Inc&gclid=CjwKCAiAxJSPBhAoEiwAeO_fP0jt6Ce-0s7Bdl8Msl-FxEtlkEP35RCr5qoYZS6azBifDDCklZcshhoCEmIQAvD_BwE
 
 9) Gesture sensor (APDS-9960) is not mounted on the board, it is connected via
-4 wires (VCC, Gnd, SCL, SDA), board needs 4 pads for soldering the wires.
+4 wires (VCC, Gnd, SCL, SDA/NAND), board needs 4 pads for soldering the wires.
 
 10) Display connects directly to 13-pin .7 mm FPC connector on board,
 no adaptor board, 1.28 inch lcd round is a 240x240 display using GC9A01 driver HD ips.
@@ -68,7 +68,7 @@ https://www.espressif.com/en/products/modules
 
 13) PCB design best practices: decoupling capacitors, landing patterns large enough
 for the footprint, avoid too many via holes, avoid excessive trace lengths (especially
-in the SPI bus between TFT, SD, and ESP32), avoid EMI from the ESP32 antennae, and
+in the SPI bus between TFT, SD/NAND, and ESP32), avoid EMI from the ESP32 antennae, and
 expect board revisions to correct unforseen problems.
 
 14) Uses ESP32 processors with pre-burned ESP-IDF V3.1 bootloader. The boards must
@@ -81,5 +81,7 @@ Jan 19, 2022 - Mohammed using IMU LSM6DS3TR
 https://lcsc.com/product-detail/Attitude-Sensors_STMicroelectronics-LSM6DS3TR-C_C967633.html
 Jan 19, 2022 - Avinadad using AT6558R GPS (different from AT6558R, same pin layout)
 Jan 19, 2022 - Avinadad ads GPIO 3 for battery voltage sensing
+Jan 20, 2022 - Mohammed using 1 GB NAND/SD
+https://lcsc.com/product-detail/NAND-FLASH_XTX-XTSD01GLGEAG_C558837.html
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
