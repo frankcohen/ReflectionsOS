@@ -35,6 +35,9 @@ All components are on 3.3 volts.
 The board needs a battery sensor, a voltage divider connected to GPIO 2
 to measure the battery voltage. Unlike the usual ESP32 development boards
 there is no LED on this board.
+The board needs to operate while USB is connected and charging the battery.
+I anticipate users plugging in a USB powerbank to keep the watch going as
+they play games on it.
 
 6) GPIO 36 (right button), 39 (center button), 34 (left button) are pads on the
 board. We will solder wires connecting the pads to SPST button switches.
@@ -76,6 +79,8 @@ be verified by connecting a USB cable to a laptop running Arduino IDE 1.8 or lat
 and flash a testing sketch.
 https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/bootloader.html
 
+15) The board is not user expandable to add more devices to the I2C, SPI buses.
+
 Changes to above:
 Jan 19, 2022 - Mohammed using IMU LSM6DS3TR
 https://lcsc.com/product-detail/Attitude-Sensors_STMicroelectronics-LSM6DS3TR-C_C967633.html
@@ -83,5 +88,10 @@ Jan 19, 2022 - Avinadad using AT6558R GPS (different from AT6558R, same pin layo
 Jan 19, 2022 - Avinadad ads GPIO 3 for battery voltage sensing
 Jan 20, 2022 - Mohammed using 1 GB NAND/SD
 https://lcsc.com/product-detail/NAND-FLASH_XTX-XTSD01GLGEAG_C558837.html
+Jan 20, 2022 - Avinadad is basing higher pull-up resistors for I2C to lower the
+battery drain. The board is not user expandable to add more devices to the I2C bus.
+The board needs to operate while USB is connected and charging the battery.
+I anticipate users plugging in a USB powerbank to keep the watch going as
+they play games on it.
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
