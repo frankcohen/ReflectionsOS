@@ -49,8 +49,6 @@ CP2102-GM. https://lcsc.com/product-detail/USB-ICs_SILICON-LABS-CP2102-GMR_C6568
 USB connector at 180 degrees from ESP32 antennae for layout. Use Micro-USB C
 to allow for battery charging during operation.
 
-```.
-
 8) GPS module uses AT6558 running 3.3 volts. Breadboard shows connected to 5 volts
 due to a requirement of the GPS breakout board. The breadboard uses the GPS + BDS
 BeiDou Dual Module Flight Control Wiki - DFRobot breakout board. The board uses
@@ -98,5 +96,8 @@ battery drain. The board is not user expandable to add more devices to the I2C b
 The board needs to operate while USB is connected and charging the battery.
 I anticipate users plugging in a USB powerbank to keep the watch going as
 they play games on it. To support this requires USB-C.
+Jan 21, 2022 - Mohammed did not find a .7 pitch connector for the display.
+I added the display datasheet and pointed him to:
+https://www.aliexpress.com/item/1005002389910393.html
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
