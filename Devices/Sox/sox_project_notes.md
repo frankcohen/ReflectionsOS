@@ -63,6 +63,8 @@ https://www.digikey.com/en/products/detail/suntsu-electronics,-inc./SCNRF-6AAN-P
 
 10) Display connects directly to 13-pin .7 mm FPC connector on board,
 no adaptor board, 1.28 inch lcd round is a 240x240 display using GC9A01 driver HD ips.
+https://www.aliexpress.com/item/1005002389910393.html
+Also listed here:
 https://pan.baidu.com/s/1x9B9jKrjikSCBUI38ZUC3w Extraction code: 8888
 https://www.taobao.com/list/item/606659413574.htm?spm=a21wu.12321156.recommend-tpp.1
 
