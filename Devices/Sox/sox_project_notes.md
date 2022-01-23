@@ -99,5 +99,14 @@ they play games on it. To support this requires USB-C.
 Jan 21, 2022 - Mohammed did not find a .7 pitch connector for the display.
 I added the display datasheet and pointed him to:
 https://www.aliexpress.com/item/1005002389910393.html
+Jan 21, 2022 - Avinadad asked if the board needs a volume button. The board
+will control volume through software only.
+Jan 22, 2022 - Changed IMU and magnetometer/compass to these:
+LIS2DH12 - 3 axis MEMS accelerometer
+https://www.sparkfun.com/products/15760
+https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=LIS2DH12
+And,
+Magnetometer - MMC5603NJ
+https://datasheet.lcsc.com/lcsc/1912111437_MEMSIC-MMC5603NJ_C404328.pdf
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com

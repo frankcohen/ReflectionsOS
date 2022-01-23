@@ -4,7 +4,7 @@
 //#define MJPEG_FILENAME "/Little-Kids.mjpeg"
 //#define MJPEG_FILENAME "/Stars.mjpeg"
 //#define MJPEG_FILENAME "/cat5.mjpeg"
-#define MJPEG_FILENAME "/Little-Kids2.mjpeg"
+#define MJPEG_FILENAME "/heads.mjpeg"
 //#define MJPEG_FILENAME "/ReflectionsWaves2021.mjpeg"
 
 #define MJPEG_BUFFER_SIZE (240 * 240 * 2 / 10) // memory for a single JPEG frame
