@@ -56,8 +56,9 @@ only the AT6558 chip. And the board needs to provide an IPEX connector for the G
 When I put the board into a wrist watch enclosure the GPS antenna will go into the wrist band.
 https://www.digikey.com/en/products/detail/suntsu-electronics,-inc./SCNRF-6AAN-P1FS/14291136?utm_adgroup=Suntsu%20Electronics%20Inc&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_DK%2BSupplier_Other&utm_term=&utm_content=Suntsu%20Electronics%20Inc&gclid=CjwKCAiAxJSPBhAoEiwAeO_fP0jt6Ce-0s7Bdl8Msl-FxEtlkEP35RCr5qoYZS6azBifDDCklZcshhoCEmIQAvD_BwE
 
-9) Gesture sensor (APDS-9960) is not mounted on the board, it is connected via
+9) Gesture sensor (VL53L5CX) is not mounted on the board, it is connected via
 4 wires (VCC, Gnd, SCL, SDA/NAND), board needs 4 pads for soldering the wires.
+https://www.st.com/resource/en/datasheet/vl53l5cx.pdf
 
 10) Display connects directly to 13-pin .7 mm FPC connector on board,
 no adaptor board, 1.28 inch lcd round is a 240x240 display using GC9A01 driver HD ips.
@@ -108,5 +109,7 @@ https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=LIS2DH12
 And,
 Magnetometer - MMC5603NJ
 https://datasheet.lcsc.com/lcsc/1912111437_MEMSIC-MMC5603NJ_C404328.pdf
+Jan 22, 2022 - Changing from APDS-9960 gesture sensor to VL53L5CX sensor.
+https://www.st.com/resource/en/datasheet/vl53l5cx.pdf
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
