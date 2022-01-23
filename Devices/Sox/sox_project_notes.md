@@ -60,7 +60,7 @@ https://www.digikey.com/en/products/detail/suntsu-electronics,-inc./SCNRF-6AAN-P
 4 wires (VCC, Gnd, SCL, SDA/NAND), board needs 4 pads for soldering the wires.
 https://www.st.com/resource/en/datasheet/vl53l5cx.pdf
 
-10) Display connects directly to 13-pin .7 mm FPC connector on board,
+10) Display 13-pin screen connector cable welded directly on board,
 no adaptor board, 1.28 inch lcd round is a 240x240 display using GC9A01 driver HD ips.
 https://www.aliexpress.com/item/1005002389910393.html
 Also listed here:
@@ -111,5 +111,7 @@ Magnetometer - MMC5603NJ
 https://datasheet.lcsc.com/lcsc/1912111437_MEMSIC-MMC5603NJ_C404328.pdf
 Jan 22, 2022 - Changing from APDS-9960 gesture sensor to VL53L5CX sensor.
 https://www.st.com/resource/en/datasheet/vl53l5cx.pdf
+Jan 23, 2022 - Display cable 13 pin connector welded to the board,
+not the adaptor board 7 pin connector
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
