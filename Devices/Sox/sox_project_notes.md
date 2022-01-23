@@ -1,4 +1,4 @@
-Sox project notes
+Sox project notes, Reflections
 
 I need the EasyEDA schematic and layout for the Sox board
 This is a 36 mm round board, probably 4 or more layers,
