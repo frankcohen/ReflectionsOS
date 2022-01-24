@@ -71,7 +71,13 @@ https://www.taobao.com/list/item/606659413574.htm?spm=a21wu.12321156.recommend-t
 the board may use the ESP32-S3-MINI-1.
 https://www.espressif.com/en/products/modules
 
-12) FTDI pads for pogo pins to flash the ESP32 bootloader.
+12) Not all of the GPIO pins on the ESP32 are available to use.
+See the Sox wiring guide for details:
+https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Sox/Sox%20wiring%20guide.pdf
+Do not attach to the GPIOs marked in red.
+This is based on research from Andreas Speiss, see
+https://www.youtube.com/watch?v=LY-1DHTxRAk and
+https://drive.google.com/file/d/1gbKM7DA7PI7s1-ne_VomcjOrb0bE2TPZ/view
 
 13) PCB design best practices: decoupling capacitors, landing patterns large enough
 for the footprint, avoid too many via holes, avoid excessive trace lengths (especially
@@ -113,5 +119,14 @@ Jan 22, 2022 - Changing from APDS-9960 gesture sensor to VL53L5CX sensor.
 https://www.st.com/resource/en/datasheet/vl53l5cx.pdf
 Jan 23, 2022 - Display cable 13 pin connector welded to the board,
 not the adaptor board 7 pin connector
+Jan 24, 2022 - Not all of the GPIO pins on the ESP32 are available to use.
+See the Sox wiring guide for details:
+https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Sox/Sox%20wiring%20guide.pdf
+Do not attach to the GPIOs marked in red.
+This is based on research from Andreas Speiss, see
+https://www.youtube.com/watch?v=LY-1DHTxRAk and
+https://drive.google.com/file/d/1gbKM7DA7PI7s1-ne_VomcjOrb0bE2TPZ/view
+Jan 24, 2022 - Changing to USB C and adding a uart removes the need
+for 'FTDI pads for pogo pins to flash the ESP32 bootloader'.
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
