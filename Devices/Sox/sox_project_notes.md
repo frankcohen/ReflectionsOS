@@ -52,7 +52,7 @@ to allow for battery charging during operation.
 8) GPS module uses AT6558 running 3.3 volts. Breadboard shows connected to 5 volts
 due to a requirement of the GPS breakout board. The breadboard uses the GPS + BDS
 BeiDou Dual Module Flight Control Wiki - DFRobot breakout board. The board uses
-only the AT6558 chip. And the board needs to provide an IPEX connector for the GPS antenna.
+only the AT6558 chip. And the board needs to provide an IPEX/uFl connector for the GPS antenna.
 When I put the board into a wrist watch enclosure the GPS antenna will go into the wrist band.
 https://www.digikey.com/en/products/detail/suntsu-electronics,-inc./SCNRF-6AAN-P1FS/14291136?utm_adgroup=Suntsu%20Electronics%20Inc&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_DK%2BSupplier_Other&utm_term=&utm_content=Suntsu%20Electronics%20Inc&gclid=CjwKCAiAxJSPBhAoEiwAeO_fP0jt6Ce-0s7Bdl8Msl-FxEtlkEP35RCr5qoYZS6azBifDDCklZcshhoCEmIQAvD_BwE
 
@@ -60,9 +60,10 @@ https://www.digikey.com/en/products/detail/suntsu-electronics,-inc./SCNRF-6AAN-P
 4 wires (VCC, Gnd, SCL, SDA/NAND), board needs 4 pads for soldering the wires.
 https://www.st.com/resource/en/datasheet/vl53l5cx.pdf
 
-10) Display 13-pin screen connector cable welded directly on board,
-no adaptor board, 1.28 inch lcd round is a 240x240 display using GC9A01 driver HD ips.
+10) Display 13-pin screen connector cable uses FPC connector. 1.28 inch lcd round is
+a 240x240 display using GC9A01 driver HD ips.
 https://www.aliexpress.com/item/1005002389910393.html
+https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=XUNPU%20FPC-05F-12PH20
 Also listed here:
 https://pan.baidu.com/s/1x9B9jKrjikSCBUI38ZUC3w Extraction code: 8888
 https://www.taobao.com/list/item/606659413574.htm?spm=a21wu.12321156.recommend-tpp.1
@@ -128,5 +129,7 @@ https://www.youtube.com/watch?v=LY-1DHTxRAk and
 https://drive.google.com/file/d/1gbKM7DA7PI7s1-ne_VomcjOrb0bE2TPZ/view
 Jan 24, 2022 - Changing to USB C and adding a uart removes the need
 for 'FTDI pads for pogo pins to flash the ESP32 bootloader'.
+Jan 24, 2022 - Using this connector for the display adaptor. XUNPU FPC-05F-12PH20
+https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=XUNPU%20FPC-05F-12PH20
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
