@@ -96,20 +96,27 @@ https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/bootloade
 Changes to above:
 Jan 19, 2022 - Mohammed using IMU LSM6DS3TR
 https://lcsc.com/product-detail/Attitude-Sensors_STMicroelectronics-LSM6DS3TR-C_C967633.html
+
 Jan 19, 2022 - Avinadad using AT6558R GPS (different from AT6558R, same pin layout)
+
 Jan 19, 2022 - Avinadad ads GPIO 3 for battery voltage sensing
+
 Jan 20, 2022 - Mohammed using 1 GB NAND/SD
 https://lcsc.com/product-detail/NAND-FLASH_XTX-XTSD01GLGEAG_C558837.html
+
 Jan 20, 2022 - Avinadad is basing higher pull-up resistors for I2C to lower the
 battery drain. The board is not user expandable to add more devices to the I2C bus.
 The board needs to operate while USB is connected and charging the battery.
 I anticipate users plugging in a USB powerbank to keep the watch going as
 they play games on it. To support this requires USB-C.
+
 Jan 21, 2022 - Mohammed did not find a .7 pitch connector for the display.
 I added the display datasheet and pointed him to:
 https://www.aliexpress.com/item/1005002389910393.html
+
 Jan 21, 2022 - Avinadad asked if the board needs a volume button. The board
 will control volume through software only.
+
 Jan 22, 2022 - Changed IMU and magnetometer/compass to these:
 LIS2DH12 - 3 axis MEMS accelerometer
 https://www.sparkfun.com/products/15760
@@ -117,10 +124,13 @@ https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=LIS2DH12
 And,
 Magnetometer - MMC5603NJ
 https://datasheet.lcsc.com/lcsc/1912111437_MEMSIC-MMC5603NJ_C404328.pdf
+
 Jan 22, 2022 - Changing from APDS-9960 gesture sensor to VL53L5CX sensor.
 https://www.st.com/resource/en/datasheet/vl53l5cx.pdf
+
 Jan 23, 2022 - Display cable 13 pin connector welded to the board,
 not the adaptor board 7 pin connector
+
 Jan 24, 2022 - Not all of the GPIO pins on the ESP32 are available to use.
 See the Sox wiring guide for details:
 https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Sox/Sox%20wiring%20guide.pdf
@@ -128,8 +138,10 @@ Do not attach to the GPIOs marked in red.
 This is based on research from Andreas Speiss, see
 https://www.youtube.com/watch?v=LY-1DHTxRAk and
 https://drive.google.com/file/d/1gbKM7DA7PI7s1-ne_VomcjOrb0bE2TPZ/view
+
 Jan 24, 2022 - Changing to USB C and adding a uart removes the need
 for 'FTDI pads for pogo pins to flash the ESP32 bootloader'.
+
 Jan 24, 2022 - Using this connector for the display adaptor. XUNPU FPC-05F-12PH20
 https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=XUNPU%20FPC-05F-12PH20
 Display backlight (BLK) tied to an unused GPIO.
