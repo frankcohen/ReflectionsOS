@@ -67,6 +67,7 @@ https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=XUNPU%20FPC-05F
 Also listed here:
 https://pan.baidu.com/s/1x9B9jKrjikSCBUI38ZUC3w Extraction code: 8888
 https://www.taobao.com/list/item/606659413574.htm?spm=a21wu.12321156.recommend-tpp.1
+Display backlight (BLK) tied to an unused GPIO.
 
 11) Breadboard uses an ESP32 WROOM Development Board. To minimize space Requirements
 the board may use the ESP32-S3-MINI-1.
@@ -131,5 +132,6 @@ Jan 24, 2022 - Changing to USB C and adding a uart removes the need
 for 'FTDI pads for pogo pins to flash the ESP32 bootloader'.
 Jan 24, 2022 - Using this connector for the display adaptor. XUNPU FPC-05F-12PH20
 https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=XUNPU%20FPC-05F-12PH20
+Display backlight (BLK) tied to an unused GPIO.
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com

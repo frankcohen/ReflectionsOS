@@ -1,0 +1,19 @@
+{
+	"ReflectionsShow": {
+		"title": "cc57a507881e8203569de0ee13adbd0a",
+		"showname": "cc57a507881e8203569de0ee13adbd0a",
+		"version": "1",
+		"events": {
+
+			"1": {
+				"type": "OnStart",
+				"name": "Startup sequence",
+				"comment": "Welcome to Reflections",
+				"sequence": [{
+					"playaudio": "cc57a507881e8203569de0ee13adbd0a.m4a",
+					"playvideo": "cc57a507881e8203569de0ee13adbd0a.mjpeg"
+				}]
+			}
+		}
+	}
+}
