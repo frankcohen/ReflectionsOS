@@ -146,4 +146,9 @@ Jan 24, 2022 - Using this connector for the display adaptor. XUNPU FPC-05F-12PH2
 https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=XUNPU%20FPC-05F-12PH20
 Display backlight (BLK) tied to an unused GPIO.
 
+Jan 26, 2022 - BLK  needs to be connected to a GPIO. I ran out of available GPIO pins
+on the breadboard, there are others from the ESP32 you will use for BLK (so I man
+turn-off the display and save some battery life with software).
+CS gets connected to GPIO 32 and DC connected to GPIO 16
+
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
