@@ -93,6 +93,8 @@ https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/bootloade
 
 15) The board is not user expandable to add more devices to the I2C, SPI buses.
 
+16) Pads for battery, gesture sensor, haptic motor, speaker, 3 buttons
+
 Changes to above:
 Jan 19, 2022 - Mohammed using IMU LSM6DS3TR
 https://lcsc.com/product-detail/Attitude-Sensors_STMicroelectronics-LSM6DS3TR-C_C967633.html
@@ -150,5 +152,7 @@ Jan 26, 2022 - BLK  needs to be connected to a GPIO. I ran out of available GPIO
 on the breadboard, there are others from the ESP32 you will use for BLK (so I man
 turn-off the display and save some battery life with software).
 CS gets connected to GPIO 32 and DC connected to GPIO 16
+
+Jan 27, 2022 - Pads for battery, gesture sensor, haptic motor, speaker, 3 buttons
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
