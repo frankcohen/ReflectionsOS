@@ -12,25 +12,25 @@ I put files, photos of the breadboard, software, wiring guide into
 https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Sox
 
 Requirements for this project:
-1) Schematic, Layout, and BOM developed in EasyEDA Designer https://easyeda.com/editor
+x 1) Schematic, Layout, and BOM developed in EasyEDA Designer https://easyeda.com/editor
 
-2) 36 mm diameter round board, designers choice on number of layers, traces are
+x 2) 36 mm diameter round board, designers choice on number of layers, traces are
 1 oz copper thickness, 1.6 mm board thickness, components mounted on both
 sides.
 
-3) The breadboard for this project uses break out boards. These
+x 3) The breadboard for this project uses break out boards. These
 have a bunch of step-up/down 3.3-5 volt adaptors, none of these are
 necessary for the board. Everything needs to fit onto the 36 mm diameter
 round board, except for the GPS antenna, TFT display, gesture sensor,
-and battery. The board MUST use parts that are widely/easily available,
-determined by checking stock and availability levels in LCSC.COM or
-Digikey.com
+speaker, haptic motors, and battery. The board MUST use parts that are
+widely/easily available, determined by checking stock and availability
+levels in LCSC.COM and Digikey.com.
 
-4) Photos of the breadboard are at:
+x 4) Photos of the breadboard are at:
 https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Sox/Breadboard%20Photos
 
-5) Board is powered by 1 lithium ion battery: 3.7 volts, 500 mAh.
-Connector Type: 2P PH 2.0mm Pitch; Cable Length: 5cm / 83"
+x 5) Board is powered by 1 lithium ion battery: 3.7 volts, 500 mAh with
+solder pads for VCC and Ground.
 All components are on 3.3 volts.
 The board needs a battery sensor, a voltage divider connected to GPIO 2
 to measure the battery voltage. Unlike the usual ESP32 development boards
@@ -49,7 +49,7 @@ CP2102-GM. https://lcsc.com/product-detail/USB-ICs_SILICON-LABS-CP2102-GMR_C6568
 USB connector at 180 degrees from ESP32 antennae for layout. Use Micro-USB C
 to allow for battery charging during operation.
 
-8) GPS module uses AT6558 running 3.3 volts. Breadboard shows connected to 5 volts
+x 8) GPS module uses AT6558 running 3.3 volts. Breadboard shows connected to 5 volts
 due to a requirement of the GPS breakout board. The breadboard uses the GPS + BDS
 BeiDou Dual Module Flight Control Wiki - DFRobot breakout board. The board uses
 only the AT6558 chip. And the board needs to provide an IPEX/uFl connector for the GPS antenna.
@@ -60,7 +60,7 @@ https://www.digikey.com/en/products/detail/suntsu-electronics,-inc./SCNRF-6AAN-P
 4 wires (VCC, Gnd, SCL, SDA/NAND), board needs 4 pads for soldering the wires.
 https://www.st.com/resource/en/datasheet/vl53l5cx.pdf
 
-10) Display 13-pin screen connector cable uses FPC connector. 1.28 inch lcd round is
+x 10) Display 13-pin screen connector cable uses FPC connector. 1.28 inch lcd round is
 a 240x240 display using GC9A01 driver HD ips.
 https://www.aliexpress.com/item/1005002389910393.html
 https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=XUNPU%20FPC-05F-12PH20
@@ -69,11 +69,11 @@ https://pan.baidu.com/s/1x9B9jKrjikSCBUI38ZUC3w Extraction code: 8888
 https://www.taobao.com/list/item/606659413574.htm?spm=a21wu.12321156.recommend-tpp.1
 Display backlight (BLK) tied to an unused GPIO.
 
-11) Breadboard uses an ESP32 WROOM Development Board. To minimize space Requirements
+x 11) Breadboard uses an ESP32 WROOM Development Board. To minimize space Requirements
 the board may use the ESP32-S3-MINI-1.
 https://www.espressif.com/en/products/modules
 
-12) Not all of the GPIO pins on the ESP32 are available to use.
+x 12) Not all of the GPIO pins on the ESP32 are available to use.
 See the Sox wiring guide for details:
 https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Sox/Sox%20wiring%20guide.pdf
 Do not attach to the GPIOs marked in red.
@@ -81,7 +81,7 @@ This is based on research from Andreas Speiss, see
 https://www.youtube.com/watch?v=LY-1DHTxRAk and
 https://drive.google.com/file/d/1gbKM7DA7PI7s1-ne_VomcjOrb0bE2TPZ/view
 
-13) PCB design best practices: decoupling capacitors, landing patterns large enough
+x 13) PCB design best practices: decoupling capacitors, landing patterns large enough
 for the footprint, avoid too many via holes, avoid excessive trace lengths (especially
 in the SPI bus between TFT, SD/NAND, and ESP32), avoid EMI from the ESP32 antennae, and
 expect board revisions to correct unforseen problems.
@@ -91,9 +91,9 @@ be verified by connecting a USB cable to a laptop running Arduino IDE 1.8 or lat
 and flash a testing sketch.
 https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/bootloader.html
 
-15) The board is not user expandable to add more devices to the I2C, SPI buses.
+x 15) The board is not user expandable to add more devices to the I2C, SPI buses.
 
-16) Pads for battery, gesture sensor, haptic motor, speaker, 3 buttons
+x 16) Pads for battery, gesture sensor, haptic motor, speaker, 3 buttons
 
 Changes to above:
 Jan 19, 2022 - Mohammed using IMU LSM6DS3TR
@@ -119,7 +119,7 @@ https://www.aliexpress.com/item/1005002389910393.html
 Jan 21, 2022 - Avinadad asked if the board needs a volume button. The board
 will control volume through software only.
 
-Jan 22, 2022 - Changed IMU and magnetometer/compass to these:
+x Jan 22, 2022 - Changed IMU and magnetometer/compass to these:
 LIS2DH12 - 3 axis MEMS accelerometer
 https://www.sparkfun.com/products/15760
 https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=LIS2DH12
@@ -144,15 +144,21 @@ https://drive.google.com/file/d/1gbKM7DA7PI7s1-ne_VomcjOrb0bE2TPZ/view
 Jan 24, 2022 - Changing to USB C and adding a uart removes the need
 for 'FTDI pads for pogo pins to flash the ESP32 bootloader'.
 
-Jan 24, 2022 - Using this connector for the display adaptor. XUNPU FPC-05F-12PH20
+x Jan 24, 2022 - Using this connector for the display adaptor. XUNPU FPC-05F-12PH20
 https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=XUNPU%20FPC-05F-12PH20
 Display backlight (BLK) tied to an unused GPIO.
 
-Jan 26, 2022 - BLK  needs to be connected to a GPIO. I ran out of available GPIO pins
+x Jan 26, 2022 - BLK  needs to be connected to a GPIO. I ran out of available GPIO pins
 on the breadboard, there are others from the ESP32 you will use for BLK (so I man
 turn-off the display and save some battery life with software).
 CS gets connected to GPIO 32 and DC connected to GPIO 16
 
 Jan 27, 2022 - Pads for battery, gesture sensor, haptic motor, speaker, 3 buttons
+
+Jan 30, 2022 - Power switch. Every single component, sans the battery charger,
+gets power through the 3.3v converter, so if the 3.3v is disabled, everything
+else on the board is off. This way, even if the 3.3v converter is disabled,
+the battery still charges when connected to the USB. Because the battery
+charger gets power from the USB connector itself, VBUS. BATT_SENSOR.
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
