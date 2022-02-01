@@ -161,4 +161,9 @@ else on the board is off. This way, even if the 3.3v converter is disabled,
 the battery still charges when connected to the USB. Because the battery
 charger gets power from the USB connector itself, VBUS. BATT_SENSOR.
 
+Feb 1, 2022 - ESP32-S3-Mini is a new part and difficult to find in stock at
+the moment. There are some for sale on AliExpress. Since the ESP32-S2-Mini is
+available and pin compatible with the S3, the first round manufactured/assembled
+boards will come with S2. The second round and beyond will come with S3.
+
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com

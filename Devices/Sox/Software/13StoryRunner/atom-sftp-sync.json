@@ -1,0 +1,10 @@
+{
+    "type": "sftp",
+    "host": "35.163.96.119",
+    "username": "ec2-user",
+    "port": 22,
+    "remotePath": "/home/ec2-user",
+    "sshKeyFile": "/Users/frankcohen/Frank/Votsh/Models/Reflections/CloudCity/Reflections.pem",
+    "uploadOnSave": false,
+    "uploadConfigFile": false
+}
