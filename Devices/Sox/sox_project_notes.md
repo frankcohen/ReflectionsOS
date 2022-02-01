@@ -166,8 +166,11 @@ the moment. There are some for sale on AliExpress. Since the ESP32-S2-Mini is
 available and pin compatible with the S3, the first round manufactured/assembled
 boards will come with S2. The second round and beyond will come with S3.
 
-Feb 1, 2022 - Avinandad is widening the traces and having more spacing
+Feb 1, 2022 - Avinadad is widening the traces and having more spacing
 to lower the cost of the boards. At least 0.208mm wide traces and spacing
-will avoid paying premiums on 4pcb.com.
+will avoid paying premiums on 4pcb.com. Smaller traces are more expensive.
+This board smallest traces are 0.165mm, most are 0.25mm. The goal is to
+increase the 0.165mm lines to 0.21mm, and every line has at least 0.21mm
+spacing from each other.
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
