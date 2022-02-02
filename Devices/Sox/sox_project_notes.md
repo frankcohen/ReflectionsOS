@@ -12,13 +12,13 @@ I put files, photos of the breadboard, software, wiring guide into
 https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Sox
 
 Requirements for this project:
-x 1) Schematic, Layout, and BOM developed in EasyEDA Designer https://easyeda.com/editor
+x- 1) Schematic, Layout, and BOM developed in EasyEDA Designer https://easyeda.com/editor
 
-x 2) 36 mm diameter round board, designers choice on number of layers, traces are
+x- 2) 36 mm diameter round board, designers choice on number of layers, traces are
 1 oz copper thickness, 1.6 mm board thickness, components mounted on both
 sides.
 
-x 3) The breadboard for this project uses break out boards. These
+x- 3) The breadboard for this project uses break out boards. These
 have a bunch of step-up/down 3.3-5 volt adaptors, none of these are
 necessary for the board. Everything needs to fit onto the 36 mm diameter
 round board, except for the GPS antenna, TFT display, gesture sensor,
@@ -26,10 +26,10 @@ speaker, haptic motors, and battery. The board MUST use parts that are
 widely/easily available, determined by checking stock and availability
 levels in LCSC.COM and Digikey.com.
 
-x 4) Photos of the breadboard are at:
+x- 4) Photos of the breadboard are at:
 https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Sox/Breadboard%20Photos
 
-x 5) Board is powered by 1 lithium ion battery: 3.7 volts, 500 mAh with
+x- 5) Board is powered by 1 lithium ion battery: 3.7 volts, 500 mAh with
 solder pads for VCC and Ground.
 All components are on 3.3 volts.
 The board needs a battery sensor, a voltage divider connected to GPIO 2
@@ -39,17 +39,17 @@ The board needs to operate while USB is connected and charging the battery.
 I anticipate users plugging in a USB powerbank to keep the watch going as
 they play games on it.
 
-6) GPIO 36 (right button), 39 (center button), 34 (left button) are pads on the
+x- 6) GPIO 36 (right button), 39 (center button), 34 (left button) are pads on the
 board. We will solder wires connecting the pads to SPST button switches.
 Each has a pull-down resistor. GPIO 39 (center button) is also a control for
 turning the board on and off. Push and hold for 3 seconds to turn on or off.
 
-7) The board needs a uart, using the same provided on the HiLetGo ESP32 dev board
+x- 7) The board needs a uart, using the same provided on the HiLetGo ESP32 dev board
 CP2102-GM. https://lcsc.com/product-detail/USB-ICs_SILICON-LABS-CP2102-GMR_C6568.html
 USB connector at 180 degrees from ESP32 antennae for layout. Use Micro-USB C
 to allow for battery charging during operation.
 
-x 8) GPS module uses AT6558 running 3.3 volts. Breadboard shows connected to 5 volts
+x- 8) GPS module uses AT6558 running 3.3 volts. Breadboard shows connected to 5 volts
 due to a requirement of the GPS breakout board. The breadboard uses the GPS + BDS
 BeiDou Dual Module Flight Control Wiki - DFRobot breakout board. The board uses
 only the AT6558 chip. And the board needs to provide an IPEX/uFl connector for the GPS antenna.
@@ -60,7 +60,7 @@ https://www.digikey.com/en/products/detail/suntsu-electronics,-inc./SCNRF-6AAN-P
 4 wires (VCC, Gnd, SCL, SDA/NAND), board needs 4 pads for soldering the wires.
 https://www.st.com/resource/en/datasheet/vl53l5cx.pdf
 
-x 10) Display 13-pin screen connector cable uses FPC connector. 1.28 inch lcd round is
+x- 10) Display 13-pin screen connector cable uses FPC connector. 1.28 inch lcd round is
 a 240x240 display using GC9A01 driver HD ips.
 https://www.aliexpress.com/item/1005002389910393.html
 https://jlcpcb.com/parts/componentSearch?isSearch=true&searchTxt=XUNPU%20FPC-05F-12PH20
@@ -69,7 +69,7 @@ https://pan.baidu.com/s/1x9B9jKrjikSCBUI38ZUC3w Extraction code: 8888
 https://www.taobao.com/list/item/606659413574.htm?spm=a21wu.12321156.recommend-tpp.1
 Display backlight (BLK) tied to an unused GPIO.
 
-x 11) Breadboard uses an ESP32 WROOM Development Board. To minimize space Requirements
+x- 11) Breadboard uses an ESP32 WROOM Development Board. To minimize space Requirements
 the board may use the ESP32-S3-MINI-1.
 https://www.espressif.com/en/products/modules
 
@@ -81,7 +81,7 @@ This is based on research from Andreas Speiss, see
 https://www.youtube.com/watch?v=LY-1DHTxRAk and
 https://drive.google.com/file/d/1gbKM7DA7PI7s1-ne_VomcjOrb0bE2TPZ/view
 
-x 13) PCB design best practices: decoupling capacitors, landing patterns large enough
+x- 13) PCB design best practices: decoupling capacitors, landing patterns large enough
 for the footprint, avoid too many via holes, avoid excessive trace lengths (especially
 in the SPI bus between TFT, SD/NAND, and ESP32), avoid EMI from the ESP32 antennae, and
 expect board revisions to correct unforseen problems.
@@ -172,5 +172,10 @@ will avoid paying premiums on 4pcb.com. Smaller traces are more expensive.
 This board smallest traces are 0.165mm, most are 0.25mm. The goal is to
 increase the 0.165mm lines to 0.21mm, and every line has at least 0.21mm
 spacing from each other.
+
+Feb 1, 2022 - Changed audio amp to MAX98357AETE+T since the previous one
+was so small, traces couldn't exceed 6.3mils, therefore increasing price
+on the PCB. I also improved the ground connections, eliminated some vias,
+and increased track width/spacing on the audio chip lines
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
