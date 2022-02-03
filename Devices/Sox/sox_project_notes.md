@@ -12,7 +12,7 @@ I put files, photos of the breadboard, software, wiring guide into
 https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Sox
 
 Requirements for this project:
-x- 1) Schematic, Layout, and BOM developed in EasyEDA Designer https://easyeda.com/editor
+x-^ 1) Schematic, Layout, and BOM developed in EasyEDA Designer https://easyeda.com/editor
 
 x- 2) 36 mm diameter round board, designers choice on number of layers, traces are
 1 oz copper thickness, 1.6 mm board thickness, components mounted on both
@@ -26,10 +26,10 @@ speaker, haptic motors, and battery. The board MUST use parts that are
 widely/easily available, determined by checking stock and availability
 levels in LCSC.COM and Digikey.com.
 
-x- 4) Photos of the breadboard are at:
+x-^ 4) Photos of the breadboard are at:
 https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Sox/Breadboard%20Photos
 
-x- 5) Board is powered by 1 lithium ion battery: 3.7 volts, 500 mAh with
+x-^ 5) Board is powered by 1 lithium ion battery: 3.7 volts, 500 mAh with
 solder pads for VCC and Ground.
 All components are on 3.3 volts.
 The board needs a battery sensor, a voltage divider connected to GPIO 2
@@ -39,12 +39,12 @@ The board needs to operate while USB is connected and charging the battery.
 I anticipate users plugging in a USB powerbank to keep the watch going as
 they play games on it.
 
-x- 6) GPIO 36 (right button), 39 (center button), 34 (left button) are pads on the
+x-^ 6) GPIO 36 (right button), 39 (center button), 34 (left button) are pads on the
 board. We will solder wires connecting the pads to SPST button switches.
 Each has a pull-down resistor. GPIO 39 (center button) is also a control for
 turning the board on and off. Push and hold for 3 seconds to turn on or off.
 
-x- 7) The board needs a uart, using the same provided on the HiLetGo ESP32 dev board
+x-^ 7) The board needs a uart, using the same provided on the HiLetGo ESP32 dev board
 CP2102-GM. https://lcsc.com/product-detail/USB-ICs_SILICON-LABS-CP2102-GMR_C6568.html
 USB connector at 180 degrees from ESP32 antennae for layout. Use Micro-USB C
 to allow for battery charging during operation.
@@ -56,7 +56,7 @@ only the AT6558 chip. And the board needs to provide an IPEX/uFl connector for t
 When I put the board into a wrist watch enclosure the GPS antenna will go into the wrist band.
 https://www.digikey.com/en/products/detail/suntsu-electronics,-inc./SCNRF-6AAN-P1FS/14291136?utm_adgroup=Suntsu%20Electronics%20Inc&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_DK%2BSupplier_Other&utm_term=&utm_content=Suntsu%20Electronics%20Inc&gclid=CjwKCAiAxJSPBhAoEiwAeO_fP0jt6Ce-0s7Bdl8Msl-FxEtlkEP35RCr5qoYZS6azBifDDCklZcshhoCEmIQAvD_BwE
 
-9) Gesture sensor (VL53L5CX) is not mounted on the board, it is connected via
+^ 9) Gesture sensor (VL53L5CX) is not mounted on the board, it is connected via
 4 wires (VCC, Gnd, SCL, SDA/NAND), board needs 4 pads for soldering the wires.
 https://www.st.com/resource/en/datasheet/vl53l5cx.pdf
 
@@ -73,7 +73,7 @@ x- 11) Breadboard uses an ESP32 WROOM Development Board. To minimize space Requi
 the board may use the ESP32-S3-MINI-1.
 https://www.espressif.com/en/products/modules
 
-x 12) Not all of the GPIO pins on the ESP32 are available to use.
+x^ 12) Not all of the GPIO pins on the ESP32 are available to use.
 See the Sox wiring guide for details:
 https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Sox/Sox%20wiring%20guide.pdf
 Do not attach to the GPIOs marked in red.
@@ -93,7 +93,7 @@ https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/bootloade
 
 x 15) The board is not user expandable to add more devices to the I2C, SPI buses.
 
-x 16) Pads for battery, gesture sensor, haptic motor, speaker, 3 buttons
+x^ 16) Pads for battery, gesture sensor, haptic motor, speaker, 3 buttons
 
 Changes to above:
 Jan 19, 2022 - Mohammed using IMU LSM6DS3TR
