@@ -119,6 +119,8 @@ static void smartdelay(unsigned long ms)
   } while (millis() - start < ms);
 }
 
+long myt = millis() + 100;
+
 void loop()
 {
   // Cooperative multi-tasking functions
@@ -154,6 +156,12 @@ void loop()
     video.clearNeedsSetup();
 
     File myFile = video.getMjpegFile();
+    if ( ! myFile )
+    {
+      Serial.print( "needsSetup myFile did not open" );
+      while(1);
+    }
+
     if ( mjpeg.setup(
        &myFile, mjpeg_buf, jpegDrawCallback, true /* useBigEndian */,
        0 /* x */, 0 /* y */, gfx->width() /* widthLimit */, gfx->height() /* heightLimit */, firsttime) )
@@ -164,23 +172,19 @@ void loop()
     else
     {
       Serial.println( "Could not set-up mjpeg");
+      video.clearNeedsPlay();
+      video.setReadyForNextMedia( true );
+      video.clearNeedsSetup();
     }
-    video.clearNeedsPlay();
   }
 
   if (  video.needsPlay() )
   {
     video.clearNeedsPlay();
 
-    //digitalWrite(SD_CS, LOW);
-    //digitalWrite(SPI_DisplayCS, HIGH);
-
     mjpeg.readMjpegBuf();
-
-    //digitalWrite(SD_CS, HIGH);
-    //digitalWrite(SPI_DisplayCS, LOW);
-
     mjpeg.drawJpg();
+    smartdelay(10);
   }
 
   //audioplayer.loop();

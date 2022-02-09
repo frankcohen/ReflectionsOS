@@ -90,7 +90,6 @@ void Storage::begin()
 {
   _connectionTimer = millis() + 1000;
 
-  /*
   _wifiMulti.addAP( wifiSSID, wifiPass );
 
   Serial.println("Connecting Wifi...");
@@ -102,8 +101,9 @@ void Storage::begin()
         break;
     }
   }
-  */
+
   //replicateServerFiles();
+  //while (1 );
 }
 
 void Storage::availSpace()
@@ -199,6 +199,10 @@ void Storage::replicateServerFiles()
       // Skip if it is the same file size
 
       File myf = SD.open( "/" + thefile );
+      if ( ! myf )
+      {
+        Serial.print( "Storage replicateServerFiles: myf did not open");
+      }
 
       /*
       Serial.print("size = ");

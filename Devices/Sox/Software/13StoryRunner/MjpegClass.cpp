@@ -131,7 +131,7 @@ bool MjpegClass::readMjpegBuf()
         size_t o = _buf_read - i;
         if (o > 0)
         {
-          // Serial.printf("o: %d\n", o);
+          //Serial.printf("o: %d\n", o); //frankolo
           memcpy(_read_buf, _p + i, o);
           _buf_read = _input->readBytes(_read_buf + o, READ_BUFFER_SIZE - o);
           _p = _read_buf;
@@ -141,27 +141,20 @@ bool MjpegClass::readMjpegBuf()
         }
         else
         {
-          if ( (long) &_read_buf < 0x10000024 )
-          {
-            Serial.print( "Panic 1 detected: " );
-            Serial.println( (long) &_read_buf );
-            return true;
-          }
-
-          if ( (long) &_input < 0x10000024 )
-          {
-            Serial.print( "Panic 2 detected: " );
-            Serial.println( (long) &_input );
-            return true;
-          }
-
-          if ( _buf_read < 10 )
-          {
-            Serial.print( "Panic 3 detected: " );
-            Serial.println( (long) &_buf_read );
-            return true;
-          }
-
+          /*
+          Serial.print( "Diagnose: " );
+          Serial.print( (long) &_read_buf );
+          Serial.print( " " );
+          Serial.print( (long) &_input );
+          Serial.print( " " );
+          Serial.print( (long) &_buf_read );
+          Serial.print( " " );
+          Serial.print( READ_BUFFER_SIZE );
+          Serial.print( " " );
+          Serial.print( found_FFD9 );
+          Serial.println( " " );
+          */
+          
           _buf_read = _input->readBytes(_read_buf, READ_BUFFER_SIZE);
           _p = _read_buf;
           _inputindex += _buf_read;

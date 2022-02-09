@@ -105,7 +105,7 @@ void Video::loop()
   {
     // Read video
 
-    if ( _timer < millis() )
+    if ( millis() > _timer )
     {
       _timer = millis() + 50;
       _needsPlayFlag = true;
