@@ -85,7 +85,7 @@ void setup()
     storage.listDir(SD, "/", 100);
   }
 
-  //audioplayer.begin();
+  audioplayer.begin();
   storage.begin();
   gestures.begin();
   movement.begin();
@@ -115,6 +115,7 @@ static void smartdelay(unsigned long ms)
   unsigned long start = millis();
   do
   {
+    audioplayer.loop();
     // feel free to do something here
   } while (millis() - start < ms);
 }
@@ -145,7 +146,7 @@ void loop()
     video.setNeedsSetup( true );
     video.clearNeedsPlay();
 
-    //audioplayer.start( shows.getNextAudio() );
+    audioplayer.start( shows.getNextAudio() );
 
     Serial.print( "Show " );
     Serial.println ( ShowCount++ );
@@ -184,10 +185,10 @@ void loop()
 
     mjpeg.readMjpegBuf();
     mjpeg.drawJpg();
-    smartdelay(10);
+    smartdelay(100);
   }
 
-  //audioplayer.loop();
+  audioplayer.loop();
   video.loop();
   storage.loop();
   gestures.loop();
