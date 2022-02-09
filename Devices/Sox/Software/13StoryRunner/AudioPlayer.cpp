@@ -25,10 +25,7 @@ This file is for audio tasks.
 #include "SD.h"
 #include "FS.h"
 
-AudioPlayer::AudioPlayer()
-{
-  _readyForNextAudio = true;
-}
+AudioPlayer::AudioPlayer() {}
 
 void AudioPlayer::begin()
 {
@@ -36,45 +33,23 @@ void AudioPlayer::begin()
   _audio.setVolume(21); // 0...21
 }
 
-void AudioPlayer::loop()
+void AudioPlayer::start( String filename )
 {
-  if ( _audioDir == NULL )
+  Serial.print( "Starting audio " );
+  Serial.println( filename );
+
+  File af = SD.open( filename, FILE_READ );
+  if ( !af )
   {
-    _audioDir = SD.open("/");
+      Serial.print( "Error on opening audio file " );
+      Serial.print( filename );
+      return;
   }
 
-  if ( _readyForNextAudio )
-  {
-    _audioFile = _audioDir.openNextFile();
-    if ( _audioFile )
-    {
-      if (
-        ( String( _audioFile.name()).endsWith(".mp3") )
-        && ( ! _audioFile.isDirectory() )
-        && ( ! String( _audioFile.name()).startsWith("/._") )
-      )
-      {
-        Serial.printf_P(PSTR("Found audio '%s' from SD card\n"), _audioFile.name());
-        _audio.connecttoFS(SD, _audioFile.name() );
-        _readyForNextAudio = false;
-      }
-      return;
-    }
-    else
-    {
-      Serial.println(F("End of root directory for audio"));
-      _audioDir.close();
-      _readyForNextAudio = true;
-      return;
-    }
-  }
-  else
-  {
-    _audio.loop();
-  }
+  _audio.connecttoFS(SD, af.name() );
 }
 
-void AudioPlayer::nextAudio( boolean ready )
+void AudioPlayer::loop()
 {
-  _readyForNextAudio = ready;
+  _audio.loop();
 }

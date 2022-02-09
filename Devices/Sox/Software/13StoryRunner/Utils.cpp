@@ -20,33 +20,35 @@ This file is for general purpose tasks
 #include <ArduinoJson.h>
 #include "Utils.h"
 #include "config.h"
-#include "SPI.h"
-#include "SD.h"
+
 #include "FS.h"
+#include "SD.h"
+#include "SPI.h"
 
 Utils::Utils(){}
 
-void Utils::begin(){}
-
-void Utils::smartdelay(unsigned long ms)
-{
-  unsigned long start = millis();
-  do
-  {
-    // feel free to do something here
-  } while (millis() - start < ms);
-}
-
-void Utils::SetupHardware()
+void Utils::begin()
 {
   pinMode(SD_CS, OUTPUT);
   digitalWrite(SD_CS, HIGH);
 
+  pinMode(SPI_DisplayCS, OUTPUT);
+  digitalWrite(SPI_DisplayCS, HIGH);
+
+  pinMode(SPI_DisplayDC, OUTPUT);
+  digitalWrite(SPI_DisplayDC, HIGH);
+
+  pinMode(SPI_DisplayRST, OUTPUT);
+  digitalWrite(SPI_DisplayRST, HIGH);
+
   SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);
-  SPI.setFrequency(8000000);
+  SPI.setFrequency(4000000);  // at 8000000 I get CPU panic reboots
+
+  //SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
 
   Serial.begin(115200);
   smartdelay(1000);
+  Serial.println("Reflections Story Runner");
   Serial.println("HTTP-based MJPEG Movie and Audio Player");
 
   if ( ! SD.begin(SD_CS) )
@@ -58,5 +60,13 @@ void Utils::SetupHardware()
   {
     Serial.println(F("SD card mounted"));
   }
+}
 
+void Utils::smartdelay(unsigned long ms)
+{
+  unsigned long start = millis();
+  do
+  {
+    // feel free to do something here
+  } while (millis() - start < ms);
 }

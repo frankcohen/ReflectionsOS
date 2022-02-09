@@ -37,8 +37,6 @@ class Storage
   public:
     Storage();
 
-    void listDirMan(fs::FS &fs, String dirname, int levels);
-
     void begin();
     void loop();
 

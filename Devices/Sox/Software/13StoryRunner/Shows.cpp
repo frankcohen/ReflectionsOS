@@ -28,81 +28,135 @@ Shows::Shows(){}
 void Shows::begin()
 {
   readyForNextShow = true;
+  sequence = 1;
+  showDirectoryIterator = SD.open("/");
+  showTimer = millis() + 1000;
+  dirTimer = millis() + 3000;
 }
 
 void Shows::loop()
 {
-  /* Fixme later: JSON data size limited */
-  DynamicJsonDocument doc(500);
-
-  if ( readyForNextShow )
+  if ( millis() > showTimer )
   {
-    // Find the first show (it's a directory, with json contents )
+    showTimer = millis() + 10000;
+  }
+}
 
-    if ( showDirectoryIterator == NULL )
+String Shows::getNextVideo()
+{
+  return nextDir + "/" + nextVideo;
+}
+
+String Shows::getNextAudio()
+{
+  return nextDir + "/" + nextAudio;
+}
+
+boolean Shows::findNext()
+{
+  File file = showDirectoryIterator.openNextFile();
+  if ( ! file )
+  {
+    if ( millis() > dirTimer )
     {
+      dirTimer = millis() + 10000;
+      Serial.println( "Shows findNext did not find a file/directory. Starting at top." );
       showDirectoryIterator = SD.open("/");
-      if( ! showDirectory )
+      return false;
+    }
+  }
+  else
+  {
+    if( ! file.isDirectory() )
+    {
+      Serial.print( "Shows findNext Ignoring file ");
+      Serial.println( file.name() );
+      return false;
+    }
+    else
+    {
+      nextDir = file.name();
+      Serial.print( "nextDir: ");
+      Serial.println( nextDir );
+
+      String myname = file.name();
+      String script = myname + myname + ".json";
+      File scriptFile = SD.open( script );
+
+      if ( ! scriptFile )
       {
-        Serial.println( "Error on opening showDirectory" );
-        return;
+        Serial.print( "Shows, file not found: ");
+        Serial.println( scriptFile );
+        return false;
       }
 
-      if ( ! ( String( show.name()).endsWith( JSON_FILENAME ) ) )
-      {
-        Serial.printf_P(PSTR("Skipping non-show file '%s'\n"), show.name());
-        return;
+      /* Fixme later: JSON data size limited */
+      DynamicJsonDocument doc(500);
+
+      Serial.print( "Shows, deserialize ");
+      Serial.println( scriptFile.name() );
+
+      DeserializationError error = deserializeJson(doc, scriptFile );
+      if (error) {
+        Serial.print(F("Shows, deserializeJson() failed: "));
+        Serial.println(error.c_str());
+        return false;
       }
-      else
+
+      // serializeJsonPretty(doc, Serial);
+
+      String thevideofile;
+      String theaudiofile;
+
+      JsonObject eventseq = doc["ReflectionsShow"]["events"];
+      //serializeJsonPretty(eventseq, Serial);
+
+      for (JsonObject::iterator it = eventseq.begin(); it!=eventseq.end(); ++it)
       {
-        readyForNextShow = false;
+        String itkey = it->key().c_str();
+        String itvalue = it->value().as<char*>();
 
-        DeserializationError error = deserializeJson(doc, show );
-        if (error) {
-          Serial.print(F("Show deserializeJson() failed: "));
-          Serial.println(error.c_str());
-          return;
-        }
+        //Serial.print( "itkey: ");
+        //Serial.println( itkey );
 
-        // serializeJsonPretty(doc, Serial);
-
-        JsonObject fileseq = doc["ReflectionsShow"];
-
-        for (JsonObject::iterator it = fileseq.begin(); it!=fileseq.end(); ++it)
+        JsonArray sequence = doc["ReflectionsShow"]["events"][itkey]["sequence"];
+        for (JsonObject step : sequence)
         {
-          String itkey = it->key().c_str();
-          String itvalue = it->value().as<char*>();
+          String nv = step["playvideo"];
+          nextVideo = nv;
+          String na = step["playaudio"];
+          nextAudio = na;
+          readyForNextMedia = true;
 
-          Serial.println( itkey );
+          Serial.print( "nextVideo: " );
+          Serial.println( nextVideo );
+          Serial.print( "nextAudio: " );
+          Serial.println( nextAudio );
 
-          JsonObject group = doc["ReflectionsShow"]["events"][ itkey ];
-
-          for (JsonObject::iterator groupit = group.begin(); groupit!=group.end(); ++groupit)
-          {
-            String groupkey = groupit->key().c_str();
-            String groupvalue = groupit->value().as<char*>();
-
-            Serial.print( "groupkey " );
-            Serial.print( groupkey );
-            Serial.print( " groupvalue " );
-            Serial.println( groupvalue );
-
-            //if ( groupkey.equals( "file" ) ) { thefile = groupvalue; }
-          }
+          return true;
         }
       }
     }
   }
+  return true;
 }
 
-// Parse the show, set-up the show state machine
-
-void Shows::openShow()
+boolean Shows::getReadyForNextMedia()
 {
-
+  return readyForNextMedia;
 }
 
-void Shows::getReadyForNextShow( boolean rfns )
+void Shows::setReadyForNextMedia( boolean nm )
+{
+  readyForNextMedia = nm;
+}
+
+boolean Shows::getReadyForNextShow()
+{
+  return readyForNextShow;
+}
+
+void Shows::setReadyForNextShow( boolean rfns )
 {
   readyForNextShow = rfns;
 }

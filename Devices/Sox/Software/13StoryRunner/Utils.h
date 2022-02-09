@@ -31,7 +31,6 @@ class Utils
   public:
     Utils();
     void begin();
-    void SetupHardware();
     void smartdelay(unsigned long ms);
 
   private:

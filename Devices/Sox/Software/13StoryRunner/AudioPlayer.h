@@ -33,13 +33,10 @@ class AudioPlayer
     AudioPlayer();
     void begin();
     void loop();
-    void nextAudio( boolean nextflag );
+    void start( String filename );
 
   private:
     Audio _audio;
-    boolean _readyForNextAudio;
-    File _audioDir;
-    File _audioFile;
 };
 
 #endif // _audio_

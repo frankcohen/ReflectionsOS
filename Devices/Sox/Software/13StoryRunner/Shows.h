@@ -27,15 +27,36 @@ class Shows
 
     void begin();
     void loop();
-    void getReadyForNextShow( boolean rfns );
+
     void openShow();
+
+    void setReadyForNextShow( boolean rfns );
+    boolean getReadyForNextShow();
+
+    boolean getReadyForNextMedia();
+    void setReadyForNextMedia( boolean nm );
+
+    boolean findNext();
+
+    String getNextVideo();
+    String getNextAudio();
 
   private:
     boolean readyForNextShow;
+    boolean readyForNextMedia;
+    int sequence;
+
     File showDirectoryIterator;
     File showDirectory;
     File showDir;
     File show;
+
+    long showTimer;
+    long dirTimer;
+
+    String nextVideo;
+    String nextAudio;
+    String nextDir;
 
     String showTitle;
     String showName;

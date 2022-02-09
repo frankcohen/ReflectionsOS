@@ -21,11 +21,8 @@ Read the license in the license.txt file that comes with this code.
 #define cloudCityURL "35.163.96.119"
 #define cloudCityPort 8088
 
-// #define wifiSSID "FranksFreeInternet"
-// #define wifiPass ""
-
-#define wifiSSID "NETGEAR26"
-#define wifiPass "gracefultuba564"
+#define wifiSSID "FranksFreeInternet"
+#define wifiPass ""
 
 #define MJPEG_FILENAME ".mjpeg"
 #define TAR_FILENAME ".tar"
@@ -35,15 +32,17 @@ Read the license in the license.txt file that comes with this code.
 #define BUTTON_RIGHT  39
 
 // Digital I/O used
-#define SD_CS          4
 #define SPI_MOSI      23
 #define SPI_MISO      19
 #define SPI_SCK       18
-#define I2S_DOUT      27
-#define I2S_BCLK      26
-#define I2S_LRC       25
+
+#define SD_CS         4
 #define SPI_DisplayDC 16
 #define SPI_DisplayCS 32
 #define SPI_DisplayRST 17
+
+#define I2S_DOUT      27
+#define I2S_BCLK      26
+#define I2S_LRC       25
 
 #endif // _config_

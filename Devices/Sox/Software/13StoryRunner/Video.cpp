@@ -19,24 +19,27 @@ This file is for operating the video display.
 #include "FS.h"
 #include "config.h"
 
-Video::Video()
-{
-  _readyForNextVideo = true;
-  _timer = 5;
-
-  _needsSetupFlag = false;
-  _needsPlayFlag = false;
-}
+Video::Video() {}
 
 void Video::begin()
 {
+  _readyForNextVideo = true;
+  _timer = 5;
+  _needsSetupFlag = false;
+  _needsPlayFlag = false;
+  _firsttime = true;
+
   _total_frames = 0;
   _total_read_video = 0;
   _total_decode_video = 0;
   _total_show_video = 0;
   _start_ms = 0;
   _curr_ms = 0;
-  _firsttime = true;
+}
+
+void Video::setNeedsSetup( boolean mns )
+{
+  _needsSetupFlag = mns;
 }
 
 boolean Video::needsSetup()
@@ -69,98 +72,67 @@ void Video::setFirsttime( boolean ft )
   _firsttime = ft;
 }
 
-boolean Video::getReadyForNextVideo()
-{
-  return _readyForNextVideo;
-}
-
-void Video::setReadyForNextVideo( boolean rfnv )
-{
-  _readyForNextVideo = rfnv;
-}
-
 File Video::getMjpegFile()
 {
   return _mjpegFile;
 }
 
+void Video::setMjpegFile( File thefile )
+{
+  _mjpegFile = thefile;
+}
+
+boolean Video::getReadyForNextMedia()
+{
+  return _readyForNextVideo;
+}
+
+void Video::setReadyForNextMedia( boolean nm )
+{
+  _readyForNextVideo = nm;
+}
+
 unsigned long Video::addTotal_show_video( unsigned long msec )
 {
   _total_show_video += msec;
-  return _total_show_video;
 }
 
 void Video::loop()
 {
-  if ( _videoDir == NULL )
-  {
-    _videoDir = SD.open("/");
-    if( ! _videoDir )
-    {
-        Serial.println("Failed to open directory");
-        _videoDir == NULL;
-        return;
-    }
-  }
+  if ( _readyForNextVideo ) return;
 
-  if ( _readyForNextVideo )
+  if ( _mjpegFile.available() )
   {
-    _mjpegFile = _videoDir.openNextFile();
+    // Read video
 
-    if ( _mjpegFile )
+    if ( _timer < millis() )
     {
-      if ( ( String( _mjpegFile.name()).endsWith( MJPEG_FILENAME ) )
-        && ( ! _mjpegFile.isDirectory() )
-        && ( ! String( _mjpegFile.name()).startsWith(".") )
-      )
-      {
-        Serial.printf_P(PSTR("MJPEG start '%s' from SD card...\n"), _mjpegFile.name());
-        _start_ms = millis();
-        _curr_ms = millis();
-        _needsSetupFlag = true;
-        _firsttime = false;
-        _readyForNextVideo = false;
-        return;
-      }
-      return;
-    }
-    else
-    {
-      Serial.println(F("End of root directory"));
-      _videoDir.close();
-      _readyForNextVideo = true;
-      return;
+      _timer = millis() + 50;
+      _needsPlayFlag = true;
+      _curr_ms = millis();
+      _total_frames++;
     }
   }
   else
   {
-    if ( _mjpegFile.available() )
-    {
-      // Read video
+    _mjpegFile.close();
+    _readyForNextVideo = true;
 
-      if ( _timer-- == 0 )
-      {
-        _timer = 4;
-        _needsPlayFlag = true;
-        _curr_ms = millis();
-        _total_frames++;
-      }
-    }
-    else
-    {
-      _mjpegFile.close();
-      _readyForNextVideo = true;
+    int _time_used = millis() - _start_ms;
+    float fps = 1000.0 * _total_frames / _time_used;
+    Serial.printf("FPS: %0.1f\n", fps);
 
-      int _time_used = millis() - _start_ms;
-      Serial.println(F("MJPEG end"));
-      float fps = 1000.0 * _total_frames / _time_used;
-      _total_decode_video -= _total_show_video;
-      Serial.printf("Total frames: %d\n", _total_frames);
-      Serial.printf("Time used: %d ms\n", _time_used);
-      Serial.printf("Average FPS: %0.1f\n", fps);
-      Serial.printf("Read MJPEG: %lu ms (%0.1f %%)\n", _total_read_video, 100.0 * _total_read_video / _time_used);
-      Serial.printf("Decode video: %lu ms (%0.1f %%)\n", _total_decode_video, 100.0 * _total_decode_video / _time_used);
-      Serial.printf("Show video: %lu ms (%0.1f %%)\n", _total_show_video, 100.0 * _total_show_video / _time_used);
-    }
+    /*
+    Serial.println(F("MJPEG end"));
+    float fps = 1000.0 * _total_frames / _time_used;
+    _total_decode_video -= _total_show_video;
+    Serial.printf("Total frames: %d\n", _total_frames);
+    Serial.printf("Time used: %d ms\n", _time_used);
+    Serial.printf("Average FPS: %0.1f\n", fps);
+    Serial.printf("Read MJPEG: %lu ms (%0.1f %%)\n", _total_read_video, 100.0 * _total_read_video / _time_used);
+    Serial.printf("Decode video: %lu ms (%0.1f %%)\n", _total_decode_video, 100.0 * _total_decode_video / _time_used);
+    Serial.printf("Show video: %lu ms (%0.1f %%)\n", _total_show_video, 100.0 * _total_show_video / _time_used);
+    */
   }
+
 }

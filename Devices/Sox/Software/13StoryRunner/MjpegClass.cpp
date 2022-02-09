@@ -22,9 +22,7 @@
 #define READ_BUFFER_SIZE 1024
 #define MAXOUTPUTSIZE (MAX_BUFFERED_PIXELS / 16 / 16)
 
-MjpegClass::MjpegClass()
-{
-}
+MjpegClass::MjpegClass() {}
 
 bool MjpegClass::setup(
       Stream *input, uint8_t *mjpeg_buf, JPEG_DRAW_CALLBACK *pfnDraw, bool useBigEndian,
@@ -143,6 +141,27 @@ bool MjpegClass::readMjpegBuf()
         }
         else
         {
+          if ( (long) &_read_buf < 0x10000024 )
+          {
+            Serial.print( "Panic 1 detected: " );
+            Serial.println( (long) &_read_buf );
+            return true;
+          }
+
+          if ( (long) &_input < 0x10000024 )
+          {
+            Serial.print( "Panic 2 detected: " );
+            Serial.println( (long) &_input );
+            return true;
+          }
+
+          if ( _buf_read < 10 )
+          {
+            Serial.print( "Panic 3 detected: " );
+            Serial.println( (long) &_buf_read );
+            return true;
+          }
+
           _buf_read = _input->readBytes(_read_buf, READ_BUFFER_SIZE);
           _p = _read_buf;
           _inputindex += _buf_read;

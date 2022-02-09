@@ -48,19 +48,21 @@ class Video
     unsigned long addTotal_show_video( unsigned long msec );
     boolean needsSetup();
     void clearNeedsSetup();
+    void setNeedsSetup( boolean mns );
     boolean needsPlay();
     void clearNeedsPlay();
     uint8_t * getMjpegBuf();
 
     boolean getFirsttime();
     void setFirsttime( boolean ft );
-    boolean getReadyForNextVideo();
-    void setReadyForNextVideo( boolean rfnv );
     File getMjpegFile();
+    void setMjpegFile( File thefile );
+
+    boolean getReadyForNextMedia();
+    void setReadyForNextMedia( boolean nm );
 
   private:
     unsigned long _total_show_video;
-    File _videoDir;
 
     long _timer;
     File _mjpegFile;

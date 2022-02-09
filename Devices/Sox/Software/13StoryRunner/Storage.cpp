@@ -90,6 +90,7 @@ void Storage::begin()
 {
   _connectionTimer = millis() + 1000;
 
+  /*
   _wifiMulti.addAP( wifiSSID, wifiPass );
 
   Serial.println("Connecting Wifi...");
@@ -101,8 +102,8 @@ void Storage::begin()
         break;
     }
   }
-  
-  replicateServerFiles();
+  */
+  //replicateServerFiles();
 }
 
 void Storage::availSpace()
@@ -113,23 +114,24 @@ void Storage::availSpace()
 
 void Storage::loop()
 {
-
-  if ( _connectionTimer++ > millis() + 1000 )
+  if ( _connectionTimer++ < millis() )
   {
-    _connectionTimer = millis() + 1000;
+    _connectionTimer = millis() + 5000;
+
     if ( _wifiMulti.run() != WL_CONNECTED)
     {
       Serial.println("WiFi not connected");
     }
   }
-
 }
 
 /* Mirrors files on Cloud City server to local storage */
 
 void Storage::replicateServerFiles()
 {
-  Serial.println("getWebFileList");
+  Serial.println("Replicating Server Files");
+
+  //listDir(SD, "/", 100);
 
   /* Fixme later: JSON data size limited */
   DynamicJsonDocument doc(500);
@@ -155,7 +157,7 @@ void Storage::replicateServerFiles()
     String itkey = it->key().c_str();
     String itvalue = it->value().as<char*>();
 
-    Serial.println( itkey );
+    //Serial.println( itkey );
 
     JsonObject group = doc["Reflections"][ itkey ];
 
@@ -168,10 +170,12 @@ void Storage::replicateServerFiles()
       String groupkey = groupit->key().c_str();
       String groupvalue = groupit->value().as<char*>();
 
+      /*
       Serial.print( "groupkey " );
       Serial.print( groupkey );
       Serial.print( " groupvalue " );
       Serial.println( groupvalue );
+      */
 
       if ( groupkey.equals( "file" ) ) { thefile = groupvalue; }
 
@@ -184,41 +188,63 @@ void Storage::replicateServerFiles()
 
     // Is there a file already downloaded?
 
-    if ( SD.exists( thefile ) )
+    //Serial.print("tests ");
+    //Serial.println( thefile );
+
+    if ( SD.exists( "/" + thefile ) )
     {
-      Serial.print("exists ");
-      Serial.println( thefile );
+      // Serial.print("exists ");
+      // Serial.println( thefile );
 
       // Skip if it is the same file size
 
-      File myf = SD.open( thefile );
+      File myf = SD.open( "/" + thefile );
 
+      /*
       Serial.print("size = ");
       Serial.println( myf.size() );
+      Serial.print("lngsize = ");
+      Serial.println( lngsize );
+      */
 
       if ( myf.size() != lngsize )
       {
         // Download the file
+
         if ( ! getFileSaveToSD( thefile ) ) return;
 
-        // If it is a tar, then unpack it
+        // If it is a tar, then unpack it too
+
         if ( thefile.endsWith( TAR_FILENAME ) )
         {
           extract_files( thefile );
         }
       }
+      else
+      {
+        Serial.print( "Skipping existing file " );
+        Serial.println( thefile );
+      }
     }
     else
     {
+      Serial.print( "getFileSaveToSD ");
+      Serial.println( thefile );
+
       getFileSaveToSD( thefile );
 
       // If it is a tar, then unpack it
+
       if ( thefile.endsWith( TAR_FILENAME ) )
       {
         extract_files( "/" + thefile );
       }
+
     }
   }
+
+  Serial.println("Replicate done");
+  //listDir(SD, "/", 100);
 }
 
 /*
@@ -230,7 +256,14 @@ void Storage::extract_files( String tarfilename )
   Serial.println("Extracting TAR");
 
   char tarFolder[100];
-  tarfilename.toCharArray( tarFolder, tarfilename.length() - 3 );
+  String mydir = tarfilename.substring( 0, tarfilename.length()-4 );
+  mydir.toCharArray( tarFolder, tarfilename.length() );
+
+  Serial.print( "extract dir = ");
+  Serial.print( tarFolder );
+  Serial.println( "#");
+
+  //tarfilename.toCharArray( tarFolder, tarfilename.length() - 3 );
 
   char fnbuff[100];
   tarfilename.toCharArray( fnbuff, tarfilename.length() + 1 );
@@ -590,20 +623,44 @@ String Storage::getFileListString()
         HTTPClient http;
         String flresponse = "";
 
-        http.begin( cloudCityURL, cloudCityPort, "/listfiles" );
+        int counter = 0;
+        while (WiFi.status() != WL_CONNECTED) {
+          delay(500);
+          Serial.print(".");
+          counter++;
+          if(counter>=60){
+            Serial.println(" time out" );
+            break;
+          }
+        }
+
+        int beginval = 0;
+        beginval = http.begin( cloudCityURL, cloudCityPort, "/listfiles" );
+        if ( !beginval )
+        {
+          Serial.print( "getFileListString, Server failed to begin. " );
+          Serial.println( beginval );
+          Serial.print( "cloudCityURL " );
+          Serial.println( cloudCityURL );
+          Serial.print( "cloudCityPort " );
+          Serial.println( cloudCityPort );
+          return "";
+        }
+
+        delay(2000);
 
         int httpCode = http.GET();
         if( httpCode != HTTP_CODE_OK )
         {
-                Serial.print( "Server response code: " );
-                Serial.println( httpCode );
-                return "";
+          Serial.print( "Server response code: " );
+          Serial.println( httpCode );
+          return "";
         }
 
         // get length of document (is -1 when Server sends no Content-Length header)
         int len = http.getSize();
-        Serial.print( "Size: " );
-        Serial.println( len );
+        //Serial.print( "Size: " );
+        //Serial.println( len );
 
         /* Fixme later: Maximum download size is set to 2000 */
 

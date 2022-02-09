@@ -1,4 +1,3 @@
-
 /*
 Reflections, distributed entertainment device
 
@@ -61,11 +60,13 @@ static MjpegClass mjpeg;
 uint8_t *mjpeg_buf;
 #define MJPEG_BUFFER_SIZE (240 * 240 * 2 / 10) // memory for a single JPEG frame
 boolean firsttime = true;
+File vidfile;
+int ShowCount = 0;
 
 // pixel drawing callback
 static int jpegDrawCallback(JPEGDRAW *pDraw)
 {
-  Serial.printf("Draw pos = %d,%d. size = %d x %d\n", pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight);
+  // Serial.printf("Draw pos = %d,%d. size = %d x %d\n", pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight);
   unsigned long start = millis();
   gfx->draw16bitBeRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);
   video.addTotal_show_video( millis() - start );
@@ -75,15 +76,16 @@ static int jpegDrawCallback(JPEGDRAW *pDraw)
 void setup()
 {
   utils.begin();
-  utils.SetupHardware();
 
-  Serial.println("");
-  Serial.println("Reflections Story Runner");
+  //Remove all files on the SD
+  if ( 0 )
+  {
+    storage.removeFiles(SD, "/", 100 );
+    storage.removeDirectories( SD, "/", 100 );
+    storage.listDir(SD, "/", 100);
+  }
 
-  //storage.removeFiles(SD, "/", 100 );
-  //storage.removeDirectories( SD, "/", 100 );
-
-  audioplayer.begin();
+  //audioplayer.begin();
   storage.begin();
   gestures.begin();
   movement.begin();
@@ -92,7 +94,7 @@ void setup()
   shows.begin();
 
   video.begin();
-  video.setReadyForNextVideo( true );
+  video.setReadyForNextMedia( true );
 
   mjpeg_buf = (uint8_t *) malloc(MJPEG_BUFFER_SIZE);
   if (!mjpeg_buf)
@@ -106,8 +108,6 @@ void setup()
   gfx->fillScreen(BLUE);
   gfx->invertDisplay(true);
   gfx->setRotation(0);
-
-  storage.listDir(SD, "/", 0);
 }
 
 static void smartdelay(unsigned long ms)
@@ -121,35 +121,76 @@ static void smartdelay(unsigned long ms)
 
 void loop()
 {
-  if (  video.needsSetup() )
+  // Cooperative multi-tasking functions
+
+  if ( video.getReadyForNextMedia() )
+  {
+    if ( ! shows.findNext() ) return;
+
+    Serial.print( "shows.getNextVideo(): " );
+    Serial.println( shows.getNextVideo() );
+
+    vidfile = SD.open( shows.getNextVideo(), FILE_READ );
+    if ( ! vidfile )
+    {
+      Serial.print("Could not open: ");
+      Serial.print( shows.getNextVideo() );
+      return;
+    }
+
+    video.setMjpegFile( vidfile );
+    video.setReadyForNextMedia( false );
+    video.setNeedsSetup( true );
+    video.clearNeedsPlay();
+
+    //audioplayer.start( shows.getNextAudio() );
+
+    Serial.print( "Show " );
+    Serial.println ( ShowCount++ );
+  }
+
+  if ( video.needsSetup() )
   {
     video.clearNeedsSetup();
 
     File myFile = video.getMjpegFile();
-    mjpeg.setup(
+    if ( mjpeg.setup(
        &myFile, mjpeg_buf, jpegDrawCallback, true /* useBigEndian */,
-       0 /* x */, 0 /* y */, gfx->width() /* widthLimit */, gfx->height() /* heightLimit */, firsttime);
+       0 /* x */, 0 /* y */, gfx->width() /* widthLimit */, gfx->height() /* heightLimit */, firsttime) )
+    {
+      Serial.println( "Mjpeg set-up");
+      firsttime = false;
+    }
+    else
+    {
+      Serial.println( "Could not set-up mjpeg");
+    }
+    video.clearNeedsPlay();
   }
 
   if (  video.needsPlay() )
   {
     video.clearNeedsPlay();
+
+    //digitalWrite(SD_CS, LOW);
+    //digitalWrite(SPI_DisplayCS, HIGH);
+
     mjpeg.readMjpegBuf();
+
+    //digitalWrite(SD_CS, HIGH);
+    //digitalWrite(SPI_DisplayCS, LOW);
+
     mjpeg.drawJpg();
   }
 
   //audioplayer.loop();
-  //video.loop();
-
-  //change storage loop to check for new download files (every 2-3 minutes)
-
+  video.loop();
   storage.loop();
   gestures.loop();
   movement.loop();
   haptic.loop();
   buttons.loop();
   shows.loop();
-
 }
 
 // Audio system interrupt callbacks
@@ -163,7 +204,6 @@ void audio_id3data(const char *info){  //id3 metadata
 void audio_eof_mp3(const char *info){  //end of file
   Serial.println( "Audio ended" );
   Serial.println(info);
-  audioplayer.nextAudio( true );
 }
 void audio_showstation(const char *info){
     Serial.print("station     ");Serial.println(info);
