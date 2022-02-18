@@ -3,6 +3,10 @@ Gesture Learning Engine (GLE)
 by Frank Cohen
 License: GPL v3
 
+A finger gesture sensor. This sketch builds gesture learning files (.ges)
+and compares them to the live readings from a VL53L5CX sensor.
+Details at https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Sox/Software/14Gestures
+
 Read an 8x8 array of distances from the VL53L5CX
 Store a gesture file
 Identify % similarity between gestures
@@ -17,6 +21,7 @@ Detect a gesture
 - Repeat
 
 Depends on SparkFun Electronics VL53L5CX library
+https://learn.sparkfun.com/tutorials/qwiic-tof-imager---vl53l5cx-hookup-guide
 
 */
 
@@ -46,7 +51,7 @@ int imageWidth = 0; //Used to pretty print output
 #define maxGestures 16
 #define nameSize 50
 #define variance 10
-#define threashold 32   // 50% of 64 = 32
+#define threashold 24   // 50% of 64 = 32
 
 // Prints a gesture to the serial monitor
 
