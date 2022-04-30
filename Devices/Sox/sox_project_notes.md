@@ -213,17 +213,8 @@ Product W356416AS1J3 (Muhammad) cost $5 USD per board with 34 mm x 36 mm,
 
 - Sox Avinadad board TXCO power pads reversed.
 
-See the Devices/Hoober/hoober_project_notes.md
+See the Hoober board notes for the 2nd revision to the Sox board:
 
-
-
-sensor, in a 34 mm round board. Cost for the prototype is $70 per board. This first version has about 3-4 problems that need reworking. The team is feeling good that the number of problems is less than 10. That puts us on track to have the finished board in Summer 2022. I will put the Gerber files and BOM into the repository for the upcoming revision 2 - code named Hoober. I am glad to send the Gerber files for your review, criticism, and feedback.
-
-
-
-
-
-
-
+https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Hoober/hoober_project_notes.md
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
