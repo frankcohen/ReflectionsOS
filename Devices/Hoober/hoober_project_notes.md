@@ -1,4 +1,18 @@
-Sox project notes, Reflections
+Hoober project notes, Reflections
+
+Hoober is the revision 2 of the Reflections main board. Hoober
+fixes problems in the Sox board and gets closer to manufacturing.
+
+Sox - 1st generation board design
+Hoober - rev 2, fixes problems
+ThingTwo - rev 3, ready for manufacturing
+
+
+
+
+
+
+
 
 I need the EasyEDA schematic and layout for the Sox board
 This is a 36 mm round board, probably 4 or more layers,
@@ -213,7 +227,7 @@ Product W356416AS1J3 (Muhammad) cost $5 USD per board with 34 mm x 36 mm,
 
 - Sox Avinadad board TXCO power pads reversed.
 
-See the Devices/Hoober/hoober_project_notes.md
+See the hoober_project_notes.md
 
 
 
