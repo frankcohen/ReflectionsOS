@@ -39,16 +39,17 @@ Product W356416AS1J3 (Muhammad) cost $5 USD per board with 34 mm x 36 mm,
 
 - Sox Avinadad board TXCO power pads reversed.
 
-Hoober requirements:
+HOOBER REQUIREMENTS
+-------------------
 
 - Sketch upload with Arduino IDE 1.8.19 over Micro USB connector.
 
 - Uses "Adafruit ESP32-S3 Feather No PSRAM" derived Arduino IDE board definition.
-https://www.adafruit.com/product/5323
-Schematic at
-https://learn.adafruit.com/assets/110822
-other files at:
-https://learn.adafruit.com/adafruit-esp32-s2-feather/downloads
+  https://www.adafruit.com/product/5323
+  Schematic at
+  https://learn.adafruit.com/assets/110822
+  other files at:
+  https://learn.adafruit.com/adafruit-esp32-s2-feather/downloads
 
 - Firmware uploads are automatic. Does not need to hold-down the Boot nor Reset
   to initiate Firmware Download mode for downloading firmware through the serial port.
@@ -56,40 +57,36 @@ https://learn.adafruit.com/adafruit-esp32-s2-feather/downloads
 
 - ESP32 S3 with Espressif bootloader pre-flashed.
 
+- Hirose DF65 Connector for speaker, haptic motor, battery wire connections
+  https://www.hirose.com/product/series/DF65
+  Hoober removes the Sox solder pads for speaker, haptic, gesture, battery, power, buttons
+  Remove resistors for buttons.
+
 - Power switch, press and hold to turn-on, press and hold to force off. Switch is
   side mounted at the edge of the board, at a 180 degree angle from the USB port.
 
 - Battery charging when powered over USB-C. Powered by LiPo or USB.
 
-- TFT welded to board, no more connector.
+- TFT welded to board, no connector.
 
-- Board size is 34 mm round, no table for USB port
+- Board size is 34 mm round, no tab for USB port
 
-- Gesture Sensor daughterboard and main board connector
+- Gesture Sensor daughterboard and main board connector. Specs at:
+  https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Hoober/Gesture%20Sensor%20Daughter%20Board.pdf
+  Power to the TOF sensor programmable from one of the GPIOs
 
+- JTAG pogo pin connectors to pins:
+  TDI - GPIO 12
+  TMS - GPIO 14
+  TCLK - GPIO 13
+  TDO - GPIO 15
+  Single row Test programming fixture pogo pin pitch 2.54mm 8P/9P/10P/11P/ 3P~12P with wire
+  https://www.ebay.com/itm/143924370628?var=443188826270
 
+- USB port at 45 degrees
 
+- Board clearance around ESP32-S3-Mini antenna
 
-
-
-Move USB 45 degrees
-Flash sketches and bootloader through USB, without switch
-Gesture sensor connector
-Power to the TOF sensor programmable from one of the GPIOs
-USB recharges battery
-JTAG pogo pads
-Board clearance around ESP32 antenna
-Connector instead of pads: speaker, haptic motor, battery
-  https://www.hirose.com/product/series/DF65     https://www.youtube.com/watch?v=JXliTh3bPm8
-Side button power reset
-Button pads change to GPIO pads, no resister
-Blue board color
-Readable silk labels (pad labels larger)
-
-
-
-
-
-
+- Blue board color
 
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
