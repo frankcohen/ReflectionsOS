@@ -89,4 +89,6 @@ HOOBER REQUIREMENTS
 
 - Blue board color
 
+- Boards in panelization
+
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
