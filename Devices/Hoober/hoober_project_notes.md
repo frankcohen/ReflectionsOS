@@ -42,7 +42,7 @@ Product W356416AS1J3 (Muhammad) cost $5 USD per board with 34 mm x 36 mm,
 HOOBER REQUIREMENTS
 -------------------
 
-- Sketch upload with Arduino IDE 1.8.19 over Micro USB connector.
+- Sketch upload with Arduino IDE 1.8.19 over USB C connector.
 
 - Uses "Adafruit ESP32-S3 Feather No PSRAM" derived Arduino IDE board definition.
   https://www.adafruit.com/product/5323
@@ -51,16 +51,16 @@ HOOBER REQUIREMENTS
   other files at:
   https://learn.adafruit.com/adafruit-esp32-s2-feather/downloads
 
-- Firmware uploads are automatic. Does not need to hold-down the Boot nor Reset
+- Firmware uploads are automatic. Does not need to hold-down the Boot nor EN buttons
   to initiate Firmware Download mode for downloading firmware through the serial port.
   This is the real difference from Adafruit ESP32-S2 Feather.
 
-- ESP32 S3 with Espressif bootloader pre-flashed.
+- ESP32 S3 Mini with Espressif bootloader pre-flashed.
 
 - Hirose DF65 Connector for speaker, haptic motor, battery wire connections
   https://www.hirose.com/product/series/DF65
-  Hoober removes the Sox solder pads for speaker, haptic, gesture, battery, power, buttons
-  Remove resistors for buttons.
+  Hoober removes the Sox solder pads for speaker, haptic, gesture, battery, power, center/left/right buttons
+  Remove resistors for center, left, right buttons.
 
 - Power switch, press and hold to turn-on, press and hold to force off. Switch is
   side mounted at the edge of the board, at a 180 degree angle from the USB port.
@@ -83,7 +83,7 @@ HOOBER REQUIREMENTS
   Single row Test programming fixture pogo pin pitch 2.54mm 8P/9P/10P/11P/ 3P~12P with wire
   https://www.ebay.com/itm/143924370628?var=443188826270
 
-- USB port at 45 degrees
+- USB port at 45 degrees to the ESP
 
 - Board clearance around ESP32-S3-Mini antenna
 
