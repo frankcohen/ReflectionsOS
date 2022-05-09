@@ -91,4 +91,29 @@ HOOBER REQUIREMENTS
 
 - Boards in panelization
 
+NOTES
+-----
+
+Getting Arduino IDE to compile and upload on MacOS 12.3.1
+change python to python3 in
+$HOME/Library/Arduino15/packages/esp32/hardware/esp32/2.0.2/platform.txt
+https://forum.arduino.cc/t/mac-os-update-killed-esp32-sketch/969580/8
+
+esptool on MacOS 12.3.1 with Arduino IDE 1.8.19
+~/Library/Arduino15/packages/esp32/tools/esptool_py/3.1.0/esptool
+
+Adafruit Feather ESP32-S3 has The board definition includes several software switches in the Tools drop-down menu:
+
+USB Mode - The board definition supports two types of USB interaction with your computer. USB-OTG is USB On-the-Go (OTG) allows two USB devices to talk to each other without requiring the services of a personal computer. "Hardware CDC and JTAG" implements a serial port (CDC) to implement the serial console, instead of using UART with an external USB-UART bridge chip, including flashing, debugger, and bi-direction serial communication. I choose USB-OTG.
+
+USB CDC On Boot - USB Communication Device Class (CDC) implements the serial console, instead of using a UART with an external USB-UART FTDI or other programmer bridge chip. I choose Enabled.
+
+USB Firmware MSC On Boot - Mass Storage Class (MSC) makes the Feather appear to be a USB storage device connected to your computer. I choose Disabled.
+
+USB DFU On Boot - USB Device Firmware Upgrade (DFU) enables updating the firmware of a USB device. I choose Disabled.
+
+With the above switches set I choose the board port in the Tools menu, open the Arduino IDE Serial Monitor, then click the Upload button. I press the Boot button on the board. Arduino IDE esptool.py flashes the sketch.
+
+After the upload completes, I click the Boot button. I see the output correctly in the Serial Monitor.
+
 Question? Ask principal maintainer Frank Cohen, fcohen@votsh.com
