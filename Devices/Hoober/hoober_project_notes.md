@@ -39,6 +39,13 @@ Product W356416AS1J3 (Muhammad) cost $5 USD per board with 34 mm x 36 mm,
 
 - Sox Avinadad board TXCO power pads reversed.
 
+- IPX display ground connector reversed.
+
+- ESP32 pin 23 is data native USB support, don't need an FTDI converter for USB.
+
+- USB connector solder connections could not hold the connector to the board.
+
+
 HOOBER REQUIREMENTS
 -------------------
 
@@ -51,10 +58,6 @@ HOOBER REQUIREMENTS
   other files at:
   https://learn.adafruit.com/adafruit-esp32-s2-feather/downloads
 
-- Firmware uploads are automatic. Does not need to hold-down the Boot nor EN buttons
-  to initiate Firmware Download mode for downloading firmware through the serial port.
-  This is the real difference from Adafruit ESP32-S2 Feather.
-
 - ESP32 S3 Mini with Espressif bootloader pre-flashed.
 
 - Hirose DF65 Connector for speaker, haptic motor, battery wire connections
@@ -62,8 +65,10 @@ HOOBER REQUIREMENTS
   Hoober removes the Sox solder pads for speaker, haptic, gesture, battery, power, center/left/right buttons
   Remove resistors for center, left, right buttons.
 
-- Power switch, press and hold to turn-on, press and hold to force off. Switch is
+- Power switch, press and hold to turn-on, press to force off. Switch is
   side mounted at the edge of the board, at a 180 degree angle from the USB port.
+
+- Boot and Reset buttons buttons side mounted at the edge of the board.
 
 - Battery charging when powered over USB-C. Powered by LiPo or USB.
 
