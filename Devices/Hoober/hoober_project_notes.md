@@ -92,7 +92,7 @@ HOOBER REQUIREMENTS
 
 - Board clearance around ESP32-S3-Mini antenna
 
-- Blue board color
+- Green board color
 
 - Boards in panelization
 
