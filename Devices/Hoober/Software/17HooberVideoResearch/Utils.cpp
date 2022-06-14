@@ -43,40 +43,33 @@ void Utils::begin()
 
 void Utils::loop()
 {
-  if ( _connectionTimer++ < millis() )
-  {
-    _connectionTimer = millis() + 5000;
-
-    if ( _wifiMulti.run() != WL_CONNECTED)
-    {
-      Serial.println("WiFi not connected");
-    }
-  }  
 }
 
 void Utils::startSDWifi()
 {
-  if (!SD.begin( 10 )) {
-    // Serial statement works and text is now also displayed on TFT
-    Serial.println(F("Card init. failed!"));
+  if (!SD.begin( SD_CS )) 
+  {
+    Serial.println(F("Storage initialization failed"));
   } else {
-    // Serial statement works and text is now also displayed on TFT
-    Serial.println(F("Card init. Success"));
+    Serial.println(F("Storage initialization success"));
   }
   
   _wifiMulti.addAP( wifiSSID, wifiPass );
 
+  Serial.println("Connecting Wifi");
+
   long ago = millis();
-  while ( ago < millis() + ( 1000*15 ) )
+  while ( millis() < ( ago + ( 1000*10 ) ) )
   {
     if(_wifiMulti.run() == WL_CONNECTED) {
         //Serial.println("WiFi connected");
         break;
     }
   }
-  Serial.println("Connecting Wifi...");
-
-  _connectionTimer = millis() + 1000;  
+  if ( _wifiMulti.run() != WL_CONNECTED)
+  {
+    Serial.println("WiFi not connected");
+  }  
 }
 
 void Utils::listDir(fs::FS &fs, const char * dirname, uint8_t levels){

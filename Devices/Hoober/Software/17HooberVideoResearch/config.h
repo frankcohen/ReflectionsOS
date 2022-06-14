@@ -22,6 +22,7 @@ Read the license in the license.txt file that comes with this code.
 #define cloudCityPort 8088
 
 #define wifiSSID "FranksFreeInternet"
+//#define wifiSSID "Franks_Free_Internet_Guest"
 #define wifiPass ""
 
 #define MJPEG_FILENAME ".mjpeg"

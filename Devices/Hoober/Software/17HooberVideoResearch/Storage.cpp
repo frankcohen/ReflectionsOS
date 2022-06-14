@@ -43,7 +43,7 @@ Storage::Storage(){}
 
 void Storage::begin()
 {  
-  //replicateServerFiles();
+  replicateServerFiles();
 }
 
 void Storage::availSpace()
@@ -65,7 +65,7 @@ void Storage::replicateServerFiles()
   //listDir(SD, "/", 100);
 
   /* Fixme later: JSON data size limited */
-  DynamicJsonDocument doc(500);
+  DynamicJsonDocument doc(1000);
 
   //Serial.println( "getFileListString" );
   //Serial.println( getFileListString() );
