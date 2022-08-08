@@ -54,19 +54,26 @@ ThingTwo is the 3rd revision of the Reflections main board. It is the successor 
 
 ThingTwo board changes:
 
-- Pickup Hoober rework changes, details in https://bit.ly/3PmWc9c
++ Pickup Hoober rework changes, details in https://bit.ly/3PmWc9c
 
-- Remove power-on/off circuit and power button.
++ Remove power-on/off circuit and power button.
 
-- Replace GPS circuit with ATGM336H module.
++ Replace GPS circuit with ATGM336H module. Power on/off control using a GPIO.
 
-- Add power-on LED.
++ Display connector pads have corrected pitch.
 
-- Display connector pads have corrected pitch.
++ Remove traces and vias around ESP32 antenna, https://bit.ly/3Od68kH
 
-- Remove traces and vias around ESP32 antenna, https://bit.ly/3Od68kH
++ Add more room around the daughter board cable pads for easier soldering.
 
-- Add more room around the daughter board cable pads for easier soldering.
++ Label ESP32-S3-Mini-1-CUSTOM since we fixed some issues the Hoober footprint
+  had with the Thermal Pads causing false flag DRC errors. It is the same as
+  the previous footprints.
+
++ Put ESP32-S3 into JTAG USB mode on boot (GPIO3 is high on reset) AND make it
+  possible to desolder a resistor (R19) to change GPIO3 to be low on reset for
+  GPIO39-42 JTAG interface.
+
 
 NOTES
 -----
