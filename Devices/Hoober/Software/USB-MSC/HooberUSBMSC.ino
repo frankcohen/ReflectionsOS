@@ -1,15 +1,15 @@
 /*
 Reflections USB MSC for Hoober research
 
-This sketch turns the Reflections main board into a USB PCMCIA flash mass storage device. 
+This sketch turns the Reflections main board into a USB PCMCIA flash mass storage device.
 Connect the board to the USB port of your Mac or other laptop and the NAND SD card
 contents appear as a disk drive. This is something Limor Fried (@LadyAda) and Phillip Torrone (@pt)
 first demonstrated in 2019 on https://www.youtube.com/watch?v=0bWba0PU4-g
 Unfortunately, Adafruit_TinyUSB does not compile under the ESP32-S3.
 This sketch makes their idea work on an ESP32-S3-Mini-1 with a NAND storage device
-and USB port connected directly to the ESP32. NAND is a surface mount version of an 
+and USB port connected directly to the ESP32. NAND is a surface mount version of an
 SD mass storage card. NAND gives gigabytes of storage. ESP32 uses the SPI bus to
-communicate with the NAND. This sketch uses the TinyUSB library support included in 
+communicate with the NAND. This sketch uses the TinyUSB library support included in
 the ESP32 libraries. Reflections software and hardware is distributed under a GPL v3 Open Source license.
 See the Reflections Wiring Guide for details at:
 https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Hoober/Software/USB-MSC/USB-MSC-Wiring-Guide.jpg
@@ -21,7 +21,8 @@ USB Firmware MSC On Boot: Disabled
 USB DFU On Boot: Disabled
 
 Depends on:
- * SdFat https://github.com/adafruit/SdFat
+ * SdFat https://github.com/adafruit/SdFat, for a version that uses only the ESP32 SD library
+   and not SdFat https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Hoober/Software/07USBFlashDrive
  * ESP32 TinyUSB implementation (USBMSC, USB) part of the Arduino IDE hardware library
 
 Built from examples:
@@ -30,7 +31,7 @@ https://github.com/adafruit/Adafruit_TinyUSB_Arduino/blob/master/examples/MassSt
 About Reflections:
 What started as a project to wear videos of my children as they grew up on my
 arm as a wristwatch, grew to be a platform for making entertaining experiences.
-This is one of the software components. It runs on an ESP32-based platform with 
+This is one of the software components. It runs on an ESP32-based platform with
 TFT OLED display, audio player, flash memory, GPS, gesture sensor, and accelerometer/compass
 
 Repository is at https://github.com/frankcohen/ReflectionsOS
@@ -74,13 +75,13 @@ void setup()
 {
   Serial.begin(115200);
   long time = millis();
-  while (!Serial && ( millis() < time + 5000) ); // wait up to 5 seconds for Arduino Serial Monitor  
+  while (!Serial && ( millis() < time + 5000) ); // wait up to 5 seconds for Arduino Serial Monitor
   Serial.setDebugOutput(true);
   Serial.println("");
   Serial.println("Reflections USB MSC for Hoober research");
   //Serial.print("Waited ");
   //Serial.println( millis() - time );
-  
+
   pinMode(SD_CS, OUTPUT);
   digitalWrite(SD_CS, LOW);
 
@@ -88,11 +89,11 @@ void setup()
   pinMode(42, OUTPUT);
   digitalWrite(42, LOW);
 
-  SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);  
-  
+  SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);
+
   init_sdcard();
   sd_inited = true;
-    
+
   Serial.println("USB MSC ready");
   delay(1000);
 }
@@ -133,7 +134,7 @@ bool init_sdcard(void)
   usb_msc.onWrite(onWrite);
   usb_msc.mediaPresent(true);
   usb_msc.begin(DISK_SECTOR_COUNT, DISK_SECTOR_SIZE);
-  
+
   return true;
 }
 
@@ -194,7 +195,7 @@ static int32_t onRead(uint32_t lba, uint32_t offset, void* buffer, uint32_t bufs
 }
 
 // Callback invoked when received WRITE10 command.
-// Process data in buffer to disk's storage and 
+// Process data in buffer to disk's storage and
 // return number of written bytes (must be multiple of block size)
 
 static int32_t onWrite(uint32_t lba, uint32_t offset, uint8_t* buffer, uint32_t bufsize)
