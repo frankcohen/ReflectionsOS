@@ -101,4 +101,80 @@ With the above switches set I choose the board port in the Tools menu, open the 
 After the upload completes, I need to re-choose the USB Port, then click the Reset button.
 I see the output correctly in the Serial Monitor.
 
+Testing ThingTwo:
+
+Untested:
+Battery charging
+JTAG debugging
+
+Test sketches:
+GPS, ATGM336H-5N31, 05GPS.ino, works
+Accelerometer, LIS331DLHTR, 01_lis331_accellerometer, uses Adafruit LIS331 library, works
+NAND, sketch 06SDFiles.ino, works
+Display, GC9A01, graphicstest.ino, backlight ok, no animation
+Haptic feedback, 02Haptic.ino, Adafruit_DRV2605 library, works
+Audio, 13AudioHomer.ino, ESP8266Audio library, works
+Magnetometer, MMC5603NJ, chip id 4294967295, https://github.com/adafruit/Adafruit_MMC56x3, works
+Gestures, 04Gestures.ino, SparkFun_VL53L5CX_Library, works
+
+I2C devices
+I2C device found at address 0x18 (24)  LIS331_DEFAULT_ADDRESS - accelerometer
+I2C device found at address 0x29 (41)  Gesture sensor
+I2C device found at address 0x30 (48)  Magnetometer, compass
+I2C device found at address 0x5A (90)  Haptic controller
+
+
+Explorations in MicroPython
+
+https://docs.micropython.org/en/latest/esp32/quickref.html
+
+Make backup of board:
+a) Install esptool from https://github.com/espressif/esptool/releases
+./esptool-v4.4-macos/esptool --chip esp32s3 -b 115200 --port /dev/cu.usbmodem1442201 read_flash 0x00000 0x400000 ./flash_4M.bin
+
+./esptool --chip esp32s3 --port /dev/cu.usbmodem1442201 read_flash 0x00000 0x400000 ./flash_4M.bin
+
+Install MicroPython:
+
+esptool-v4.4-macos did not work, stalled on using its stub
+Using /Users/frankcohen/Library/Arduino15/packages/esp32/tools/esptool_py/3.3.0/esptool works:
+
+Backup using:
+/Users/frankcohen/Library/Arduino15/packages/esp32/tools/esptool_py/3.3.0/esptool --chip esp32s3 --port /dev/cu.usbmodem1432201 read_flash 0x00000 0x400000 ./ThingTwo_Backup_20230114_flash_4M.bin
+
+Erase flash
+/Users/frankcohen/Library/Arduino15/packages/esp32/tools/esptool_py/3.3.0/esptool --chip esp32s3 --port /dev/cu.usbmodem1432201 erase_flash
+
+Install MicroPython firmware:
+/Users/frankcohen/Library/Arduino15/packages/esp32/tools/esptool_py/3.3.0/esptool --chip esp32s3 --port /dev/cu.usbmodem1432201 write_flash -z 0 ./MicroPython_GENERIC_S3-20220618-v1.19.1.bin
+
+Restart the board, use Serialtools to communicate over USB, and it works:
+>>> print(‘Hi Avinadad and Muhammad’)
+Hi Avinadad and Muhammad
+
+Next I need a MacOS compatible IDE to develop my MicroPython ReflectionsOS.
+Considering CircuitPython, Platform.io (doesn't do python), Arduino IDE, Thonny IDE
+
+Thonny IDE tutorial:
+https://randomnerdtutorials.com/getting-started-thonny-micropython-python-ide-esp32-esp8266/#install-thonny-ide-mac
+
+It would be so nice to have a JTAG-style debugger for MicroPython on ESP32
+
+Mu Editor
+uPyCraft IDE
+VS Code + Pymakr Extension
+PyCharm
+
+Install CircuitPython:
+/Users/frankcohen/Library/Arduino15/packages/esp32/tools/esptool_py/3.3.0/esptool --chip esp32s3 --port /dev/cu.usbmodem1234561 erase_flash
+
+/Users/frankcohen/Library/Arduino15/packages/esp32/tools/esptool_py/3.3.0/esptool --chip esp32s3 --port /dev/cu.usbmodem1234561 write_flash -z 0x1000 ./ThingTwo_Backup_20230114_flash_4M.bin
+
+Enable WebREPL with password: ABCDEF
+
+J1 - Battery
+J2 - Haptic motor, speaker
+
+MMC5603NJ magnetometer/compass
+
 Question? Ask principal maintainer Frank Cohen, fcohen@starlingwatch.com
