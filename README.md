@@ -1,7 +1,7 @@
 # ReflectionsOS
 ESP32 and Arduino-based Internet enabled watch project and reference architecture to make your own projects
 
-Many times I imagine making a mobile application connected to the Internet. For example, a wrist watch. I love the Arduino community and yet when I go to put something like this together I find many tutorials on the parts (like a display, bluetooth, SD card, sound, and compass) there's very little I found that shows them all integrated together. I am making my watch project and will be posting the code, datasheets, and design in the Reflections repository.
+Many times I imagine making a mobile application connected to the Internet. For example, a wrist watch. I love the Arduino community and yet when I go to put something like this together I find many tutorials on the parts (like a display, bluetooth, SD card, sound, and compass) there's very little I found that shows them integrated together. I am making my watch project and will be posting the code, datasheets, and design in the Reflections repository.
 
 I love working with a group of creative makers. Please feel free to let me know your feedback and ideas. Thanks, in advance!
 
@@ -19,6 +19,13 @@ https://github.com/frankcohen/EleksTubeIPSHack
 -Frank
 
 <hr>
+
+Update as of January 25, 2023:
+
+All of the main board components are working. One more revision of the board is needed to incorporate the reworks we made to the ThingTwo board. We're calling the new revision Horton. It should be complete and go to manufacture and assembly in early February 2023.
+
+The project team attention next goes to producing theh first wearable prototype. This will strap to one's wrist, run on battery, and have a prototype display. We are also considering our first crowd funding campaign featuring the prototype. This is leading to an exciting Spring 2023.
+
 
 Update as of July 30, 2022:
 
