@@ -108,20 +108,44 @@ Battery charging
 JTAG debugging
 
 Test sketches:
+NAND, sketch 06SDFiles.ino, works
+Display, GC9A01, 15DisplayTest.ino, backlight ok
+Gestures, 14Gestures.ino, SparkFun_VL53L5CX_Library, works
 GPS, ATGM336H-5N31, 05GPS.ino, works
 Accelerometer, LIS331DLHTR, 01_lis331_accellerometer, uses Adafruit LIS331 library, works
-NAND, sketch 06SDFiles.ino, works
-Display, GC9A01, graphicstest.ino, backlight ok, no animation
 Haptic feedback, 02Haptic.ino, Adafruit_DRV2605 library, works
-Audio, 13AudioHomer.ino, ESP8266Audio library, works
+Audio, 13AudioHomer.ino, ESP8266Audio  library, works
 Magnetometer, MMC5603NJ, chip id 4294967295, https://github.com/adafruit/Adafruit_MMC56x3, works
-Gestures, 04Gestures.ino, SparkFun_VL53L5CX_Library, works
 
 I2C devices
 I2C device found at address 0x18 (24)  LIS331_DEFAULT_ADDRESS - accelerometer
 I2C device found at address 0x29 (41)  Gesture sensor
 I2C device found at address 0x30 (48)  Magnetometer, compass
 I2C device found at address 0x5A (90)  Haptic controller
+
+ThingTwo boards
+1
+Port not registering
+
+2
+I2C device found at address 0x18 (24)  LIS331_DEFAULT_ADDRESS - accelerometer
+I2C device found at address 0x5A (90)  Haptic controller
+Display works
+NAND works
+
+3
+I2C device found at address 0x18 (24)  LIS331_DEFAULT_ADDRESS - accelerometer
+I2C device found at address 0x30 (48)  Magnetometer, compass
+I2C device found at address 0x5A (90)  Haptic controller
+Display does not work, backlight on
+No gesture sensor installed
+NAND does not work
+
+4
+I2C device found at address 0x18 (24)  LIS331_DEFAULT_ADDRESS - accelerometer
+I2C device found at address 0x5A (90)  Haptic controller
+Display works
+NAND works
 
 
 Explorations in MicroPython

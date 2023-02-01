@@ -42,3 +42,5 @@ Horton board changes:
   Remove OPT3002DNPT from BOM
   Some resistors and capacitors are out of stock, replace them
   TPS2115APW power multiplexer is out of stock, replace with older less expensive multiplexer
+  Change TOF name to Gesture_Power and use GPIO 26 (Don't use 44 RXD0)
+  
