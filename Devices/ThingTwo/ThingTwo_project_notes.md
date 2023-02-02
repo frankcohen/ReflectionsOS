@@ -146,6 +146,7 @@ I2C device found at address 0x18 (24)  LIS331_DEFAULT_ADDRESS - accelerometer
 I2C device found at address 0x5A (90)  Haptic controller
 Display works
 NAND works
+GPS does not return data
 
 
 Explorations in MicroPython
