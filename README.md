@@ -7,6 +7,10 @@ Many times I imagine making a mobile application connected to the Internet. For 
 
 I love working with a group of creative makers. Please feel free to let me know your feedback and ideas. Thanks, in advance!
 
+EasyEDA project for the main board project is at:
+
+
+
 The wrist watch is a way for me to enjoy home videos of my children on my wrist - my Reflections project. I published 3 articles on the technology needed to make Reflections:
 
 https://www.reddit.com/r/arduino/comments/mjygkl/using_tar_files_in_esp32_with_sd_applications_for

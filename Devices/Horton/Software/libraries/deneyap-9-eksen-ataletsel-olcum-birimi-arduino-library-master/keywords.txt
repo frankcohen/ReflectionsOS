@@ -1,0 +1,31 @@
+#######################################
+# Syntax Coloring Map For	Deneyap_9EksenAtaletselOlcumBirimi
+#######################################
+
+#######################################
+# Library (KEYWORD1)
+#######################################
+
+Deneyap_9EksenAtaletselOlcumBirimi	KEYWORD1	Deneyap_9EksenAtaletselOlcumBirimi
+
+####################################
+# Class (KEYWORD1)
+####################################
+
+MAGNETOMETER	KEYWORD1	MAGNETOMETER
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin	KEYWORD2
+RegRead	KEYWORD2
+readMagnetometerX	KEYWORD2
+readMagnetometerY	KEYWORD2
+readMagnetometerZ	KEYWORD2
+readData	KEYWORD2
+writeRegister	KEYWORD2
+readRegisters	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################

@@ -7,8 +7,11 @@ Sox - 1st generation board design
 Hoober - rev 2, fixes problems
 ThingTwo - rev 3, ready for manufacturing
 
-Problems from the Hoober board project
+Find the Hoober board project at:
 https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Hoober
+
+Find the ThingTwo board project
+https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/ThingTwo
 
 What went wrong in Hoober:
 
@@ -74,7 +77,6 @@ ThingTwo board changes:
   possible to desolder a resistor (R19) to change GPIO3 to be low on reset for
   GPIO39-42 JTAG interface.
 
-
 NOTES
 -----
 
@@ -124,16 +126,16 @@ I2C device found at address 0x30 (48)  Magnetometer, compass
 I2C device found at address 0x5A (90)  Haptic controller
 
 ThingTwo boards
-1
+Board #1
 Port not registering
 
-2
+Board #2
 I2C device found at address 0x18 (24)  LIS331_DEFAULT_ADDRESS - accelerometer
 I2C device found at address 0x5A (90)  Haptic controller
 Display works
 NAND works
 
-3
+Board #3
 I2C device found at address 0x18 (24)  LIS331_DEFAULT_ADDRESS - accelerometer
 I2C device found at address 0x30 (48)  Magnetometer, compass
 I2C device found at address 0x5A (90)  Haptic controller
@@ -141,7 +143,7 @@ Display does not work, backlight on
 No gesture sensor installed
 NAND does not work
 
-4
+Board #4
 I2C device found at address 0x18 (24)  LIS331_DEFAULT_ADDRESS - accelerometer
 I2C device found at address 0x5A (90)  Haptic controller
 Display works

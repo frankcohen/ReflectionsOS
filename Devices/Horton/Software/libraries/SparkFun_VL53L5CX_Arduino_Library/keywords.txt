@@ -1,0 +1,49 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SparkFun_VL53L5CX	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+setErrorCallback	KEYWORD2
+isConnected	KEYWORD2
+setAddress	KEYWORD2
+getAddress	KEYWORD2
+setRangingFrequency	KEYWORD2
+getRangingFrequency	KEYWORD2
+setRangingMode	KEYWORD2
+getRangingMode	KEYWORD2
+startRanging	KEYWORD2
+stopRanging	KEYWORD2
+isDataReady	KEYWORD2
+getResolution	KEYWORD2
+setResolution	KEYWORD2
+getRangingData	KEYWORD2
+setPowerMode	KEYWORD2
+getPowerMode	KEYWORD2
+setIntegrationTime	KEYWORD2
+getIntegrationTime	KEYWORD2
+setSharpenerPercent	KEYWORD2
+getSharpenerPercent	KEYWORD2
+setTargetOrder	KEYWORD2
+getTargetOrder	KEYWORD2
+getWireMaxPacketSize	KEYWORD2
+setWireMaxPacketSize	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+VL53L5CX_ResultsData	LITERAL1
+SparkFun_VL53L5CX_Error	LITERAL1
+SF_VL53L5CX_RANGING_MODE	LITERAL1
+SF_VL53L5CX_POWER_MODE	LITERAL1
+SF_VL53L5CX_TARGET_ORDER	LITERAL1
