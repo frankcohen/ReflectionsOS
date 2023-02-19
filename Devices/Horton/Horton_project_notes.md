@@ -151,3 +151,24 @@ I2C device found at address 0x18 (24)  LIS331_DEFAULT_ADDRESS - accelerometer
 I2C device found at address 0x29 (41)  Gesture sensor
 I2C device found at address 0x30 (48)  Magnetometer, compass
 I2C device found at address 0x5A (90)  Haptic controller
+
+Things to-do list
+
+Set-up Platform.io with ESP32-S3 board definition
+One sketch to test all the components
+Support Surface Mount Solutions (SMS) of Santa Clara, California to assemble Horton boards
+Test display brightness using PWM
+Test battery charging
+
+Burning Man light sticks prototype
+  Power from battery inside 1.5" PVC with WS2812 LEDs on outside
+  
+Calliope wrist watch prototype
+  Test Horton board
+  Test brighter displays
+  New case and strap
+    Haptic motor, GPS antenna, battery, speaker
+	How long does the battery last?
+	Terri demonstration and approval
+	
+	
