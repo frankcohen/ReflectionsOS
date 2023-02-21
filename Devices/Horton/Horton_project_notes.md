@@ -165,7 +165,7 @@ Burning Man light sticks prototype
   
 Calliope wrist watch prototype
   Test Horton board
-  Test brighter displays
+  DONE Test brighter displays
   New case and strap
     Haptic motor, GPS antenna, battery, speaker
 	How long does the battery last?
