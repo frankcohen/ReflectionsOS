@@ -179,3 +179,31 @@ https://jlcpcb.com/partdetail/998876-MD7671A33PA1/C920513
 We found a component with the same footprint and function
 at Mouser on https://bit.ly/3II03Mk. This is a Linear Regulator (LDO)
 that puts out 3.3 volts from either USB 5V or battery 3.7 V input
+
+Gesture sensor algorithm
+Record or sensing
+
+Record
+  Start the sensor
+  sensorHasSomething()
+    recordGesture()
+	  for 5 seconds, 4 frames per second
+	    recordFrame()
+	    until !sensortHasSomething()
+	saveGesture()
+	
+Sensing
+  Start the sensor
+  sensorHasSomething()
+    somethingMatchesFrame()
+	  while moreFrames()
+	    advanceToNextFrame()
+      moreFrames()
+		no, you found a match
+	  keep history of matches and misses
+		
+
+
+
+
+
