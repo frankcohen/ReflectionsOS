@@ -140,7 +140,8 @@ NAND, sketch 01SDFiles.ino, works
 Display, GC9A01, 02DisplayTest.ino, backlight ok
 Gestures, 03Gestures.ino, SparkFun_VL53L5CX_Library, works
 GPS, ATGM336H-5N31, 04GPS.ino, works
-Accelerometer, LIS331DLHTR, 05Accellerometer, uses Adafruit LIS331 library, works
+Accelerometer, LIS331DLHTR, 05LIS3DHTR_IIC_AcceleratorReadings, 
+  uses https://github.com/Seeed-Studio/Seeed_Arduino_LIS3DHTR, works
 Haptic feedback, 06Haptic.ino, Adafruit_DRV2605 library, works
 Audio, 07AudioHomer.ino, ESP8266Audio  library, works
 Magnetometer, 08Compass.ino, MMC5603NJ, chip id 4294967295,
@@ -152,7 +153,8 @@ I2C device found at address 0x29 (41)  Gesture sensor
 I2C device found at address 0x30 (48)  Magnetometer, compass
 I2C device found at address 0x5A (90)  Haptic controller
 
-Things to-do list
+THINGS TO-DO LIST
+-----------------
 
 Set-up Platform.io with ESP32-S3 board definition
 One sketch to test all the components
@@ -170,7 +172,6 @@ Calliope wrist watch prototype
     Haptic motor, GPS antenna, battery, speaker
 	How long does the battery last?
 	Terri demonstration and approval
-	
 
 fcohen@starlingwatch.com March 4, 2023:
 JLCPCB confirms their system is not properly showing inventory
@@ -179,31 +180,3 @@ https://jlcpcb.com/partdetail/998876-MD7671A33PA1/C920513
 We found a component with the same footprint and function
 at Mouser on https://bit.ly/3II03Mk. This is a Linear Regulator (LDO)
 that puts out 3.3 volts from either USB 5V or battery 3.7 V input
-
-Gesture sensor algorithm
-Record or sensing
-
-Record
-  Start the sensor
-  sensorHasSomething()
-    recordGesture()
-	  for 5 seconds, 4 frames per second
-	    recordFrame()
-	    until !sensortHasSomething()
-	saveGesture()
-	
-Sensing
-  Start the sensor
-  sensorHasSomething()
-    somethingMatchesFrame()
-	  while moreFrames()
-	    advanceToNextFrame()
-      moreFrames()
-		no, you found a match
-	  keep history of matches and misses
-		
-
-
-
-
-

@@ -36,6 +36,16 @@ It does 750 NITS and appears good and bright
 
 Update silk: Starling Watch 2023, CindyLou AM MAG
 
+V-scoring, and the scoring needs to be against a flat (not round) part of the board
+
+Daughter board should be the VLC53 chip on a flexible cable board, with the resisters/caps on the main board, so there’s no welding needed at the daughter board for the cable, 
+
+USB connector is super tight against the board, needs a little tolerance
+
+
+
+
+
 Stencil requirements for main board:
 
 Board type :Panel by PCBWay

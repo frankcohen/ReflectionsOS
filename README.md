@@ -25,11 +25,17 @@ https://github.com/frankcohen/EleksTubeIPSHack
 
 <hr>
 
+Update as of March 16, 2023:
+
+Horton board is in from assembly and it works great! Next up, our first wearable prototype.
+Expect many updates to the source code repository over the coming weeks and months.
+
+
 Update as of January 25, 2023:
 
 All of the main board components are working. One more revision of the board is needed to incorporate the reworks we made to the ThingTwo board. We're calling the new revision Horton. It should be complete and go to manufacture and assembly in early February 2023.
 
-The project team attention next goes to producing theh first wearable prototype. This will strap to one's wrist, run on battery, and have a prototype display. We are also considering our first crowd funding campaign featuring the prototype. This is leading to an exciting Spring 2023.
+The project team attention next goes to producing the first wearable prototype. This will strap to one's wrist, run on battery, and have a prototype display. We are also considering our first crowd funding campaign featuring the prototype. This is leading to an exciting Spring 2023.
 
 
 Update as of July 30, 2022:
