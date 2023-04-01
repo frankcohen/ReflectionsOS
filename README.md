@@ -25,6 +25,10 @@ https://github.com/frankcohen/EleksTubeIPSHack
 
 <hr>
 
+Update as of April 1, 2023:
+
+![I call this a Breadcard, it's not a breadboard but getting close to a wearable prototype, codenamed Horton](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Horton/HortonBreadcard.jpg "Horton Breadcard")
+
 Update as of March 16, 2023:
 
 Horton board is in from assembly and it works great! Next up, our first wearable prototype.
