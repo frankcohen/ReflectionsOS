@@ -1,0 +1,161 @@
+body {
+	line-height: 1.5;
+	font-family: sans-serif;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	color:black;
+	margin:2em;
+}
+
+h1 {
+
+	text-decoration-thickness: 3px;
+	text-underline-offset: 6px;
+	font-size: 220%;
+	font-weight: bold;
+}
+
+h2 {
+	font-weight: bold;
+	color: #005A9C;
+	font-size: 140%;
+	text-transform: uppercase;
+}
+
+p {
+	margin: 1em 0;
+}
+
+pre {
+	padding: 0px;
+	border:0px;
+	border-radius: 0px;
+}
+
+red {
+	color: red;
+}
+
+a {
+  color: #4183c4;
+  font-weight: 300;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #3d85c6;
+  text-decoration: underline;
+}
+
+a#downloadLink {
+  display: block;
+  margin: 0 0 1em 0;
+  min-height: 1.2em;
+}
+
+div#container {
+  margin: 0 auto 0 auto;
+  max-width: 720px;
+  padding: 1em 1.5em 1.3em 1.5em;
+}
+
+h3 {
+  border-top: 1px solid #eee;
+  color: #666;
+  font-size: 0.9em;
+  font-weight: 500;
+  margin: 20px 0 10px 0;
+  padding: 10px 0 0 0;
+  white-space: nowrap;
+}
+
+p#data {
+  border-top: 1px dotted #666;
+  font-family: Courier New, monospace;
+  line-height: 1.3em;
+  min-height: 6em;
+  max-height: 1000px;
+  overflow-y: auto;
+  padding: 1em 0 0 0;
+}
+
+video {
+  background: #222;
+  margin: 10px auto;
+  width: 640px;
+  height: 360px;
+}
+
+#controls {
+  display: flex;
+  margin-top: 2rem;
+  max-width: 28em;
+}
+
+button {
+  flex-grow: 1;
+  height: 3.5rem;
+  min-width: 2rem;
+  border: none;
+  border-radius: 0.15rem;
+  background: #5448bd;
+  margin-left: 2px;
+  box-shadow: inset 0 -0.15rem 0 rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color:#201717f3;
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+button:hover, button:focus {
+  outline: none;
+  background: #52c71c;
+}
+button::-moz-focus-inner {
+  border: 0;
+}
+button:active {
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.2);
+  line-height: 3rem;
+}
+button:disabled {
+  pointer-events: none;
+  background: #b9b3eb;
+}
+button:first-child {
+  margin-left: 0;
+}
+
+#wrapper{
+  position:relative;
+  width:600px;
+  height:480px;
+}
+#canvas,#videoshare{
+  position:absolute; top:0px; left:0px;
+  width:100%;
+  height:100%;
+}
+#loading {
+    width: 20rem;
+    height: 20rem;
+    border: 5px solid #f3f3f3;
+    border-top: 6px solid #9c41f2;
+    border-radius: 100%;
+    margin: auto;
+    visibility: hidden;
+    animation: spin 1s infinite linear;
+}
+#loading.display {
+    visibility: visible;
+}
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
