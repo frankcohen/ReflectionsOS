@@ -1,9 +1,18 @@
-Reflections Air Guitar on Horton board
-Plays audio as mainboard is moved up-and-down as an "air guitar"
-Plays .mp3 audio files over Bluetooth A2DP to portable speakers
-
 May 13, 2023
-Fun and game demonstration of Reflections Horton main board
+fcohen@starlingwatch.com
+
+Reflections Air Guitar
+
+Plays audio as board is moved up-and-down as an "air guitar"
+Plays .mp3 audio files over Bluetooth A2DP to portable speakers
+Requires Bluetooth Classic, so yes to ESP32, and no to ESP32S3 (BLE)
+
+![AirGuitar breadboard](AirGuitar.jpg "Components and assembly instructions")
+
+Components
+ESP32 Dev Board from HiLetGo.com
+Adafruit NAND SD SPI SMT card
+Adafruit BN055 9 axis accelerometer
 
 Depends on
 Arduino-Audio-Tools library 
@@ -12,6 +21,11 @@ ESP32-A2DP library
 https://github.com/pschatzmann/ESP32-A2DP
 and
 https://github.com/pschatzmann/arduino-libhelix
+Accelerometer
+https://github.com/adafruit/Adafruit_BNO055
+
+Acclerometer support library
+https://github.com/Seeed-Studio/Seeed_Arduino_LIS3DHTR
 
 Uses example code from
 https://github.com/pschatzmann/arduino-audio-tools/blob/main/examples/examples-basic-api/base-player-a2dp/base-player-a2dp.ino
@@ -19,7 +33,7 @@ https://github.com/pschatzmann/arduino-audio-tools/blob/main/examples/examples-p
 https://github.com/pschatzmann/arduino-audio-tools/blob/main/examples/examples-player/player-sd-i2s/player-sd-i2s.ino
 
 What this does:
-player-sd-a2dp
+esp32-player-sd-a2dp
 
 Audio file processing needed:
 Open sound file in Audacity. Make sure that it contains 2 channels
@@ -37,8 +51,4 @@ Pins
 
 22 - SCL
 21 - SDA
-
-Todo
-Sketch to play music
-Sense accelerometer being shaken, none = pause
 
