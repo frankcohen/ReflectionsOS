@@ -11,6 +11,14 @@ Project and source code at https://tinyurl.com/airmoe
 
 ![AirGuitar breadboard](AirGuitar.jpg "Components and assembly instructions")
 
+Shake the board and it plays music to your Bluetooth speaker. Stop shaking
+and it stops the music.
+
+Still to do:
+- Download songs from a Web site (maybe Spotify)
+- Skip to next/previous song
+- Support more than one song
+
 Components
 ESP32 Dev Board from HiLetGo.com
 Adafruit NAND SD SPI SMT card
