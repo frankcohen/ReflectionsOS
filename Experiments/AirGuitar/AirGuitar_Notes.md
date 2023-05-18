@@ -7,6 +7,8 @@ Plays audio as board is moved up-and-down as an "air guitar"
 Plays .mp3 audio files over Bluetooth A2DP to portable speakers
 Requires Bluetooth Classic, so yes to ESP32, and no to ESP32S3 (BLE)
 
+Project and source code at https://tinyurl.com/airmoe
+
 ![AirGuitar breadboard](AirGuitar.jpg "Components and assembly instructions")
 
 Components
