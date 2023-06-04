@@ -18,7 +18,7 @@ Choosing a different board may cause Arduino IDE to not show you the needeed JTA
 
 Choose the ESP32 S3 Board type and serial port. Click compile, then click Debug.
 
-![Arduinno IDE 2.1 Debugger](xhttps://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/Arduino_21_Debugger.jpg)
+![Arduinno IDE 2.1 Debugger](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/Arduino_21_Debugger.jpg)
 
 In Arduino IDE 2.1's Debug panel set debug breakpoints, inspeect variables and step through execution of your code.
 
