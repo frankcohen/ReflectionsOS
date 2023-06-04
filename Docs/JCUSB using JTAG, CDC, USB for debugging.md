@@ -26,9 +26,6 @@ JCUSB gives fast uploads, debugging, breakpoints, variable inspection, and stepp
 
 I created a video answer to Andreas with more discussion of the problems I encountered:
 
-[![Watch the video](https://img.youtube.com/vi/nTQUwghvy5Q/default.jpg)](https://youtu.be/nTQUwghvy5Q)
-
-
 [![Watch the video](http://i3.ytimg.com/vi/vQBxMgNvwZI/hqdefault.jpg)]( https://www.youtube.com/watch?v=vQBxMgNvwZI)
 
 I am using JCUSB in my upcoming open source project Reflections, a portable and mobile way to make animation experiences possible. Check https://github.com/frankcohen/ReflectionsOS for source code, examples, experiments, and details.
