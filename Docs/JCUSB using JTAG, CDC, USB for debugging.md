@@ -20,11 +20,13 @@ Choose the ESP32 S3 Board type and serial port. Click compile, then click Debug.
 
 ![Arduinno IDE 2.1 Debugger](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/Arduino_21_Debugger.jpg)
 
-In Arduino IDE 2.1's Debug panel set debug breakpoints, inspeect variables and step through execution of your code.
+In Arduino IDE 2.1's Debug panel set debug breakpoints, inspect variables and step through execution of your code.
 
 JCUSB gives fast uploads, debugging, breakpoints, variable inspection, and stepping in and out of code. The alternative is to load up my code with  Serial.println(""); commands and compile-upload-run.
 
-I created a video answer to Andreas with more discussion of the problems I encountered: https://www.youtube.com/watch?v=vQBxMgNvwZI
+I created a video answer to Andreas with more discussion of the problems I encountered:
+
+[![Watch the video](https://i3.ytimg.com/vi/vQBxMgNvwZI/maxresdefault.jpg)]( https://www.youtube.com/watch?v=vQBxMgNvwZI)
 
 I am using JCUSB in my upcoming open source project Reflections, a portable and mobile way to make animation experiences possible. Check https://github.com/frankcohen/ReflectionsOS for source code, examples, experiments, and details.
 
