@@ -33,6 +33,8 @@ CindyLou board changes:
 Change the display pad layout to support
 the Beryl Zeng CT013A6QQIGC7N10-XHT display
 It does 750 NITS and appears good and bright
+Add new connector to replace FPC1, and place
+connector during assembly.
 
 Update silk: Starling Watch 2023, CindyLou AM MAG
 
@@ -42,9 +44,14 @@ Daughter board should be the VLC53 chip on a flexible cable board, with the resi
 
 USB connector is super tight against the board, needs a little tolerance
 
+Replace J2 DF65-5P with new lighter weight connectors that handle 30 AWG guage wire to the battery, speaker, and haptic motor.
 
+Change JTAG H1 Header-Male-2.54_1x4 pins to: pin 1 +5V In, pin 2 D- GPIO 19, pin 3 D+ GPIO 20, pin 4 GND In. See discussion at https://github.com/espressif/arduino-esp32/issues/8237
 
+Add surge protection diode array to USB using 
+https://www.digikey.com/en/products/detail/littelfuse-inc/SRV05-4HTG-D/10230852
 
+Pads for the remaining unused GPIOs, as many as will fit.
 
 Stencil requirements for main board:
 
