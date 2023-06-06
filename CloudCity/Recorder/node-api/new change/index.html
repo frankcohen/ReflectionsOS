@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base target="_blank">
+  <title>Screen Recording With System Sounds Demo</title>
+  
+  <!-- Latest compiled and minified Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <style>
+    #body {
+            background-color: ivory;
+        }
+        
+</style>
+<p>Click once to set starting rectangle position</p>
+<p>Click again to set the ending position & draw rectangle</p>
+
+    <div>
+      <h1>Screen Recording With System Sounds Demo</h1>
+      <p><small>Made by the <a href="https://addpipe.com">Pipe Recording Platform</a></small></p>
+      <h2>Record the screen using <strong>getDisplayMedia</strong> and <strong>Media​Stream Recording API</strong></h2>
+      <div id="wrapper">
+        
+       <video id="videoshare" controls autoplay></video><br> 
+       <canvas id="canvas" width=100% height=100%></canvas> 
+      </div>
+      
+      
+      </div>
+	  <div id="controls">
+		  <button id="shareScreen" onclick="onShareScreen()">Share Screen</button>
+		  <button id="rec" onclick="onBtnRecordClicked()" disabled>Record</button>
+		  <button id="stop" onclick="onBtnStopClicked()" disabled>Stop</button>
+		  <button id="stateButton" onclick="onStateClicked()">trace state</button>
+      <button id="cropBtn" onclick="cropSelect()">Crop</button>
+	  </div>
+    </div>
+    <a id="downloadLink" download="mediarecorder.webm" name="mediarecorder.webm" href></a>
+    <button id="downloadLink" download="mediarecorder.webm" name="mediarecorder.webm" onclick="onUpload()">upload</button>
+    <p id="data"></p>
+    <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://webrtchacks.github.io/adapter/adapter-latest.js"></script>
+<!--	<script src="js/main.js"></script> -->
+  <script src="js/crop.js"></script>
+    <h2>Works on:</h2>
+    <ul>
+      <li>Chrome 74 and up</li>
+      <li>Firefox 66 and up</li>
+    </ul>
+    <span style="color:red">Limitations:</span>
+    <ul>
+      <li>On Chrome for macOS it is only possible to share your audio when choosing to capture a Chrome tab </li>
+      <li>Firefox does not yet support capturing system sounds</li>
+    </ul>
+	<h2>Links:</h2>
+	<ul>
+		<li>Code for this demo on GitHub: <a target="_blank" href="https://github.com/addpipe/getDisplayMedia-demo">https://github.com/addpipe/getDisplayMedia-demo</a></li>
+	</ul>
+</body>
+</html>
