@@ -1,0 +1,14 @@
+G04 Layer: BottomSolderMaskLayer*
+G04 EasyEDA v6.5.23, 2023-06-19 17:21:20*
+G04 ee985b8f540a42c383d3d7bffb3f9d32,c17a8ced473b4d519dda31697e0e54b6,10*
+G04 Gerber Generator version 0.2*
+G04 Scale: 100 percent, Rotated: No, Reflected: No *
+G04 Dimensions in millimeters *
+G04 leading zeros omitted , absolute positions ,4 integer and 5 decimal *
+%FSLAX45Y45*%
+%MOMM*%
+
+%ADD10C,0.0001*%
+
+%LPD*%
+M02*

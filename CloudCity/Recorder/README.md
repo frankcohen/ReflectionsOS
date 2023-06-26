@@ -137,7 +137,7 @@ Elastic IPs can be allocated to your account, and you can choose when to associa
 
 In our setup, by utilizing Elastic IP, we've ensured a reliable and stable connection to our EC2 instance, enhancing our system's robustness and availability.
 
-## Conclusion
+## Summary
 
 This documentation provides a comprehensive overview of the significant modifications made to the Reflections Recorded project, each aimed at enhancing the system's performance, reliability, and user experience.
 
@@ -148,3 +148,8 @@ With the use of pm2, we have a robust, streamlined, and efficient way to manage 
 The introduction of an Elastic IP to our EC2 instance has added stability and flexibility to our server access, safeguarding against potential DNS issues, facilitating rapid failover scenarios, and providing a consistent public IP address.
 
 In essence, these modifications have significantly elevated the Reflections Recorded project's operational capacity. They not only optimize the system's current performance but also set a foundation for future enhancements and scalability.
+
+## Notes
+Recorder main page is in node-api/public/index.html
+Selection mechanism is in node-api/public/cropv2.js
+
