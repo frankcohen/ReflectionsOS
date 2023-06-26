@@ -38,11 +38,9 @@ Update as of June 26, 2023:
 
 CindyLou is the latest version of the main board. CindyLou lets me put everything into a wrist watch case and actually wear it on my wrist! Plus the software to drive experiences (codename CalliopeOpensEyes) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the main board.
 
-![I call this a Breadcard, it's not a breadboard but getting close to a wearable prototype, codenamed Horton](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Horton/HortonBreadcard.jpg "Horton Breadcard")
+![CindyLou version of the main board](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/CindyLou/CindyLou_main_board.jpg "CindyLou main board")
 
-![CindyLou version of the main board]("https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/CindyLou/CindyLou_main_board.jpg")
-
-![Daughterboard for gesture sensing]("https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/CindyLou/CindyLou_daughter_board.jpg")
+![Daughterboard for gesture sensing](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/CindyLou/CindyLou_daughter_board.jpg "CindyLou daughter board")
 
 CindyLou Gerber files and schematic are at:
 https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CindyLou
