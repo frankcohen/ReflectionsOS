@@ -14,7 +14,7 @@ https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CindyLou
 EasyEDA project for the previous main board project is at:
 https://oshwlab.com/fcohen/horton-main-board
 
-The wrist watch is a way for me to enjoy home videos of my children on my wrist - my Reflections project. I published articles on the technology needed to make Reflections:
+I published articles on the technology needed to make Reflections:
 
 JCUSB for JTAG debugging in Arduino IDE 2.1
 https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/JCUSB%20using%20JTAG%2C%20CDC%2C%20USB%20for%20debugging.md
@@ -34,7 +34,41 @@ and I made an air-guitar project to learn about streaming music over Bluetooth C
 
 <hr>
 
-Update as of June 26, 2023:
+##Update as of July 18, 2023:
+
+A friend asked me: What can the Reflections board do? Consider these possibilities.
+
+- Haptic feedback - a buzzer in the case. Buzzes softly or energetically. Fades the buzzing up, or down, and make patterns. It even does morse code - buzz buzz buzz.
+
+- Long arm movement sensing - Recognizes the direction, speed, and acceleration of your wrist. Recognizes gestures made by moving your wrist in the air. Like sweeping left and right, slow pitching a ball.
+
+- Finger movement sensing - recognizes gestures made with fingers.
+
+- Range, Distance, Heading - when GPS is available, knows its position and direction/heading to other boards. When GPS is not available, such as being indoors, uses a compass and triangulation to detect movement towards or away from other boards using BLE.
+
+- Compass - knows North from South and between.
+
+- Location - when GPS is available, knows when it is in a location. For example, knows when it is at Disneyland and in line for the Matterhorn.
+
+- Bump - touch another board and exchange data.
+
+- USB flash memory - plug into your mobile phone or laptop to store and move files.
+
+- Grab and play - capture video and audio of anything playing on your laptop, displays on the screen.
+
+- [Martians](https://github.com/frankcohen/Martians) - yearn for each other, their hearts point to each other.
+
+- Speaker to play sound and music. However, the speaker volume is very low. A future version needs an audio amplifier.
+
+- Dance movements like pirouette
+
+- Red light green light
+
+- Head and shoulders, knees and toes
+
+I'm glad to update this list with your ideas. Thanks.
+
+##Update as of June 26, 2023:
 
 CindyLou is the latest version of the main board. CindyLou lets me put everything into a wrist watch case and actually wear it on my wrist! Plus the software to drive experiences (codename CalliopeOpensEyes) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the main board.
 

@@ -22,7 +22,11 @@ https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CindyLou
 
 What went wrong in Horton:
 
+Horton's display is too dim - produced 250 NITs of brightness. CindyLou
+uses the Beryl Display at 750 NITs.
 
+J1 and J2 connectors were for power supply circuits. They do not work
+well with low power, low amperage wires. CindyLou replaces them with low powered and easy to connect wire-to-booard connectors.
 
 
 CINDYLOU REQUIREMENTS
