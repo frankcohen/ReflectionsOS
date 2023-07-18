@@ -32,8 +32,6 @@ and I made an air-guitar project to learn about streaming music over Bluetooth C
 
 -Frank
 
-<hr>
-
 ##Update as of July 18, 2023:
 
 A friend asked me: What can the Reflections board do? Consider these possibilities.
