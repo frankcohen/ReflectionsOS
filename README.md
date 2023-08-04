@@ -14,23 +14,38 @@ https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CindyLou
 EasyEDA project for the previous main board project is at:
 https://oshwlab.com/fcohen/horton-main-board
 
-I published articles on the technology needed to make Reflections:
+Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS), July 21, 2023
 
-JCUSB for JTAG debugging in Arduino IDE 2.1
-https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/JCUSB%20using%20JTAG%2C%20CDC%2C%20USB%20for%20debugging.md
+## Articles
 
-https://www.reddit.com/r/arduino/comments/mjygkl/using_tar_files_in_esp32_with_sd_applications_for
+I publish articles on the technology needed to make Reflections:
 
-https://www.reddit.com/r/arduino/comments/mx7x31/file_transfer_using_bluetooth_classic_esp32_sd
+[Arduino and BLE on ESP32 as server and client combined, using NimBLE]
+(https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Why%20I%20like%20NimBLE%20for%20Bluetooth%20BLE.md)
 
-https://www.reddit.com/r/arduino/comments/mbdj53/json_procedural_scripting_using_arduinojson_and
+[JCUSB for JTAG debugging in Arduino IDE 2.1](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/JCUSB%20using%20JTAG%2C%20CDC%2C%20USB%20for%20debugging.md)
 
-I used the EleksTube IPS clock for experimentation. It is an ESP32 device featuring 6 TFT displays. See
-https://github.com/frankcohen/EleksTubeIPSHack
+[ESP32-S3 + NAND SD Storage + USB MSCC = Arduino that shows up like a disk drive](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Arduino%20that%20shows%20up%20like%20a%20disk%20drive%20_%20arduino.pdf)
 
-and I made an air-guitar project to learn about streaming music over Bluetooth Clasic, and why it won't work yet on BLE: https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar
+[JSON Procedural Scripting using ArduinoJSON and ESP32](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/JSON%20Procedural%20Scripting%20using%20ArduinoJSON%20and%20ESP32.pdf)
+
+[Managing SSL Certificates for HTTPS with IoT devices, ESP32-nginx+node.js+OTA](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Managing%20SSL%20certificates%20for%20HTTPS%20with%20IoT%20devices_%20ESP32%2BNginx%2BNode.js%2BOTA%20_%20esp32.pdf)
+
+[Reference to Mastering ArduinoJSON](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Mastering%20ArduinoJSON.pdf)
+
+[Create Using TAR files in ESP32 with SD applications for easy multiple file transfers to Arduino](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Using%20TAR%20files%20in%20ESP32%20with%20SD%20applications%20for%20easy%20multiple%20file%20transfers%20_%20arduino.pdf)
+
+I used the [EleksTube IPS clock](https://elekstube.com/) for experimentation. It is an ESP32 device featuring 6 TFT displays. See [https://github.com/frankcohen/EleksTubeIPSHack](https://github.com/frankcohen/EleksTubeIPSHack)
+
+I made an air-guitar project to learn about streaming music over Bluetooth Clasic, and why it won't work yet on BLE: [https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar]([https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar]
+)
 
 -Frank
+
+## Update as of August 4, 2023
+
+@dankeboy36 (on Github) published an Arduino stack trace decoding utility. When your sketch crashes a stack trace leading to the crash often appears in the Serial Monitor. Arduino IDE 2.1 does not yet support plug-ins and a decoder utility (available in Arduino IDE 1.8) is needed to explain the stack trace contents. @dankeboy36 created a decoder and it works great. It requires the nightly Arduino IDE build available at https://www.arduino.cc/en/software. The decoder is at at:
+https://github.com/dankeboy36/esp-exception-decoder. On a Mac use Command-Shift-P and type ESP Exception Decoder: Show Decoder Terminal.
 
 ## Update as of July 18, 2023
 
