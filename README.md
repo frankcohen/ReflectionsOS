@@ -14,14 +14,13 @@ https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CindyLou
 EasyEDA project for the previous main board project is at:
 https://oshwlab.com/fcohen/horton-main-board
 
-Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS), July 21, 2023
+Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS), August 4, 2023
 
 ## Articles
 
-I publish articles on the technology needed to make Reflections:
+I publish articles on the technology needed to make Reflections.
 
-[Arduino and BLE on ESP32 as server and client combined, using NimBLE]
-(https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Why%20I%20like%20NimBLE%20for%20Bluetooth%20BLE.md)
+[Arduino and BLE on ESP32 as server and client combined, using NimBLE](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Why%20I%20like%20NimBLE%20for%20Bluetooth%20BLE.md)
 
 [JCUSB for JTAG debugging in Arduino IDE 2.1](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/JCUSB%20using%20JTAG%2C%20CDC%2C%20USB%20for%20debugging.md)
 
