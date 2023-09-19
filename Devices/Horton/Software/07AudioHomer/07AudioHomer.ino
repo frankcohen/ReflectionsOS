@@ -9,9 +9,14 @@ AudioFileSourcePROGMEM *in;
 AudioGeneratorAAC *aac;
 AudioOutputI2S *out;
 
+#define AudioPower 7
+
 void setup()
 {
   Serial.begin(115200);
+
+  pinMode(AudioPower, OUTPUT);
+  digitalWrite(AudioPower, HIGH);
 
   audioLogger = &Serial;
   in = new AudioFileSourcePROGMEM(sampleaac, sizeof(sampleaac));
@@ -19,7 +24,7 @@ void setup()
   out = new AudioOutputI2S();
   out -> SetPinout( 9 /* bclkPin */, 10 /* wclkPin */, 8 /* doutPin */);
 
-  out -> SetGain( 0.300 );
+  out -> SetGain( 0.600 );
 
   aac->begin(in, out);
 }

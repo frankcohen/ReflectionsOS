@@ -1,13 +1,17 @@
 # ReflectionsOS
-ESP32 and Arduino-based Internet enabled watch project and reference architecture to make your own projects
+ESP32 and Arduino-based Internet-enabled watch project and reference architecture to make your own entertaining experiences
 
 ![Reflections Mobile Experiences](Reflections_logo.jpg)
 
-Many times I imagine making a mobile application connected to the Internet. For example, a wrist watch that shows videos of my children growing-up. I love the Arduino community and yet when I go to put something like this together I find many tutorials on the parts (like a display, Bluetooth, SD card, sound, and compass) there's very little I found that shows them integrated together. I am making my watch project and will be posting the code, datasheets, and design in the Reflections repository.
+Many times I imagine making a mobile application connected to the Internet. For example, a watch that shows videos of my children growing-up on my wrist. And the same project is re-used for creative makers to make their own entertaining experiences. Reflections is the architecture and the wrist watch is the first application.
 
-I love working with a group of creative makers. Please feel free to let me know your feedback and ideas. Thanks, in advance!
+Reflections integrates video displays, Bluetooth, Wifi, SD storage, sound, and a bunch of sensors (compass/magnetometer, gestures, accelerometer). It is battery powered, powered managed from software, and charges from USB. It is small in size (34 mm round) and powerful from an ESP32-S3 dual core processor. Reflections software, hardware, and cloud components are open-source (GPL v3) so anyone can use it and they must contribute improvements back to the project.
 
-CindyLou is the latest version of the main board. CindyLou lets me put everything into a wrist watch case and actually wear it on my wrist! Plus the software to drive experiences (codename CalliopeOpensEyes) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the main board.
+I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry pocket watches with Disney Imagineer and Mupeteer Terri Hardin. We are working on a new experience powere by Reflections. Announcement coming soon.
+
+I love working with a group of creative makers and the Arduino community. Please feel free to let me know your feedback and ideas.
+
+CindyLou is the latest version of the Reflections main board. CindyLou lets me put everything into a wrist watch case and actually wear it on my wrist! Plus the software to drive experiences (codename CalliopeOpensEyes) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the main board.
 
 CindyLou Gerber files and schematic are at:
 https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CindyLou

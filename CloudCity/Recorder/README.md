@@ -1,7 +1,7 @@
 # Reflections Recorder version 4
 ## Notes on installation, server operation, and code
 
-June 4, 2023
+June 4, 2023, updated August 9, 2023
 fcohen@starlingwatch.com
 
 This readme provides an overview of the **modifications** made to the Reflections Recorder project. It covers the enhancements and changes implemented to improve the functionality and user experience of the project.
@@ -57,6 +57,17 @@ To summarize, this configuration redirects all HTTP traffic to the HTTPS equival
 ## API
 
 The server offers various endpoints that allow you to interact with the files on the server.
+
+#### Endpoint: '/logit?message='
+
+Logs a message to the server log at /home/ec2-user/.pm2/logs/
+
+```bash
+Recorder-error.log  Recorder-out.log  index-error.log  index-out.log
+```
+Message needs to be URL encoded.
+
+For example, https://cloudcity.starlingwatch.com/api/logit?message=thisismyfirstlogentry5
 
 #### Endpoint: `/files`
 
@@ -114,7 +125,7 @@ To view the logs of the application, which can provide valuable insights into it
     pm2 logs
 ```
 
-This command displays the real-time stdout and stderr outputs of the applications managed by pm2, which can be especially useful for debugging issues.
+This command displays the real-time stdout and stderr outputs of the applications managed by pm2, which can be especially useful for debugging issues. 
 
 ## EC2 Instance and Elastic IP
 
