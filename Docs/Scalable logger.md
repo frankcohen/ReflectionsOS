@@ -21,7 +21,10 @@ void error( String message );
 void critical( String message );
 ```
 
-For example, logger.info( "My log message" );
+For example, logger.info( "My log message" ); and the log appears as
+```
+device-name, info, My log message
+```
 
 ## Log files
 
@@ -44,33 +47,21 @@ By default Logger uses HTTPS protocols. The root server certificate must be made
 extern const char* root_ca;   // Defined in secrets.h
 ```
 
-##Using logger in Arduino sketches and C++ files
+## Using logger in Arduino sketches and C++ files
 
+Here is an examaple Arduino sketch using logger.
 
-
-Arduino sketch
-
+```
 #include "Logger.h"
 
-LOGGER logger;
-
-loop()
-{
-
+setup() {
+  logger.begin();
 }
 
-
-
-
-void Battery::loop( LOGGER &logger )
-{
-
-
-	logger.info( "My log message" );
+loop() {
+  logger.info( "My log message" );
 }
-
-
-
+```
 
 ## Bugs
 
@@ -79,9 +70,6 @@ While working on the logger I found two bugs in the ESP32. When the logger initi
 The second issues happens when using the HTTPclient library. If the code does not use the end() method after making an HTTP GET request to the Web service, then HTTPclient causes the SD library to stop writing data to the SD/NAND device. The File object write() method returns a value equal to the number of bytes you asked it to write, yet the file size remains the same as though the write never happened. Using the HTTPclient end() method solves this problem.
 
 ## How you may help
-
-
-
 
 Any help with this would be great of you and appreciated, including criticisms of the design and refactoring ideas. I'm open to all.
 
@@ -162,7 +150,7 @@ class LOGGER
 ```
 
 *** Logger.cpp***
-'''
+```
 /*
  Reflections, mobile connected entertainment device
 
@@ -533,4 +521,8 @@ void LOGGER::loop()
     }
   }
 }
-'''
+```
+
+## Find the latest update
+
+The latest update is in the source code repository at [https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Scalable%20logger.md](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Scalable%20logger.md)
