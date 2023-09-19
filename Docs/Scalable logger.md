@@ -1,4 +1,4 @@
-#Scalable logger ESP32 + Wifi + SD/NAND for multiple devices
+# Scalable logger ESP32 + Wifi + SD/NAND for multiple devices
 
 I wrote a logger. It runs on an ESP32-S3, stores the log values on local storage temporarily, and sends the log values over Wifi to a service for storage and anlysis. My goal is to have an unlimited number of log entries. I do not want to bog-down the ESP32 as it stores and uploads the logs. I plan to have hundreds or thousands of devices logging concurrently. And it works even when Wifi service is not available, following a store-and-forward pattern.
 
@@ -6,40 +6,43 @@ I wrote a logger. It runs on an ESP32-S3, stores the log values on local storage
 
 The logger receives String values, saves them to a log file on an SD/NAND device. [NAND](https://www.lcsc.com/product-detail/NAND-FLASH_XTX-XTSD01GLGEAG_C558837.html) is a surface mount version of an SD card. The logger keeps logging to the file until the file size hits 200 bytes (200 is for testing, the NAND has 8 Gbytes of storage). The logger then closes the file and starts logging to a new log file. A separately running service finds the previous log files and sends the log contents to a Web-based service. The service stores the log data in a MongoDB collection. The logger deletes log files after it completes sending them to the service.
 
-This article covers the client-side logger code. It makes HTTP GET requests as described below. The server side components log to 
+![Log data on an AWS hosting service](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/Logger_Architecture.jpg)
 
+This article covers the client-side logger code. It makes HTTP GET requests as described below. The server side components log to local log files, and optionally to a MongoDB collection.
 
-##Log levels
+## Log levels
 
 Logger implements 4 levels of logs: info, warning, error, and critical. Call these methods to put a message into the log.
 
-'''
+```
 void info( String message );
 void warning( String message );
 void error( String message );
 void critical( String message );
-'''
+```
 
 For example, logger.info( "My log message" );
 
-##Log files
+## Log files
 
 Logger creates log files with the name 'log' at the root level of the SD/NAND. For example, log1, log2, log3, and more. Logger creates the next log file after it stores 200 or more bytes of log data. Adjust the size for your project, any size will do.
 
-##Web-based API service
+## Web-based API service
 
 Logger's upload service runs every 20 seconds. It finds the log file with the lowest log number. It uses HTTPclient to make a GET request to the Web server in this format:
 
+```
 https://server.com?message=the%2Alog%2Amessage
+```
 
 Logger URL encodes the message field before sending it to the server. Logger adds a unique device identifier to the message. It uses the name of the device from a #define statement appended with the final 2 digits of the ESP32 MAC address. For example, CALLIOPE-8F, info, the log message.
 
 By default Logger uses HTTPS protocols. The root server certificate must be made available for HTTPclient to make a connection. Logger expects to find the certificate in a secrets.h file. Set the file using: 
 
-'''
+```
 #include "secrets.h"
 extern const char* root_ca;   // Defined in secrets.h
-'''
+```
 
 ##Using logger in Arduino sketches and C++ files
 
@@ -69,13 +72,13 @@ void Battery::loop( LOGGER &logger )
 
 
 
-##Bugs
+## Bugs
 
 While working on the logger I found two bugs in the ESP32. When the logger initially opens a new log file the SD library size() method returns garbage values. Once I write some data to the log f ile size() returns the correct value. This is [Bug Report 8625](https://github.com/espressif/arduino-esp32/issues/8625#issuecomment-1715236171) for Espressif for the ESP32.
 
 The second issues happens when using the HTTPclient library. If the code does not use the end() method after making an HTTP GET request to the Web service, then HTTPclient causes the SD library to stop writing data to the SD/NAND device. The File object write() method returns a value equal to the number of bytes you asked it to write, yet the file size remains the same as though the write never happened. Using the HTTPclient end() method solves this problem.
 
-## 
+## How you may help
 
 
 
@@ -90,7 +93,7 @@ Source code:
 
 ***Logger.h***
 
-'''
+```
 #ifndef _LOGGER_
 #define _LOGGER_
 
@@ -156,9 +159,9 @@ class LOGGER
 };
 
 #endif // _LOGGER_
-'''
+```
 
-***Logger.cpp***
+*** Logger.cpp***
 '''
 /*
  Reflections, mobile connected entertainment device
