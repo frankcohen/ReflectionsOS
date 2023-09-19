@@ -526,3 +526,6 @@ void LOGGER::loop()
 ## Find the latest update
 
 The latest update is in the source code repository at [https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Scalable%20logger.md](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Scalable%20logger.md)
+
+Article published and comments at:
+(https://www.reddit.com/r/esp32/comments/16mj3zh/scalable_logger_esp32_wifi_sdnand_for_multiple/)[https://www.reddit.com/r/esp32/comments/16mj3zh/scalable_logger_esp32_wifi_sdnand_for_multiple/]
