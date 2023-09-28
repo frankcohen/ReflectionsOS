@@ -1,0 +1,72 @@
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+Release/
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+# PyDev specific (Python IDE for Eclipse)
+*.pydevproject
+
+# CDT-specific (C/C++ Development Tooling)
+#.cproject
+
+# Java annotation processor (APT)
+.factorypath
+
+# PDT-specific (PHP Development Tools)
+.buildpath
+
+# sbteclipse plugin
+.target
+
+# Tern plugin
+.tern-project
+
+# TeXlipse plugin
+.texlipse
+
+# STS (Spring Tool Suite)
+.springBeans
+
+# Code Recommenders
+.recommenders/
+
+# Scala IDE specific (Scala & Java development for Eclipse)
+.cache-main
+.scala_dependencies
+.worksheet
+
+# Temporary files used while creating the certs
+extras/example.conf
+extras/example.crt
+extras/example.crt.DER
+extras/example.csr
+extras/example.key
+extras/example.key.DER
+extras/exampleca.conf
+extras/exampleca.crt
+extras/exampleca.key
+extras/exampleca.srl
+
+# Cert files in every example
+cert.h
+private_key.h
+
+# Do not push VS Code project files
+.vscode
+
+# Ignore platformio work directory
+.pio
