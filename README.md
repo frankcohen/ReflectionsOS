@@ -47,6 +47,12 @@ I made an air-guitar project to learn about streaming music over Bluetooth Clasi
 
 -Frank
 
+## Update as of October 6, 2023
+
+Added Wifi-based [Logger](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Scalable%20logger.md). Logs messages to server-side logger. Update board (codenamed Red Fish) to solve U4 LDO problem when battery is attached. Investigated active GPS antennas.
+
+![Cindy Lou board](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/CindyLou.jpg)
+
 ## Update as of August 6, 2023
 
 Added Over The Air (OTA) update capabilitiy. Server downloads .bin firmware and a version identifier text file over HTTPS secure protocol. OTA system replaces the current firmware and restarts the host. Thanks to @lipun12ka4 on [Espressif Forums](https://esp32.com/posting.php?f=13&mode=reply&t=30973&sid=89252e0558c707c8813146f40cccf9fc) for sharing his OTA code, a problem, and solution. config.h defines the code's version number, it is a simple integer value. Arduino IDE compiles the firmware. Use FTP to store it in /home/fcohen/files on cloudcity.starlingwatch.com.
