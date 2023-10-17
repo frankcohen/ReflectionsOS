@@ -32,6 +32,8 @@ The wire-to-board connectors for battery, haptic, and speaker work well and requ
 
 GPS passive antennas are less expensive and smaller in physical size than active antennas required by the GPS module.
 
+FCP boards for the gesture sensor are too expensive.
+
 ## Blue Fish Requirements
 
 1. Use the [LDO](https://www.digikey.com/en/products/detail/diodes-incorporated/AP2112K-3-3TRG1/4470746?s=N4IgTCBcDaIAQEEAKYCMqwGkC0BmAdLgCoBKA4qiALoC%2BQA) from the Adafruit Feather ESP32-S3.
@@ -42,9 +44,14 @@ GPS passive antennas are less expensive and smaller in physical size than active
 
 4. Add an LNA chip to the GPS module for passive antenna support. Keep the IPEX connector for now, though we may change to an on-board antenna or an FCP external connector.
 
-5. Change the battery, haptic, and audio connectors to micro JST. Replaces the previous 009176002884906 KYOCERA AVX wire to board connectors.
+5. Change the battery, haptic, and audio connectors to solder pads. Replaces the previous 009176002884906 KYOCERA AVX wire-to-board connectors.
 
 6. Update the silk: Starling Watch 2023, BlueFish T4 AM MAG. T4 is for Thi Thu Thao Tran, a talented electronics engineer who made the changes for Blue Fish.
 
 7. Do not place GPIO header.
 
+8. Remove the gesture sensor connector and place a VL53L5CX Time Of Flight sensor to a new tab on the main board.
+
+9. Move the USB connector to the 3 o'clock position relative to the top side of the main board.
+
+10. Add a slot/hole through the board for the display FCP connection. Relocate the display connector.
