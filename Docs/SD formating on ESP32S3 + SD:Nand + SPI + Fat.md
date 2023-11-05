@@ -22,6 +22,10 @@ Find this definition, change its value to 3
 #define SPI_DRIVER_SELECT 3
 ```
 
+### Schematic
+
+![image]()
+
 ### Sketch
 
 Refer to the code 
