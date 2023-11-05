@@ -1,6 +1,6 @@
 # ESP32-S3 SPI Nand/SD SdFat Format for Fat16 recipe
 
-by Frank Cohen, November 2, 2023, part of the Reflections open-source project
+by Frank Cohen, November 2, 2023, part of the [Reflections](https://github.com/frankcohen/ReflectionsOS) open-source project
 
 ## A Recipe
 
@@ -114,7 +114,7 @@ Connect your computer to an ESP32-S3 using a technique I call [JCUSB](https://gi
 
 Once you customize the above values, compile and upload the code. Then open the Serial Monitor, set the connection speeed to 115200, follow the on-screen instructions.
 
-Here is an example run on my MacOS laptop using Arduino IDE 2.2.1.
+Here is an example. I ran this on my MacOS laptop using Arduino IDE 2.2.1.
 
 ```
 SdFat version: 2.2.2
@@ -125,7 +125,8 @@ Assuming the SD chip select pin is: 15
 Edit SD_CS_PIN to change the SD chip select pin.
 Done
 
-type any character to start```
+type any character to start
+```
 
 ## What goes wrong
 
