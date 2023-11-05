@@ -24,7 +24,7 @@ Find this definition, change its value to 3
 
 ### Schematic
 
-![image]()
+![SD attaches to ESP32 over SPI](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/SD-ESP32-SdFat.jpg)
 
 ### Sketch
 
