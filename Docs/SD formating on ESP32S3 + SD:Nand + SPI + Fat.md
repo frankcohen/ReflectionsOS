@@ -24,12 +24,12 @@ Find this definition, change its value to 3
 
 ### Schematic
 
-![SD attaches to ESP32 over SPI](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/SD-ESP32-SdFat.jpg)
+![SD attaches to ESP32 over SPI](https://github.com/frankcohen/ReflectionsOS/Docs/images/SD-ESP32-SdFat.jpg)
 
 ### Sketch
 
 Refer to the code 
-[SdFat_ESP32_SPI_SD_NAND_Formatting](https://github.com/frankcohen/ReflectionsOS/experiments/SdFat_ESP32_SPI_SD_NAND_Formatting)
+[https://github.com/frankcohen/ReflectionsOS/Experiments/SdFat_ESP32_SPI_SD_NAND_Formatting](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/SdFat_ESP32_SPI_SD_NAND_Formatting)
 
 GPIO 12 is the chip-select for a TFT video display on the same SPI bus as the SD/Nand. This tells SdFat to disable it.
 ```
@@ -41,7 +41,7 @@ GPIO 15 is the chip-select for the SD/Nand.
 #define SD_CS_PIN 15
 ```
 
-ESP32 allows any GPIO pins to be an SPI bus. See Andreas Speiss video and spreadsheet to know the limitations. Reflection's board uses 35, 36, 37 for SPI between the SD/Nand and Display.
+ESP32 allows any GPIO pins to be an SPI bus. See [Andreas Speiss video and spreadsheet](https://www.youtube.com/watch?v=LY-1DHTxRAk) to know the limitations. Reflection's board uses 35, 36, 37 for SPI between the SD/Nand and Display.
 ```
 #define SPI_MOSI      35
 #define SPI_MISO      37
@@ -112,7 +112,7 @@ USB Mode: Hardware CDC and JTAG
 
 ## JCUSB, USB, JTAG Debugging, Connection
 
-Connect your computer to an ESP32-S3 using a technique I call [JCUSB](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/JCUSB%20using%20JTAG%2C%20CDC%2C%20USB%20for%20debugging.md). JCUSB is short for S3 + USB + CDC + OpenOCD + Arduino IDE. JCUSB short for JTAG + CDC + USB + OpenOCD + Arduino IDE Debugger. Only ESP32-S3 and its successors support JCUSB - it won't work on ESP32 and ESP32-S2. JCUSB uses a custom USB cable to connect an ESP32 to a Windows or MacOS computer. [Details here](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/JCUSB%20using%20JTAG%2C%20CDC%2C%20USB%20for%20debugging.md)
+Connect your computer to an ESP32-S3 using a technique I call [JCUSB](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/JCUSB%20using%20JTAG%2C%20CDC%2C%20USB%20for%20debugging.md). JCUSB is short for S3 + USB + CDC + OpenOCD + Arduino IDE. Only ESP32-S3 and its successors support JCUSB - it won't work on ESP32 and ESP32-S2. JCUSB uses a custom USB cable to connect an ESP32 to a Windows or MacOS computer. [Details here](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/JCUSB%20using%20JTAG%2C%20CDC%2C%20USB%20for%20debugging.md)
 
 # Compile and Run
 
@@ -136,13 +136,15 @@ type any character to start
 
 SdFat works with a lot of hardware and SD cards, and it is possible it will not work with yours.
 
-SPI bus speed.
+SPI bus speed. SdFat sets SPI bus speed with the SD_SCK_MHZ macro. 50 works for my ESP32-S3-Mini-N1. I have found no clear method of determining the speed for a given board and SD/Nand component. Try lesser values. For example, 30, 20, 10.
 
-SD card won't format. Usually because it is broken. Or maybe partially zapped from static electricity.
+SD card won't format. Usually because it is broken. Or maybe partially zapped from static electricity. Or it is a low quality SD card that works inconsistently.
 
-Conflicts with the board definitions.
+Conflicts with the board definitions. Check the pin use on your board.
 
-SdFat's creator/maintainer does an amazing job at interacting with his community. I recommend you post an issue for support.
+In the event something goes wrong, SdFat's creator/maintainer does an amazing job at interacting with his community. I recommend you search the issues, and if you need to post an issue.
+
+--
 
 Frank Cohen, 2023
 [Reflections Project](https://github.com/frankcohen/ReflectionsOS)
