@@ -136,11 +136,11 @@ type any character to start
 
 SdFat works with a lot of hardware and SD cards, and it is possible it will not work with yours.
 
-SPI bus speed. SdFat sets SPI bus speed with the SD_SCK_MHZ macro. 50 works for my ESP32-S3-Mini-N1. I have found no clear method of determining the speed for a given board and SD/Nand component. Try lesser values. For example, 30, 20, 10.
+- SPI bus speed. SdFat sets SPI bus speed with the SD_SCK_MHZ macro. 50 works for my ESP32-S3-Mini-N1. I have found no clear method of determining the speed for a given board and SD/Nand component. Try lesser values. For example, 30, 20, 10.
 
-SD card won't format. Usually because it is broken. Or maybe partially zapped from static electricity. Or it is a low quality SD card that works inconsistently.
+- SD card won't format. Usually because it is broken. Or maybe partially zapped from static electricity. Or it is a low quality SD card that works inconsistently.
 
-Conflicts with the board definitions. Check the pin use on your board.
+- Conflicts with the board definitions. Check the pin use on your board.
 
 In the event something goes wrong, SdFat's creator/maintainer does an amazing job at interacting with his community. I recommend you search the issues, and if you need to post an issue.
 
