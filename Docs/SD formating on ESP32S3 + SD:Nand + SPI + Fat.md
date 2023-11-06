@@ -24,7 +24,7 @@ Find this definition, change its value to 3
 
 ### Schematic
 
-![SD attaches to ESP32 over SPI](https://github.com/frankcohen/ReflectionsOS/Docs/images/SD-ESP32-SdFat.jpg)
+<img src="https://raw.githubusercontent.com/frankcohen/ReflectionsOS/main/Docs/images/SD-ESP32-SdFat.jpg" alt="SD attaches to ESP32 over SPI" width="100%"/>
 
 ### Sketch
 
@@ -132,7 +132,7 @@ Done
 type any character to start
 ```
 
-## What goes wrong
+## What May Go Wrong
 
 SdFat works with a lot of hardware and SD cards, and it is possible it will not work with yours.
 
