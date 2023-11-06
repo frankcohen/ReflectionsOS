@@ -142,7 +142,7 @@ SdFat works with a lot of hardware and SD cards, and it is possible it will not 
 
 - Conflicts with the board definitions. Check the pin use on your board.
 
-In the event something goes wrong, SdFat's creator/maintainer does an amazing job at interacting with his community. I recommend you search the issues, and if you need to post an issue.
+In the event something goes wrong, SdFat's creator/maintainer does an amazing job at interacting with his community. I recommend you search the [issues](https://github.com/greiman/SdFat/issues), and if you need to post an issue.
 
 --
 
