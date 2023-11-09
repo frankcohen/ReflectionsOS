@@ -11,5 +11,3 @@ Read the [Reflections Recorder Operations Notes](https://github.com/frankcohen/R
 ## Gateway Experiment
 
 Gateway is an experiment to provide file and command transfer over Bluetooth Classic to a Reflections operating environment. Read the [Gateway Experiment Notes](https://github.com/frankcohen/ReflectionsOS/blob/main/CloudCity/CloudCity/Gateway/README.md)
-
-
