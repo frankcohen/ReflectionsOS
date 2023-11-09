@@ -8,6 +8,42 @@ Reflections Recorder records video and audio using WebRTC in a browser window, u
 
 This readme provides an overview of modifications made to the Reflections Recorder 4 project. It covers the enhancements and changes implemented to improve the functionality and user experience of the project.
 
+## Design Documents
+
+[Reflections Recorder 5 requirements](https://github.com/frankcohen/ReflectionsOS/blob/main/CloudCity/Recorder/Reflections%20Recorder%205%20requirements.pdf)
+
+[Reflections Recorder Design](https://github.com/frankcohen/ReflectionsOS/blob/main/CloudCity/Recorder/Reflections%20Recorder%20design.pdf)
+
+## Changes Needed
+
+The Selection Box correctly highlights the selection zone. Reflections is tested using YouTube.com.
+
+![Recorder captures YouTube video](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/Recorder.jpg)
+
+However, some Selection Box location and size values deliver video that is wrongly clipped.
+
+![Recorder captures YouTube video](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/Recorder.jpg)
+
+This may be the constant ratio values fault. Look in crop.js
+
+node-api/public/js/crop.js, lines 143 to 144:
+```
+r.w = size
+r.h = size * 1.2
+```
+
+and 
+
+node-api/routes/users.js, lines 65 to 68:
+```
+const x = Math.ceil( xStart * 3.07 );
+const y = Math.ceil( yStart * 2.10 );
+const w = Math.ceil( ( frameWidth * 2.4 ) * 1.2 );
+const h = Math.ceil( frameHeight * 2.4 );
+```
+
+Also, Recorder throws an error when I share a running QuickTime movie and drag the selection box. The inputs to ffmjpeg on the server are too large.
+
 ## Service Start/Stop
 
 pm2 start index.js
