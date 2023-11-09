@@ -1,21 +1,132 @@
-# Reflections Recorder version 4
-## Notes on installation, server operation, and code
 
-June 4, 2023, updated August 9, 2023
-fcohen@starlingwatch.com
+# Reflections Recorder Operations Notes
 
-This readme provides an overview of the **modifications** made to the Reflections Recorder project. It covers the enhancements and changes implemented to improve the functionality and user experience of the project.
+Updated: November 8, 2023
+(c) 2023 Frank Cohen. Published under Creative Commons license.
 
-Repository is at https://github.com/frankcohen/ReflectionsOS
-Includes board wiring directions, server side components, examples, support
+Reflections Recorder records video and audio using WebRTC in a browser window, uploads it to a server over HTTPS, processes the video into 240x240 mjpeg movie and audio formats, packs the video and audio into a TAR file, and downloads the TAR to a Reflections board over Wifi to play.
 
-Licensed under GPL v3 Open Source Software
-(c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
-Read the license in the license.txt file that comes with this code.
+This readme provides an overview of modifications made to the Reflections Recorder 4 project. It covers the enhancements and changes implemented to improve the functionality and user experience of the project.
+
+## Service Start/Stop
+
+pm2 start index.js
+
+```
+sudo pm2 delete 0
+sudo pm2 start
+
+sudo systemctl restart nginx
+sudo systemctl stop nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+sudo systemctl status nginx
+
+Mongo start command
+sudo mongod --port 27017 --dbpath ~/mongodb-data
+
+Mongo connect command: 
+mongosh --port 27017
+```
+
+## Paths
+
+- /home/fcohen/files
+- /home/fcohen
+- /etc/nginx
+- /var/www/node-api
+- /etc/ssl
+
+### Recorder UX
+
+- Client side /var/www/node-api/public/js/main.js
+- Server side to ffmpeg process video at: /var/www/node-api/routes/users.js
+
+Temporary for logger
+/home/ec2-user/.pm2/logs
+
+### Logger
+
+```
+/var/www/node-api/index.js at /logger sends logger/dist/index.html which is react
+/var/www/node-api/logger/src/text.txt appears to be the server-side tail service,
+a post to https://cloudcity.starlingwatch.com/api/logging/ returns the log contents
+
+/var/www/node-api/logger/src/
+App.jsx - emits html of buttons and logger panel
+LogViewer.jsx - emits html of logger panel and tests for notifications (uneeded)
+index.css
+text.txt - socket.io to serve the log files to the react-viewer
+```
+
+When you need to clear the log file contents, to free disk space:
+```
+sudo rm /home/ec2-home/.pm2/logs/index-out.log
+sudo vi /home/ec2-home/.pm2/logs/index-out.log
+sudo chown ec2-user index-out.log 
+sudo chgrp ec2-user index-out.log 
+cd /var/www/node-api
+pm2 start ecosystem.config.js
+```
+
+### Telemetry with MongoDB
+
+Telemetry is a service to save sensor data to a MongoDB collection. Access it through the Node.js APIs:
+
+```
+https://cloudcity.starlingwatch.com/telemetry/find?db=test1&field3=1
+```
+Executes /var/www/node-js/telemetry/scripts/find.js making the key/value pairs
+available to the script. Returns 200 plus html response created in find.js, or
+returns 500 error code plus error description in the body of the html.
+Telemetry app locates find.js dynamically by file name, so that I can write my
+own scripts and store them in telemetry/scripts.
+
+```
+https://cloudcity.starlingwatch.com/telemetry/log?db=starlingdb&collection=watches&firstname=frank&lastname=cohen&price=340
+```
+Inserts a document into named db and named collection using one or more URL 
+encoded key/value pairs. Returns 200 response or 500 error code plus error 
+description in the body of the html.
+
+Mongo connect command: 
+```
+mongosh --port 27017
+```
+
+## Permissions
+
+```
+sudo groupadd mygroup
+sudo usermod -a -G mygroup root
+sudo usermod -a -G mygroup ec2-user
+sudo chgrp -R mygroup /var/www/node-api/node_modules
+sudo chgrp -R mygroup /var/www/node-api
+sudo chmod -R 777 /var/www/node-api/node_modules
+sudo chmod -R 777 /var/www/node-api
+```
+
+From https://stackoverflow.com/questions/48798760/npm-install-on-aws-ec2-instance-throw-eacces
+
+## Node log timestamp utility
+
+npm install log-timestamp
+adds date/time stamp to console logs automatically
+
+Changed code to show local time zone in time stamp:
+sudo vi ./node_modules/log-timestamp/log-timestamp.js
+
+// the default date format to print
+function timestamp() {
+  return '[' + new Date().toLocaleString( 'sv', { timeZoneName: 'short' } ) + ']';
+}
 
 ## Nginx
 
 In the file `/etc/nginx/conf.d/reflections-ssl.conf`, I made changes to the **NGINX** configuration. Specifically, I configured the application to work with the file `/var/www/node-api/public/index.html` as the main page. For API calls, I set up a `proxy_pass` directive to redirect them to `https://cloudcity.starlingwatch.com/api/`.
+
+Log files at
+/var/log/nginx/
 
 Here is an example snippet from the configuration file:
 
@@ -30,10 +141,18 @@ Here is an example snippet from the configuration file:
     # location block for your API endpoints
     location /api {
         proxy_pass http://localhost:3000;
-        client_max_body_size 200M;#
+        client_max_body_size 200M;
+		}
+		
+	# location block for your API endpoints
+    location /telemetry {
+        proxy_pass http://localhost:3000;
+        client_max_body_size 200M;
+    }		
+}		
 ```
 
-In /etc/nginx/conf.d/ssl.conf, I did this configuration is setting up a simple HTTP to HTTPS redirect on your Nginx server for the domain cloudcity.starlingwatch.com. Let's go over each directive:
+In /etc/nginx/conf.d/ssl.conf, HTTP to HTTPS redirect on Nginx server for the domain cloudcity.starlingwatch.com:
 
 ```bash
 server {
@@ -54,20 +173,17 @@ server {
 
 To summarize, this configuration redirects all HTTP traffic to the HTTPS equivalent for the `cloudcity.starlingwatch.com` domain, improving security by ensuring all traffic to that domain is encrypted.
 
-## API
+Front-end Javascript functions are implemented in
+/var/www/node-api/public/js
+cropv2.js and main.js
+
+## APIs
+
+Backend APIs are implemented in
+/var/www/node-api/routes
+index.js
 
 The server offers various endpoints that allow you to interact with the files on the server.
-
-#### Endpoint: '/logit?message='
-
-Logs a message to the server log at /home/ec2-user/.pm2/logs/
-
-```bash
-Recorder-error.log  Recorder-out.log  index-error.log  index-out.log
-```
-Message needs to be URL encoded.
-
-For example, https://cloudcity.starlingwatch.com/api/logit?message=thisismyfirstlogentry5
 
 #### Endpoint: `/files`
 
@@ -89,13 +205,13 @@ A new endpoint, /delete/, has been created for file management purposes. This en
 https://cloudcity.starlingwatch.com/api/delete?name=4eadea855c363ebbcac60902dc4b8cb1.tar
 ```
 
-Upon interacting with this endpoint, you'll receive a message indicating the status of the operation. The possible responses include `File deleted` if the operation was successful, or `File not found` if the specified file does not exist.
+Upon interacting with this endpoint, receive a message indicating the status of the operation. The possible responses include `File deleted` if the operation was successful, or `File not found` if the specified file does not exist.
 
 The rest of the server configuration remains unchanged from the previous setup.
 
 ## PM2
 
-The root of our server is located at /var/www/node-api. From this directory, we can start the server, as well as monitor the logs to troubleshoot any errors that may arise during the operation of the server.
+The root of our server is /var/www/node-api. Start the node server from this directory. And, monitor the logs to troubleshoot any errors that may arise during the operation of the server.
 
 ### Starting the Server
 
@@ -106,6 +222,26 @@ To start the server, you can use the pm2 command, a production process manager f
 ```
 
 This command instructs pm2 to launch the application described in the ecosystem.config.js configuration file.
+
+### ecosysytem.config.js
+
+```
+module.exports = {
+  apps : [{
+    name   : "Recorder",
+    script : "./index.js",
+    watch: false,
+    watch_delay: 1000,
+    ignore_watch : ["*.jpg", "*.mjpeg", "*.m4a", "*.tar" ]
+  },
+  {
+    script: 'index.js',
+    watch: 'false',
+    ignore_watch: ["*.mjpeg","*.m4a","*.tar"]
+  }
+  ]
+}
+```
 
 ### Checking the Server Status
 
@@ -121,11 +257,25 @@ This command will display the current operational state of all applications bein
 
 To view the logs of the application, which can provide valuable insights into its operation and any errors that might have occurred, use the following pm2 command:
 
-```bash
-    pm2 logs
+```
+pm2 logs
 ```
 
-This command displays the real-time stdout and stderr outputs of the applications managed by pm2, which can be especially useful for debugging issues. 
+This command displays the real-time stdout and stderr outputs of the applications managed by pm2, which can be especially useful for debugging issues.
+
+## Browsing Logs using react-logviewer
+
+pm2 keeps the logs in /home/ec2-user/.pm2/logs
+
+Recorder-error.log, Recorder-out.log, index-error.log, index-out.log
+
+CloudCity uses [react-logviewer](https://github.com/melloware/react-logviewer) to make the logs available from a browser at [https://cloudcity.starlingwatch.com/logger](https://cloudcity.starlingwatch.com/logger).
+
+Wraps react-log viewer in the Reflections Recorder node.js application at /var/www/node-api/index.js
+
+Serves from https://cloudcity.starlingwatch.com/logger. Displays logs from /home/ec2-user/.pm2/logs. Clickable tabs change view between log files. Expands to fill browser window width/height. Lazy loads. Live/streamed view of logs, no reload of page needed.
+
+Logs support clickable URLs, search (case insensitive), multi-line copy, search next/previous.
 
 ## EC2 Instance and Elastic IP
 
@@ -148,7 +298,7 @@ Elastic IPs can be allocated to your account, and you can choose when to associa
 
 In our setup, by utilizing Elastic IP, we've ensured a reliable and stable connection to our EC2 instance, enhancing our system's robustness and availability.
 
-## Summary
+## Conclusion
 
 This documentation provides a comprehensive overview of the significant modifications made to the Reflections Recorded project, each aimed at enhancing the system's performance, reliability, and user experience.
 
@@ -160,7 +310,14 @@ The introduction of an Elastic IP to our EC2 instance has added stability and fl
 
 In essence, these modifications have significantly elevated the Reflections Recorded project's operational capacity. They not only optimize the system's current performance but also set a foundation for future enhancements and scalability.
 
-## Notes
-Recorder main page is in node-api/public/index.html
-Selection mechanism is in node-api/public/cropv2.js
+## Set Time and Date
 
+AWS Linux instances come with [chronyd ntp service](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-time.html) pre-installed.
+
+```
+sudo service chronyd restart
+vi /etc/chrony.conf
+sudo chkconfig chronyd on
+sudo timedatectl set-timezone America/Los_Angeles
+timedatectl
+```
