@@ -22,7 +22,7 @@ The Selection Box correctly highlights the selection zone. Reflections is tested
 
 However, some Selection Box location and size values deliver video that is wrongly clipped.
 
-![Recorder captures YouTube video](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/Recorder.jpg)
+![Recorder captures YouTube video](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/Recorder2.jpg)
 
 This may be the constant ratio values fault. Look in crop.js
 
