@@ -1,7 +1,8 @@
+// const common = require('./common');
 var express = require('express');
 var router = express.Router();
 const path = require('path');
-const common = require('../common');
+const { exec } = require('child_process');
 
 const UPLOAD_TMP_DIR = 'uploads/tmp'; 
 const FINAL_PATH = 'uploads/final';
@@ -20,48 +21,58 @@ const { xml } = require('jade/lib/doctypes');
 const upload = multer({
   dest:UPLOAD_TMP_DIR
 })
+
+
+const common = {
+  exec: (command) => {
+    return new Promise((resolve, reject) => {
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`exec error: ${error}`);
+          reject(error);
+          return;
+        }
+        console.log(`stdout: ${stdout}`);
+        console.error(`stderr: ${stderr}`);
+        resolve(stdout);
+      });
+    });
+  },
+}
+
+
 /* GET users listing. */
 router.post('/', upload.single('file'), async function(req, res, next) {
   console.log(req.file)
   console.log(`CROP: ${req.body.crop}`);
-
   
   const {xStart, xEnd, yStart, yEnd, maxX, maxY} = JSON.parse(req.body.crop);
   const frameWidth = parseFloat(xEnd) - parseFloat(xStart);
   const frameHeight = parseFloat(yEnd) - parseFloat(yStart);
   const videoWidth = parseFloat(maxX);
   const videoHeight = parseFloat(maxY);
-
+	
   const scaleX = videoWidth / frameWidth;
   const scaleY = videoHeight / frameHeight;
   
-  console.log(`Width: ${frameWidth}, Height: ${frameHeight}`);
-
-
-  /*
-  const ffmpegCmd = `ffmpeg -i ${tmpPath} -map 0:a ${finalPathAudio} -filter:v "crop=${width}:${height}:${xStart}:${yStart},fps=15,scale=240:240:flags=lanczos,crop=240:in_h:(in_w-240)/2:0"  -q:v 9 -map 0:v ${tempPathVideo}`
-  const ffmpegCropCmd = `ffmpeg -i ${tempPathVideo} -vf "fps=15,scale=240:240:flags=lanczos,crop=240:in_h:(in_w-240)/2:0" -q:v 9 ${finalPathVideo}`
-
-  const ffmpegCmd = `ffmpeg -i ${tmpPath} -map 0:a ${finalPathAudio} -vf  "crop=${width}:${height}:${xStart}:${yStart},scale=240:240:flags=lanczos,fps=15" -q:v 9 -map 0:v ${finalPathVideo}`;
-
-*/
-  
   const tmpPath = path.join(UPLOAD_TMP_DIR, req.file.filename); 
-  const finalPathAudio = path.join(FINAL_PATH, req.file.filename) + "." + AUDIO_CODEC;  
+  const finalPathAudio = path.join(FINAL_PATH, req.file.filename) + "." + AUDIO_CODEC; 
   const finalPathVideo = path.join(FINAL_PATH, req.file.filename) + "." + VIDEO_CODEC;
   const finalPathJson = path.join(FINAL_PATH, req.file.filename) + ".json";
   const tempPathVideo = path.join(FINAL_PATH, req.file.filename) + "_t." + VIDEO_CODEC;
   const finalPathArchive = path.join(TAR_PATH, req.file.filename) + "." + TAR_FORMAT;
 
-  const w = Math.round(frameWidth*scaleX);
-  const h = Math.round(frameHeight*scaleY);
-  const x = Math.round(xStart*scaleX);
-  const y = Math.round(yStart*scaleY);
-
+  const x = Math.ceil( xStart * 3.07 );
+  const y = Math.ceil( yStart * 2.10 );
+  const w = Math.ceil( ( frameWidth * 2.4 ) * 1.2 );
+  const h = Math.ceil( frameHeight * 2.4 );
+	
   console.log(`Width: ${w}, Height: ${h}, X: ${x}, Y: ${y}`);
 
-    
-  const ffmpegCmd = `/usr/local/bin/ffmpeg/ffmpeg-git-20230313-amd64-static/ffmpeg -i ${tmpPath} -map 0:a ${finalPathAudio} -vf  "crop=${w}:${h}:${x}:${y},scale=240:240:flags=lanczos,fps=15" -q:v 9 -map 0:v ${finalPathVideo}`;
+  // A great quick tutorial on ffmpeg scale and crop
+  // https://www.youtube.com/watch?v=oT1ywwoUrbU
+	
+  const ffmpegCmd = `/usr/local/bin/ffmpeg/ffmpeg-git-20230313-amd64-static/ffmpeg -i ${tmpPath} -map 0:a ${finalPathAudio} -vf "crop=${w}:${h}:${x}:${y},scale=240:240:flags=lanczos,fps=15"  -q:v 9 -map 0:v ${finalPathVideo}`;
   
   console.log(`Executing ffmpegCmd command: ${ffmpegCmd}`);
   try{

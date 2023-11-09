@@ -2,17 +2,25 @@ var express = require('express');
 var router = express.Router();
 var path = require('path');
 
+import React from 'react';
+import { render } from 'react-dom';
+import { LazyLog } from 'react-lazylog';
+const { LazyLog } = require('react-lazylog');
+
 const folderPath = "/home/fcohen/files/";
 // const folderPath = "/home/ec2-user/cloudCity/files/";
 // "/var/www/node-api/uploads/final/";
 const fs = require("fs");
 
-// GET to make a log entry
 
-var timestamp = require('log-timestamp');
-router.get( "/logit", (req, res) => {
-  console.log( req.query.message );
-  res.send( "<html><body>Logged</body></html>" );
+// endpoint for browing the logs
+router.get( "/logs", (req, res) => {
+
+  res.send( render((
+  <LazyLog url="http://example.log" />
+), document.getElementById('root'));
+)
+
 });
 
 
