@@ -24,7 +24,7 @@ However, some Selection Box location and size values deliver video that is wrong
 
 ![Recorder captures YouTube video](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/Recorder2.jpg)
 
-This may be the constant ratio values fault. Look in crop.js
+This may be the constant ratio values fault. Look in:
 
 node-api/public/js/crop.js, lines 143 to 144:
 ```
@@ -41,6 +41,7 @@ const y = Math.ceil( yStart * 2.10 );
 const w = Math.ceil( ( frameWidth * 2.4 ) * 1.2 );
 const h = Math.ceil( frameHeight * 2.4 );
 ```
+The multiple values in the code above were developed from testing. There is no long term guarantee these values will work.
 
 Also, Recorder throws an error when I share a running QuickTime movie and drag the selection box. The inputs to ffmjpeg on the server are too large.
 
