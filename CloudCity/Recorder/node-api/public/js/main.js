@@ -22,8 +22,18 @@ var soundMeter = null;
 var micNumber = 0;
 var blob =null;
 
+<<<<<<< Updated upstream
 const WIDTH=800;
 let convertedHeight = 600;
+=======
+var myX = 0;
+var myY = 0;
+var myW = 0;
+var myH = 0;
+
+var WIDTH=800;
+var convertedHeight = 600;
+>>>>>>> Stashed changes
 
 // showing loading
 const loader = document.querySelector("#loading");
@@ -87,10 +97,16 @@ function onShareScreen() {
                         micSource.connect(micGain).connect(audioDestination);
                         console.log("added mic audio");
                       }
+<<<<<<< Updated upstream
 
                       audioDestination.stream.getAudioTracks().forEach(function(audioTrack) {
                           composedStream.addTrack(audioTrack);
                         });
+=======
+					  audioDestination.stream.getAudioTracks().forEach(function(audioTrack) {
+                          composedStream.addTrack(audioTrack);
+                       });
+>>>>>>> Stashed changes
                     } else {
                       //add just the mic audio
                       micStream.getAudioTracks().forEach(function(micTrack) {
@@ -128,13 +144,22 @@ function getStreamSuccess(stream) {
       };
     }
     if (track.kind == "video") {
+<<<<<<< Updated upstream
       console.log(track.kind + ":" + JSON.stringify(track.getSettings()));
       //console.log(track.getSettings());
+=======
+      //console.log(track.kind + ":" + JSON.stringify(track.getSettings()));
+
+	  console.log("video ");
+
+	  //console.log(track.getSettings());
+>>>>>>> Stashed changes
       /*document.getElementById("canvas").height = track.getSettings().height;
       document.getElementById("canvas").width= track.getSettings().width;
       document.getElementById("videoshare").height = track.getSettings().height;
       document.getElementById("videoshare").width= track.getSettings().width;*/
 
+<<<<<<< Updated upstream
       aspectRatio = track.getSettings().aspectRatio;
 
       let convertedHeight = WIDTH / aspectRatio;
@@ -148,6 +173,11 @@ function getStreamSuccess(stream) {
       };
     }
   });
+=======
+      aspectRatio = track.getSettings().aspectRatio;		
+    }
+  } );
+>>>>>>> Stashed changes
 
   maxX = localStream.getVideoTracks()[0].getSettings().width;
   maxY = localStream.getVideoTracks()[0].getSettings().height;
@@ -190,7 +220,10 @@ function onBtnRecordClicked() {
       } else if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8")) {
         var options = { mimeType: "video/webm;codecs=vp8" };
       }
+<<<<<<< Updated upstream
       //log("Using " + options.mimeType);
+=======
+>>>>>>> Stashed changes
       mediaRecorder = new MediaRecorder(localStream, options);
     } else {
       //log("isTypeSupported is not supported, using default codecs for browser");
@@ -240,6 +273,7 @@ function onBtnRecordClicked() {
   }
 }
 
+<<<<<<< Updated upstream
 function checkCoordinates(){
 	console.log(`checkCoordinates: ${JSON.stringify(coordinates, 0,3)}, max: ${maxX}, ${maxY}`)
 
@@ -277,12 +311,18 @@ function checkCoordinates(){
 	console.log(`Updated checkCoordinates: ${JSON.stringify(coordinates, 0,3)}, lengths: ${xLength}, ${yLength}`)
 }
 
+=======
+>>>>>>> Stashed changes
 const onUpload = async ()=> {
   var Blob = blob;
   const data = new FormData;
 
   coordinates.maxX = maxX;
+<<<<<<< Updated upstream
   coordinates.maxY = maxY;
+=======
+  coordinates.maxY = maxY;	
+>>>>>>> Stashed changes
 
   console.log( `onUpload crop ${ JSON.stringify(coordinates, 0, 1) } `);
 	 
@@ -317,6 +357,7 @@ function onBtnStopClicked() {
   stopBtn.disabled = true;
 }
 
+<<<<<<< Updated upstream
 // function onStateClicked() {
 //   if (mediaRecorder != null && localStream != null && soundMeter != null) {
 //     log("mediaRecorder.state=" + mediaRecorder.state);
@@ -337,6 +378,8 @@ function onBtnStopClicked() {
 //   }
 // }
 
+=======
+>>>>>>> Stashed changes
 function log(message) {
   dataElement.innerHTML = dataElement.innerHTML + "<br>" + message;
   console.log(message);
