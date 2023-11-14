@@ -8,7 +8,7 @@ const UPLOAD_TMP_DIR = 'uploads/tmp';
 const FINAL_PATH = 'uploads/final';
 // const TAR_PATH = '/home/ec2-user/cloudCity/files';
 const TAR_PATH = '/home/fcohen/files';
-const AUDIO_CODEC = 'm4a';
+const AUDIO_CODEC = 'mp3';
 const VIDEO_CODEC = 'mjpeg';
 const TAR_FORMAT = 'tar';
 const TAR_CMD = 'tar'
@@ -72,8 +72,13 @@ router.post('/', upload.single('file'), async function(req, res, next) {
   // A great quick tutorial on ffmpeg scale and crop
   // https://www.youtube.com/watch?v=oT1ywwoUrbU
 	
-  const ffmpegCmd = `/usr/local/bin/ffmpeg/ffmpeg-git-20230313-amd64-static/ffmpeg -i ${tmpPath} -map 0:a ${finalPathAudio} -vf "crop=${w}:${h}:${x}:${y},scale=240:240:flags=lanczos,fps=15"  -q:v 9 -map 0:v ${finalPathVideo}`;
-  
+  // scale=240:240:flags=lanczos,fps=15 scales to 240x240 pixels, 15 frames
+  // per second and no compression
+  // -ac 1 combines audio channels into 1 mono channel
+  // -ar 16000 down samples audio to 16,000 Mhz
+
+  const ffmpegCmd = `/usr/local/bin/ffmpeg/ffmpeg-git-20230313-amd64-static/ffmpeg -i ${tmpPath} -ac 1 -ar 16000 -map 0:a ${finalPathAudio} -vf "crop=${w}:${h}:${x}:${y},scale=240:240:flags=lanczos,fps=15"  -q:v 9 -map 0:v ${finalPathVideo}`;
+	
   console.log(`Executing ffmpegCmd command: ${ffmpegCmd}`);
   try{
     let execResp = await common.exec(ffmpegCmd);

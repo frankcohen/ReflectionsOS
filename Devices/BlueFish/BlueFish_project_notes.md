@@ -1,10 +1,11 @@
 # RedFish project notes, Reflections
 
 Started: October 6, 2023
+Updated: NOvember 13, 2023
 
 Blue Fish is the 7th revision of the Reflections main board. 
 It is the successor to RedFish, CindyLou, Horton, ThingTwo, Hoober, Knox and Sox.
-Blue Fish adds an LNA  chip so Reflections can use inexpensive passive GPS antennae. Predecessors require active GPS antenna. Battery, speaker, haptic motor get micro JST SH connectors. 
+Blue Fish adds an LNA  chip so Reflections can use inexpensive and small passive GPS antennae. Predecessors require active GPS antenna. Battery, speaker, haptic motor are now connected by solder pads.
 
 - Sox - 1st generation board design
 - Hoober - rev 2, fixes problems
@@ -28,7 +29,7 @@ Battery powered circuit does not provide enough voltage. The voltage drop throug
 
 Compared Red Fish schematic to [Adafruit Feather ESP32-S3](https://learn.adafruit.com/adafruit-esp32-s3-feather/downloads) reference board. The voltage drop through mosfet and LDO is almost 0V. 
 
-The wire-to-board connectors for battery, haptic, and speaker work well and require a lot of pressure to close.
+The wire-to-board connectors for battery, haptic, and speaker work well, and add expense, require a lot of pressure to close.
 
 GPS passive antennas are less expensive and smaller in physical size than active antennas required by the GPS module.
 
