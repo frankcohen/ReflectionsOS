@@ -35,10 +35,16 @@ https://github.com/espressif/arduino-esp32/blob/master/libraries/SD/src/SD.cpp
 
 USBMSC msc;
 
-#define NAND_SPI_MOSI      11
-#define NAND_SPI_MISO      13
-#define NAND_SPI_SCK       12
-#define NAND_SPI_CS        42
+#define NAND_SPI_MOSI      35
+#define NAND_SPI_MISO      37
+#define NAND_SPI_SCK       36
+#define NAND_SPI_CS        15
+
+// Display
+#define Display_SPI_DC    GPIO_NUM_5
+#define Display_SPI_CS    GPIO_NUM_12
+#define Display_SPI_RST   GPIO_NUM_0
+#define Display_SPI_BK    GPIO_NUM_6
 
 static const uint32_t DISK_SECTOR_COUNT = 240 * 1000; // 8KB is the smallest size that windows allow to mount
 static const uint16_t DISK_SECTOR_SIZE = 512;    // Should be 512
@@ -120,8 +126,20 @@ void setup() {
   Serial.println("");
   Serial.println("MSC research for Hoober");
 
-  pinMode(NAND_SPI_CS, OUTPUT);
+  pinMode( NAND_SPI_CS, OUTPUT );
   digitalWrite(NAND_SPI_CS, LOW);
+
+  pinMode(Display_SPI_CS, OUTPUT);
+  digitalWrite(Display_SPI_CS, LOW);
+
+  pinMode(Display_SPI_DC, OUTPUT);
+  digitalWrite(Display_SPI_DC, HIGH);
+
+  pinMode(Display_SPI_RST, OUTPUT);
+  digitalWrite(Display_SPI_RST, HIGH);
+
+  pinMode(Display_SPI_BK, OUTPUT);
+  digitalWrite(Display_SPI_BK, LOW);
 
   SPI.begin(NAND_SPI_SCK, NAND_SPI_MISO, NAND_SPI_MOSI);  
   if ( !SD.begin( NAND_SPI_CS ) )

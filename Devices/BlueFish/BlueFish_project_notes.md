@@ -1,7 +1,8 @@
 # RedFish project notes, Reflections
 
 Started: October 6, 2023
-Updated: NOvember 13, 2023
+
+Updated: November 13, 2023
 
 Blue Fish is the 7th revision of the Reflections main board. 
 It is the successor to RedFish, CindyLou, Horton, ThingTwo, Hoober, Knox and Sox.
