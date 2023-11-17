@@ -18,3 +18,5 @@ Arduino IDE settings:
 
 ![Schematic](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Flash_Drive_MSC_Nand_ESP32_SD/ESP32S3_NAND_USB_schematic.jpg)
 
+![Screen shot](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Flash_Drive_MSC_Nand_ESP32_SD/Nand_Flash.jpg)
+
