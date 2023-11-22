@@ -1,0 +1,74 @@
+I'm working on gesture detection with an accelerometer. First part is to detect when the sensor is being moved. Then sense what the movement means. Here's my code so far, checking on the X axis only. What do you think of the approach?
+
+void detectStartOfGesture()
+{
+  if ( ( ( millis() - movetimer ) > windowtime ) || ( firsttime ) )
+  {
+    movetimer = millis();
+    firsttime = false;
+
+    myx = LIS.getAccelerationX() * 200 ;
+
+    if ( ( myx > 1000 ) || ( myx < -1000 ) )
+    {
+      Serial.print( "ignoring " );
+      Serial.print( "\t");
+      Serial.println( myx );
+      firsttime = true;
+      return;
+    }
+    else
+    {
+      x0 = myx;
+      return;
+    }
+  }
+
+  myx = LIS.getAccelerationX() * 200;
+
+  x1 = x2;
+  x2 = x3;
+  x3 = myx;
+    
+  if ( ( myx > 1000 ) || ( myx < -1000 ) )
+  {
+    Serial.print( "ignoring x * " );
+    Serial.print( "\t");
+    Serial.println( myx );
+    return;
+  }
+
+  x4 =  ( x1 + x2 + x3 ) / 3 ;
+  movecount++;
+
+  bool pop = false;
+
+  float meow = x0 + ( x0 * ( tollerance / 2 ) );
+  float wolf = x0 - ( x0 * ( tollerance / 2 ) );
+
+  if ( x4 > 0 )
+  {
+    if ( ! ( ( x4 < meow ) && ( x4 > wolf ) ) )
+    {
+      pop = true;
+    }
+  }
+  else
+  {
+    if ( ! ( ( x4 < wolf ) && ( x4 > meow ) ) )
+    {
+      pop = true;
+    }
+  }
+
+  if ( pop )
+  {
+    firsttime = true;
+
+    Serial.print( "sensor moving" );
+    Serial.print( "\t" );
+    Serial.print( x0 );
+    Serial.print( "\t" );
+    Serial.println( x4 );
+  } 
+}

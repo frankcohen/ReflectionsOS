@@ -11,3 +11,5 @@ Added Over The Air (OTA) update capabilitiy. Server downloads .bin firmware and 
 ## Wifi connections added
 
 Added [WifiManager](https://github.com/tzapu/WiFiManager) to enable easy connection to a Wifi network. Connect to Reflections board from your laptop or mobile device. The SSID is named CALLIOPE plus the last digits of the device mac address. For example, CALLIOPE-7A. Follow the instructions to log Reflections into your Wifi network. Passwords are sent to the device in the clear, and optionally stored on the device with no encryption. Someone could extract these if they got their hands on your device.
+
+## MSC
