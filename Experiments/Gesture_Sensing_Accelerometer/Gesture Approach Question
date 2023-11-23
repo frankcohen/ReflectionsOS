@@ -1,4 +1,49 @@
-I'm working on gesture detection with an accelerometer. First part is to detect when the sensor is being moved. Then sense what the movement means. Here's my code so far, checking on the X axis only. What do you think of the approach?
+November 23, 2023, fcohen@starlingwatch.com
+
+I'm working on gesture detection with a 3-axis accelerometer. First part is to detect when the sensor is being moved. Then sense what the movement means. Here's my code so far. What do you think of the approach? -Frank
+
+// Auto-detect start of gesture
+
+#define tollerance 1.10
+#define windowtime 1000
+#define scaler 200
+#define scalemax 1000
+#define scalemin -1000
+
+unsigned long movetimer;
+bool firsttime = true;
+int movecount = 1;
+
+float nx0 = 1, nx1 = 1, nx2 = 1, nx3 = 1, nx4 = 1;
+float ny0 = 1, ny1 = 1, ny2 = 1, ny3 = 1, ny4 = 1;
+float nz0 = 1, nz1 = 1, nz2 = 1, nz3 = 1, nz4 = 1;
+float nx, ny, nz;
+
+bool getAccelValues()
+{
+  nx = LIS.getAccelerationX() * scaler ;
+  ny = LIS.getAccelerationY() * scaler ;
+  nz = LIS.getAccelerationZ() * scaler ;
+
+  if ( 
+    ( ( nx > scalemax ) || ( nx < scalemin ) ) ||
+    ( ( ny > scalemax ) || ( ny < scalemin ) ) ||
+    ( ( nz > scalemax ) || ( nz < scalemin ) )
+  )
+  {
+    Serial.print( "ignoring " );
+    Serial.print( "\tX = ");
+    Serial.println( nx );
+    Serial.print( "\tY = ");
+    Serial.println( ny );
+    Serial.print( "\tZ = ");
+    Serial.println( nz );
+
+    return false;
+  }
+
+  return true;
+}
 
 void detectStartOfGesture()
 {
@@ -7,68 +52,87 @@ void detectStartOfGesture()
     movetimer = millis();
     firsttime = false;
 
-    myx = LIS.getAccelerationX() * 200 ;
-
-    if ( ( myx > 1000 ) || ( myx < -1000 ) )
+    if ( ! getAccelValues() )
     {
-      Serial.print( "ignoring " );
-      Serial.print( "\t");
-      Serial.println( myx );
       firsttime = true;
       return;
     }
-    else
-    {
-      x0 = myx;
-      return;
-    }
-  }
 
-  myx = LIS.getAccelerationX() * 200;
+    nx0 = nx;
+    ny0 = ny;
+    nz0 = nz;
 
-  x1 = x2;
-  x2 = x3;
-  x3 = myx;
-    
-  if ( ( myx > 1000 ) || ( myx < -1000 ) )
-  {
-    Serial.print( "ignoring x * " );
-    Serial.print( "\t");
-    Serial.println( myx );
     return;
   }
 
-  x4 =  ( x1 + x2 + x3 ) / 3 ;
+  if ( ! getAccelValues() ) return;
+  
+  nx1 = nx2;
+  nx2 = nx3;
+  nx3 = nx;
+  nx4 =  ( nx1 + nx2 + nx3 ) / 3 ;
+
+  ny1 = ny2;
+  ny2 = ny3;
+  ny3 = ny;
+  ny4 =  ( ny1 + ny2 + ny3 ) / 3 ;
+
+  nz1 = nz2;
+  nz2 = nz3;
+  nz3 = nz;
+  nz4 =  ( nz1 + nz2 + nz3 ) / 3 ;
+
   movecount++;
 
-  bool pop = false;
+  bool popx = false, popy = false, popz = false;
 
-  float meow = x0 + ( x0 * ( tollerance / 2 ) );
-  float wolf = x0 - ( x0 * ( tollerance / 2 ) );
+  float meow = nx0 + ( nx0 * ( tollerance / 2 ) );
+  float wolf = nx0 - ( nx0 * ( tollerance / 2 ) );
 
-  if ( x4 > 0 )
+  if ( nx4 > 0 )
   {
-    if ( ! ( ( x4 < meow ) && ( x4 > wolf ) ) )
-    {
-      pop = true;
-    }
+    if ( ! ( ( nx4 < meow ) && ( nx4 > wolf ) ) ) popx = true;
   }
   else
   {
-    if ( ! ( ( x4 < wolf ) && ( x4 > meow ) ) )
-    {
-      pop = true;
-    }
+    if ( ! ( ( nx4 < wolf ) && ( nx4 > meow ) ) ) popx = true;
   }
 
-  if ( pop )
+  meow = ny0 + ( ny0 * ( tollerance / 2 ) );
+  wolf = ny0 - ( ny0 * ( tollerance / 2 ) );
+
+  if ( ny4 > 0 )
+  {
+    if ( ! ( ( ny4 < meow ) && ( ny4 > wolf ) ) ) popy = true;
+  }
+  else
+  {
+    if ( ! ( ( ny4 < wolf ) && ( ny4 > meow ) ) ) popy = true;
+  }
+
+  meow = nz0 + ( nz0 * ( tollerance / 2 ) );
+  wolf = nz0 - ( nz0 * ( tollerance / 2 ) );
+
+  if ( nz4 > 0 )
+  {
+    if ( ! ( ( nz4 < meow ) && ( nz4 > wolf ) ) ) popz = true;
+  }
+  else
+  {
+    if ( ! ( ( nz4 < wolf ) && ( nz4 > meow ) ) ) popz = true;
+  }
+
+  if ( popx || popy || popz )
   {
     firsttime = true;
 
-    Serial.print( "sensor moving" );
-    Serial.print( "\t" );
-    Serial.print( x0 );
-    Serial.print( "\t" );
-    Serial.println( x4 );
-  } 
+    Serial.print( "sensor moving " );
+    Serial.print( movecount );
+    Serial.print( "\tx = " );
+    Serial.print( popx );
+    Serial.print( "\ty = " );
+    Serial.print( popy );
+    Serial.print( "\tz = " );
+    Serial.println( popz );
+  }
 }
