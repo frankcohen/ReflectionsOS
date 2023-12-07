@@ -11,14 +11,14 @@ I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry poc
 
 I love working with a group of creative makers and the Arduino community. Please feel free to let me know your feedback and ideas.
 
-CindyLou is the latest version of the Reflections main board. CindyLou lets me put everything into a wrist watch case and actually wear it on my wrist! Plus the software to drive experiences (codename CalliopeOpensEyes) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the main board.
+Cat In Hat is the latest version of the Reflections main board. Everything fits into a wrist watch case and I actually wear it on my wrist! Plus the software to drive experiences (codename CalliopeOpensEyes) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the main board.
 
-CindyLou Gerber files and schematic are at:
-https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CindyLou
+Cat In Hat Gerber files and schematic are at:
+https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CatInHat
 EasyEDA project for the previous main board project is at:
 https://oshwlab.com/fcohen/horton-main-board
 
-Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS), August 4, 2023
+Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS), December 7, 2023
 
 ## Articles
 
@@ -46,6 +46,10 @@ I made an air-guitar project to learn about streaming music over Bluetooth Clasi
 )
 
 -Frank
+
+## Update as of December 7, 2023
+
+Work on the [Cat In Hat](https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CatInHat) main board is nearly complete. This solves a consistency problem with the NAND. And, adds press-and-hold power on/off capability to the Boot button. I depart tomorrow to China to find components and manufacturers for the case and strap. 
 
 ## Update as of October 6, 2023
 
