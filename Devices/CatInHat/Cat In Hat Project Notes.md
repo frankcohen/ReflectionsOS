@@ -35,6 +35,8 @@ The board has no power-down capability.
 
 The case to house the board needs easy push-button access to the Boot and Reset switches. The main board gets in the way.
 
+The board needs to host the speaker and haptic motor to fit with a minimum of height into a wrist watch case.
+
 ## Cat In Hat Requirements
 
 1. Add press-and-hold to the Boot button to turn power on to the board, and press-and-hold to turn power off. Add LTC 2954 pushbutton on/off controller.
@@ -42,3 +44,12 @@ The case to house the board needs easy push-button access to the Boot and Reset 
 2. Tune the SPI bus board traces for the NAND.
 
 3. Add notches into the board below the Boot and Reset switches.
+
+4. Change speaker to SW151008-1 and attach to board.
+
+5. Make room for haptic motor to be attached to board.
+
+6. Use 0.8 board thickness.
+
+
+
