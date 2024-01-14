@@ -7,7 +7,7 @@ Many times I imagine making a mobile application connected to the Internet. For 
 
 Reflections integrates video displays, Bluetooth, Wifi, SD storage, sound, and a bunch of sensors (compass/magnetometer, gestures, accelerometer). It is battery powered, powered managed from software, and charges from USB. It is small in size (34 mm round) and powerful from an ESP32-S3 dual core processor. Reflections software, hardware, and cloud components are open-source (GPL v3) so anyone can use it and they must contribute improvements back to the project.
 
-![Reflections Mobile Experiences](../Docs/images/CatInHat2024.jpg)
+![Reflections Mobile Experiences](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/CatInHat2024.jpg)
 
 
 
