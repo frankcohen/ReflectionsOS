@@ -9,12 +9,11 @@ Reflections integrates video displays, Bluetooth, Wifi, SD storage, sound, and a
 
 ![Reflections Mobile Experiences](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/CatInHat2024.jpg)
 
-
-
-
 I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry pocket watches with Disney Imagineer and Mupeteer Terri Hardin. We are working on a new experience powere by Reflections. Announcement coming soon.
 
 I love working with a group of creative makers and the Arduino community. Please feel free to let me know your feedback and ideas.
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/HIWHx4NLKUU/0.jpg)](https://www.youtube.com/watch?v=HIWHx4NLKUU)
 
 Cat In Hat is the latest version of the Reflections main board. Everything fits into a wrist watch case and I actually wear it on my wrist! Plus the software to drive experiences (codename CalliopeOpensEyes) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the main board.
 
