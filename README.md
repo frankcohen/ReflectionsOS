@@ -11,7 +11,7 @@ Reflections integrates video displays, Bluetooth, Wifi, SD storage, sound, and a
 
 Reflections goes beyond the wearable device to deliver server side architecture.
 
-![Reflections Server Side Architecture](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/ReflectionsIntro.jpg)
+![Reflections Server Side Architecture](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/ReflectionsServerSide.jpg)
 
 I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry pocket watches with Disney Imagineer and Mupeteer Terri Hardin. We are working on a new experience powere by Reflections. Announcement coming soon.
 
