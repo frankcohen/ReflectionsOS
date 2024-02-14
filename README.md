@@ -19,14 +19,14 @@ I love working with a group of creative makers and the Arduino community. Please
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/HIWHx4NLKUU/0.jpg)](https://www.youtube.com/watch?v=HIWHx4NLKUU)
 
-Cat In Hat is the latest version of the Reflections main board. Everything fits into a wrist watch case and I actually wear it on my wrist! Plus the software to drive experiences (codename CalliopeOpensEyes) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the main board.
+Yertle is the latest version of the Reflections main board. Everything fits into a wrist watch case and I actually wear it on my wrist! Plus the software to drive experiences (codename ReflectionsOfFrank) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the main board.
 
-Cat In Hat Gerber files and schematic are at:
-https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CatInHat
+Yertle Gerber files and schematic are at:
+https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Yertle
 EasyEDA project for the previous main board project is at:
 https://oshwlab.com/fcohen/horton-main-board
 
-Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS), December 7, 2023
+Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS), February 14, 2024
 
 ## Articles
 
@@ -54,6 +54,10 @@ I made an air-guitar project to learn about streaming music over Bluetooth Clasi
 )
 
 -Frank
+
+## Update as of February 14, 2024
+
+Cat In Hat turned out to be a fools errand, the ESP32-S3 would not boot with the addition of the press-and-hold power on/off capability using U9. Yertle solves this by removing U9. Work on the software continues, should have a simple video player using wrist gestures done soon. Work on the case and strap is in progress. I am only wearing Yertle everyday now, no more traditional watches.
 
 ## Update as of December 7, 2023
 
