@@ -20,13 +20,19 @@ Roll your fist counter clockwise, to the left.
 
 Roll your fist clockwise, to the right.
 
+![Previous](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/Previous.jpg)
+
 3. Accept - person's goal is to approve a selection
 
 I adopted the American Sign Language (ASL) movement to say yes, take a hand and make it into a fist and bob it back and forth, resembling a head nodding. 
 
+![Accept](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/Accept.jpg)
+
 4. Cancel - person's goal is to disapprove a selection
 
 I adopted ASL to say no, take your first two fingers and tap them with your thumb, resembling a mouth saying no.
+
+![Cancel](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/Cancel.jpg)
 
 
 
