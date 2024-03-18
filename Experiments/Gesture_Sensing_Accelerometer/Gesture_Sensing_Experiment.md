@@ -2,7 +2,7 @@
 by Frank Cohen, fcohen@starlingwatch.com
 March 17, 2024
 
-Licensed under the Creative Commons, ok to share with attribution.
+Licensed under GPL v3, ok to share with attribution.
 
 This is an experiment to see if a computing device can make sense of gestures made with a person's wrist. It idenfies the [Fabulous Four Gestures](#fabulous-four-gestures) of next, previous, accept, and cancel. It is extensible to train and identify additional gestures. It uses [ESP32](https://www.espressif.com/en/products/socs/esp32) and [LIS3DHTR](https://www.digikey.com/en/products/detail/stmicroelectronics/LIS3DHTR/2334338) accelerometer. It uses a [Movement Observation Matching](#movement-observation-matching) algorithm to make sense of a person's wrist movements.
 
@@ -34,7 +34,7 @@ I adopted ASL to say no, take your first two fingers and tap them with your thum
 
 ![Cancel](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/Cancel.jpg)
 
-
+Serial monitor shows status and progress to recognize gestures.
 
 ```
 Make a gesture... 
@@ -54,24 +54,37 @@ Sum of averages, gesture inconclusive
 Highest average, gesture inconclusive
 ```
 
-
-
-
-
 ## Movement Observation Matching
 
 Movement Observation Matching (MOM) algorithm detects a person's wrist movements. It is a template system. It compares a person's movements to a library of recorded templates. Movement and template recordings begin with detection of a person's movement. A variety of techniques determine the conclusive determination of movements to the templates. 
 
 Templates last 2 seconds, with 50 frames of accelerometer X, Y, Z data and 40 milliseconds between each frame. Recording begins after the person begins movement. Movements are the same duration and frames as templates.
 
-Matching algorithms.
+MOM uses multiple templates for the same gesture to identify gestures. The default settings record 5 templates for each gesture. Then compare a persons latest gesture to the templates.
+
+![MOM Algorithm](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/MOM_algorithm.jpg)
+
+Settings in Accelerometer.h control the types of gestures, the number of templates for each gesture type, the number of frames, and the template duration.
+
+MOM uses these matching algorithms:
+
+- Sum of averages, chooses the gesture type with the overall highest average matching ratio. Ratio must be 55% or higher to be selected.
+
+- Highest average, chooses the gesture type with the highest single matching ratio. Ration must be 55% of higher to be selected.
+
+MOM is extensible to include additional matching alhgorithms.
 
 ### Training
 
+Training is the process of recording templates for the [Fabulous Four Gestures](#fabulous-four-gestures). Use this method to put the Gesture Sensor into training mode.
+
+```
+void setTraining( bool mode );
+```
 
 [@CieloStrive](https://github.com/CieloStrive) experiment on [gesture cognition using Dynamic Time Warping (DTW)](https://github.com/CieloStrive/GESTURE-RECOGNITION-DYNAMIC-TIME-WARPING) influenced this experiment. My DTW implementation is at [https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/Gesture_Sensing_Accelerometer/AccelGestureDTW](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/Gesture_Sensing_Accelerometer/AccelGestureDTW)
 
-#Code
+## Code
 
 Coded using 
 Find the implementation in the ReflectionsOS repository here: [https://github.com/frankcohen/ReflectionsOS/blob/main/src/Accellerometer.cpp](https://github.com/frankcohen/ReflectionsOS/blob/main/src/Accellerometer.cpp)
@@ -88,7 +101,7 @@ ESP32 board, [https://github.com/espressif/arduino-esp32](https://github.com/esp
 
 Hardware wiring:
 
-![Accelerometer schematic](Experiments/Gesture_Sensing_Accelerometer/LIS_schematic.jpg)
+![Accelerometer schematic](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/LIS_schematic.jpg)
 
 ## Future 
 
