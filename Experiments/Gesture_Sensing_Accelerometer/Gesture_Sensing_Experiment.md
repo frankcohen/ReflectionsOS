@@ -6,6 +6,10 @@ Licensed under GPL v3, ok to share with attribution.
 
 This is an experiment to see if a computing device can make sense of gestures made with a person's wrist. It idenfies the [Fabulous Four Gestures](#fabulous-four-gestures) of next, previous, accept, and cancel. It is extensible to train and identify additional gestures. It uses [ESP32](https://www.espressif.com/en/products/socs/esp32) and [LIS3DHTR](https://www.digikey.com/en/products/detail/stmicroelectronics/LIS3DHTR/2334338) accelerometer. It uses a [Movement Observation Matching](#movement-observation-matching) algorithm to make sense of a person's wrist movements.
 
+## Wrist Gestures Briefing
+
+[![![Briefing](https://youtu.be/nNwV_FyjRPc)](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/Gesture_briefing_title_card.jpg)
+
 ## Fabulous Four Gestures
 
 Human interfaces to computing devices often benefit from having 4 primary controls. I call these the Fabulous Four Gestures:
@@ -72,7 +76,7 @@ MOM uses these matching algorithms:
 
 - Highest average, chooses the gesture type with the highest single matching ratio. Ration must be 55% of higher to be selected.
 
-MOM is extensible to include additional matching alhgorithms.
+MOM is extensible to include additional matching algorithms.
 
 ### Training
 
@@ -82,15 +86,13 @@ Training is the process of recording templates for the [Fabulous Four Gestures](
 void setTraining( bool mode );
 ```
 
-[@CieloStrive](https://github.com/CieloStrive) experiment on [gesture cognition using Dynamic Time Warping (DTW)](https://github.com/CieloStrive/GESTURE-RECOGNITION-DYNAMIC-TIME-WARPING) influenced this experiment. My DTW implementation is at [https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/Gesture_Sensing_Accelerometer/AccelGestureDTW](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/Gesture_Sensing_Accelerometer/AccelGestureDTW)
-
 ## Code
 
 Find the implementation in the ReflectionsOS repository here: [https://github.com/frankcohen/ReflectionsOS/blob/main/src/Accellerometer.cpp](https://github.com/frankcohen/ReflectionsOS/blob/main/src/Accellerometer.cpp)
 
 # Building
 
-Use Arduino IDE 2.3 or later. Code requires changes to be compatible with Arduino IDE 1.x nor Platform IO.
+Use Arduino [IDE 2.3](https://www.arduino.cc/en/software) or later. Code requires changes to be compatible with Arduino IDE 1.x nor [Platform IO](https://platformio.org/).
 
 Requires these libraries:
 
@@ -121,6 +123,10 @@ MOM has yet to be proven in these instances:
 - What impact does a benign essential tremor (ET), Parkinson's disease, Zlzheimer's disease, and Multiple Sclerosis (MS) have on gesture recognition?
 
 - Do individuals gesture differently?
+
+## Investigations Along The Way
+
+[@CieloStrive](https://github.com/CieloStrive) experiment on [gesture cognition using Dynamic Time Warping (DTW)](https://github.com/CieloStrive/GESTURE-RECOGNITION-DYNAMIC-TIME-WARPING) influenced this experiment. My DTW implementation is at [https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/Gesture_Sensing_Accelerometer/AccelGestureDTW](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/Gesture_Sensing_Accelerometer/AccelGestureDTW)
 
 ## ReflectionsOS Project
 
