@@ -86,7 +86,6 @@ void setTraining( bool mode );
 
 ## Code
 
-Coded using 
 Find the implementation in the ReflectionsOS repository here: [https://github.com/frankcohen/ReflectionsOS/blob/main/src/Accellerometer.cpp](https://github.com/frankcohen/ReflectionsOS/blob/main/src/Accellerometer.cpp)
 
 # Building
@@ -113,13 +112,13 @@ We have these planned improvements to MOM:
 
 - Template sharing between people. MOM shares templates with high success ratings among other devices.
 
-## The Unkown
+## The Unknown
 
 MOM has yet to be proven in these instances:
 
 - Is there a difference in recognition between left and right handed people?
 
-- What impact does a benign essential tremor (ET), Parkinson's disease, and Multiple Sclerosis (MS) have on gesture recognition?
+- What impact does a benign essential tremor (ET), Parkinson's disease, Zlzheimer's disease, and Multiple Sclerosis (MS) have on gesture recognition?
 
 - Do individuals gesture differently?
 
