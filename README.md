@@ -58,9 +58,13 @@ I made an air-guitar project to learn about streaming music over Bluetooth Clasi
 
 -Frank
 
-## Update as of Marchc 19, 2024
+## Update as of March 19, 2024
 
+Software work achieves success along the way to the ReflectionsOS operating environment. A gesture experiement using the accelerometer works. Watch a 5 minute briefing here:
 
+[![5 minute video briefing on Wrist Gesture Sensing](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/Gesture_briefing_title_card.jpg)](https://youtu.be/nNwV_FyjRPc)
+
+[Yertle](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Yertle/Yertle%20Project%20Notes.md) arrived and looks fully functional.
 
 ## Update as of February 14, 2024
 
