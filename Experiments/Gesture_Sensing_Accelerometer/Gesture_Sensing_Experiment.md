@@ -8,7 +8,7 @@ This is an experiment to see if a computing device can make sense of gestures ma
 
 ## Wrist Gestures Briefing
 
-[![Briefing](https://youtu.be/nNwV_FyjRPc)](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/Gesture_briefing_title_card.jpg)
+[![Briefing](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/Gesture_briefing_title_card.jpg)](https://youtu.be/nNwV_FyjRPc)
 
 ## Fabulous Four Gestures
 
