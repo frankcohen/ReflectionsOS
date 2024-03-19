@@ -4,9 +4,11 @@ March 17, 2024
 
 Licensed under GPL v3, ok to share with attribution.
 
-This is an experiment to see if a computing device can make sense of gestures made with a person's wrist. It idenfies the [Fabulous Four Gestures](#fabulous-four-gestures) of next, previous, accept, and cancel. It is extensible to train and identify additional gestures. It uses [ESP32](https://www.espressif.com/en/products/socs/esp32) and [LIS3DHTR](https://www.digikey.com/en/products/detail/stmicroelectronics/LIS3DHTR/2334338) accelerometer. It uses a [Movement Observation Matching](#movement-observation-matching) algorithm to make sense of a person's wrist movements.
+This is an experiment to see if a computing device can make sense of gestures made with a person's wrist. It identifies the [Fabulous Four Gestures](#fabulous-four-gestures) of next, previous, accept, and cancel. It is extensible to train and identify additional gestures. It uses [ESP32](https://www.espressif.com/en/products/socs/esp32) and [LIS3DHTR](https://www.digikey.com/en/products/detail/stmicroelectronics/LIS3DHTR/2334338) accelerometer. It uses a [Movement Observation Matching](#movement-observation-matching) algorithm to make sense of a person's wrist movements.
 
 ## Wrist Gestures Briefing
+
+5 minute video briefing on Wrist Gesture Sensing.
 
 [![Briefing](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/Gesture_briefing_title_card.jpg)](https://youtu.be/nNwV_FyjRPc)
 
