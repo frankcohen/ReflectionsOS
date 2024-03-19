@@ -1,5 +1,5 @@
-#ifndef _ACCELLEROMETER_
-#define _ACCELLEROMETER_
+#ifndef _ACCELEROMETER_
+#define _ACCELEROMETER_
 
 #include "config.h"
 #include "secrets.h"
@@ -13,18 +13,29 @@
 #include "SD.h"
 #include "SPI.h"
 
-#define tollerance 1.05
+#define tollerance 0.10
 #define windowtime 1000
 #define scaler 200
-#define scalemax 1000
-#define scalemin -1000
+#define scalemax 300
+#define scalemin -300
 
-#define maxgestures 10
+// For example, next, previous, cancel, and accept are gesturetypes
+#define gesturetypes 4
+#define type1 "next"
+#define type2 "previous"
+#define type3 "cancel"
+#define type4 "accept"
+
+// Records a template for each gesturetype.
+#define maxgestures 5
+
+// Number of frames for each gesture template
 #define maxframes 50
-#define framedelay 40
-#define detectdelay 500
 
-class Accellerometer
+// Milliseconds delay between frames
+#define framedelay 40
+
+class Accelerometer
 {
   public:
     Accellerometer();
@@ -32,16 +43,13 @@ class Accellerometer
     void loop();
     bool test();
     void setTraining( bool mode );
+    bool detectStartOfGesture();
     
   private:
-    float DTW_THRESHOLD( int gesturenum );
     bool getAccelValues();
-    bool detectStartOfGesture();
     bool saveGesture();
-    bool saveRatings();
     bool loadGesture();
-    float DTWNORM( float dx, float dy, float dz);
-    float DTWMIN( float &a, float &b ,float &c );
+    float timeWarp( int gestureIndex, int typen );
 
     LIS3DHTR<TwoWire> LIS;
 
@@ -57,34 +65,32 @@ class Accellerometer
     bool gesturestart;
     int cmpcount;
     bool recordingTemplate;
+    bool firstnotice;
+    int typecounter;
 
     float accxt[maxframes];
     float accyt[maxframes];
     float acczt[maxframes];
 
-    float accx[maxgestures][maxframes];
-    float accy[maxgestures][maxframes];
-    float accz[maxgestures][maxframes];
+    float accx[maxgestures][maxframes][gesturetypes];
+    float accy[maxgestures][maxframes][gesturetypes];
+    float accz[maxgestures][maxframes][gesturetypes];
 
-    int reward[ maxgestures ];
+    float aavgs[ gesturetypes ];
+    float tophigh[ gesturetypes ];
 
     int gesturenumber;
     int gesturecount;
 
     bool firsttime = true;
-    int movecount = 1;
 
-    float nx0, nx1, nx2, nx3, nx4;
-    float ny0, ny1, ny2, ny3, ny4;
-    float nz0, nz1, nz2, nz3, nz4;
+    float nx0, nx1, nx2, nx3;
+    float ny0, ny1, ny2, ny3;
+    float nz0, nz1, nz2, nz3;
     float nx, ny, nz;
-
-    long timer = 0;
 
     int8_t state = 0;
     int8_t co = 0;
-
-    float DTW[ maxframes ][ maxframes ];
 
     float dx = 0;
     float dy = 0;
@@ -94,4 +100,4 @@ class Accellerometer
 
 };
 
-#endif // _ACCELLEROMETER_
+#endif // _ACCELEROMETER_

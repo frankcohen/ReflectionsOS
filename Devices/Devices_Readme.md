@@ -2,7 +2,7 @@
 
 Started: October 6, 2023
 
-Updated: November 16, 2023
+Updated: March 19, 2024
 
 Reflections is a hardware, software, and server architecture for building mobile entertaining experiences. We went through 8 revisions to the board to get to a finished prototype. Each revision is in a sub directory of [Reflections/devices](https://github.com/frankcohen/ReflectionsOS/tree/main/Devices).
 

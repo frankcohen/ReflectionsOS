@@ -32,6 +32,9 @@ Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/fr
 
 I publish articles on the technology needed to make Reflections.
 
+
+
+
 [Scalable Logger on ESP32 with Wifi and SD/NAND](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Scalable%20logger.md)
 
 [Arduino and BLE on ESP32 as server and client combined, using NimBLE](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Why%20I%20like%20NimBLE%20for%20Bluetooth%20BLE.md)
@@ -54,6 +57,10 @@ I made an air-guitar project to learn about streaming music over Bluetooth Clasi
 )
 
 -Frank
+
+## Update as of Marchc 19, 2024
+
+
 
 ## Update as of February 14, 2024
 

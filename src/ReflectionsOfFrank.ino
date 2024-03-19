@@ -18,6 +18,7 @@ Depends on these libraries:
 For convenience, these libraries are in the [https://github.com/frankcohen/ReflectionsOS/libraries](https://github.com/frankcohen/ReflectionsOS)
 directory. Copy the contents to your Arduino IDE installation under documents/libraries.
 
+ESP32 board, https://github.com/espressif/arduino-esp32
 esp32FOTA, OTA updates, https://github.com/chrisjoyce911/esp32FOTA
 Adafruit DRV2605 Library, haptic controller, https://github.com/adafruit/Adafruit_DRV2605_Library
 Adafruit MMC56x3, compass, magnetometer, https://github.com/adafruit/Adafruit_MMC56x3
@@ -32,7 +33,7 @@ FastLED, https://github.com/FastLED/FastLED
 GFX Library for Arduino, https://github.com/moononournation/Arduino_GFX
 JPEGDEC, https://github.com/bitbank2/JPEGDEC.git
 NimBLE-Arduino, https://github.com/h2zero/NimBLE-Arduino
-LISDHTR Acellerometer, https://travis-ci.com/Seeed-Studio/Seeed_Arduino_LIS3DHTR.svg?branch=master
+LISDHTR Accelerometer, https://travis-ci.com/Seeed-Studio/Seeed_Arduino_LIS3DHTR.svg?branch=master
 SparkFun_VL53L5CX_Arduino_Library, https://github.com/sparkfun/SparkFun_VL53L5CX_Arduino_Library
 Time, https://playground.arduino.cc/Code/Time/
 TinyGPSPlus-ESP32, https://github.com/Tinyu-Zhao/TinyGPSPlus-ESP32
@@ -154,11 +155,43 @@ void assertTest(bool result, String deviceName) {
   Cooperative multi-tasking functions
 */
 
+long testdetecttimer = millis();
+long testdetecttimer2 = millis();
+
 static void smartdelay(unsigned long ms) {
   unsigned long start = millis();
   do {
     battery.loop();
     accel.loop();
+
+
+
+/*
+  if ( ( millis() - testdetecttimer ) > 50 )
+  {
+    testdetecttimer = millis();
+
+    if ( accel.detectStartOfGesture() )
+    {
+      Serial.print("+");
+    }
+    else
+    {
+      Serial.print("-");
+    }
+
+  }
+
+
+  if ( ( millis() - testdetecttimer2 ) > 2000 )
+  {
+    testdetecttimer2 = millis();
+    Serial.println("bloop");
+  }
+
+*/
+
+
 
     /*
     video.loop();
@@ -170,6 +203,7 @@ static void smartdelay(unsigned long ms) {
     storage.loop();
     utils.loop();
     wifi.loop();
+    tof.loop();
     compass.loop();
     haptic.loop();
     led.loop();
@@ -223,8 +257,8 @@ void setup() {
 
 //  Serial.println( "Files on board:" );
 //  storage.listDir(SD, "/", 100, true);
-  Serial.println( "Files on board:" );
-  storage.listDir(SD, "/REFLECTIONS", 100, true);
+//  Serial.println( "Files on board:" );
+//  storage.listDir(SD, "/REFLECTIONS", 100, true);
 
 
   /* 
@@ -252,12 +286,9 @@ void setup() {
   // Self-test: NAND, I2C, SPI
   // while playing startup animation and sound
 
-  assertI2Cdevice(24, "TOF Accel");
-  smartdelay(200);
-  assertI2Cdevice(48, "Compass");
-  smartdelay(200);
+  //assertI2Cdevice(24, "TOF Accel");
+  //assertI2Cdevice(48, "Compass");
   assertI2Cdevice(90, "Haptic");
-  smartdelay(200);
 
   haptic.playEffect(14);  // 14 Strong Buzz
 

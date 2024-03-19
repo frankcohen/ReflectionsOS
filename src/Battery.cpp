@@ -27,6 +27,8 @@ bool Battery::test()
   return true;
 }
 
+// 3500 = battery at empty
+
 String Battery::batLevel( float analogVolts )
 {
   if ( analogVolts < 3900 ) return "Low";
