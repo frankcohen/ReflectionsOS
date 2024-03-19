@@ -32,8 +32,7 @@ Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/fr
 
 I publish articles on the technology needed to make Reflections.
 
-
-
+[Wrist Gesture Sensing on ESP32 and Accelerometer](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/Gesture_Sensing_Experiment.md)
 
 [Scalable Logger on ESP32 with Wifi and SD/NAND](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Scalable%20logger.md)
 
