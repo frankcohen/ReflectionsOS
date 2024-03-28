@@ -75,7 +75,7 @@ USB Mode: Hardware CDC and JTAG
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include "secrets.h"
-#include "Accellerometer.h"
+#include "Accelerometer.h"
 #include "Audio.h"
 #include "Compass.h"
 #include "GPS.h"
@@ -100,7 +100,7 @@ Audio audio;
 
 static Wifi wifi;
 static GPS gps;
-static Accellerometer accel;
+static Accelerometer accel;
 static Compass compass;
 static TOF tof;
 static LED led;

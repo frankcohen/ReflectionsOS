@@ -38,7 +38,7 @@
 class Accelerometer
 {
   public:
-    Accellerometer();
+    Accelerometer();
     void begin();
     void loop();
     bool test();
@@ -50,6 +50,9 @@ class Accelerometer
     bool saveGesture();
     bool loadGesture();
     float timeWarp( int gestureIndex, int typen );
+    float DTWgpt( float seq1[][3], float seq2[][3], int len );
+    float DTWdistance(float x1, float y1, float z1, float x2, float y2, float z2);
+    float DTWmin(float a, float b, float c);
 
     LIS3DHTR<TwoWire> LIS;
 
@@ -78,6 +81,11 @@ class Accelerometer
 
     float aavgs[ gesturetypes ];
     float tophigh[ gesturetypes ];
+
+    float dtwlow[ gesturetypes ];
+    float cost[maxframes][maxframes];
+    float seq1[maxframes][3];   // current recording
+    float seq2[maxframes][3];   // saved gestures
 
     int gesturenumber;
     int gesturecount;
