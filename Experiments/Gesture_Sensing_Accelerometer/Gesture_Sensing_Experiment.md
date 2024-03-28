@@ -1,6 +1,6 @@
 # Wrist Gesture Sensing
 by Frank Cohen, fcohen@starlingwatch.com
-March 17, 2024
+March 17, 2024, updated March 27, 2024
 
 Licensed under GPL v3, ok to share with attribution.
 
@@ -43,21 +43,17 @@ I adopted ASL to say no, take your first two fingers and tap them with your thum
 Serial monitor shows status and progress to recognize gestures.
 
 ```
-Make a gesture... 
-Sensing gesture
 Comparing gestures
-Accellerometer gesture next     0.70, 0.74, 0.81, 0.83, 0.77,	 
-Accellerometer gesture previous 0.67, 0.48, 0.39, 0.46, 0.55,	 
-Accellerometer gesture cancel   0.55, 0.53, 0.57, 0.55, 0.58,	 
-Accellerometer gesture accept   0.51, 0.49, 0.53, 0.57, 0.60,	 
-Sum of averages, gesture recognized: next 
-Highest average, gesture recognized: next 
+DTWgpt accelerometer gesture next	    5090.33,	4006.13,	3806.27,	3491.63,	3926.08,	 
+DTWgpt accelerometer gesture previous	3884.40,	3595.16,	3730.78,	3616.00,	3515.38,	 
+DTWgpt accelerometer gesture cancel	    5265.93,	4413.33,	5127.32,	5331.95,	5711.88,	 
+DTWgpt accelerometer gesture accept	    4579.27,	5161.31,	4865.67,	5162.56,	4810.36,	 
+DTWgpt, gesture recognized: next 3491
 ```
 
 In the case where no gesture is recognized the code shows:
 ```
-Sum of averages, gesture inconclusive
-Highest average, gesture inconclusive
+DTWgpt, gesture recognized: Inconclusive
 ```
 
 ## Movement Observation Matching
@@ -73,6 +69,11 @@ MOM uses multiple templates for the same gesture to identify gestures. The defau
 Settings in Accelerometer.h control the types of gestures, the number of templates for each gesture type, the number of frames, and the template duration.
 
 MOM uses these matching algorithms:
+
+- Dynamic Time Warping (DTW), identifies distance between two sequences of equal length. The min() 
+function finds the minimum of three values, and the distance() function calculates the Euclidean distance between two points in the sequences. The setup() function initializes Serial communication and calculates the DTW distance for two example sequences (seq1 and seq2). Finally, the DTW distance is printed to the Serial monitor.
+
+Unused:
 
 - Sum of averages, chooses the gesture type with the overall highest average matching ratio. Ratio must be 55% or higher to be selected.
 
