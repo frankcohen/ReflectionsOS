@@ -292,7 +292,8 @@ void setup() {
 
   haptic.playEffect(14);  // 14 Strong Buzz
 
-  accel.setTraining( true );    // Put accelermoeter into training mode
+  //accel.setTraining( true );    // Put accelermoeter into training mode
+  accel.loadGestures();           // Load the prerecorded accelermeter gestures
 
   utils.begin();
 

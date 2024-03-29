@@ -19,6 +19,9 @@
 #define scalemax 300
 #define scalemin -300
 
+// Version number for .ages file
+#define ages_version 1
+
 // For example, next, previous, cancel, and accept are gesturetypes
 #define gesturetypes 4
 #define type1 "next"
@@ -44,11 +47,11 @@ class Accelerometer
     bool test();
     void setTraining( bool mode );
     bool detectStartOfGesture();
+    bool saveGestures();
+    bool loadGestures();
     
   private:
     bool getAccelValues();
-    bool saveGesture();
-    bool loadGesture();
     float timeWarp( int gestureIndex, int typen );
     float DTWgpt( float seq1[][3], float seq2[][3], int len );
     float DTWdistance(float x1, float y1, float z1, float x2, float y2, float z2);
@@ -83,6 +86,8 @@ class Accelerometer
     float tophigh[ gesturetypes ];
 
     float dtwlow[ gesturetypes ];
+    float dtwttl[ gesturetypes ];
+    float dtwavg[ gesturetypes ];
     float cost[maxframes][maxframes];
     float seq1[maxframes][3];   // current recording
     float seq2[maxframes][3];   // saved gestures

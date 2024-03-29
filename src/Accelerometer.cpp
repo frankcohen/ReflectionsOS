@@ -81,11 +81,6 @@ void Accelerometer::begin()
     Serial.println( F( " exists" ) );    
   }
 
-  // Load the prerecorded gestures
-  //loadGestures();
-
-
-
   state = 0;
   co = 0;
 
@@ -313,26 +308,11 @@ float Accelerometer::timeWarp( int gestureIndex, int typen )
 }
 
 /*
-  Save gesture to Accelerometer Gesture (.ages) binary file format
-  https://siliz4.github.io/guides/tutorials/2020/05/21/guide-on-binary-files-cpp.html
-
-  gesture category - 2 bytes
-    0 - yes
-    1 - cancel, no, wrong
-    2 - next
-    3 - previous
-  gesture number - 4 bytes
-  gesture name length - 2 bytes
-  gesture name - variable
-  gesture length - 4 bytes
-  gesture template data - variable
+ * Save recorded gestures to Accelerometer Gesture (.ages) binary file format
+ * /REFLECTIONS/agesture/fantastic4.ages
 */
 
-/*
- * Store recorded gestures to /REFLECTIONS/agesture/fantastic4.ages
-*/
-
-bool Accelerometer::saveGesture()
+bool Accelerometer::saveGestures()
 {
   String mef = "/";
   mef += NAND_BASE_DIR;
@@ -355,49 +335,41 @@ bool Accelerometer::saveGesture()
     return false;
   }
 
-  // version number
+  // Write VersionNumber to the file
+  int version = ages_version;
+  myFile.write((uint8_t*) &version, sizeof( version ));
 
   // gesture type descriptions
+  for (int i = 0; i < gesturetypes; i++)
+  {
+    String gesturetype;
+    if ( i == 0 ) { gesturetype = type1; }
+    if ( i == 1 ) { gesturetype = type2; }
+    if ( i == 2 ) { gesturetype = type3; }
+    if ( i == 3 ) { gesturetype = type4; }
 
-  // gesture array
+    myFile.write( (uint8_t *) gesturetype.c_str(), (int) gesturetype.length() + 1); // Include null terminator
+  }
 
-  
+  // Write accx, accy, and accz arrays to the file
+  myFile.write((uint8_t*)accx, sizeof(accx));
+  myFile.write((uint8_t*)accy, sizeof(accy));
+  myFile.write((uint8_t*)accz, sizeof(accz));
 
-
-  int gesturecategory = 1;
-  myFile.write( (uint8_t *) &gesturecategory, 2 );
-
-  // gesture number - 2 bytes
-  myFile.write( (uint8_t *) &gesturenumber, 2 );
-  gesturenumber++;
-
-  String gesturename = "cancel";
-  int gesturenamelen = gesturename.length();
-  // gesture length - 2 bytes
-  myFile.write( (uint8_t *) &gesturenamelen, gesturenamelen );
-
-  // gesture name - variable
-  myFile.write( (uint8_t *) &gesturename, (int) gesturenamelen );
-
-  // gestures are 3 axis of float values (4 bytes per float):
-  // float accx[maxgestures][maxframes][gesturetypes];
-  // float accy[maxgestures][maxframes][gesturetypes];
-  // float accz[maxgestures][maxframes][gesturetypes];
-
-  int gesturelen = maxframes * maxgestures * gesturetypes * 4;
-  
-  Serial.print( "gesturelen = " );
-  Serial.println( gesturelen );
-
-  // gesture template data
-  myFile.write( (uint8_t *) &accxt, gesturelen );
-
+  // Close the file
   myFile.close();
+
+  Serial.println("Data saved to file.");
 
   return true;
 }
 
-bool Accelerometer::loadGesture()
+/*
+ * Load recorded gestures from Accelerometer Gesture (.ages) binary file format
+ * /REFLECTIONS/agesture/fantastic4.ages
+*/
+
+bool Accelerometer::loadGestures()
 {
   String mef = "/";
   mef += NAND_BASE_DIR;
@@ -407,62 +379,40 @@ bool Accelerometer::loadGesture()
   mef += ACCEL_BASE_FILE;
   mef += ACCEL_BASE_EXT;
 
-  File myFile = SD.open( mef, FILE_READ );
-  if ( myFile )
-  {
-    Serial.print( F( "SD file opened for read: " ) );
-    Serial.println( mef );
-  }
-  else
-  {
-    Serial.print( F( "Error opening new file for read: " ) );
-    Serial.println( mef );
+  int VersionNumber;
+
+  // Open file for reading
+  File file = SD.open( mef, FILE_READ);
+  if (!file) {
+    Serial.println("Error opening file for reading!");
     return false;
   }
 
-  /*
-  gesture category - 2 bytes
-    0 - yes
-    1 - cancel, no, wrong
-    2 - next
-    3 - previous
-  */
+  // Read VersionNumber from the file
+  file.read((uint8_t*)&VersionNumber, sizeof(VersionNumber));
 
-  int gesturecategory = 1;
-  if ( myFile.read( (uint8_t *) &gesturecategory, sizeof( int ) ) == 0 )
+  Serial.print( "Ages loading, version number " );
+  Serial.println( VersionNumber );
+
+  // Read gesture types from the file
+  Serial.println( "Types: ");
+  for ( int i = 0; i < gesturetypes; i++ )
   {
-    return false;
+    char buffer[21]; // Maximum string length + 1 for null terminator
+    file.readBytesUntil('\0', buffer, sizeof(buffer));
+    Serial.println( String( buffer ) );
   }
 
-  // gesture number - 4 bytes
-  int gn = 0;
-  if ( myFile.read( (uint8_t *) &gn, sizeof( int ) ) == 0 )
-  {
-    return false;
-  }
+  // Read accx, accy, and accz arrays from the file
+  file.read((uint8_t*)accx, sizeof(accx));
+  file.read((uint8_t*)accy, sizeof(accy));
+  file.read((uint8_t*)accz, sizeof(accz));
 
-  String gesturename = "cancel";
-  int gesturenamelen = gesturename.length();
-  if ( myFile.read( (uint8_t *) &gesturenamelen, sizeof( int ) ) == 0 )
-  {
-    return false;
-  }
+  Serial.println( "Ages loading done" );
 
-  // gesture length - 4 bytes
-  if ( myFile.read( (uint8_t *) &gesturename, gesturenamelen ) == 0 )
-  {
-    return false;
-  }
+  file.close();
 
-  int gesturelen = maxframes * 4 * 3 * maxgestures;     // gestures are 3 axis of float values (4 bytes per float)
-  
-  // gesture template data
-  if ( myFile.read( (uint8_t *) &accxt, gesturelen ) == 0 )
-  {
-    return false;
-  }
-
-  myFile.close();
+  gesturesloaded = true;
 
   return true;
 }
@@ -531,79 +481,35 @@ void Accelerometer::loop()
             trainingMode = false;
             gesturesloaded = true;
             gesturestart = false;
-            typecounter = 0;            
-          }
+            typecounter = 0;
 
-          /*
-          Serial.println( "accx,y,z values" );
-          for ( int x = 0; x < gesturecount; x++ )
-          {
-            for ( int y = 0; y < maxframes; y++ )
+            saveGestures();
+
+            // For testing, dump contents of new gesture file
+            String mef = "/";
+            mef += NAND_BASE_DIR;
+            mef += "/";
+            mef += ACCEL_BASE_DIR;
+            mef += "/";
+            mef += ACCEL_BASE_FILE;
+            mef += ACCEL_BASE_EXT;
+            File gfile = SD.open( mef );
+            if ( ! gfile )
             {
-              for ( int z = 0; z < gesturetypes; z++ )
-              {
-                Serial.print( accx[x][y][z] );
-                Serial.print( " " );
-                Serial.print( accy[x][y][z] );
-                Serial.print( " " );
-                Serial.print( accz[x][y][z] );
-                Serial.print( ",  " );
-              }
+              Serial.print( "Unable to open new gesture file for hexdump " );
+              Serial.println( mef );
             }
-            Serial.println( "bop" );
+            else
+            {
+              Serial.print( "Open new gesture file for hexdump " );
+              Serial.println( mef );
+              utils.hexDump( gfile );
+            }
           }
-          */
-
-
-          /*
-          // For testing, dump contents of new gesture file
-          String mef = "/";
-          mef += NAND_BASE_DIR;
-          mef += "/";
-          mef += ACCEL_BASE_DIR;
-          mef += "/";
-          mef += ACCEL_BASE_FILE;
-          mef += ACCEL_BASE_EXT;
-          File gfile = SD.open( mef );
-          if ( ! gfile )
-          {
-            Serial.print( "Unable to open new gesture file for hexdump " );
-            Serial.println( mef );
-          }
-          else
-          {
-            Serial.print( "Open new gesture file for hexdump " );
-            Serial.println( mef );
-            utils.hexDump( gfile );
-          }
-        }
-        */
-
-
         }
       }
     }
   }
-
-
-// Load gestures from sd
-
-/*
-  if ( ( ! trainingMode ) && ( ! gesturesloaded ) )
-  {
-    gesturecount = 0;
-    while ( ( gesturecount < maxgestures ) && loadGesture() )
-    {
-      gesturecount++;      
-    }
-
-    Serial.print( "Loaded " );
-    Serial.print( gesturecount );
-    Serial.println( " gestures" );
-
-    gesturesloaded = true;
-  }
-*/
 
   // Detect recognized gestures, show results
 
@@ -656,6 +562,7 @@ void Accelerometer::loop()
           for ( int t = 0; t < gesturetypes; t++ )
           {
             dtwlow[ t ] = 1000000;
+            dtwavg[ t ] = 0;
 
             Serial.print( "DTWgpt accelerometer gesture " );
             if ( t == 0 ) { Serial.print( type1 ); }
@@ -680,6 +587,8 @@ void Accelerometer::loop()
 
               dtwhold = DTWgpt(seq1, seq2, maxframes);
               
+              dtwavg[ t ] += dtwhold;
+              
               if ( dtwhold < dtwlow[ t ] )
               {
                 dtwlow[ t ] = dtwhold;
@@ -687,9 +596,12 @@ void Accelerometer::loop()
 
               Serial.print( dtwhold );
               Serial.print( ",\t" );
-
             }
-            Serial.println( " " );
+
+            Serial.print( dtwavg[ t ] / maxgestures );
+            Serial.print( ",\t" );
+            Serial.print( dtwlow[ t ] );
+            Serial.println( ",\t" );
           }
 
           int dtwlowtype = 0;
@@ -697,15 +609,15 @@ void Accelerometer::loop()
           
           for ( int v = 0; v < gesturetypes; v++ )
           {
-            if ( dtwlow[ v ] < dtwbotval )
+            if ( ( dtwavg[ v ] / maxgestures ) < dtwbotval )
             {
               dtwlowtype = v;
-              dtwbotval = dtwlow[ v ];
+              dtwbotval = dtwavg[ v ] / maxgestures;
             }
           }
 
           Serial.print( "DTWgpt, gesture recognized: " );
-          if ( dtwbotval < 4000 )
+          if ( dtwbotval < 5000 )
           {
             if ( dtwlowtype == 0 ) { Serial.print( type1 ); }
             if ( dtwlowtype == 1 ) { Serial.print( type2 ); }
