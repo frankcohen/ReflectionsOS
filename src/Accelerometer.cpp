@@ -30,6 +30,7 @@
 extern Storage storage;   // Defined in ReflectionsOfFrank.ino
 extern Haptic haptic;
 extern Utils utils;
+extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 
 Accelerometer::Accelerometer(){}
 
@@ -71,14 +72,13 @@ void Accelerometer::begin()
 
   if ( ! SD.exists( mef ) )
   {
-    Serial.print( F( "Creating Accelerometer directory " ) );
-    Serial.println( mef );
+    logger.info( F( "Creating wrist gesture sensing directory " ) );
+    logger.info( mef );
     storage.createDir( SD, mef.c_str() );
   }
   else
   {
-    Serial.print( mef );
-    Serial.println( F( " exists" ) );    
+    logger.info( F( "Accel directory exists" ) );    
   }
 
   state = 0;
@@ -89,6 +89,18 @@ void Accelerometer::begin()
   dz = 0;
 
   threshold = 0;
+}
+
+int Accelerometer::getRecentGesture()
+{
+  if ( ( ( millis() - recenttimer ) > recentdelay ) )
+  {
+    recenttimer = millis();
+
+    recentGesture = 0;
+  }
+
+  return recentGesture;
 }
 
 void Accelerometer::setTraining( bool mode )
@@ -325,13 +337,13 @@ bool Accelerometer::saveGestures()
   File myFile = SD.open( mef, FILE_WRITE );
   if ( myFile )
   {
-    Serial.print( F( "SD file opened for write: " ) );
-    Serial.println( mef );
+    logger.info( F( "SD file opened for write: " ) );
+    logger.info( mef );
   }
   else
   {
-    Serial.print( F( "Error opening file for writing: " ) );
-    Serial.println( mef );
+    logger.error( F( "Error opening file for writing: " ) );
+    logger.error( mef );
     return false;
   }
 
@@ -359,7 +371,7 @@ bool Accelerometer::saveGestures()
   // Close the file
   myFile.close();
 
-  Serial.println("Data saved to file.");
+  logger.info("Data saved to file.");
 
   return true;
 }
@@ -384,23 +396,23 @@ bool Accelerometer::loadGestures()
   // Open file for reading
   File file = SD.open( mef, FILE_READ);
   if (!file) {
-    Serial.println("Error opening file for reading!");
+    logger.error("Accelerometer error opening file for reading.");
     return false;
   }
 
   // Read VersionNumber from the file
   file.read((uint8_t*)&VersionNumber, sizeof(VersionNumber));
 
-  Serial.print( "Ages loading, version number " );
-  Serial.println( VersionNumber );
+  //logger.info( "Ages loading, version number " );
+  //logger.info( String( VersionNumber ) );
 
   // Read gesture types from the file
-  Serial.println( "Types: ");
+  //logger.info( "Types: ");
   for ( int i = 0; i < gesturetypes; i++ )
   {
     char buffer[21]; // Maximum string length + 1 for null terminator
     file.readBytesUntil('\0', buffer, sizeof(buffer));
-    Serial.println( String( buffer ) );
+    //logger.info( String( buffer ) );
   }
 
   // Read accx, accy, and accz arrays from the file
@@ -408,7 +420,7 @@ bool Accelerometer::loadGestures()
   file.read((uint8_t*)accy, sizeof(accy));
   file.read((uint8_t*)accz, sizeof(accz));
 
-  Serial.println( "Ages loading done" );
+  logger.info( "Accelerometer loading done" );
 
   file.close();
 
@@ -429,15 +441,15 @@ void Accelerometer::loop()
     {
       firstnotice = true;
 
-      Serial.print("Template recording, ");
-      Serial.print( gesturecount );
-      Serial.print( ", ");
+      logger.info("Template recording, ");
+      logger.info( String( gesturecount ) );
+      logger.info( ", ");
 
-      if ( typecounter == 0 ) { Serial.print( type1 ); }
-      if ( typecounter == 1 ) { Serial.print( type2 ); }
-      if ( typecounter == 2 ) { Serial.print( type3 ); }
-      if ( typecounter == 3 ) { Serial.print( type4 ); }
-      Serial.println( " gesture" );
+      if ( typecounter == 0 ) { logger.info( type1 ); }
+      if ( typecounter == 1 ) { logger.info( type2 ); }
+      if ( typecounter == 2 ) { logger.info( type3 ); }
+      if ( typecounter == 3 ) { logger.info( type4 ); }
+      logger.info( " gesture" );
     }
 
     if ( detectStartOfGesture() )
@@ -467,7 +479,7 @@ void Accelerometer::loop()
         recordi = 0;
         haptic.playEffect(70);  // Transition Ramp Down Long Smooth 1 – 100 to 0%
         //haptic.playEffect(14);  // 14 Strong Buzz
-        Serial.println( "recording done" );
+        logger.info( "recording done" );
         firstnotice = false;
 
         gesturecount++;
@@ -486,6 +498,7 @@ void Accelerometer::loop()
             saveGestures();
 
             // For testing, dump contents of new gesture file
+            /*
             String mef = "/";
             mef += NAND_BASE_DIR;
             mef += "/";
@@ -496,15 +509,17 @@ void Accelerometer::loop()
             File gfile = SD.open( mef );
             if ( ! gfile )
             {
-              Serial.print( "Unable to open new gesture file for hexdump " );
-              Serial.println( mef );
+              logger.info( "Unable to open new gesture file for hexdump " );
+              logger.info( mef );
             }
             else
             {
-              Serial.print( "Open new gesture file for hexdump " );
-              Serial.println( mef );
+              logger.info( "Open new gesture file for hexdump " );
+              logger.info( mef );
               utils.hexDump( gfile );
             }
+            */
+
           }
         }
       }
@@ -519,13 +534,13 @@ void Accelerometer::loop()
     {
       if ( ! firstnotice )
       {
-        Serial.println("Make a gesture... ");
+        //logger.info("Make a gesture... ");
         firstnotice = true;
       }
 
       if ( detectStartOfGesture() )
       {
-        Serial.println("Sensing gesture");
+        //logger.info("Sensing gesture");
         gesturestart = true;
         recordtimer = millis();
         recordi = 0;
@@ -551,7 +566,7 @@ void Accelerometer::loop()
           gesturestart = false;
           firstnotice = false;
           
-          Serial.println("Comparing gestures");
+          //logger.info("Comparing gestures");
 
           // Pick a winner, the DTWgpt way
 
@@ -564,12 +579,14 @@ void Accelerometer::loop()
             dtwlow[ t ] = 1000000;
             dtwavg[ t ] = 0;
 
-            Serial.print( "DTWgpt accelerometer gesture " );
-            if ( t == 0 ) { Serial.print( type1 ); }
-            if ( t == 1 ) { Serial.print( type2 ); }
-            if ( t == 2 ) { Serial.print( type3 ); }
-            if ( t == 3 ) { Serial.print( type4 ); }
-            Serial.print( "\t" );
+            /*
+            logger.info( "DTWgpt accelerometer gesture " );
+            if ( t == 0 ) { logger.info( type1 ); }
+            if ( t == 1 ) { logger.info( type2 ); }
+            if ( t == 2 ) { logger.info( type3 ); }
+            if ( t == 3 ) { logger.info( type4 ); }
+            logger.info( "\t" );
+            */
 
             for ( int c = 0; c < maxgestures; c++ )
             {
@@ -594,14 +611,15 @@ void Accelerometer::loop()
                 dtwlow[ t ] = dtwhold;
               }
 
-              Serial.print( dtwhold );
-              Serial.print( ",\t" );
+              //logger.info( String( dtwhold ) );
+              //logger.info( ",\t" );
             }
 
-            Serial.print( dtwavg[ t ] / maxgestures );
-            Serial.print( ",\t" );
-            Serial.print( dtwlow[ t ] );
-            Serial.println( ",\t" );
+            float myvg = dtwavg[ t ] / maxgestures;
+            //logger.info( String( myvg ) );
+            //logger.info( ",\t" );
+            //logger.info( String( dtwlow[ t ] ) );
+            //logger.info( ",\t" );
           }
 
           int dtwlowtype = 0;
@@ -616,19 +634,39 @@ void Accelerometer::loop()
             }
           }
 
-          Serial.print( "DTWgpt, gesture recognized: " );
+          String mef = F( "DTWgpt, gesture recognized: " );
           if ( dtwbotval < 5000 )
           {
-            if ( dtwlowtype == 0 ) { Serial.print( type1 ); }
-            if ( dtwlowtype == 1 ) { Serial.print( type2 ); }
-            if ( dtwlowtype == 2 ) { Serial.print( type3 ); }
-            if ( dtwlowtype == 3 ) { Serial.print( type4 ); }
-            Serial.print( " " );
-            Serial.println( dtwbotval );
+            if ( dtwlowtype == 0 )
+            {
+              recentGesture = 1;
+              mef += type1; 
+            }
+
+            if ( dtwlowtype == 1 )
+            {
+              recentGesture = 2;
+              mef += type2; 
+            }
+
+            if ( dtwlowtype == 2 )
+            {
+              recentGesture = 3;
+              mef += type3; 
+            }
+
+            if ( dtwlowtype == 3 )
+            {
+              recentGesture = 4;
+              mef += type4; 
+            }
+
+            logger.info( mef );
           }
           else
           {
-            Serial.println( "Inconclusive" );
+            recentGesture = 0;
+            logger.info( "Inconclusive" );
           }
 
           // Pick a winner, the Sum Of Averages and Highest Average way
@@ -648,18 +686,18 @@ void Accelerometer::loop()
             aavgs[ t ] = 0;
             tophigh[ t ] = 0;
 
-            Serial.print( "Accelerometer gesture " );
-            if ( t == 0 ) { Serial.print( type1 ); }
-            if ( t == 1 ) { Serial.print( type2 ); }
-            if ( t == 2 ) { Serial.print( type3 ); }
-            if ( t == 3 ) { Serial.print( type4 ); }
-            Serial.print( "\t" );
+            logger.info( "Accelerometer gesture " );
+            if ( t == 0 ) { logger.info( type1 ); }
+            if ( t == 1 ) { logger.info( type2 ); }
+            if ( t == 2 ) { logger.info( type3 ); }
+            if ( t == 3 ) { logger.info( type4 ); }
+            logger.info( "\t" );
 
             for ( int c = 0; c < maxgestures; c++ )
             {
               gesperc = timeWarp( c, t );
-              Serial.print( gesperc );
-              Serial.print( ",\t" );
+              logger.info( gesperc );
+              logger.info( ",\t" );
 
               aavgs[ t ] += gesperc;
 
@@ -668,7 +706,7 @@ void Accelerometer::loop()
                 tophigh[ t ] = gesperc;
               }
             }
-            Serial.println( " " );
+            //logger.info( " " );
 
             if ( tophigh[ t ] > topsyval  )
             {
@@ -690,30 +728,30 @@ void Accelerometer::loop()
 
           if ( topval > 0.55 )
           {
-            Serial.print( "Sum of averages, gesture recognized: " );
-            if ( toptype == 0 ) { Serial.print( type1 ); }
-            if ( toptype == 1 ) { Serial.print( type2 ); }
-            if ( toptype == 2 ) { Serial.print( type3 ); }
-            if ( toptype == 3 ) { Serial.print( type4 ); }
-            Serial.println( " " );
+            logger.info( "Sum of averages, gesture recognized: " );
+            if ( toptype == 0 ) { logger.info( type1 ); }
+            if ( toptype == 1 ) { logger.info( type2 ); }
+            if ( toptype == 2 ) { logger.info( type3 ); }
+            if ( toptype == 3 ) { logger.info( type4 ); }
+            logger.info( " " );
           }
           else
           {
-            Serial.println( "Sum of averages, inconclusive " );
+            logger.info( "Sum of averages, inconclusive " );
           }
 
           if ( topsyval > 0.55 )
           {
-            Serial.print( "Highest average, gesture recognized: " );
-            if ( topsy == 0 ) { Serial.print( type1 ); }
-            if ( topsy == 1 ) { Serial.print( type2 ); }
-            if ( topsy == 2 ) { Serial.print( type3 ); }
-            if ( topsy == 3 ) { Serial.print( type4 ); }
-            Serial.println( " " );
+            logger.info( "Highest average, gesture recognized: " );
+            if ( topsy == 0 ) { logger.info( type1 ); }
+            if ( topsy == 1 ) { logger.info( type2 ); }
+            if ( topsy == 2 ) { logger.info( type3 ); }
+            if ( topsy == 3 ) { logger.info( type4 ); }
+            logger.info( " " );
           }
           else
           {
-            Serial.println( "Highest average, inconclusive " );
+            logger.info( "Highest average, inconclusive " );
           }
 
           */

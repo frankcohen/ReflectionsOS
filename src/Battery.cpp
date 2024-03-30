@@ -39,7 +39,7 @@ String Battery::batLevel( float analogVolts )
 
 void Battery::loop()
 {
-  if ( ( millis() - batteryWaitTime ) > 30000 )
+  if ( ( millis() - batteryWaitTime ) > 60000 )
   {
     batteryWaitTime = millis();
 

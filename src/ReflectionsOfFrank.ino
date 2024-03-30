@@ -100,7 +100,6 @@ Audio audio;
 
 static Wifi wifi;
 static GPS gps;
-static Accelerometer accel;
 static Compass compass;
 static TOF tof;
 static LED led;
@@ -113,6 +112,7 @@ const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certi
 LOGGER logger;
 Battery battery;
 Hardware hardware;
+Accelerometer accel;
 
 // Host name
 std::string devname;
@@ -155,52 +155,20 @@ void assertTest(bool result, String deviceName) {
   Cooperative multi-tasking functions
 */
 
-long testdetecttimer = millis();
-long testdetecttimer2 = millis();
-
-static void smartdelay(unsigned long ms) {
+static void smartdelay( unsigned long ms )\
+{
   unsigned long start = millis();
+
   do {
     battery.loop();
     accel.loop();
-
-
-
-/*
-  if ( ( millis() - testdetecttimer ) > 50 )
-  {
-    testdetecttimer = millis();
-
-    if ( accel.detectStartOfGesture() )
-    {
-      Serial.print("+");
-    }
-    else
-    {
-      Serial.print("-");
-    }
-
-  }
-
-
-  if ( ( millis() - testdetecttimer2 ) > 2000 )
-  {
-    testdetecttimer2 = millis();
-    Serial.println("bloop");
-  }
-
-*/
-
-
-
-    /*
-    video.loop();
     player.loop();
-
-    audio.loop();
-
-    logger.loop();
+    video.loop();
     storage.loop();
+  
+    /*
+    audio.loop();
+    logger.loop();
     utils.loop();
     wifi.loop();
     tof.loop();
@@ -236,7 +204,7 @@ void setup() {
   player.begin();
 
   //wifi.reset();  // Optionally reset any previous connection settings
-  //wifi.begin();  // Non-blocking, until guest uses it to connect
+  wifi.begin();  // Non-blocking, until guest uses it to connect
 
   logger.begin();
   logger.setEchoToSerial(true);
@@ -254,27 +222,9 @@ void setup() {
 
   locationUpdateTimer = millis();
 
-
-//  Serial.println( "Files on board:" );
-//  storage.listDir(SD, "/", 100, true);
-//  Serial.println( "Files on board:" );
-//  storage.listDir(SD, "/REFLECTIONS", 100, true);
-
-
-  /* 
-    Sometimes you need to delete all the files
-    and try to load them again
-  */
-
-  if ( false ) {
-    Serial.println( "Replicating server files" );
-    //storage.listDir(SD, "/", 100, true);    
-
-    storage.replicateServerFiles();
-
-    Serial.println( "Files on board:" );
-    storage.listDir(SD, "/", 100, true);
-  }
+  //storage.replicateServerFiles();
+  //Serial.println( "Files on board:" );
+  //storage.listDir(SD, "/", 100, true);
   
   haptic.begin();
   battery.begin();

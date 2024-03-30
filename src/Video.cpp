@@ -216,6 +216,7 @@ void Video::loop()
   }
   else
   {
+    vidtimer = millis();
     stopVideo();
 
     totalTime = millis() - startMs;

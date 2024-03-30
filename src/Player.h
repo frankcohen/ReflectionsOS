@@ -23,6 +23,7 @@ set-up story elements like gestures, location triggers
 #include "Video.h"
 #include "Audio.h"
 #include "Storage.h"
+#include "Accelerometer.h"
 
 class Player
 {
@@ -35,9 +36,6 @@ class Player
     void openShow();
     bool findNext();
     bool tarsExist();
-    bool decodeShow( String showName );
-    void play( String mname );
-    bool startAtTop();
 
     void RetreatGesture();
     void SkipGesture();
@@ -47,13 +45,15 @@ class Player
     void ShowMenu();
 
   private:
-    unsigned long playertime;
     unsigned long checktime;
     
     int sequence;
     bool fileValid;
 
     File showDirectoryIterator;
+    bool findMore;
+    int twice;
+    bool showIteratorFlag;
     File showDirectory;
     File showDir;
     File show;

@@ -20,6 +20,7 @@ extern LOGGER logger;
 extern Video video;
 extern Audio audio;
 extern Storage storage;
+extern Accelerometer accel;
 
 Player::Player() {}
 
@@ -76,64 +77,73 @@ bool Player::tarsExist()
   return false;
 }
 
-bool Player::startAtTop()
-{
-  String mef = "/";
-  mef += NAND_BASE_DIR;
-
-  showDirectoryIterator = SD.open( mef.c_str() );
-  if( !showDirectoryIterator )
-  {
-    logger.error( F( "Player startAtTop failed to open" ) );
-    return false;
-  }
-  return true;
-}
-
 bool Player::findNext()
 { 
-  File file = showDirectoryIterator.openNextFile();
-  if ( ! file )
+  if ( ! showIteratorFlag )
   {
     String mef = "/";
     mef += NAND_BASE_DIR;
+
     showDirectoryIterator = SD.open( mef.c_str() );
-    if( !showDirectoryIterator )
+    if( ! showDirectoryIterator )
     {
-      logger.error( F( "Player failed to open directory /" ) );
-      startAtTop();
+      showIteratorFlag = false;
+      logger.error( F( "Player failed to open directory iterator" ) );
       return false;
+    }
+
+    showIteratorFlag = true;
+  }
+
+  findMore = true;
+  twice = 0;
+  File file;
+
+  while ( ( findMore ) && ( twice < 2 ) )
+  {
+    file = showDirectoryIterator.openNextFile();
+    if ( ! file )
+    {
+      twice++;
+
+      String mef = "/";
+      mef += NAND_BASE_DIR;
+
+      showDirectoryIterator = SD.open( mef.c_str() );
+      if( ! showDirectoryIterator )
+      {
+        logger.error( F( "Player, showDirectoryIterator failed" ) );
+        showDirectoryIterator.close();
+        showIteratorFlag = false;
+      }
+    }
+
+    if( file.isDirectory() )
+    {
+      findMore = false;
     }
   }
 
-  if( ! file.isDirectory() )
+  if ( twice >= 2 )
   {
+    logger.error( F( "Player, showDirectoryIterator failed" ) );
     return false;
   }
-  else
+
+  String showName = file.path();
+
+  String msg = "Player findNext nextDir is ";
+  msg += showName;
+  logger.info( msg );
+
+  if ( nextDir.startsWith("/.") )
   {
-    nextDir = file.path();
-
-    String msg = "Player findNext nextDir: ";
-    msg += nextDir;
+    String msg = "Player findNext skipping directory ";
+    msg += showName;
     logger.info( msg );
-
-    if ( nextDir.startsWith("/.") )
-    {
-      String msg = "Player findNext skipping directory: ";
-      msg += nextDir;
-      logger.info( msg );
-
-      return false;
-    }
-
-    return decodeShow( nextDir );
+    return false;
   }
-  return true;
-}
 
-bool Player::decodeShow( String showName )
-{
   String sc = NAND_BASE_DIR;
   String lilname = showName.substring( sc.length() + 2 );
 
@@ -149,16 +159,17 @@ bool Player::decodeShow( String showName )
 
   if ( ! scriptFile )
   {
-    Serial.print( F( "Player, file not found: " ));
-    Serial.println( script );
+    String mef = F( "Player, file not found: " );
+    mef += script;
+    logger.info( mef );
     return false;
   }
 
   /* Fixme later: JSON data size limited */
   DynamicJsonDocument doc(500);
 
-  Serial.print( F( "Shows: deserialize " ) );
-  Serial.println( scriptFile.name() );
+  //Serial.print( F( "Shows: deserialize " ) );
+  //Serial.println( scriptFile.name() );
 
   DeserializationError error = deserializeJson(doc, scriptFile );
   if (error) {
@@ -167,7 +178,7 @@ bool Player::decodeShow( String showName )
     return false;
   }
 
-  serializeJsonPretty(doc, Serial);
+  //serializeJsonPretty(doc, Serial);
 
   String thevideofile;
   String theaudiofile;
@@ -191,61 +202,70 @@ bool Player::decodeShow( String showName )
       String na = step["playaudio"];
       nextAudio = na;
       nextDir = showName;
-      
-      Serial.print( "nextVideo: " );
-      Serial.println( nextVideo );
-      Serial.print( "nextAudio: " );
-      Serial.println( nextAudio );
+
+      /*
+      String mef = F( "Player, nextVideo ");
+      mef += nextVideo;
+      logger.info( mef );
+      String mef2 = F( "Player, nextAudio ");
+      mef2 += nextAudio;
+      logger.info( mef2 );
+      */
 
       return true;
     }
   }
 
-  return true;
-}
-
-void Player::play( String mname )
-{
-  if ( video.getStatus() > 0 )
-  {
-    video.stopVideo();
-  }
-
-  // decode mjpeg and audio from show json instructions
-
-  if ( decodeShow( mname ) )
-  {
-    playerStatus = 1;
-    String mef = "/";
-    mef += NAND_BASE_DIR;
-    mef += "/" + nextDir + "/" + nextVideo;
-    video.startVideo( mef );
-
-    /*
-    mef = "/";
-    mef += NAND_BASE_DIR;
-    mef += "/" + nextDir + "/" + nextAudio;
-    audio.play( mef );
-    */
-  }
-  else
-  {
-    logger.error( F( "Player play decodeShow returned false" ) );
-  }
+  return false;
 }
 
 void Player::begin()
 {
   playerStatus = 0;
-  startAtTop();
   checktime = millis();
+  showIteratorFlag = false;
 }
 
 void Player::loop()
 {
-  if ( video.getStatus() > 0 ) return;
+  if ( video.getStatus() == 1 )
+  {
+    if ( ( millis() - checktime ) > 2000 )
+    {
+      checktime = millis();
 
-  if ( ( millis() - checktime ) > 5000 )
+      int ges = accel.getRecentGesture();
+
+      if ( ges == 0 ) return;
+
+      // Next video
+      if ( ges > 0 )
+      {
+        video.stopVideo();
+
+        if ( findNext() )
+        {
+          playerStatus = 1;
+          logger.info( F( "Player next video" ) );
+
+          //mef = nextDir + "/" + nextAudio;
+          //audio.play( mef );
+          //logger.info( "audio play " + mef );
+          
+        }
+      }
+
+      // Previous video
+      if ( ges == 2 )
+      {
+        
+      }
+    }
+
+    return;
+  }
+  
+  if ( ( millis() - checktime ) > 2000 )
   {
     checktime = millis();
 
@@ -257,11 +277,13 @@ void Player::loop()
       video.startVideo( mef );
       logger.info( "video startVideo " + mef );
 
-      /*
-      mef = nextDir + "/" + nextAudio;
-      audio.play( mef );
-      logger.info( "audio play " + mef );
-      */
+      //mef = nextDir + "/" + nextAudio;
+      //audio.play( mef );
+      //logger.info( "audio play " + mef );
+      
+    }
+    else
+    {
     }
   }
 

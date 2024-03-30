@@ -7,6 +7,7 @@
 #include "Storage.h"
 #include "Haptic.h"
 #include "Utils.h"
+#include "Logger.h"
 
 #include "LIS3DHTR.h"
 #include <Wire.h>
@@ -38,6 +39,9 @@
 // Milliseconds delay between frames
 #define framedelay 40
 
+// Milliseconds to time-out the most recent gesture
+#define recentdelay 5000
+
 class Accelerometer
 {
   public:
@@ -49,6 +53,7 @@ class Accelerometer
     bool detectStartOfGesture();
     bool saveGestures();
     bool loadGestures();
+    int getRecentGesture();
     
   private:
     bool getAccelValues();
@@ -59,6 +64,8 @@ class Accelerometer
 
     LIS3DHTR<TwoWire> LIS;
 
+    int recentGesture;
+    long recenttimer;
     bool trainingMode;
     unsigned long movetimer;
     float olddtw;
