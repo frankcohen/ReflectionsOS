@@ -239,7 +239,7 @@ void Player::loop()
       if ( ges == 0 ) return;
 
       // Next video
-      if ( ges > 0 )
+      if ( ges > 1 )
       {
         video.stopVideo();
 
