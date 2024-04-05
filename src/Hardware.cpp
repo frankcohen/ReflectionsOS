@@ -21,12 +21,11 @@ void Hardware::begin()
 
   Wire.begin(I2CSDA, I2CSCL);  // Initialize I2C bus
 
+  // Starts SD/NAND storage component
+
   pinMode(NAND_SPI_CS, OUTPUT );
   digitalWrite(NAND_SPI_CS, HIGH);
-
   delay(1000);
-
-  pinMode(NAND_SPI_CS, OUTPUT );
   digitalWrite(NAND_SPI_CS, LOW);
 
   // Configure display pins
@@ -47,19 +46,19 @@ void Hardware::begin()
   pinMode(AudioPower, OUTPUT);
   digitalWrite(AudioPower, HIGH);
 
-  // Starts SD/NAND storage component
-
-  pinMode( NAND_SPI_CS, OUTPUT );
-  digitalWrite( NAND_SPI_CS, LOW);
-
   if ( ! SD.begin( NAND_SPI_CS ) )
   {
-    Serial.println(F("SD card failed"));
+    Serial.println(F("SD storage failed"));
+    Serial.println(F("Stopping"));
     NANDMounted = false;
+    while(1)  // Stopping
+    {
+      delay(1000);
+    };
   }
   else
   {
-    Serial.println(F("SD card mounted"));
+    Serial.println(F("SD storage mounted"));
     NANDMounted = true;
   }
 }

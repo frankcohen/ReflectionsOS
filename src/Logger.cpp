@@ -1,5 +1,5 @@
 /*
- Reflections, mobile connected entertainment device
+ Reflections, mobile connected entertainment experience
 
  Repository is at https://github.com/frankcohen/ReflectionsOS
  Includes board wiring directions, server side components, examples, support
@@ -7,9 +7,6 @@
  Licensed under GPL v3 Open Source Software
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
-
- Depends on:
- https://github.com/plageoj/urlencode
 
 Example log entry:
 CALLIOPE-7A,info,Logger started correctly
@@ -76,12 +73,9 @@ void LOGGER::logit( String msgtype, String msg )
     Serial.println( msg );
   }
 
-  // Don't log while testing
-  return;
-
   if ( ! echoServer ) return;
 
-  if ( mylogopen != 1 )
+  if ( ! mylogopen )
   {
     Serial.println( F( "Not logging, mylog is not open" ) );
     return;    
@@ -117,8 +111,8 @@ void LOGGER::logit( String msgtype, String msg )
     //Serial.print( F( ", forcecount = " ) );
     //Serial.print( forcecount );
     //Serial.println( F( " OK" ));
-        
-    forceit = 1;
+    
+    forceit = true;
   }
   else
   {
@@ -126,20 +120,18 @@ void LOGGER::logit( String msgtype, String msg )
 
     Serial.print( F("Starting new log file, forcecount = " ) );
     Serial.println( forcecount++ );
-    forceit = 0;
+    forceit = false;
   }
 
   if ( forceit )
   {
-    forceit = 1;
-
     if ( mylog.size() < log_size_upload ) return;
 
     if ( ! scanLogNumbers() ) return;
   }
 
   mylog.close();
-  mylogopen = 0;
+  mylogopen = false;
 
   String elname = LOGNAME_START;
   elname += String( highLogNumber + 1 );
@@ -149,11 +141,12 @@ void LOGGER::logit( String msgtype, String msg )
   {
     Serial.print( F( "Unable to create log file " ) );
     Serial.println( elname );
-  }    
+    return;
+  }
   
   mylog = lognext;
   mylogname = elname;
-  mylogopen = 1;
+  mylogopen = true;
   
   Serial.print( F( "Opened log file " ) );
   Serial.print( mylogname );
@@ -171,6 +164,54 @@ void LOGGER::logit( String msgtype, String msg )
   mylog.print( mylogname );
   mylog.print( "\n" );
   mylog.flush();
+}
+
+
+/*
+
+ChatGPT provided the urlencode() method from these prompts:
+Are you familiar with URL encoding?
+I am working in an ESP32 using Arduino IDE 2.3
+I need a method in C to URL encode a String
+
+ChatGPT details on the method:
+This code defines a function urlencode that takes a null-terminated string as input and returns a 
+dynamically allocated string containing the URL encoded version of the input string. It handles all 
+characters in the string according to the URL encoding rules.
+
+*/
+
+char * LOGGER::urlencode(const char *str) 
+{
+    const char *hex = "0123456789ABCDEF";
+    char *pstr = (char *)str, *buf, *pbuf;
+    size_t len = strlen(str);
+    size_t buf_len = len * 3 + 1; // Maximum possible length
+
+    buf = (char *)malloc(buf_len);
+    if (buf == NULL) {
+        return NULL;
+    }
+
+    pbuf = buf;
+    while (*pstr) {
+        if ((*pstr >= 'A' && *pstr <= 'Z') ||
+            (*pstr >= 'a' && *pstr <= 'z') ||
+            (*pstr >= '0' && *pstr <= '9') ||
+            *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') {
+            *pbuf++ = *pstr;
+        } else if (*pstr == ' ') {
+            *pbuf++ = '+';
+        } else {
+            *pbuf++ = '%';
+            *pbuf++ = hex[*pstr >> 4];
+            *pbuf++ = hex[*pstr & 15];
+        }
+        pstr++;
+    }
+    *pbuf = '\0';
+
+    return buf;
 }
 
 /*
@@ -197,11 +238,29 @@ void LOGGER::setEchoToServer( bool echo )
 
 bool LOGGER::sendToServer( String message )
 {
-  //Serial.print( "sendToServer: ");
-  //Serial.println( message );
+  Serial.print( "sendToServer: ");
+  Serial.println( message );
+
+  if ( message == "" )
+  {
+    error( F("empty message") );
+    return false;
+  }
+
+  char * encoded_str = urlencode( message.c_str() );
+  if ( encoded_str == NULL )
+  {
+    error( F( "Failed to allocate memory for encoded string" ) );
+    return false;
+  } 
 
   String logurl = cloudCityLogURL;
-  logurl += urlEncode( message );
+  logurl += String( encoded_str );
+
+
+  Serial.println( "Sent to server:" );
+  Serial.println( logurl );
+
 
   http.begin( logurl, root_ca );
   http.setReuse(true);
@@ -212,10 +271,13 @@ bool LOGGER::sendToServer( String message )
   {
     Serial.print( F( "Server response code: " ) );
     Serial.println( httpCode );
+    free(encoded_str);
     return false;
   }
 
   http.end();
+
+  free(encoded_str);
 
   return true;
 }
@@ -229,13 +291,16 @@ bool LOGGER::scanLogNumbers()
   mef += NAND_BASE_DIR;
 
   File root = SD.open( mef );
-  if( !root ){
-      Serial.print( F( "scanLogNumbers failed to open directory " ) );
-      Serial.println ( mef );
-      return false;
+  if( !root )
+  {
+    info( F( "scanLogNumbers failed to open directory" ) );
+    return false;
   }
 
-  while ( 1 )
+  String mynum;
+  int mynumbr = 0;
+
+  for ( int j = 0; j < 1000; j++ )
   {
     File file = root.openNextFile();
     if ( file )
@@ -246,8 +311,8 @@ bool LOGGER::scanLogNumbers()
 
         if ( myfilename.startsWith( "log" ) )
         {
-          String mynum = myfilename.substring( 3 );
-          int mynumbr = mynum.toInt();
+          mynum = myfilename.substring( 3 );
+          mynumbr = mynum.toInt();
 
           if ( mynumbr < lowLogNumber )
           {
@@ -263,7 +328,7 @@ bool LOGGER::scanLogNumbers()
     }
     else
     {
-      break;
+      return true;
     }
   }
 
@@ -281,14 +346,14 @@ void LOGGER::begin()
 
   root_ca = ssl_cert;   // Defined in secrets.h
 
-  echoSerial = false;   // Echo's log messages to Serial monitor
-  echoServer = true;    // Echo's log messages to log service in the Cloud
+  echoSerial = false;   // Echo log messages to Serial monitor
+  echoServer = true;    // Echo log messages to log service in the Cloud
 
-  mylogopen = 0;
-  myuploadopen = 0;
-  uploading = 0;
-  uploadcount = 0;
-  forceit = 0;
+  mylogopen = false;
+  myuploadopen = false;
+  uploading = false;
+  uploadcount = 1;
+  forceit = false;
   forcecount = 0;
 
   devname = host_name_me;
@@ -308,9 +373,9 @@ void LOGGER::begin()
   {
     Serial.print( F( "Unable to create log file " ) );
     Serial.println( mylog );
-  }    
+  }
   
-  mylogopen = 1;
+  mylogopen = true;
   
   Serial.print( F( "Opened starting log file " ) );
   Serial.print( mylogname );
@@ -330,11 +395,10 @@ void LOGGER::loop()
   {
     uploadchecktime = millis();
     
-    Serial.println( F( "Checking for upload" ) );
+    //Serial.println( F( "Checking for upload" ) );
 
     if ( !uploading )
     {
-
       if ( scanLogNumbers() )
       {
         uploadfilename = LOGNAME_START;
@@ -342,35 +406,37 @@ void LOGGER::loop()
 
         if ( ( mylogopen ) && ( uploadfilename.equals( mylogname ) ) )
         {
-          Serial.print( F( "Skipping log file because it is open " ) );
-          Serial.println( uploadfilename );
+          String mef = F( "Skipping log file because it is open " );
+          mef += uploadfilename;
+          info( mef );
         }
         else
         {
           myupload = SD.open( uploadfilename );
           if( !myupload )
           {
-            Serial.print( F( "Unable to open upload file " ) );
-            Serial.println( uploadfilename );
-            myuploadopen = 1;
-            uploadcount = 0;
-            uploading = 0;
+            String mef = F( "Logger unable to open upload file " );
+            mef += uploadfilename;
+            info( mef );
+
+            myuploadopen = true;
+            uploading = false;
           }
           else
           {
-            uploading = 1;
-            myuploadopen = 1;
-            uploadcount = 0;
-            
-            Serial.print( F( "Uploading log " ) );
-            Serial.println( uploadfilename );
+            String mef = F( "Logger uploading log " );
+            mef += uploadfilename;
+            info( mef );
+
+            uploading = true;
+            myuploadopen = true;
           }
         }
       }
     }
     else
     {
-      Serial.println( F( "We're uploading, so I'm fine." ) );
+      info( F( "Logger uploading in progress" ) );
     }
   }
 
@@ -380,37 +446,22 @@ void LOGGER::loop()
 
     if ( avail > 0 )
     {
-      char line[ maxlogmsg + 1 ];
-      for ( int j = 0; j < maxlogmsg; j++)
-      {
-        line[j] = 0;
-      }
-      char fchr;
-
-      int i=0;
-      while ( ( i < maxlogmsg ) && myupload.available() )
-      {
-        fchr = myupload.read();
-        if ( fchr == '\n' ) break;
-        line[i] = fchr;
-        i++;
-      }
-      line[ i ] = 0;
-
-      String mys = line;
-
+      String mys = myupload.readStringUntil('\n');
       sendToServer( mys );
-      uploadcount++;
     }
     else
     {
-      //Serial.print( F( "Log sent to service, count = " ) );
-      //Serial.println( uploadcount );
+      String mef = F( "Logger sent " );
+      mef += uploadfilename;
+      mef += " to service and deleted the file ";
+      mef += uploadcount;
+      info( mef );
 
+      uploadcount++;
       myupload.close();
-      myuploadopen = 0;
+      myuploadopen = false;
       SD.remove( uploadfilename );
-      uploading = 0;
+      uploading = false;
     }
   }
 }

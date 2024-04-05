@@ -11,7 +11,9 @@
 #include "SD.h"
 #include "SPI.h"
 
-#include <UrlEncode.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define log_size_upload 1000
 
@@ -30,6 +32,7 @@ class LOGGER
     void critical( String message );
     void clearLog( String logname );
     bool scanLogNumbers();
+    char * urlencode(const char *str);
 
     void setEchoToSerial( bool echo );
     void setEchoToServer( bool echo );

@@ -165,10 +165,10 @@ static void smartdelay( unsigned long ms )\
     player.loop();
     video.loop();
     storage.loop();
+    logger.loop();
   
     /*
     audio.loop();
-    logger.loop();
     utils.loop();
     wifi.loop();
     tof.loop();
@@ -223,8 +223,8 @@ void setup() {
   locationUpdateTimer = millis();
 
   //storage.replicateServerFiles();
-  //Serial.println( "Files on board:" );
-  //storage.listDir(SD, "/", 100, true);
+  Serial.println( "Files on board:" );
+  storage.listDir(SD, "/", 100, true);
   
   haptic.begin();
   battery.begin();
