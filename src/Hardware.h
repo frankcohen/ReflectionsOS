@@ -5,6 +5,7 @@
 #include "secrets.h"
 
 #include "Arduino.h"
+#include "SD.h"
 #include "SPI.h"
 #include "Wire.h"
 #include "Logger.h"
@@ -19,6 +20,7 @@ class Hardware
 
   private:
     bool NANDMounted;
+
 };
 
 #endif // _HARDWARE_

@@ -161,10 +161,10 @@ static void smartdelay( unsigned long ms )\
 
   do {
     battery.loop();
-    accel.loop();
-    player.loop();
-    video.loop();
-    storage.loop();
+    //accel.loop();
+    //player.loop();
+    //video.loop();
+    //storage.loop();
     logger.loop();
   
     /*
@@ -279,10 +279,18 @@ void setup() {
   logger.info(F("Setup complete"));
 }
 
+int msi = 0;
+long msitime = millis();
+
 void loop() {
   smartdelay(1000);
 
-
+  if ((millis() - msitime) > 2000) 
+  {
+    msitime = millis();
+    logger.info( "Just me logging " );
+    logger.info( String( msi++ ) );
+  }
 
 
   // Send telemetry of sensors to Cloud City for analysis

@@ -77,7 +77,7 @@ void LOGGER::logit( String msgtype, String msg )
 
   if ( ! mylogopen )
   {
-    Serial.println( F( "Not logging, mylog is not open" ) );
+    //Serial.println( F( "Not logging, mylog is not open" ) );
     return;    
   }
 
@@ -238,12 +238,12 @@ void LOGGER::setEchoToServer( bool echo )
 
 bool LOGGER::sendToServer( String message )
 {
-  Serial.print( "sendToServer: ");
-  Serial.println( message );
+  //Serial.print( "sendToServer: ");
+  //Serial.println( message );
 
   if ( message == "" )
   {
-    error( F("empty message") );
+    //error( F("empty message") );
     return false;
   }
 
@@ -258,8 +258,8 @@ bool LOGGER::sendToServer( String message )
   logurl += String( encoded_str );
 
 
-  Serial.println( "Sent to server:" );
-  Serial.println( logurl );
+  //Serial.println( "Sent to server:" );
+  //Serial.println( logurl );
 
 
   http.begin( logurl, root_ca );
