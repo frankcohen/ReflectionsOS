@@ -385,6 +385,7 @@ void LOGGER::begin()
   Serial.println( lowLogNumber );
 
   uploadchecktime = millis();
+  uploadpacetime = millis();
 
   Serial.println( F( "Logger started" ) );
 }
@@ -434,34 +435,35 @@ void LOGGER::loop()
         }
       }
     }
-    else
-    {
-      info( F( "Logger uploading in progress" ) );
-    }
   }
 
   if ( uploading )
   {
-    long avail = myupload.available();
-
-    if ( avail > 0 )
+    if ( ( ( millis() - uploadpacetime ) > 500 ) )
     {
-      String mys = myupload.readStringUntil('\n');
-      sendToServer( mys );
-    }
-    else
-    {
-      String mef = F( "Logger sent " );
-      mef += uploadfilename;
-      mef += " to service and deleted the file ";
-      mef += uploadcount;
-      info( mef );
+      uploadpacetime = millis();
 
-      uploadcount++;
-      myupload.close();
-      myuploadopen = false;
-      SD.remove( uploadfilename );
-      uploading = false;
+      long avail = myupload.available();
+
+      if ( avail > 0 )
+      {
+        String mys = myupload.readStringUntil('\n');
+        sendToServer( mys );
+      }
+      else
+      {
+        String mef = F( "Logger sent " );
+        mef += uploadfilename;
+        mef += " to service and deleted the file ";
+        mef += uploadcount;
+        info( mef );
+
+        uploadcount++;
+        myupload.close();
+        myuploadopen = false;
+        SD.remove( uploadfilename );
+        uploading = false;
+      }
     }
   }
 }

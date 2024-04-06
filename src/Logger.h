@@ -59,6 +59,7 @@ class LOGGER
     bool myuploadopen;
     bool uploading;
     long uploadchecktime;
+    long uploadpacetime;
     long uploadcount;
 
     HTTPClient http;
