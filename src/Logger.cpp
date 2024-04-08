@@ -75,11 +75,58 @@ void LOGGER::logit( String msgtype, String msg )
 
   if ( ! echoServer ) return;
 
+  // Time to open a new log file?
+
   if ( ! mylogopen )
   {
-    //Serial.println( F( "Not logging, mylog is not open" ) );
-    return;    
+    if ( ( ( millis() - logcreatepacetime ) < 500 ) )
+    {
+      return;
+    }
+
+    logcreatepacetime = millis();
+
+    Serial.print( F("Starting new log file " ) );
+
+    if ( ! scanLogNumbers() )
+    {
+      Serial.print( F("Logger scanLogNumbers failed" ) );
+      return;
+    }
+
+    mylogname = LOGNAME_START;
+    mylogname += String( highLogNumber + 1 );
+    
+    mylog = SD.open( mylogname, FILE_WRITE );
+    if( ! mylog )
+    {
+      Serial.print( F( "Unable to create log file " ) );
+      Serial.println( mylogname );
+      return;
+    }
+    
+    mylogopen = true;
+    
+    Serial.print( F( "Opened log file " ) );
+    Serial.print( mylogname );
+    Serial.print( ", mylog.size() = " );
+    Serial.println( (long) mylog.size() );
+
+    // I need to write something to the log file here because the 
+    // Espressif SD library has a bug, it returns a random value for mylog.size() 
+    // before something is written to the log file.
+
+    mylog.print( devname.c_str() );
+    mylog.print( F( ",Info," ) );
+    mylog.print( F( "Starting log " ) );
+    mylog.print( mylogname );
+    mylog.print( F( "\n" ) );
+    mylog.flush();
   }
+
+  // Write to the log file
+
+  long mysize = (long) mylog.size();
 
   String logmsg = devname.c_str();
   logmsg += ",";
@@ -88,82 +135,30 @@ void LOGGER::logit( String msgtype, String msg )
   logmsg += msg;
   logmsg += "\n";
 
-  long mysize = (long) mylog.size();
-
   int logval = mylog.print( logmsg );
+
   mylog.flush();
 
-  /*
-  Serial.print( "Logged to " );
-  Serial.print( mylogname );
-  Serial.print( ", written = ");
-  Serial.print( logval );
-  Serial.print( ", characters " );
-  Serial.print( logmsg.length() );
-  Serial.print( ", file size before " );
-  Serial.print( mysize );
-  Serial.print( ", file size after " );
-  Serial.print( mylog.size() );
-  */
+  // Then check the log file size is correct
+  // Because the Espressif SD library has a nasty
+  // bug where intermittently it will not actually
+  // write to the file.
 
-  if ( mylog.size() == mysize + logmsg.length() )
+  if ( mylog.size() != ( mysize + logmsg.length() ) )
   {
-    //Serial.print( F( ", forcecount = " ) );
-    //Serial.print( forcecount );
-    //Serial.println( F( " OK" ));
-    
-    forceit = true;
-  }
-  else
-  {
-    //Serial.println( ", FAIL" );
-
-    Serial.print( F("Starting new log file, forcecount = " ) );
+    Serial.print( "Logger failed when checking " );
+    Serial.print( mylogname );
+    Serial.print( " size should be " );
+    Serial.print( mysize + logmsg.length() );
+    Serial.print( " instead it is " );
+    Serial.print( mylog.size() );
+    Serial.print( F( " forcecount = " ) );
     Serial.println( forcecount++ );
-    forceit = false;
+
+    Serial.println( F( "Closing log file" ) );
+    mylog.close();
+    mylogopen = false;
   }
-
-  if ( forceit )
-  {
-    if ( mylog.size() < log_size_upload ) return;
-
-    if ( ! scanLogNumbers() ) return;
-  }
-
-  mylog.close();
-  mylogopen = false;
-
-  String elname = LOGNAME_START;
-  elname += String( highLogNumber + 1 );
-  
-  lognext = SD.open( elname, FILE_WRITE );
-  if( !lognext )
-  {
-    Serial.print( F( "Unable to create log file " ) );
-    Serial.println( elname );
-    return;
-  }
-  
-  mylog = lognext;
-  mylogname = elname;
-  mylogopen = true;
-  
-  Serial.print( F( "Opened log file " ) );
-  Serial.print( mylogname );
-  Serial.print( ", mylog.size() = " );
-  Serial.println( (long) mylog.size() );
-
-  // I need to write something to the log file here
-  // because the Espressif SD library returns a random
-  // value for mylog.size() before something is
-  // written to the log file.
-
-  mylog.print( devname.c_str() );
-  mylog.print( ",Info," );
-  mylog.print( "Starting log " );
-  mylog.print( mylogname );
-  mylog.print( "\n" );
-  mylog.flush();
 }
 
 
@@ -386,6 +381,7 @@ void LOGGER::begin()
 
   uploadchecktime = millis();
   uploadpacetime = millis();
+  logcreatepacetime = millis();
 
   Serial.println( F( "Logger started" ) );
 }

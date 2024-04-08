@@ -165,7 +165,7 @@ static void smartdelay( unsigned long ms )\
     //player.loop();
     //video.loop();
     //storage.loop();
-    logger.loop();
+    //logger.loop();
   
     /*
     audio.loop();
@@ -288,8 +288,9 @@ void loop() {
   if ((millis() - msitime) > 2000) 
   {
     msitime = millis();
-    logger.info( "Just me logging " );
-    logger.info( String( msi++ ) );
+    String mef = "Just me logging ";
+    mef += msi++;
+    logger.info( mef );
   }
 
 

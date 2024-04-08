@@ -46,10 +46,8 @@ class LOGGER
     int highLogNumber;
 
     File mylog;
-    File lognext;
     bool mylogopen;
     String mylogname;
-    long mylogtime;
 
     std::string devname;
     String devicename;
@@ -60,6 +58,7 @@ class LOGGER
     bool uploading;
     long uploadchecktime;
     long uploadpacetime;
+    long logcreatepacetime;
     long uploadcount;
 
     HTTPClient http;
