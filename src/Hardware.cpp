@@ -46,7 +46,7 @@ void Hardware::begin()
   pinMode(AudioPower, OUTPUT);
   digitalWrite(AudioPower, HIGH);
 
-  if ( ! SD.begin( NAND_SPI_CS, SPI, 10000000) )
+  if ( ! SD.begin( NAND_SPI_CS, SPI, SPI_SPEED) )
   {
     Serial.println(F("SD storage failed"));
     Serial.println(F("Stopping"));

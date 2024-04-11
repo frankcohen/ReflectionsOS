@@ -42,6 +42,10 @@ class LOGGER
     bool setActiveFile( int atvnum );
     bool sendToServer( String message );
 
+    char buffer[101];
+    int bytesRead;
+    String data;
+
     int lowLogNumber;
     int highLogNumber;
 
@@ -54,16 +58,17 @@ class LOGGER
 
     File myupload;
     String uploadfilename;
-    bool myuploadopen;
     bool uploading;
     long uploadchecktime;
     long uploadpacetime;
     long logcreatepacetime;
     long uploadcount;
+    long deletetime;
+    bool deleting;
 
     HTTPClient http;
+    String uploadstr;
 
-    bool forceit;
     int forcecount;
 
     bool echoSerial;

@@ -30,6 +30,12 @@ https://myserver.com/api/logit?message=thisismyfirstlogentry5
 Article and comments at:
 https://www.reddit.com/r/esp32/comments/16mj3zh/scalable_logger_esp32_wifi_sdnand_for_multiple/
 
+Issure reports:
+https://github.com/espressif/arduino-esp32/issues/9465
+The logger fails when it uses SD.remove(“/REFLECTIONS/log1”). It works fine with log1.txt. I opened a bug 
+report at: https://github.com/espressif/arduino-esp32/issues/9465. And I changed the logger.cpp code to use 
+log1.txt as a file name.
+
 */
 
 #include "Logger.h"
@@ -77,6 +83,16 @@ void LOGGER::logit( String msgtype, String msg )
 
   // Time to open a new log file?
 
+  if ( mylogopen )
+  {
+    if ( mylog.size() > log_size_upload )
+    {
+      Serial.println( F( "Closing log file" ) );
+      mylog.close();
+      mylogopen = false;
+    }
+  }
+
   if ( ! mylogopen )
   {
     if ( ( ( millis() - logcreatepacetime ) < 500 ) )
@@ -96,6 +112,7 @@ void LOGGER::logit( String msgtype, String msg )
 
     mylogname = LOGNAME_START;
     mylogname += String( highLogNumber + 1 );
+    mylogname += LOGNAME_END;
     
     mylog = SD.open( mylogname, FILE_WRITE );
     if( ! mylog )
@@ -160,7 +177,6 @@ void LOGGER::logit( String msgtype, String msg )
     mylogopen = false;
   }
 }
-
 
 /*
 
@@ -306,8 +322,14 @@ bool LOGGER::scanLogNumbers()
 
         if ( myfilename.startsWith( "log" ) )
         {
-          mynum = myfilename.substring( 3 );
-          mynumbr = mynum.toInt();
+          int startPos = myfilename.indexOf("log") + 3;
+          int endPos = myfilename.indexOf( LOGNAME_END );
+
+          // Extract the numeric part of the filename
+          String numericPart = myfilename.substring(startPos, endPos);
+
+          // Convert the numeric part to an integer
+          mynumbr = numericPart.toInt();
 
           if ( mynumbr < lowLogNumber )
           {
@@ -345,11 +367,10 @@ void LOGGER::begin()
   echoServer = true;    // Echo log messages to log service in the Cloud
 
   mylogopen = false;
-  myuploadopen = false;
   uploading = false;
   uploadcount = 1;
-  forceit = false;
   forcecount = 0;
+  deleting = 0;
 
   devname = host_name_me;
   std::string mac = WiFi.macAddress().c_str();
@@ -362,7 +383,8 @@ void LOGGER::begin()
 
   mylogname = LOGNAME_START;
   mylogname += String( highLogNumber + 1 );
-  
+  mylogname += LOGNAME_END;
+
   mylog = SD.open( mylogname, FILE_WRITE );
   if( !mylog )
   {
@@ -394,71 +416,97 @@ void LOGGER::loop()
     
     //Serial.println( F( "Checking for upload" ) );
 
-    if ( !uploading )
+    if ( ( ! uploading ) && ( ! deleting ) )
     {
-      if ( scanLogNumbers() )
+      if ( ! scanLogNumbers() )
+      {
+        Serial.println( "Logger scanLogNumbers failed");
+        return;
+      }
+      else
       {
         uploadfilename = LOGNAME_START;
         uploadfilename += String( lowLogNumber );
+        uploadfilename += LOGNAME_END;
 
-        if ( ( mylogopen ) && ( uploadfilename.equals( mylogname ) ) )
+        if ( mylogopen ) 
         {
-          String mef = F( "Skipping log file because it is open " );
-          mef += uploadfilename;
-          info( mef );
+          if ( uploadfilename.equals( mylogname ) )
+          {
+            String mef = F( "Skipping log file because it is open " );
+            mef += uploadfilename;
+            Serial.println( mef );
+            return;
+          }
+        }
+
+        myupload = SD.open( uploadfilename );
+        if( ! myupload )
+        {
+          Serial.print( F( "Logger unable to open upload file " ) );
+          Serial.println( uploadfilename );
+
+          uploading = false;
         }
         else
         {
-          myupload = SD.open( uploadfilename );
-          if( !myupload )
-          {
-            String mef = F( "Logger unable to open upload file " );
-            mef += uploadfilename;
-            info( mef );
+          Serial.print( F( "Logger uploading " ) );
+          Serial.println( uploadfilename );
 
-            myuploadopen = true;
-            uploading = false;
-          }
-          else
-          {
-            String mef = F( "Logger uploading log " );
-            mef += uploadfilename;
-            info( mef );
-
-            uploading = true;
-            myuploadopen = true;
-          }
+          uploading = true;
         }
       }
     }
   }
 
-  if ( uploading )
+  if ( ( uploading ) && ( ! deleting ) )
   {
     if ( ( ( millis() - uploadpacetime ) > 500 ) )
     {
       uploadpacetime = millis();
 
-      long avail = myupload.available();
+      //uploadstr = myupload.readStringUntil('\n');
+      //if ( uploadstr.length() > 0 )
 
-      if ( avail > 0 )
-      {
-        String mys = myupload.readStringUntil('\n');
-        sendToServer( mys );
+
+      bytesRead = myupload.readBytes(buffer, 100);
+      if ( bytesRead > 0 )
+
+      {  
+        data = String( buffer );
+        Serial.print( "   Simulation: " );
+        Serial.println( data );
+        //Serial.println( uploadstr );
+        // sendToServer( uploadstr );
       }
       else
       {
-        String mef = F( "Logger sent " );
-        mef += uploadfilename;
-        mef += " to service and deleted the file ";
-        mef += uploadcount;
-        info( mef );
+        Serial.print( F( "Logger sent " ) );
+        Serial.print( uploadfilename );
+        Serial.println( F( " to service" ) );
 
-        uploadcount++;
         myupload.close();
-        myuploadopen = false;
-        SD.remove( uploadfilename );
         uploading = false;
+        uploadcount++;
+        deleting = true;
+        deletetime = millis();
+      }
+    }
+  }
+
+  if ( deleting )
+  {
+    if ( ( ( millis() - deletetime ) > 2000 ) )
+    {
+      deleting = false;
+
+      if ( SD.remove( uploadfilename ) )
+      {
+        Serial.println( F("Log file deleted successfully") );
+      }
+      else
+      {
+        Serial.println( F( "Log file delete failed" ) );
       }
     }
   }

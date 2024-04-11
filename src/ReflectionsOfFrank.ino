@@ -165,7 +165,7 @@ static void smartdelay( unsigned long ms )\
     //player.loop();
     //video.loop();
     //storage.loop();
-    //logger.loop();
+    logger.loop();
   
     /*
     audio.loop();
@@ -292,7 +292,6 @@ void loop() {
     mef += msi++;
     logger.info( mef );
   }
-
 
   // Send telemetry of sensors to Cloud City for analysis
 

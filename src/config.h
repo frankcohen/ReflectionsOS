@@ -40,12 +40,13 @@ Read the license in the license.txt file that comes with this code.
 #define SPI_MOSI      35
 #define SPI_MISO      37
 #define SPI_SCK       36
-#define SPI_SPEED     40000000
+#define SPI_SPEED     10000000
 
 // NAND Storage
 #define NAND_SPI_CS   15
 #define NAND_BASE_DIR "REFLECTIONS"
 #define LOGNAME_START "/REFLECTIONS/log"
+#define LOGNAME_END ".txt"
 
 // Accelerometer template storage
 #define ACCEL_BASE_DIR "agesture"
