@@ -15,8 +15,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define log_size_upload 1000
+// Maximum characters to buffer before writing to a log
+#define log_max_size 1000
 
+// Maximum characters in one log message
 #define maxlogmsg 500
 
 class LOGGER
@@ -40,11 +42,16 @@ class LOGGER
   private:
     void logit( String msgtype, String msg );
     bool setActiveFile( int atvnum );
-    bool sendToServer( String message );
+    bool sendToServer( String logfilename );
+    void appendToBuffer( String data );
+    void writeBufferToFile();
 
-    char buffer[101];
+    char upBuffer[101];
     int bytesRead;
     String data;
+
+    char buffer[ log_max_size ];   // Buffer to hold logged data before being saved to a log file, all at once
+    int bufferIndex;               // Index to track position in the buffer
 
     int lowLogNumber;
     int highLogNumber;

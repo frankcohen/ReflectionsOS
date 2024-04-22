@@ -116,4 +116,7 @@ Read the license in the license.txt file that comes with this code.
 // Logger URL
 #define cloudCityLogURL "https://cloudcity.starlingwatch.com/api/logit?message="
 
+// Logger POST URL
+#define cloudCityLogPostURL "https://cloudcity.starlingwatch.com/api/logitpost"
+
 #endif // _config_

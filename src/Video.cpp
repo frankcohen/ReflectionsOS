@@ -204,8 +204,8 @@ void Video::loop()
       if ( ! mjpeg.readMjpegBuf() )
       {
         logger.error( F("readMjpegBuf returned false") );
-        videoStatus = 0;
-        mjpegFile.close();
+        stopVideo();
+        return;
       }
 
       totalDecodeVideo += millis() - dtime;

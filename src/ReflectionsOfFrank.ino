@@ -162,9 +162,9 @@ static void smartdelay( unsigned long ms )\
   do {
     battery.loop();
     //accel.loop();
-    //player.loop();
-    //video.loop();
-    //storage.loop();
+    player.loop();
+    video.loop();
+    storage.loop();
     logger.loop();
   
     /*
@@ -223,8 +223,9 @@ void setup() {
   locationUpdateTimer = millis();
 
   //storage.replicateServerFiles();
-  Serial.println( "Files on board:" );
-  storage.listDir(SD, "/", 100, true);
+  
+  //Serial.println( "Files on board:" );
+  //storage.listDir(SD, "/", 100, true);
   
   haptic.begin();
   battery.begin();
@@ -243,7 +244,7 @@ void setup() {
   haptic.playEffect(14);  // 14 Strong Buzz
 
   //accel.setTraining( true );    // Put accelermoeter into training mode
-  accel.loadGestures();           // Load the prerecorded accelermeter gestures
+  //accel.loadGestures();           // Load the prerecorded accelermeter gestures
 
   utils.begin();
 

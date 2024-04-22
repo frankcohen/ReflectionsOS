@@ -79,102 +79,68 @@ void LOGGER::logit( String msgtype, String msg )
     Serial.println( msg );
   }
 
-  if ( ! echoServer ) return;
-
-  // Time to open a new log file?
-
-  if ( mylogopen )
+  if ( echoServer )
   {
-    if ( mylog.size() > log_size_upload )
-    {
-      Serial.println( F( "Closing log file" ) );
-      mylog.close();
-      mylogopen = false;
-    }
+    String logmsg = devname.c_str();
+    logmsg += ",";
+    logmsg += msgtype;
+    logmsg += ",";
+    logmsg += msg;
+    logmsg += "\n";
+
+    appendToBuffer( logmsg );
   }
+}
 
-  if ( ! mylogopen )
+// Append data to the buffer
+
+void LOGGER::appendToBuffer( String data )
+{
+  int dataLength = data.length();
+  if ( bufferIndex + dataLength < log_max_size )
   {
-    if ( ( ( millis() - logcreatepacetime ) < 500 ) )
-    {
-      return;
-    }
-
-    logcreatepacetime = millis();
-
-    Serial.print( F("Starting new log file " ) );
-
-    if ( ! scanLogNumbers() )
-    {
-      Serial.print( F("Logger scanLogNumbers failed" ) );
-      return;
-    }
-
-    mylogname = LOGNAME_START;
-    mylogname += String( highLogNumber + 1 );
-    mylogname += LOGNAME_END;
-    
-    mylog = SD.open( mylogname, FILE_WRITE );
-    if( ! mylog )
-    {
-      Serial.print( F( "Unable to create log file " ) );
-      Serial.println( mylogname );
-      return;
-    }
-    
-    mylogopen = true;
-    
-    Serial.print( F( "Opened log file " ) );
-    Serial.print( mylogname );
-    Serial.print( ", mylog.size() = " );
-    Serial.println( (long) mylog.size() );
-
-    // I need to write something to the log file here because the 
-    // Espressif SD library has a bug, it returns a random value for mylog.size() 
-    // before something is written to the log file.
-
-    mylog.print( devname.c_str() );
-    mylog.print( F( ",Info," ) );
-    mylog.print( F( "Starting log " ) );
-    mylog.print( mylogname );
-    mylog.print( F( "\n" ) );
-    mylog.flush();
+    // Append data to buffer
+    data.toCharArray( buffer + bufferIndex, dataLength + 1 );
+    bufferIndex += dataLength;
   }
-
-  // Write to the log file
-
-  long mysize = (long) mylog.size();
-
-  String logmsg = devname.c_str();
-  logmsg += ",";
-  logmsg += msgtype;
-  logmsg += ",";
-  logmsg += msg;
-  logmsg += "\n";
-
-  int logval = mylog.print( logmsg );
-
-  mylog.flush();
-
-  // Then check the log file size is correct
-  // Because the Espressif SD library has a nasty
-  // bug where intermittently it will not actually
-  // write to the file.
-
-  if ( mylog.size() != ( mysize + logmsg.length() ) )
+  else
   {
-    Serial.print( "Logger failed when checking " );
-    Serial.print( mylogname );
-    Serial.print( " size should be " );
-    Serial.print( mysize + logmsg.length() );
-    Serial.print( " instead it is " );
-    Serial.print( mylog.size() );
-    Serial.print( F( " forcecount = " ) );
-    Serial.println( forcecount++ );
+    // Buffer overflow, write buffer contents to log file
+    writeBufferToFile();
 
-    Serial.println( F( "Closing log file" ) );
-    mylog.close();
-    mylogopen = false;
+    // Reset buffer and append data again
+    data.toCharArray( buffer, dataLength + 1 );
+    bufferIndex = dataLength;
+  }
+}
+
+// Write buffer contents to log file
+
+void LOGGER::writeBufferToFile() 
+{
+  int mylognum = 0;
+
+  if ( scanLogNumbers() )
+  {
+    mylognum = highLogNumber + 1;
+  }
+  
+  mylogname = LOGNAME_START;
+  mylogname += String( mylognum );
+  mylogname += LOGNAME_END;
+
+  File logFile = SD.open( mylogname, FILE_WRITE ); // Open the log file for writing
+  if ( logFile ) 
+  {
+    logFile.write( (const uint8_t *) buffer, bufferIndex );
+    logFile.flush();
+    logFile.close();
+    bufferIndex = 0; // Reset buffer index
+    Serial.println("Buffer written to log file.");
+  }
+  else
+  {
+    Serial.println("Error writing to log file");
   }
 }
 
@@ -189,6 +155,18 @@ ChatGPT details on the method:
 This code defines a function urlencode that takes a null-terminated string as input and returns a 
 dynamically allocated string containing the URL encoded version of the input string. It handles all 
 characters in the string according to the URL encoding rules.
+
+Here is how you use it:
+
+  char * encoded_str = urlencode( message.c_str() );
+  if ( encoded_str == NULL )
+  {
+    error( F( "Failed to allocate memory for encoded string" ) );
+    return false;
+  } 
+
+  String logurl = cloudCityLogURL;
+  logurl += String( encoded_str );
 
 */
 
@@ -244,51 +222,49 @@ void LOGGER::setEchoToServer( bool echo )
 }
 
 /*
-* Sends message to the server over HTTPS GET protocol
+* Sends log to the server over HTTPS Post protocol
 */
 
-bool LOGGER::sendToServer( String message )
+bool LOGGER::sendToServer( String logfilename )
 {
-  //Serial.print( "sendToServer: ");
-  //Serial.println( message );
-
-  if ( message == "" )
+  File logFile = SD.open( logfilename );
+  if ( !logFile ) 
   {
-    //error( F("empty message") );
+    Serial.print( F( "Error opening log file ") );
+    Serial.println( logfilename );
     return false;
   }
 
-  char * encoded_str = urlencode( message.c_str() );
-  if ( encoded_str == NULL )
+  String logData = "";
+
+  while ( logFile.available() ) 
   {
-    error( F( "Failed to allocate memory for encoded string" ) );
-    return false;
+    logData += (char) logFile.read();
+  }
+
+  logFile.close();
+
+  HTTPClient http;
+
+  http.begin( cloudCityLogPostURL, root_ca );
+  http.addHeader("Content-Type", "text/plain");
+
+  int httpResponseCode = http.POST( logData );
+
+  if (httpResponseCode > 0) 
+  {
+    Serial.printf( "Logger sendToServer POST... response code: %d\n", httpResponseCode );
+    if ( httpResponseCode == HTTP_CODE_OK ) 
+    {
+      return true;
+    }
   } 
-
-  String logurl = cloudCityLogURL;
-  logurl += String( encoded_str );
-
-
-  //Serial.println( "Sent to server:" );
-  //Serial.println( logurl );
-
-
-  http.begin( logurl, root_ca );
-  http.setReuse(true);
-
-  int httpCode = http.GET();
-
-  if( httpCode != HTTP_CODE_OK )
+  else
   {
-    Serial.print( F( "Server response code: " ) );
-    Serial.println( httpCode );
-    free(encoded_str);
-    return false;
+    Serial.printf( "Logger sendToServer POST... failed, response error: %s\n", http.errorToString(httpResponseCode).c_str() );
   }
 
   http.end();
-
-  free(encoded_str);
 
   return true;
 }
@@ -342,14 +318,18 @@ bool LOGGER::scanLogNumbers()
           }
         }
       }
-    }
-    else
-    {
-      return true;
+      file.close();
     }
   }
 
-  return true;
+  if ( ( lowLogNumber == 1000000 ) || ( highLogNumber == 0 ) )
+  {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
 }
 
 /*
@@ -401,6 +381,8 @@ void LOGGER::begin()
   Serial.print( ", lowLogNumber = " );
   Serial.println( lowLogNumber );
 
+  int bufferIndex = 0;
+ 
   uploadchecktime = millis();
   uploadpacetime = millis();
   logcreatepacetime = millis();
@@ -414,100 +396,37 @@ void LOGGER::loop()
   {
     uploadchecktime = millis();
     
-    //Serial.println( F( "Checking for upload" ) );
-
-    if ( ( ! uploading ) && ( ! deleting ) )
+    if ( ! scanLogNumbers() )
     {
-      if ( ! scanLogNumbers() )
-      {
-        Serial.println( "Logger scanLogNumbers failed");
-        return;
-      }
-      else
-      {
-        uploadfilename = LOGNAME_START;
-        uploadfilename += String( lowLogNumber );
-        uploadfilename += LOGNAME_END;
-
-        if ( mylogopen ) 
-        {
-          if ( uploadfilename.equals( mylogname ) )
-          {
-            String mef = F( "Skipping log file because it is open " );
-            mef += uploadfilename;
-            Serial.println( mef );
-            return;
-          }
-        }
-
-        myupload = SD.open( uploadfilename );
-        if( ! myupload )
-        {
-          Serial.print( F( "Logger unable to open upload file " ) );
-          Serial.println( uploadfilename );
-
-          uploading = false;
-        }
-        else
-        {
-          Serial.print( F( "Logger uploading " ) );
-          Serial.println( uploadfilename );
-
-          uploading = true;
-        }
-      }
+      //Serial.println( "Logger scanLogNumbers failed");
     }
-  }
-
-  if ( ( uploading ) && ( ! deleting ) )
-  {
-    if ( ( ( millis() - uploadpacetime ) > 500 ) )
+    else
     {
-      uploadpacetime = millis();
+      uploadfilename = LOGNAME_START;
+      uploadfilename += String( lowLogNumber );
+      uploadfilename += LOGNAME_END;
 
-      //uploadstr = myupload.readStringUntil('\n');
-      //if ( uploadstr.length() > 0 )
+      uploading = true;
 
-
-      bytesRead = myupload.readBytes(buffer, 100);
-      if ( bytesRead > 0 )
-
-      {  
-        data = String( buffer );
-        Serial.print( "   Simulation: " );
-        Serial.println( data );
-        //Serial.println( uploadstr );
-        // sendToServer( uploadstr );
-      }
-      else
+      if ( sendToServer( uploadfilename ) )
       {
         Serial.print( F( "Logger sent " ) );
         Serial.print( uploadfilename );
         Serial.println( F( " to service" ) );
 
-        myupload.close();
         uploading = false;
         uploadcount++;
-        deleting = true;
-        deletetime = millis();
-      }
-    }
-  }
 
-  if ( deleting )
-  {
-    if ( ( ( millis() - deletetime ) > 2000 ) )
-    {
-      deleting = false;
+        if ( SD.remove( uploadfilename ) )
+        {
+          Serial.println( F("Log file deleted successfully") );
+        }
+        else
+        {
+          Serial.println( F( "Log file delete failed" ) );
+        }
+      }
 
-      if ( SD.remove( uploadfilename ) )
-      {
-        Serial.println( F("Log file deleted successfully") );
-      }
-      else
-      {
-        Serial.println( F( "Log file delete failed" ) );
-      }
     }
   }
 }
