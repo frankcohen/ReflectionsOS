@@ -120,11 +120,10 @@ void LOGGER::writeBufferToFile()
 {
   int mylognum = 0;
 
-  if ( scanLogNumbers() )
-  {
-    mylognum = highLogNumber + 1;
-  }
-  
+  scanLogNumbers();
+
+  mylognum = highLogNumber + 1;
+
   mylogname = LOGNAME_START;
   mylogname += String( mylognum );
   mylogname += LOGNAME_END;
@@ -271,8 +270,10 @@ bool LOGGER::sendToServer( String logfilename )
 
 bool LOGGER::scanLogNumbers()
 {
-  lowLogNumber = 1000000;
+  lowLogNumber = 0;
   highLogNumber = 0;
+  bool foundone = false;
+  bool firsttime = true;
 
   String mef = "/";
   mef += NAND_BASE_DIR;
@@ -287,10 +288,14 @@ bool LOGGER::scanLogNumbers()
   String mynum;
   int mynumbr = 0;
 
-  for ( int j = 0; j < 1000; j++ )
+  while(1)
   {
     File file = root.openNextFile();
-    if ( file )
+    if ( ! file )
+    {
+      return false;
+    }
+    else
     {
       if ( ! file.isDirectory() )
       {
@@ -307,29 +312,46 @@ bool LOGGER::scanLogNumbers()
           // Convert the numeric part to an integer
           mynumbr = numericPart.toInt();
 
-          if ( mynumbr < lowLogNumber )
+          if ( firsttime )
           {
+            firsttime = false;
+            lowLogNumber = mynumbr;
+            highLogNumber = mynumbr;
+          }
+
+          if ( mynumbr <= lowLogNumber )
+          {
+            foundone = true;
             lowLogNumber = mynumbr;
           }
 
-          if ( mynumbr > highLogNumber )
+          if ( mynumbr >= highLogNumber )
           {
+            foundone = true;
             highLogNumber = mynumbr;
           }
         }
       }
       file.close();
+      break;
     }
   }
 
-  if ( ( lowLogNumber == 1000000 ) || ( highLogNumber == 0 ) )
+  Serial.print( "scanLogNumbers: " );
+  Serial.print( lowLogNumber );
+  Serial.print( ", " );
+  Serial.print(  highLogNumber );
+  Serial.print( ", " );
+  if ( foundone ) {   Serial.print( "true, " ); } else { Serial.print( "false, " ); }
+  if ( firsttime ) {   Serial.print( "true, " ); } else { Serial.print( "false, " ); }
+  Serial.println( " " );
+
+  if ( firsttime )
   {
     return false;
-  }
-  else
-  {
-    return true;
-  }
+
+  } 
+  return foundone;
 }
 
 /*

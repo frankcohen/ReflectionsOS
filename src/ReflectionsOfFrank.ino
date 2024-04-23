@@ -163,7 +163,7 @@ static void smartdelay( unsigned long ms )\
     battery.loop();
     //accel.loop();
     player.loop();
-    video.loop();
+    //video.loop();
     storage.loop();
     logger.loop();
   
