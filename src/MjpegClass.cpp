@@ -63,6 +63,11 @@ bool MjpegClass::readMjpegBuf()
       unsigned long stime = millis();
       // Reads the first chunk of the mjpeg file
       readcount = _input->readBytes(_read_buf, READ_BUFFER_SIZE);
+      
+      //Serial.print( "_input readcount ");
+      //Serial.print( readcount );
+      //Serial.println( " bytes");
+
       _inputindex += readcount;
       video.addReadTime( millis() - stime );
     }
@@ -97,6 +102,11 @@ bool MjpegClass::readMjpegBuf()
       {
         unsigned long stime = millis();
         readcount = _input->readBytes(_read_buf, READ_BUFFER_SIZE);
+
+        //Serial.print( "found_FFD8 readcount ");
+        //Serial.print( readcount );
+        //Serial.println( " bytes");
+
         video.addReadTime( millis() - stime );
       }
     }
@@ -141,6 +151,14 @@ bool MjpegClass::readMjpegBuf()
         Serial.println( (long) _p );
         */
 
+        // A special check to avoid crashing on badly formed mjpeg files
+        if ( _mjpeg_buf_offset > 4096 )
+        {
+          //Serial.print( "_mjpeg_buf_offset > 4096 " );
+          //Serial.println( _mjpeg_buf_offset );
+          return false;
+        }
+
         if ( _mjpeg_buf == 0 )
         {
           return false;
@@ -153,18 +171,21 @@ bool MjpegClass::readMjpegBuf()
 
         if (o > 0)
         {
-          //Serial.printf("o: %d\n", o); //frankolo
+          //Serial.printf("o: %d\n", o);
           
           memcpy(_read_buf, _p + i, o);
 
           unsigned long stime = millis();
           readcount = _input->readBytes(_read_buf + o, READ_BUFFER_SIZE - o);
+
+          //Serial.print( "o>0 readcount ");
+          //Serial.print( readcount );
+          //Serial.println( " bytes");
+
           _p = _read_buf;
           _inputindex += readcount;
           readcount += o;
-          video.addReadTime( millis() - stime );
-          
-          //Serial.printf("readcount: %d\n", readcount);
+          video.addReadTime( millis() - stime );          
         }
         else
         {
@@ -183,23 +204,26 @@ bool MjpegClass::readMjpegBuf()
           Serial.print( READ_BUFFER_SIZE );
           Serial.print( " " );
           Serial.print( found_FFD9 );
-          Serial.print( " " );
+          Serial.println( " " );
           */
 
           unsigned long stime = millis();
 
           readcount = _input->readBytes(_read_buf, READ_BUFFER_SIZE);
-          
+
+          //Serial.print( "Diagnose readcount ");
+          //Serial.print( readcount );
+          //Serial.println( " bytes");
+
+          if ( readcount == 0 )
+          {
+            // Serial.println( "readcount = 0");
+            return false;
+          }
+
           _p = _read_buf;
           _inputindex += readcount;
           video.addReadTime( millis() - stime );
-
-          /*
-          Serial.print( (long) readcount );
-          Serial.print( " " );
-          Serial.print( (long) _inputindex );
-          Serial.println( " " );
-          */
         }
 
         i = 0;
@@ -212,7 +236,7 @@ bool MjpegClass::readMjpegBuf()
       }
     }
 
-    //Serial.println("Returning false");
+    Serial.println( F("Returning false"));
     return false;
 }
 

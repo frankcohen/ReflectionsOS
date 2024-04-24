@@ -204,6 +204,21 @@ void Video::loop()
       if ( ! mjpeg.readMjpegBuf() )
       {
         logger.error( F("readMjpegBuf returned false") );
+
+        /* Checks the Nand/SD is still working
+        Serial.println("Testing SD, contents of foo");
+        File mickey = SD.open( "/foo.txt" );
+        if (!mickey)
+        {
+          Serial.println("Filed to open mickey");
+        }
+        while ( mickey.available() )
+        {
+          Serial.print( mickey.read() );
+        }
+        Serial.println("Testing SD, done");
+        */
+
         stopVideo();
         return;
       }

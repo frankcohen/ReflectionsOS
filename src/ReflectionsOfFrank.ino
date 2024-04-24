@@ -155,7 +155,7 @@ void assertTest(bool result, String deviceName) {
   Cooperative multi-tasking functions
 */
 
-static void smartdelay( unsigned long ms )\
+static void smartdelay( unsigned long ms )
 {
   unsigned long start = millis();
 
@@ -163,7 +163,7 @@ static void smartdelay( unsigned long ms )\
     battery.loop();
     //accel.loop();
     player.loop();
-    //video.loop();
+    video.loop();
     storage.loop();
     logger.loop();
   
