@@ -51,6 +51,8 @@ Nand U5 is easily overwhelmed with requests. The controller stops responding. Th
 4. Parts substitutions. R3, R16, R20, R24, U11 are in 'shortfall' status from JLCPCB. Here are the replacements.
 
 R3, https://jlcpcb.com/partdetail/Resi-HPCR0402F6K80K9/C365045
+
 R16, R20, R24, https://jlcpcb.com/partdetail/Yageo-RC0402FR0710KL/C60490
+
 U11, https://jlcpcb.com/partdetail/Mk-MKDV2GILAS/C726727
 
