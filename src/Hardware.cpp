@@ -17,21 +17,20 @@ Hardware::Hardware(){}
 
 void Hardware::begin()
 { 
-  SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI, -1);
-
-  Wire.begin(I2CSDA, I2CSCL);  // Initialize I2C bus
-
   // Starts SD/NAND storage component
 
-  pinMode(NAND_SPI_CS, OUTPUT );
+  pinMode( NAND_SPI_PWR, OUTPUT);
+  digitalWrite( NAND_SPI_PWR, HIGH);
+  delay(2000);
+  digitalWrite( NAND_SPI_PWR, LOW);
+
+  pinMode(NAND_SPI_CS, OUTPUT);
   digitalWrite(NAND_SPI_CS, HIGH);
-  delay(1000);
-  digitalWrite(NAND_SPI_CS, LOW);
 
   // Configure display pins
 
   pinMode(Display_SPI_CS, OUTPUT);
-  digitalWrite(Display_SPI_CS, LOW);
+  digitalWrite(Display_SPI_CS, HIGH);
 
   pinMode(Display_SPI_DC, OUTPUT);
   digitalWrite(Display_SPI_DC, HIGH);
@@ -46,15 +45,20 @@ void Hardware::begin()
   pinMode(AudioPower, OUTPUT);
   digitalWrite(AudioPower, HIGH);
 
+  // Create an SPIClass instance
+  SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI, NAND_SPI_CS);
+
+  // Begin SPI communication with desired settings
+  //SPISettings spiSettings(SPI_SPEED, MSBFIRST, SPI_MODE0);
+
+  Wire.begin(I2CSDA, I2CSCL);  // Initialize I2C bus
+
   if ( ! SD.begin( NAND_SPI_CS, SPI, SPI_SPEED) )
   {
     Serial.println(F("SD storage failed"));
     Serial.println(F("Stopping"));
     NANDMounted = false;
-    while(1)  // Stopping
-    {
-      delay(1000);
-    };
+    while(1);
   }
   else
   {

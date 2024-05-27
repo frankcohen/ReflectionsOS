@@ -14,8 +14,10 @@ class TOF
     TOF();
     void begin();
     void loop();
-    boolean test();
+    bool test();
     void printTOF();
+    bool tofStatus();
+    SparkFun_VL53L5CX getMyimager();
     
   private:
     SparkFun_VL53L5CX myImager;

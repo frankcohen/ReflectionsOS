@@ -39,9 +39,19 @@ void TOF::begin()
   started = true;
 }
 
-boolean TOF::test()
+bool TOF::tofStatus()
+{
+  return started;
+}
+
+bool TOF::test()
 {
   return started;  
+}
+
+SparkFun_VL53L5CX TOF::getMyimager()
+{
+  return myImager;
 }
 
 void TOF::printTOF()

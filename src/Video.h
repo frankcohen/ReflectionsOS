@@ -36,6 +36,7 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 #include "config.h"
 #include "MjpegClass.h"
 #include "Logger.h"
+#include "TOF.h"
 
 #include <Arduino_GFX_Library.h>
 
@@ -57,6 +58,21 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 #define linespacing 20
 #define maxchars 16
 
+// Definitions for TOFeyes
+#define tofdiam 18
+#define xdistance 30
+#define ydistance 30
+#define xspace 30
+#define yspace 30
+#define maxdist 50
+
+#define COLOR_BACKGROUND RGB565(115, 58, 0)
+#define COLOR_LEADING RGB565(123, 63, 0)
+#define COLOR_RING RGB565(234, 68, 0)
+#define COLOR_TRAILING RGB565(178, 67, 0 )
+
+#define COLOR_BLUE RGB565( 12, 30, 29 )
+
 class Video
 {
   public:
@@ -71,6 +87,7 @@ class Video
     int getStatus();
     boolean startAtTop();
     boolean StartAtTopOrReplicate();
+    void setTofEyes( bool status );
 
   private:
     File mjpegFile;
@@ -79,6 +96,9 @@ class Video
     File vidfile;
     int videoStatus;
     unsigned long vidtimer;
+    
+    void drawTofEyes();
+    VL53L5CX_ResultsData measurementData;
 
     float totalFrames;
     float totalReadVideo;
@@ -86,6 +106,8 @@ class Video
     float totalShowVideo;
     float startMs;
     float totalTime;
+
+    bool tofEyes;
 };
 
 #endif // _video_

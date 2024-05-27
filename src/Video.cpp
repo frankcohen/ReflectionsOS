@@ -16,12 +16,13 @@ This file is for operating the video display.
 
 // Defined in ReflectionsOfFrank.ino
 extern LOGGER logger;
+extern TOF tof;
 
 static MjpegClass mjpeg;
 uint8_t *mjpeg_buf;
 
 static Arduino_DataBus *bus = new Arduino_HWSPI(Display_SPI_DC, Display_SPI_CS, SPI_SCK, SPI_MOSI, SPI_MISO);
-static Arduino_GFX *gfx = new Arduino_GC9A01(bus, Display_SPI_RST, 1 /* rotation */, false /* IPS */);
+Arduino_GFX *gfx = new Arduino_GC9A01(bus, Display_SPI_RST, 1 /* rotation */, false /* IPS */);
 Arduino_GFX *bufgfx = new Arduino_Canvas( 240 /* width */, 240 /* height */, gfx );
 
 #define MJPEG_BUFFER_SIZE (240 * 240 * 2 / 10) // memory for a single JPEG frame
@@ -33,6 +34,7 @@ static int jpegDrawCallback( JPEGDRAW *pDraw )
   //Serial.printf("Draw pos = %d,%d. size = %d x %d\n", pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight);
   gfx->draw16bitBeRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);
   // output_display -> flush();
+  
   return 1;
 }
 
@@ -44,8 +46,8 @@ void Video::begin()
     GFX_EXTRA_PRE_INIT();
   #endif
 
-  mjpeg_buf = (uint8_t *) malloc(MJPEG_BUFFER_SIZE);
-  if (!mjpeg_buf)
+  mjpeg_buf = (uint8_t *) malloc( MJPEG_BUFFER_SIZE );
+  if ( !mjpeg_buf )
   {
     Serial.println( F("mjpeg_buf malloc failed, stopping" ) );
     stopOnError( "Video buffer", "fail", "", "", "" );
@@ -187,6 +189,70 @@ void Video::stopVideo()
   videoStatus = 0;
 }
 
+void Video::setTofEyes( bool status )
+{
+  tofEyes = status;
+}
+
+#define smallcircle 20
+#define bigcircle 40
+#define maxy 40
+#define bridgex 45
+
+void Video::drawTofEyes()
+{ 
+  if ( tof.getMyimager().isDataReady() == false ) return;
+
+  if ( ! tof.getMyimager().getRangingData(&measurementData) ) return;    //Read distance data into array
+
+  int pointx = 0;
+  int pointy = 0;
+  int pointd = 0;
+
+  for (int x = 0; x < 8; x++)
+  {
+    for ( int y = 0; y < 8; y++)
+    {
+      int d = measurementData.distance_mm[ y + ( x * 8 ) ];
+      if ( ( d > pointd ) && ( d < maxdist ) )
+      {
+        pointx = x;
+        pointy = y;
+        pointd = d;
+
+        pointx++;
+        pointy++;
+      }
+    }
+  }
+
+  int basey = 40;
+
+  int basex = 0;
+  basex += pointx * ( ( 240 - 30 - 30 - smallcircle ) / 8 );
+
+  int topx = basex;
+  topx += bigcircle / 2;
+  int topy = basey;
+  topy += bigcircle / 2;
+
+  int middlex = topx;
+  int middley = topy + ( bigcircle / 2 );
+
+  int bottomx = middlex;
+  int bottomy = middley + ( bigcircle / 2 );
+
+  gfx -> fillRect( 0, maxy, 240, maxy * 2, COLOR_LEADING );
+
+  gfx -> fillCircle( topx, topy, smallcircle /2, COLOR_RING );
+  gfx -> fillCircle( middlex, middley, bigcircle / 2, COLOR_RING );
+  gfx -> fillCircle( bottomx, bottomy, smallcircle /2, COLOR_RING );
+
+  gfx -> fillCircle( topx + bridgex, topy, smallcircle /2, COLOR_RING );
+  gfx -> fillCircle( middlex + bridgex, middley, bigcircle / 2, COLOR_RING );
+  gfx -> fillCircle( bottomx + bridgex, bottomy, smallcircle /2, COLOR_RING );
+}
+
 void Video::loop()
 {
   if ( videoStatus == 0 ) return;
@@ -225,7 +291,16 @@ void Video::loop()
 
       totalDecodeVideo += millis() - dtime;
       dtime = millis();
-      mjpeg.drawJpg();
+
+      if ( tofEyes && tof.tofStatus() )
+      {
+        drawTofEyes();
+      }
+      else
+      {
+        mjpeg.drawJpg();
+      }
+
       totalShowVideo += millis() - dtime;
     }
   }

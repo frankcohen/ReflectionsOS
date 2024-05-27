@@ -90,6 +90,7 @@ USB Mode: Hardware CDC and JTAG
 #include "driver/gpio.h"
 #include "Hardware.h"
 #include "Wire.h"
+#include "Parallax.h"
 
 Utils utils;
 Storage storage;
@@ -97,11 +98,12 @@ Player player;
 Video video;
 Haptic haptic;
 Audio audio;
+TOF tof;
+Parallax parallax;
 
 static Wifi wifi;
 static GPS gps;
 static Compass compass;
-static TOF tof;
 static LED led;
 static USBFlashDrive flash;
 static BLE ble;
@@ -162,16 +164,19 @@ static void smartdelay( unsigned long ms )
   do {
     battery.loop();
     //accel.loop();
-    player.loop();
-    video.loop();
+
+    //player.loop();
+    //video.loop();
+
     storage.loop();
     logger.loop();
+    tof.loop();
+    parallax.loop();
   
     /*
     audio.loop();
     utils.loop();
     wifi.loop();
-    tof.loop();
     compass.loop();
     haptic.loop();
     led.loop();
@@ -186,6 +191,8 @@ void setup() {
   long time = millis();
   while (!Serial && (millis() < time + 2000)) ;  // wait up to 2 seconds for Arduino Serial Monitor
   Serial.setDebugOutput(true);
+
+  Serial.println("Starting");
 
   hardware.begin();   // Sets all the hardware pins
 
@@ -227,19 +234,21 @@ void setup() {
   //Serial.println( "Files on board:" );
   //storage.listDir(SD, "/", 100, true);
   
+  // Self-test: NAND, I2C, SPI
+  // while playing startup animation and sound
+
+  //assertI2Cdevice(48, "Compass");
+  assertI2Cdevice(90, "Haptic");
+  assertI2Cdevice(24, "TOF Accel");
+
   haptic.begin();
   battery.begin();
   audio.begin();
   gps.begin();
   accel.begin();
   compass.begin();
-
-  // Self-test: NAND, I2C, SPI
-  // while playing startup animation and sound
-
-  //assertI2Cdevice(24, "TOF Accel");
-  //assertI2Cdevice(48, "Compass");
-  assertI2Cdevice(90, "Haptic");
+  tof.begin();
+  parallax.begin();
 
   haptic.playEffect(14);  // 14 Strong Buzz
 
@@ -277,6 +286,8 @@ void setup() {
   // startMSC();     // Calliope mounts as a flash drive, showing NAND contents over USB on your computer
 */
 
+  video.setTofEyes( true );
+
   logger.info(F("Setup complete"));
 }
 
@@ -286,7 +297,7 @@ long msitime = millis();
 void loop() {
   smartdelay(1000);
 
-  if ((millis() - msitime) > 2000) 
+  if ((millis() - msitime) > 5000) 
   {
     msitime = millis();
     String mef = "Just me logging ";

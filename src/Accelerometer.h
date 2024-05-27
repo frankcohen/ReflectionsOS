@@ -54,6 +54,7 @@ class Accelerometer
     bool saveGestures();
     bool loadGestures();
     int getRecentGesture();
+    float getXreading();
     
   private:
     bool getAccelValues();

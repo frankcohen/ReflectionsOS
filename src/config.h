@@ -44,6 +44,7 @@ Read the license in the license.txt file that comes with this code.
 
 // NAND Storage
 #define NAND_SPI_CS   15
+#define NAND_SPI_PWR  11
 #define NAND_BASE_DIR "REFLECTIONS"
 #define LOGNAME_START "/REFLECTIONS/log"
 #define LOGNAME_END ".txt"

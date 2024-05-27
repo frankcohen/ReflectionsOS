@@ -132,6 +132,14 @@ boolean Accelerometer::test()
   return false;    
 }
 
+// For Parallex effect
+// returns X axis value from 0 to 5
+
+float Accelerometer::getXreading()
+{
+  return LIS.getAccelerationX();
+}
+
 // Get values from accelermoter, apply scale and filter
 
 bool Accelerometer::getAccelValues()
