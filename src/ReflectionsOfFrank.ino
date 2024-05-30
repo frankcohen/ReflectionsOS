@@ -171,7 +171,10 @@ static void smartdelay( unsigned long ms )
     storage.loop();
     logger.loop();
     tof.loop();
-    parallax.loop();
+    
+    ble.loop();
+
+    //parallax.loop();
   
     /*
     audio.loop();
@@ -180,7 +183,6 @@ static void smartdelay( unsigned long ms )
     compass.loop();
     haptic.loop();
     led.loop();
-    ble.loop();
     */
 
   } while (millis() - start < ms);
@@ -229,10 +231,10 @@ void setup() {
 
   locationUpdateTimer = millis();
 
-  //storage.replicateServerFiles();
+  // storage.replicateServerFiles();
   
-  //Serial.println( "Files on board:" );
-  //storage.listDir(SD, "/", 100, true);
+  Serial.println( "Files on board:" );
+  storage.listDir(SD, "/", 100, true);
   
   // Self-test: NAND, I2C, SPI
   // while playing startup animation and sound
@@ -256,6 +258,7 @@ void setup() {
   //accel.loadGestures();           // Load the prerecorded accelermeter gestures
 
   utils.begin();
+  ble.begin();
 
 /*
   //assertI2Cdevice(41, "Gesture");
@@ -268,7 +271,6 @@ void setup() {
 
   flash.begin();
   led.begin();
-  ble.begin();
 
   assertTest(storage.testNandStorage(), "NAND storage");
   smartdelay(200);
@@ -297,6 +299,7 @@ long msitime = millis();
 void loop() {
   smartdelay(1000);
 
+  /*
   if ((millis() - msitime) > 5000) 
   {
     msitime = millis();
@@ -304,13 +307,13 @@ void loop() {
     mef += msi++;
     logger.info( mef );
   }
+  */
 
   // Send telemetry of sensors to Cloud City for analysis
 
 
   // Update BLE beacon heading for other devices
 
-/*
   if ((millis() - locationUpdateTimer) > 2000) {
     locationUpdateTimer = millis();
 
@@ -320,5 +323,5 @@ void loop() {
     ble.setMessage(myh);
     ble.setLocalHeading(headfl);
   }
-*/
+
 }

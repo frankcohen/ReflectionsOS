@@ -3,11 +3,19 @@
 
 #include "Arduino.h"
 #include <WiFi.h>
+#include <SPI.h>
+#include <SD.h>
+
+#include <NimBLEDevice.h>
 
 #include "config.h"
 #include "secrets.h"
 
-#include <NimBLEDevice.h>
+#include "Logger.h"
+#include "Accelerometer.h"
+#include <Arduino_GFX_Library.h>
+#include <JPEGDEC.h>
+#include "Compass.h"
 
 #define maxDistanceReadings 3
 
@@ -30,6 +38,8 @@ class BLE
 
   private:
     void areDevicesPointedToEachOther();
+    void showCatFaceDirection( int pose );
+    uint8_t* loadFileToBuffer( String filePath );
 
     std::string devname;
     int msgCounter;
@@ -44,6 +54,9 @@ class BLE
     float remoteHeading;
     String hottercolder;
     float oldAverageDistance;
+    long showWaitTime;
+    long fileSize;
+    JPEGDEC jpeg;
 };
 
 #endif // _BLE_

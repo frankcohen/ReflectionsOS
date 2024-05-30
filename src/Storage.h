@@ -22,17 +22,18 @@ get TAR over Wifi, Bluetooth, mostly SD utils like print to, eventually send mes
 #define _storage_
 
 #include "Arduino.h"
-#include "HTTPClient.h"
 #include "config.h"
-#include "Video.h"
-#include "ArduinoJson.h"
 #include "secrets.h"
-#include "FS.h"
-#include "SD.h"
-#include "SPI.h"
-#include <WiFiUdp.h>
-#include <WiFiMulti.h>
+
+#include "Video.h"
 #include "Logger.h"
+
+#include "ArduinoJson.h"
+
+#include "SD.h"
+
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
 
 class Storage
 {

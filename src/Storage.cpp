@@ -9,6 +9,8 @@
 extern const char* root_ca;   // Defined in secrets.h
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 
+const int httpsPort = 443;
+
 /*
 * Helper for TarUnpacker
 */
@@ -102,10 +104,10 @@ void Storage::replicateServerFiles()
 
   Serial.println( F( "Replicating Server Files") );
 
-  /* Fixme later: JSON data size limited */
-  DynamicJsonDocument doc(1000);
+  //Serial.println( getFileListString() );
 
-  Serial.println( getFileListString() );
+  /* Fixme later: JSON data size limited */
+  DynamicJsonDocument doc( 2000 );
 
   DeserializationError error = deserializeJson(doc, getFileListString() );
   if (error) {
@@ -697,7 +699,7 @@ boolean Storage::getFileSaveToSD( String thedoc )
 }
 
 /*
-  Client to CloudCity.py service on server
+  Client to Cloud City service on server
   https://cloudcity.starlingwatch.com/api/listfiles
   Responds with JSON encoded list of files and sizes
   SSL public key is in config.h
@@ -705,13 +707,51 @@ boolean Storage::getFileSaveToSD( String thedoc )
 
 String Storage::getFileListString()
 {
-  HTTPClient http;
+  WiFiClientSecure client;
   String flresponse = "";
-
+  int bytesreceived = 0;
   int beginval = 0;
+  int startTime = millis();
+  String response;
 
-  beginval = http.begin( cloudCityListFiles, root_ca );
-  if ( !beginval )
+  client.setCACert( root_ca );
+
+  if ( client.connect( cloudCityHostURL, httpsPort) )
+  {
+    client.print(String("GET ") + "/api/listfiles" + " HTTP/1.1\r\n" +
+                "Host: " + cloudCityHostURL + "\r\n" +
+                "User-Agent: ESP32\r\n" +
+                "Connection: close\r\n\r\n");
+
+    String resline;
+    
+    while (client.connected()) 
+    {
+      resline = client.readStringUntil('\n');
+      if (resline == "\r") 
+      {
+        Serial.println("Headers received");
+        break;
+      }
+    }
+
+    while (client.available()) {
+      response += client.readStringUntil('\n');
+    }
+
+    Serial.print( "Response = " );
+    Serial.println( response );
+
+    bytesreceived = response.length();
+
+    /*
+    Serial.println( F( "getFileListString" ) );
+    Serial.print( F( " cloudCityListFiles = " ) );
+    Serial.println( cloudCityListFiles );
+    */
+
+  }
+  else
   {
     Serial.print( F( "getFileListString, No contact with server" ) );
     Serial.println( beginval );
@@ -720,71 +760,20 @@ String Storage::getFileListString()
     return "";
   }
 
-  delay(2000);
-
-  Serial.println( F( "getFileListString" ) );
-  Serial.print( F( " cloudCityListFiles = " ) );
-  Serial.println( cloudCityListFiles );
-
-  int httpCode = http.GET();
-  if( httpCode != HTTP_CODE_OK )
-  {
-    Serial.print( F( "Server response code: " ) );
-    Serial.println( httpCode );
-    return "";
-  }
-
-  // get length of document (is -1 when Server sends no Content-Length header)
-  int len = http.getSize();
-  //Serial.print( F( "Size: " ) );
-  //Serial.println( len );
-
-  /* Fixme later: Maximum download size is set to 2000 */
-
-  // create buffer for read
-  char buff[2000] = { 0 };
-
-  // get tcp stream
-  WiFiClient * stream = http.getStreamPtr();
-
-  int startTime = millis();
-  int bytesReceived = 0;
-  boolean buffirst = true;
-
-  // read data from server
-  while( http.connected() && (len > 0 || len == -1))
-  {
-    size_t size = stream->available();
-    if(size)
-    {
-        int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size) );
-        bytesReceived += c;
-        buff[ bytesReceived ] = 0;
-
-        String rc( buff );
-        flresponse = flresponse + rc;
-
-        if(len > 0)
-        {
-          len -= c;
-        }
-    }
-    smartDelay(1);
-  }
-
-  http.end();
-
   Serial.print( F( "Bytes received " ) );
-  Serial.print( bytesReceived );
+  Serial.print( bytesreceived );
   Serial.print( F( " in " ) );
   Serial.print( ( millis() - startTime ) / 1000 );
   Serial.print( F( " seconds " ) );
   if ( ( ( millis() - startTime ) / 1000 ) > 0 )
   {
-          Serial.print( bytesReceived / ( ( millis() - startTime ) / 1000 ) );
-          Serial.print( F( " bytes/second" ) );
+    Serial.print( bytesreceived / ( ( millis() - startTime ) / 1000 ) );
+    Serial.print( F( " bytes/second" ) );
   }
   Serial.println( " " );
 
-  return flresponse;
+  Serial.print( "Response = " );
+  Serial.println( response );
+  
+  return response;
 }

@@ -24,6 +24,11 @@ Balance the active scanning for battery life
 
 BLE::BLE(){}
 
+extern LOGGER logger;
+extern Compass compass;
+extern Video video;
+extern Arduino_GFX *gfx;
+
 static String devicename;
 static int nextState;
 static uint32_t scanTime = 0; /** 0 = scan forever */
@@ -527,6 +532,7 @@ void BLE::begin()
   msgCounter = 0;
   clientWaitTime = millis();
   serverWaitTime = millis();
+  showWaitTime = millis();
 
   // Server set-up
 
@@ -776,6 +782,106 @@ void BLE::areDevicesPointedToEachOther()
   }
 }
 
+int JPEGDrawDirection(JPEGDRAW *pDraw)
+{
+  gfx->draw16bitRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);
+  return 1;
+}
+
+// Load JPG into memory buffer
+
+uint8_t* BLE::loadFileToBuffer( String filePath )
+{
+  String myl = F( "BLE loading file " );
+  myl += String( filePath );
+  logger.info( myl );
+
+  File file = SD.open(filePath, FILE_READ);
+  if ( !file ) 
+  {
+    logger.error( F( "BLE Failed to open file" ) );
+    return nullptr;
+  }
+
+  // Get the size of the file
+  fileSize = file.size();
+  //Serial.print("File size: ");
+  //Serial.println(fileSize);
+
+  // Allocate memory for the buffer
+  uint8_t* buffer = (uint8_t*)malloc(fileSize);
+  if ( buffer == nullptr )
+  {
+    logger.error( F( "BLE failed to allocate memory" ) );
+    file.close();
+    return nullptr;
+  }
+
+  // Read the file into the buffer
+
+  size_t bytesRead = file.read(buffer, fileSize);
+  if ( bytesRead != fileSize )
+  {
+    String myl = F( "BLE Failed to read complete file " );
+    myl += String( bytesRead );
+    logger.info( myl );
+
+    free(buffer);
+    file.close();
+    return nullptr;
+  }
+  //Serial.print( "Bytes read " );
+  //Serial.println( bytesRead );
+
+  // Close the file
+  file.close();
+  
+  // Return the buffer
+  return buffer;
+}
+
+// Displays cat face and pointer in heading of other cat
+
+void BLE::showCatFaceDirection( int pose )
+{
+  if ( ( millis() - showWaitTime ) > 1000 )
+  {
+    showWaitTime = millis();
+
+    String mef = "/";
+    mef += NAND_BASE_DIR;
+    mef += "/";
+    mef += "cat_";
+    mef += String( pose );
+    mef += "_baseline.jpg";
+
+    long lTime;
+
+    uint8_t* mybuf = loadFileToBuffer( mef );
+
+    if ( mybuf != nullptr )
+    {
+      if ( jpeg.openRAM( mybuf, fileSize, JPEGDrawDirection ) )
+      {
+        lTime = micros();
+        
+        if ( ! jpeg.decode( 0, 0, 0 ) )
+        {
+          String myl = F( "BLE image decode error " );
+          myl += String( jpeg.getLastError() );
+          logger.info( myl );
+        }
+      }
+      else
+      {
+        logger.error( F( "BLE jpeg.open failed" ) );
+      }
+      
+      free( mybuf );
+    }
+  }
+}
+
 void BLE::loop()
 {
   // Server
@@ -828,4 +934,11 @@ void BLE::loop()
 
     areDevicesPointedToEachOther();
   }
+
+  int pose = getLocalHeading();
+  if ( ( pose > 0 ) && ( pose < 360 ) )
+  {
+    showCatFaceDirection( ( pose / ( 360 / 8 ) ) + 1 );
+  }
+
 }

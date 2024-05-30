@@ -337,6 +337,7 @@ bool LOGGER::scanLogNumbers()
     }
   }
 
+  /*
   Serial.print( "scanLogNumbers: " );
   Serial.print( lowLogNumber );
   Serial.print( ", " );
@@ -345,7 +346,8 @@ bool LOGGER::scanLogNumbers()
   if ( foundone ) {   Serial.print( "true, " ); } else { Serial.print( "false, " ); }
   if ( firsttime ) {   Serial.print( "true, " ); } else { Serial.print( "false, " ); }
   Serial.println( " " );
-
+  */
+  
   if ( firsttime )
   {
     return false;
