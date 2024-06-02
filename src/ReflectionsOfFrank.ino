@@ -166,13 +166,13 @@ static void smartdelay( unsigned long ms )
     //accel.loop();
 
     //player.loop();
-    //video.loop();
+    video.loop();
 
     storage.loop();
     logger.loop();
     tof.loop();
     
-    ble.loop();
+    //ble.loop();
 
     //parallax.loop();
   
@@ -231,10 +231,10 @@ void setup() {
 
   locationUpdateTimer = millis();
 
-  // storage.replicateServerFiles();
+  //storage.replicateServerFiles();
   
-  Serial.println( "Files on board:" );
-  storage.listDir(SD, "/", 100, true);
+  //Serial.println( "Files on board:" );
+  //storage.listDir(SD, "/", 100, true);
   
   // Self-test: NAND, I2C, SPI
   // while playing startup animation and sound
@@ -298,6 +298,7 @@ long msitime = millis();
 
 void loop() {
   smartdelay(1000);
+
 
   /*
   if ((millis() - msitime) > 5000) 

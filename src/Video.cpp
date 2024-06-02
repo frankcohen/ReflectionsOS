@@ -57,9 +57,16 @@ void Video::begin()
   gfx->invertDisplay(true);
   gfx->fillScreen( COLOR_BACKGROUND );
 
+  #ifdef GFX_BL
+    pinMode(GFX_BL, OUTPUT);
+    digitalWrite(GFX_BL, HIGH);
+  #endif
+
   videoStatus = 0;   // idle
   firsttime = true;
   vidtimer = millis();
+
+  fontdelay = millis();
 }
 
 /* Show error on display, then halt */
@@ -253,8 +260,68 @@ void Video::drawTofEyes()
   gfx -> fillCircle( bottomx + bridgex, bottomy, smallcircle /2, COLOR_RING );
 }
 
+void Video::printCentered( int y2, String text, uint16_t color, const GFXfont * font )
+{
+  gfx->setFont( font );
+
+  int16_t x1, y1;
+  uint16_t w, h;
+
+  gfx->getTextBounds( text, 0, 0, &x1, &y1, &w, &h);
+
+  int16_t x = (gfx->width() - w) / 2;
+  //int16_t y = (gfx->height() - h) / 2;
+  //y += y2;
+
+  gfx->setCursor(x, y2);
+  gfx->setTextColor( color );
+  //gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, YELLOW);
+  gfx->println( text );
+}
+
+int onceplease = 0;
+
 void Video::loop()
 {
+
+  if ( ( millis() - fontdelay ) > 1000 )
+  {
+    fontdelay = millis();
+
+    if ( onceplease == 1 )
+    {
+      return;
+    }
+    onceplease = 1;
+
+    gfx->fillScreen( BLUE );
+  
+    /*
+    gfx->setCursor(random(gfx->width()), random(gfx->height()));
+    gfx->setTextColor(random(0xffff));
+    gfx->setTextSize( 1 );
+    gfx->setFont( &MKX_Title20pt7b );
+    gfx->println("Frankolo");
+    */
+
+    String toptext = "It's early";
+    String timetext = "12:10 pm";
+    String exacttext = "to be exact";
+
+    printCentered( 100, toptext, YELLOW, &Some_Time_Later20pt7b );
+
+    printCentered( 140, timetext, RED, &Minya16pt7b );
+
+    printCentered( 180, exacttext, GREEN, &ScienceFair14pt7b );
+
+
+
+
+
+  }
+
+
+
   if ( videoStatus == 0 ) return;
 
   if ( mjpegFile.available() )

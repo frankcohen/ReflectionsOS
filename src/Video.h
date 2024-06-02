@@ -44,6 +44,10 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 
 #include "FreeSerif8pt7b.h"
 #include "FreeSansBold10pt7b.h"
+#include "MKXTitle20pt7b.h"
+#include "SomeTimeLater20pt7b.h"
+#include "Minya16pt7b.h"
+#include "ScienceFair14pt7b.h"
 
 #define COLOR_BACKGROUND RGB565(115, 58, 0)
 #define COLOR_LEADING RGB565(123, 63, 0)
@@ -88,6 +92,7 @@ class Video
     boolean startAtTop();
     boolean StartAtTopOrReplicate();
     void setTofEyes( bool status );
+    void printCentered( int y2, String text, uint16_t color, const GFXfont * font );
 
   private:
     File mjpegFile;
@@ -96,6 +101,8 @@ class Video
     File vidfile;
     int videoStatus;
     unsigned long vidtimer;
+    
+    long fontdelay;
     
     void drawTofEyes();
     VL53L5CX_ResultsData measurementData;

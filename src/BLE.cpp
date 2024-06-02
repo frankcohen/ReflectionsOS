@@ -359,8 +359,8 @@ bool BLE::connectToServer()
   }
   else
   {
-    Serial.print( devicename );
-    Serial.println(": Client already connected");
+    //Serial.print( devicename );
+    //Serial.println(": Client already connected");
     return false;
   }
 
@@ -768,8 +768,8 @@ void BLE::areDevicesPointedToEachOther()
       }
       else
       {
-        Serial.print( devicename );
-        Serial.print( ": Distance = 0" );
+        //Serial.print( devicename );
+        //Serial.println( ": Distance = 0" );
       }
     }
   }
