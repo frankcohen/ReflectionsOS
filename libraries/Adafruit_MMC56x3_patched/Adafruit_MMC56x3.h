@@ -59,6 +59,7 @@ public:
   Adafruit_MMC5603(int32_t sensorID = -1);
 
   bool begin(uint8_t i2c_addr = MMC56X3_DEFAULT_ADDRESS, TwoWire *wire = &Wire);
+  bool begin(uint8_t i2c_address, TwoWire *wire, uint16_t chip_id );
 
   bool getEvent(sensors_event_t *);
   void getSensor(sensor_t *);
@@ -86,6 +87,10 @@ private:
   int32_t z; ///< z-axis raw data
 
   int32_t _sensorID;
+
+  // fcohen@starlingwatch.com June 14, 2024 patch to support MMC5603NJ and other magnetometers
+  uint16_t _sensorAddress = MMC56X3_DEFAULT_ADDRESS;
+  uint16_t _sensorChipID = MMC56X3_CHIP_ID;
 
   Adafruit_I2CDevice *i2c_dev = NULL;
 };

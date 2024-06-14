@@ -56,6 +56,28 @@ Adafruit_MMC5603::Adafruit_MMC5603(int32_t sensorID) {
   z = 0;
 }
 
+
+/***************************************************************************
+ PUBLIC FUNCTIONS
+ ***************************************************************************/
+/*!
+ *    @brief  Sets up the hardware and initializes I2C
+ *    @param  i2c_address
+ *            The I2C address to be used.
+ *    @param  wire
+ *            The Wire object to be used for I2C connections.
+ *    @param  MMC56X3_ID
+ *			  Chip ID, added to support MMC5603NJ (uses 0 for Chip ID) and others
+ *    @return True if initialization was successful, otherwise false.
+ */
+
+bool Adafruit_MMC5603::begin(uint8_t i2c_address, TwoWire *wire, uint16_t chip_id ) {
+
+  _sensorChipID = chip_id;
+
+  return begin( i2c_address, wire );
+}
+
 /***************************************************************************
  PUBLIC FUNCTIONS
  ***************************************************************************/
@@ -81,7 +103,7 @@ bool Adafruit_MMC5603::begin(uint8_t i2c_address, TwoWire *wire) {
       Adafruit_BusIO_Register(i2c_dev, MMC56X3_PRODUCT_ID);
 
   // make sure we're talking to the right chip
-  if (chip_id.read() != MMC56X3_CHIP_ID) {
+  if (chip_id.read() != _sensorChipID) {
     // No MMC56X3 detected ... return false
     return false;
   }
