@@ -8,6 +8,8 @@
 
 #define maxCompassAngles 5    // How many running average angles to keep
 
+#define MMC5603NJ_ID 0x00     // Internal ID for the magnetometer as found in the WHO_AM_I register
+
 class Compass
 {
   public:

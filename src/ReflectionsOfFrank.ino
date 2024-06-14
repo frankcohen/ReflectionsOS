@@ -174,7 +174,7 @@ static void smartdelay( unsigned long ms )
     
     //ble.loop();
 
-    //parallax.loop();
+    parallax.loop();
   
     /*
     audio.loop();
@@ -231,7 +231,7 @@ void setup() {
 
   locationUpdateTimer = millis();
 
-  //storage.replicateServerFiles();
+  storage.replicateServerFiles();
   
   //Serial.println( "Files on board:" );
   //storage.listDir(SD, "/", 100, true);
