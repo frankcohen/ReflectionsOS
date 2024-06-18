@@ -4,7 +4,7 @@ June 14, 2024
 
 Depends on a patched version of Adafruit_MMC56x3 1.0.1 library https://github.com/adafruit/Adafruit_MMC56x3
 
-Some MMC5603 variants uses (or ignore) the device ID code from WHO_AM_I register. For example, 
+Some MMC5603 variants use (or ignore) the device ID code from WHO_AM_I register. For example, 
 MMC5603NJ (https://jlcpcb.com/parts/componentSearch?searchTxt=MMC5603NJ&_t=1718386987988) returns 
 an ID value of 0x00. 
 

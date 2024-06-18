@@ -56,11 +56,11 @@ Adafruit_MMC5603::Adafruit_MMC5603(int32_t sensorID) {
   z = 0;
 }
 
-
 /***************************************************************************
  PUBLIC FUNCTIONS
  ***************************************************************************/
 /*!
+ * fcohen@starlingwatch.com June 14, 2024 patch to support MMC5603NJ and other magnetometers
  *    @brief  Sets up the hardware and initializes I2C
  *    @param  i2c_address
  *            The I2C address to be used.
@@ -103,7 +103,9 @@ bool Adafruit_MMC5603::begin(uint8_t i2c_address, TwoWire *wire) {
       Adafruit_BusIO_Register(i2c_dev, MMC56X3_PRODUCT_ID);
 
   // make sure we're talking to the right chip
-  if (chip_id.read() != _sensorChipID) {
+
+	// fcohen@starlingwatch.com June 14, 2024 patch to support MMC5603NJ and other magnetometers
+	if (chip_id.read() != _sensorChipID) {
     // No MMC56X3 detected ... return false
     return false;
   }
