@@ -32,6 +32,8 @@ Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/fr
 
 I publish articles on the technology needed to make Reflections.
 
+[Deep Sleep, Extending Battery Life for ESP32-S3 Projects](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/Deep%20Sleep)
+
 [Wrist Gesture Sensing on ESP32 and Accelerometer](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/Gesture_Sensing_Experiment.md)
 
 [Scalable Logger on ESP32 with Wifi and SD/NAND](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Scalable%20logger.md)
@@ -60,7 +62,9 @@ I made an air-guitar project to learn about streaming music over Bluetooth Clasi
 
 ## Update as of June 18, 2024
 
-We've gotten to a point in the development of the software for the board where we wanted to optimize the board's use of the battery. The battery runs for a few hours now. Using a sleep technique for the processor, we're able to make that battery last a whole lot longer. When I tell it to start up, it goes through a cold boot and then it puts the processor to sleep, the processor is now drawing extremely low energy and the display is turned off. It's extending the battery life as well. All I have to do then is to move the, the the board just a little bit and you can see that it comes awake. The accelerometer sensor on the board is sending a interrupt to the processor saying, hey, it's time to wake up the processor, then turns on the display displays this greeting message and then also an indication of how many times through this iteration loop we've gone. And then it sends the processor back into sleep until I shake it again or tap it or click it and then it turns on. So by doing this, we'll be able to get the battery life much longer than we had before we did this. And it's a nice software technique that seems to be useful for a bunch of different applications.
+We've gotten to a point in the development of the software for the board where we wanted to optimize the board's use of the battery. The battery runs for a few hours now. Using the [Deep Sleep](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/Deep%20Sleep) technique for the processor, we're able to make that battery last a whole lot longer. When I tell it to start up, it goes through a cold boot and then it puts the processor to sleep, the processor is now drawing extremely low energy and the display is turned off. It's extending the battery life as well. All I have to do then is to move the, the the board just a little bit and you can see that it comes awake. The accelerometer sensor on the board is sending a interrupt to the processor saying, hey, it's time to wake up the processor, then turns on the display displays this greeting message and then also an indication of how many times through this iteration loop we've gone. And then it sends the processor back into sleep until I shake it again or tap it or click it and then it turns on. So by doing this, we'll be able to get the battery life much longer than we had before we did this. And it's a nice software technique that seems to be useful for a bunch of different applications.
+
+Deep Sleep use of GPIO 13 and LIS3DH INT 2 pins is in the [Vlad version of the logic board](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Vlad/Vlad%20Project%20Notes.md) and later.
 
 ## Update as of March 19, 2024
 
