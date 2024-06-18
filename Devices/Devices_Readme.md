@@ -15,5 +15,6 @@ Reflections is a hardware, software, and server architecture for building mobile
 - [Blue Fish](https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/BlueFish) - 7th revision, passive GPS antenna support, solder pads instead of connectors, gesture sensor on board, reposition USB and display tab
 - [Cat In Hat](https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CatInHat) - 8th revision, adding press-and-hold power on/off. This failed, turns out the ESP32-S3 doesn't like repurposing the EN pin to provide power on/off capability. Tried changing capacitor and resistor values for the EN circuit in a project codenamed Lorax. That did not work either.
 - [Yertle](https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CatInHat) - 9th revision, removes U9 to abandon the press-and-hold power on/off.
+- [Vlad](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Vlad/Vlad%20Project%20Notes.md) - 10th revision, adds NAND power control via GPIO pin and LIS3DH accelerometer support for waking the ESP32-S3 from Deep Sleep.
 
 ![Cindy Lou board example](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/CindyLou.jpg)
