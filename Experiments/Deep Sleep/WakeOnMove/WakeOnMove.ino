@@ -208,9 +208,9 @@ void setup()
   //LIS3DH_CTRL_REG3
   //Choose source for pin 1
   dataToWrite = 0;
-  //dataToWrite |= 0x80; //Click detect on pin 1
-  dataToWrite |= 0x40; //AOI1 event (Generator 1 interrupt on pin 1)
-  dataToWrite |= 0x20; //AOI2 event ()
+  dataToWrite |= 0x80; //Click detect on pin 1
+  //dataToWrite |= 0x40; //AOI1 event (Generator 1 interrupt on pin 1)
+  //dataToWrite |= 0x20; //AOI2 event ()
   //dataToWrite |= 0x10; //Data ready
   //dataToWrite |= 0x04; //FIFO watermark
   //dataToWrite |= 0x02; //FIFO overrun
@@ -226,7 +226,7 @@ void setup()
   myIMU.writeRegister(LIS3DH_CTRL_REG6, dataToWrite);
 
   // Enable ESP32 to wake up on INT2 (GPIO13) high level
-  esp_sleep_enable_ext1_wakeup(BIT(INT2_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
+  esp_sleep_enable_ext1_wakeup(BIT(GPIO_NUM_14), ESP_EXT1_WAKEUP_ANY_HIGH);
 
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
 
