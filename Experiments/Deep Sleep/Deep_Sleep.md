@@ -4,7 +4,7 @@ June 18, 2024 fcohen@starlingwatch.com
 
 ## Extending Battery Life for ESP32-S3 Projects
 
-We are at a point in development of the [Reflections project](https://github.com/frankcohen/ReflectionsOS) where optimizations to get more battery time are important. Putting the ESP32 and display into deep sleep extends the battery life. This experiment shows the code needed and the pittfalls I encountered.
+I am at a point in development of the [Reflections project](https://github.com/frankcohen/ReflectionsOS) where optimizations to get more battery time are important. Putting the ESP32 and display into deep sleep extends the battery life. This experiment shows the code needed and the pittfalls I encountered.
 
 ### Wake On Movement
 
@@ -20,6 +20,8 @@ I connect the ESP32-S3 and LIS32DH pins:
 Originally I connected INT 1 from the accellerometer to GPIO 14. I assumed that all ESP interrupts from from mall GPIO pins. That's wrong according to the datasheet. To make the ESP interrupts work the GPIO needs to be one of the RTC compatible pins. GPIO 14 is not an RTC pin. Just my luck, as GPIO 0 to 21, except for 14, are RTC compatible pins.
 
 Instead, I used GPIO 13 connected to INT 2. That works! However, using INT 2 requires extra configuration of the LIS3DH and that's not easy, as you will see from the code. I found the Adafruit library for LIS3DH doesn't easily support setting the custom parameters needed to use INT 2. I switched to using the Sparkfun library.
+
+*NOTE: I got it wrong, GPIO 14 is an RTC pin. I corrected the code.*
 
 ### Retaining Values in Deep Sleep
 
