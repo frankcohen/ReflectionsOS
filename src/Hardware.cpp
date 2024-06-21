@@ -65,6 +65,8 @@ void Hardware::begin()
     Serial.println(F("SD storage mounted"));
     NANDMounted = true;
   }
+
+  randomSeed(analogRead(0));
 }
 
 bool Hardware::getMounted()

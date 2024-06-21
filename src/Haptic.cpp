@@ -8,7 +8,9 @@
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
 
- Depends on https://github.com/adafruit/Adafruit_DRV2605_Library
+ Depends on 
+ https://github.com/adafruit/Adafruit_DRV2605_Library
+https://github.com/adafruit/Adafruit_BusIO
 
  Effects:
   1 − Strong Click - 100%

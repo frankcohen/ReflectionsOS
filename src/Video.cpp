@@ -65,8 +65,6 @@ void Video::begin()
   videoStatus = 0;   // idle
   firsttime = true;
   vidtimer = millis();
-
-  fontdelay = millis();
 }
 
 /* Show error on display, then halt */
@@ -283,45 +281,6 @@ int onceplease = 0;
 
 void Video::loop()
 {
-
-  if ( ( millis() - fontdelay ) > 1000 )
-  {
-    fontdelay = millis();
-
-    if ( onceplease == 1 )
-    {
-      return;
-    }
-    onceplease = 1;
-
-    gfx->fillScreen( BLUE );
-  
-    /*
-    gfx->setCursor(random(gfx->width()), random(gfx->height()));
-    gfx->setTextColor(random(0xffff));
-    gfx->setTextSize( 1 );
-    gfx->setFont( &MKX_Title20pt7b );
-    gfx->println("Frankolo");
-    */
-
-    String toptext = "It's early";
-    String timetext = "12:10 pm";
-    String exacttext = "to be exact";
-
-    printCentered( 100, toptext, YELLOW, &Some_Time_Later20pt7b );
-
-    printCentered( 140, timetext, RED, &Minya16pt7b );
-
-    printCentered( 180, exacttext, GREEN, &ScienceFair14pt7b );
-
-
-
-
-
-  }
-
-
-
   if ( videoStatus == 0 ) return;
 
   if ( mjpegFile.available() )

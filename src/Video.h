@@ -49,14 +49,6 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 #include "Minya16pt7b.h"
 #include "ScienceFair14pt7b.h"
 
-#define COLOR_BACKGROUND RGB565(115, 58, 0)
-#define COLOR_LEADING RGB565(123, 63, 0)
-#define COLOR_RING RGB565(234, 68, 0)
-#define COLOR_TRAILING RGB565(178, 67, 0 )
-#define COLOR_TEXT RGB565( 234, 67, 0 )
-#define COLOR_TEXT_BACKGROUND RGB565( 79, 42, 0)
-#define COLOR_TEXT_BORDER RGB565( 207, 67, 0 )
-
 #define leftmargin 48
 #define topmargin 75
 #define linespacing 20
@@ -101,9 +93,7 @@ class Video
     File vidfile;
     int videoStatus;
     unsigned long vidtimer;
-    
-    long fontdelay;
-    
+        
     void drawTofEyes();
     VL53L5CX_ResultsData measurementData;
 

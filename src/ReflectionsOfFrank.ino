@@ -21,10 +21,15 @@ directory. Copy the contents to your Arduino IDE installation under documents/li
 ESP32 board, https://github.com/espressif/arduino-esp32
 esp32FOTA, OTA updates, https://github.com/chrisjoyce911/esp32FOTA
 Adafruit DRV2605 Library, haptic controller, https://github.com/adafruit/Adafruit_DRV2605_Library
+Sparkfun LIS3DH, https://github.com/sparkfun/SparkFun_LIS3DH_Arduino_Library
+
 Adafruit MMC56x3, compass, magnetometer, https://github.com/adafruit/Adafruit_MMC56x3
+The Adafruit I2C libraries, like MMC56x3, depend on these
 Adafruit Unified Sensor, https://github.com/adafruit/Adafruit_Sensor
-Adafruit seesaw Library, https://github.com/adafruit/Adafruit_Seesaw
 Adafrruit BusIO, I2C support, https://github.com/adafruit/Adafruit_BusIO
+Adafruit SSD1306, compass support, https://github.com/adafruit/Adafruit_SSD1306
+
+Adafruit seesaw Library, https://github.com/adafruit/Adafruit_Seesaw
 ArduinoJson, https://arduinojson.org/
 ESP32-targz, https://github.com/tobozo/ESP32-targz/
 ESP32_HTTPS_Server, https://github.com/fhessel/esp32_https_server
@@ -33,7 +38,6 @@ FastLED, https://github.com/FastLED/FastLED
 GFX Library for Arduino, https://github.com/moononournation/Arduino_GFX
 JPEGDEC, https://github.com/bitbank2/JPEGDEC.git
 NimBLE-Arduino, https://github.com/h2zero/NimBLE-Arduino
-LISDHTR Accelerometer, https://travis-ci.com/Seeed-Studio/Seeed_Arduino_LIS3DHTR.svg?branch=master
 SparkFun_VL53L5CX_Arduino_Library, https://github.com/sparkfun/SparkFun_VL53L5CX_Arduino_Library
 Time, https://playground.arduino.cc/Code/Time/
 TinyGPSPlus-ESP32, https://github.com/Tinyu-Zhao/TinyGPSPlus-ESP32
@@ -91,6 +95,7 @@ USB Mode: Hardware CDC and JTAG
 #include "Hardware.h"
 #include "Wire.h"
 #include "Parallax.h"
+#include "ShowTime.h"
 
 Utils utils;
 Storage storage;
@@ -100,6 +105,7 @@ Haptic haptic;
 Audio audio;
 TOF tof;
 Parallax parallax;
+ShowTime showtime;
 
 static Wifi wifi;
 static GPS gps;
@@ -174,7 +180,9 @@ static void smartdelay( unsigned long ms )
     
     //ble.loop();
 
-    parallax.loop();
+    //parallax.loop();
+    showtime.loop();
+
   
     /*
     audio.loop();
@@ -231,15 +239,14 @@ void setup() {
 
   locationUpdateTimer = millis();
 
-  storage.replicateServerFiles();
+  //storage.replicateServerFiles();
   
   //Serial.println( "Files on board:" );
   //storage.listDir(SD, "/", 100, true);
   
   // Self-test: NAND, I2C, SPI
-  // while playing startup animation and sound
 
-  //assertI2Cdevice(48, "Compass");
+  assertI2Cdevice(48, "Compass");
   assertI2Cdevice(90, "Haptic");
   assertI2Cdevice(24, "TOF Accel");
 
@@ -251,6 +258,7 @@ void setup() {
   compass.begin();
   tof.begin();
   parallax.begin();
+  showtime.begin();
 
   haptic.playEffect(14);  // 14 Strong Buzz
 
@@ -288,7 +296,11 @@ void setup() {
   // startMSC();     // Calliope mounts as a flash drive, showing NAND contents over USB on your computer
 */
 
+  wifi.setRTCfromNTP();
+
   video.setTofEyes( true );
+
+  showtime.startShow( 0 );
 
   logger.info(F("Setup complete"));
 }

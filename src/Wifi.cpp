@@ -16,7 +16,7 @@ This file is for operating the video display.
 
 Wifi::Wifi() {}
 
-static   WiFiManager wm;
+static WiFiManager wm;
 
 void Wifi::begin()
 { 
@@ -58,6 +58,51 @@ void Wifi::begin()
 void Wifi::reset()
 {
   wm.resetSettings();
+}
+
+/*
+* Get the time from Net Time Protocol (NTP) service pool.ntp.org
+* Set the internal RTC
+*/
+
+void Wifi::setRTCfromNTP()
+{
+  if ( WiFi.status() == WL_CONNECTED ) 
+  {
+    configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org");
+
+    struct tm timeinfo;
+    if ( ! getLocalTime( &timeinfo ) ) 
+    {
+      Serial.println( "Net time not set" );
+      return;
+    }
+
+    int hour = timeinfo.tm_hour;
+    int minute = timeinfo.tm_min;
+    String period = "AM";
+
+    if (hour >= 12) {
+      period = "PM";
+      if (hour > 12) {
+        hour -= 12;
+      }
+    } else if (hour == 0) {
+      hour = 12; // Midnight case
+    }
+
+    String minuteStr = (minute < 10) ? "0" + String(minute) : String(minute);
+    String timeStr = String(hour) + ":" + minuteStr + " " + period;
+
+    Serial.print( "Net time set to " );
+    Serial.print( timeStr );
+    Serial.print( ", GMT offset " );
+    Serial.println( gmtOffset_sec );
+  }
+  else
+  {
+    Serial.println( "Net time not set, no WIFI connection" );
+  }
 }
 
 bool Wifi::isConnected()

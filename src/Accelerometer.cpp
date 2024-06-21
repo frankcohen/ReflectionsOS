@@ -15,7 +15,7 @@
   Each gesture is 1.5 seconds, length is adjustable in the code
 
   Depends on:
-  https://github.com/Seeed-Studio/Seeed_Arduino_LIS3DHTR
+  https://github.com/sparkfun/SparkFun_LIS3DH_Arduino_Library
 
   Modified from Federico Terzi experiment at
   https://github.com/CieloStrive/GESTURE-RECOGNITION-DYNAMIC-TIME-WARPING/tree/master
@@ -32,15 +32,75 @@ extern Haptic haptic;
 extern Utils utils;
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 
-Accelerometer::Accelerometer(){}
+Accelerometer::Accelerometer() : myIMU(I2C_MODE, 0x18) {}
 
 void Accelerometer::begin()
 { 
-  LIS.begin( Wire ); //IIC init dafault :0x18
   delay(100);
+
+  myIMU.settings.adcEnabled = 1;
+  myIMU.settings.tempEnabled = 1;
+  myIMU.settings.accelSampleRate = 50;  //Hz.  Can be: 0,1,10,25,50,100,200,400,1600,5000 Hz
+  myIMU.settings.accelRange = 16;      //Max G force readable.  Can be: 2, 4, 8, 16
+  myIMU.settings.xAccelEnabled = 1;
+  myIMU.settings.yAccelEnabled = 1;
+  myIMU.settings.zAccelEnabled = 1;
+
+  myIMU.begin();
+
+  uint8_t dataToWrite = 0;
+
+  // Configure interrupts
+  // LIS3DH_INT1_CFG   
+  dataToWrite = 0x08; // Enable Y high interrupt
+  myIMU.writeRegister(LIS3DH_INT1_CFG, dataToWrite);
+
+  // LIS3DH_INT1_THS   
+  dataToWrite = 0x10; // Set threshold (adjust as needed)
+  myIMU.writeRegister(LIS3DH_INT1_THS, dataToWrite);
   
-  LIS.setOutputDataRate(LIS3DHTR_DATARATE_50HZ);
-  LIS.setHighSolution(true); //High solution enable
+  // LIS3DH_INT1_DURATION  
+  dataToWrite = 0x01; // Set duration (1 * 1/50 s = 20ms)
+  myIMU.writeRegister(LIS3DH_INT1_DURATION, dataToWrite);
+
+  // Configure click detection (optional)
+  // LIS3DH_CLICK_CFG   
+  dataToWrite = 0x15; // Enable click detection on X, Y, and Z axes
+  myIMU.writeRegister(LIS3DH_CLICK_CFG, dataToWrite);
+
+  // LIS3DH_CLICK_SRC
+  dataToWrite = 0x07; // Enable single clicks on X, Y, and Z axes
+  myIMU.writeRegister(LIS3DH_CLICK_SRC, dataToWrite);
+
+  // LIS3DH_CLICK_THS   
+  dataToWrite = 0x0A; // Set click threshold
+  myIMU.writeRegister(LIS3DH_CLICK_THS, dataToWrite);
+
+  // LIS3DH_TIME_LIMIT  
+  dataToWrite = 0x08; // Set time limit for click detection
+  myIMU.writeRegister(LIS3DH_TIME_LIMIT, dataToWrite);
+
+  // LIS3DH_TIME_LATENCY
+  dataToWrite = 0x08; // Set time latency for click detection
+  myIMU.writeRegister(LIS3DH_TIME_LATENCY, dataToWrite);
+
+  // LIS3DH_TIME_WINDOW 
+  dataToWrite = 0x10; // Set time window for double-click detection
+  myIMU.writeRegister(LIS3DH_TIME_WINDOW, dataToWrite);
+  
+  // LIS3DH_CTRL_REG5
+  myIMU.readRegister(&dataToWrite, LIS3DH_CTRL_REG5);
+  dataToWrite &= 0xF3; // Clear bits of interest
+  dataToWrite |= 0x08; // Latch interrupt
+  myIMU.writeRegister(LIS3DH_CTRL_REG5, dataToWrite);
+
+  // LIS3DH_CTRL_REG3
+  dataToWrite = 0x60; // Enable AOI1 and AOI2 events on INT1 pin
+  myIMU.writeRegister(LIS3DH_CTRL_REG3, dataToWrite);
+
+  // LIS3DH_CTRL_REG6
+  dataToWrite = 0x80; // Enable click interrupt on INT2 pin
+  myIMU.writeRegister(LIS3DH_CTRL_REG6, dataToWrite);
 
   movetimer = millis();
   detecttimer = millis();
@@ -124,7 +184,7 @@ boolean Accelerometer::test()
   long time = millis();
   while ( millis() < time + 5000 )
   {
-    if ( LIS )
+    if ( myIMU.readFloatAccelX() > 0 ) 
     {
       return true;
     }
@@ -137,16 +197,16 @@ boolean Accelerometer::test()
 
 float Accelerometer::getXreading()
 {
-  return LIS.getAccelerationX();
+  return myIMU.readFloatAccelX();
 }
 
 // Get values from accelermoter, apply scale and filter
 
 bool Accelerometer::getAccelValues()
 {
-  nx = LIS.getAccelerationX() * scaler ;
-  ny = LIS.getAccelerationY() * scaler ;
-  nz = LIS.getAccelerationZ() * scaler ;
+  nx = myIMU.readFloatAccelX() * scaler ;
+  ny = myIMU.readFloatAccelY() * scaler ;
+  nz = myIMU.readFloatAccelZ() * scaler ;
 
   nx += 300;
   ny += 300;

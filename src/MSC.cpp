@@ -44,6 +44,8 @@ mechanism to get files onto the SD/NAND device.
 
 // USBMSC msc;
 
+*/
+
 /*
 static int32_t onWrite(uint32_t lba, uint32_t offset, uint8_t* buffer, uint32_t bufsize)
 {

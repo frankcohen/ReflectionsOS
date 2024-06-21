@@ -405,7 +405,7 @@ void LOGGER::begin()
   Serial.print( ", lowLogNumber = " );
   Serial.println( lowLogNumber );
 
-  int bufferIndex = 0;
+  bufferIndex = 0;
  
   uploadchecktime = millis();
   uploadpacetime = millis();

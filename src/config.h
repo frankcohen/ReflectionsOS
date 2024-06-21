@@ -89,6 +89,11 @@ Read the license in the license.txt file that comes with this code.
 
 // Compass
 
+
+// Accellerometer Interrupt pins
+#define INT1_PIN GPIO_NUM_14
+#define INT2_PIN GPIO_NUM_13
+
 // Battery
 
 #define Battery_Sensor 16
@@ -119,5 +124,19 @@ Read the license in the license.txt file that comes with this code.
 
 // Logger POST URL
 #define cloudCityLogPostURL "https://cloudcity.starlingwatch.com/api/logitpost"
+
+/* Show Time text and colors */
+
+#define COLOR_BACKGROUND RGB565(115, 58, 0)
+#define COLOR_LEADING RGB565(123, 63, 0)
+#define COLOR_RING RGB565(234, 68, 0)
+#define COLOR_TRAILING RGB565(178, 67, 0 )
+#define COLOR_TEXT RGB565( 234, 67, 0 )
+#define COLOR_TEXT_BACKGROUND RGB565( 79, 42, 0)
+#define COLOR_TEXT_BORDER RGB565( 207, 67, 0 )
+
+#define COLOR_TEXT_YELLOW RGB565( 210, 200, 102 )
+#define COLOR_STRIPE_MEDIUM_GRAY RGB565( 153, 105, 140 )
+#define COLOR_STRIPE_PINK RGB565( 166, 139, 186 )
 
 #endif // _config_

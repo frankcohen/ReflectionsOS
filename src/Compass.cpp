@@ -72,10 +72,28 @@ void Compass::begin()
   started = false;
   
   /* Initialise the sensor */
+
+  /* Note, if you get a compile error like this it means you installed the
+    Adafruit MMC56x3 library instead of using the libraries/Adafruit_MMC56x3_Patched
+    library. Some MMC5603 variants use (or ignore) the device ID code from
+    the WHO_AM_I register. For example, MMC5603NJ 
+    (https://jlcpcb.com/parts/componentSearch?searchTxt=MMC5603NJ&_t=1718386987988) 
+    returns an ID value of 0x00. The patched library has an overloaded begin() method 
+    accepting a custom ID value.
+
+    ReflectionsOfFrank/Compass.cpp:75:65: error: no matching function for call to 'Adafruit_MMC5603::begin(int, TwoWire*, int)'
+
+    Copy libraries/Adafruit_MMC56x3_Patched into your Adafruit libraries directory
+    and delete the Adafruit_MMC56x3 directory.
+  */
+
   if ( !mag.begin( MMC56X3_DEFAULT_ADDRESS, &Wire, MMC5603NJ_ID ) ) 
   {
-    Serial.println( F( "Compass not detected" ) );
-    return;
+    if ( !mag.begin( MMC56X3_DEFAULT_ADDRESS, &Wire, MMC5603NJ_ID_Alt ) ) 
+    {
+      Serial.println( F( "Compass not detected" ) );
+      return;
+    }
   }
 
   mag.reset();
@@ -96,7 +114,8 @@ void Compass::begin()
 String Compass::decodeHeading(float measured_angle) 
 {
   //decoding heading angle according to datasheet
-  if (measured_angle > 337.25 | measured_angle < 22.5) {
+  if ( ( measured_angle > 337.25 ) || ( measured_angle < 22.5 ) )
+  {
     //Serial.println("North");
     return "N";
   }

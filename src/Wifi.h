@@ -32,9 +32,17 @@ class Wifi
     void loop();
     bool isConnected();
 
+    void setRTCfromNTP();
+
   private:
     String devicename;
     long lastWifiTime;
+
+    // Timezone offset in seconds (e.g., for GMT+1, offset is 3600)
+    const long  gmtOffset_sec = 3600 * -8;   // PST = GMT-8
+
+    // Daylight saving time offset in seconds
+    const int   daylightOffset_sec = 3600;
 };
 
 #endif // _Wifi_

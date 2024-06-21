@@ -9,7 +9,7 @@
 #include "Utils.h"
 #include "Logger.h"
 
-#include "LIS3DHTR.h"
+#include <SparkFunLIS3DH.h>
 #include <Wire.h>
 #include "SD.h"
 #include "SPI.h"
@@ -63,7 +63,7 @@ class Accelerometer
     float DTWdistance(float x1, float y1, float z1, float x2, float y2, float z2);
     float DTWmin(float a, float b, float c);
 
-    LIS3DHTR<TwoWire> LIS;
+    LIS3DH myIMU;
 
     int recentGesture;
     long recenttimer;
