@@ -36,6 +36,12 @@ void Wifi::begin()
   devname.append( mac.substr( 15, 2 ) );
   devicename = devname.c_str();
 
+  wm.setConfigPortalBlocking(false);
+  wm.setConfigPortalTimeout(60);
+
+  wm.setConfigPortalBlocking(false);
+  wm.setConfigPortalTimeout(60);
+
   bool res = wm.autoConnect( devicename.c_str(), CALLIOPE_WIFI_PASS ); // password protected ap
 
   if(!res) {
@@ -47,6 +53,8 @@ void Wifi::begin()
     Serial.print( devicename );
     Serial.println(": WifiManager connected");
   }
+
+  checkNTP = millis() + ( 10 * (60 * 1000) );
 }
 
 /*
@@ -113,9 +121,17 @@ bool Wifi::isConnected()
 
 void Wifi::loop()
 {
-  if ( (millis() - lastWifiTime) > 2000)
+  if ( (millis() - lastWifiTime) > 500)
   {
     lastWifiTime = millis();
     wm.process();     // Non-blocking Wifi manager
+
+    if ( ( (millis() - checkNTP ) > ( 10 * (60 * 1000) ) ) && isConnected() )
+    {
+      checkNTP = millis();
+      
+      setRTCfromNTP();
+    }
+
   }
 }

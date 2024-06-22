@@ -182,12 +182,11 @@ static void smartdelay( unsigned long ms )
 
     //parallax.loop();
     showtime.loop();
-
+    wifi.loop();
   
     /*
     audio.loop();
     utils.loop();
-    wifi.loop();
     compass.loop();
     haptic.loop();
     led.loop();

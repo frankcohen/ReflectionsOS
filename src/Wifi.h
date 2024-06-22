@@ -37,6 +37,7 @@ class Wifi
   private:
     String devicename;
     long lastWifiTime;
+    long checkNTP;
 
     // Timezone offset in seconds (e.g., for GMT+1, offset is 3600)
     const long  gmtOffset_sec = 3600 * -8;   // PST = GMT-8

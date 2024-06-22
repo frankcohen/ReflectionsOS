@@ -94,57 +94,44 @@ const uint16_t BatteryIcon [] PROGMEM  = {
   // Clock fun messages
   
   const char* timetext[52][2] = {
-  { "It's early", "to be exact" },
-  { "It's late", "to be exact"},
-  { "Wait, wait","you waited!"},
-  { "Peekaboo","i see you"},
-  { "Why?","why not?"},
-  { "When?","and where?"},
+  { "It's early",    "to be exact" },
+  { "It's late",     "to be exact"},
+  { "Wait, wait",    "you waited!"},
+  { "Peekaboo",      "i see you"},
+  { "Why?",          "why not?"},
+  { "When?",         "and where?"},
   { "So little time","to be exact"},
   { "Will this end?","and when?"},
-  { "Cats forever!","meow"},
-  { "Hug please","forever"},
-  { "I'm late","an important date"},
-  {"We're all mad","here, you know."},
-  {"Grin","like a cat."},
-  {"Curiouser","and curiouser."},
-  {"Imagination","is the only key."},
-  {"Oh, you can't","help that."},
-  {"How do you","like me now?"},
-  {"I've often seen","a cat without"},
-  {"Most everyone","is mad here"},
-  {"A dream","within a dream"},
-  {"I've gone","entirely mad"},
-  {"We're all mad","here, indeed"},
-  {"I've gone mad","how did that happen?"},
-  {"Simply mad","as a hatter"},
-  {"Twiddledee","and Twiddledum."},
-  {"I vanish","like a ghost"},
-  {"Very","mysterious"},
-  {"Truly","a wonderland"},
-  {"I appear","and disappear"},
-  {"Do you play","croquet?"},
-  {"Follow","the white rabbit"},
-  {"Mind the gap","between us"},
-  {"Lost my way","in the fog"},
-  {"See me?","Or maybe not"},
-  {"Dancing in","the moonlight"},
-  {"I am mad","but so are you"},
-  {"Find me","if you can"},
-  {"A place","like no other"},
-  {"Do you","believe?"},
-  {"Laughing all","the way"},
-  {"In the world","of dreams"},
-  {"Catch me","if you can"},
-  {"Playful as","a kitten"},
-  {"Look closely","at nothing"},
-  {"Smiling from","ear to ear"},
-  {"Invisible","and yet here"},
-  {"Wondering why","we exist"},
-  {"In a land","of wonder"},
-  {"Peculiar","and strange"},
-  {"Chasing my","own tail"},
-  {"Such a","curious place"}
+  { "Cats forever!", "meow"},
+  { "Hug please",    "forever"},
+  { "I'm late",      "important date"},
+  {"We're all mad",  "don't worry"},
+  {"Grin",           "like a cat."},
+  {"Curiouser",      "and curiouser"},
+  {"Most everyone",  "is mad here"},
+  {"A dream",        "within a dream"},
+  {"I've gone",      "entirely mad"},
+  {"We're all mad",  "indeed"},
+  {"Simply mad",     "as a hatter"},
+  {"Twiddledee",     "and Twiddledum"},
+  {"I vanish",       "like a ghost"},
+  {"Very, very",     "mysterious"},
+  {"Truly, very",    "wonderland"},
+  {"I appear",       "and disappear"},
+  {"Slithy toves",   "Brillig?"},
+  {"Did gyre?",      "Borogroves?"},
+  {"Do you play?",   "Croquet"},
+  {"Follow",         "White rabbit"},
+  {"See me?",        "Or not"},
+  {"White rabbit",   "Who?"},
+  {"I am mad",       "So are you"},
+  {"Find me",        "if you can"},
+  {"A place",        "like no other"},
+  {"Do you?",        "Believe?"},
+  {"Look closely",   "See nothing"},
+  {"Smiling",        "Ear to ear"},
+  {"Invisible",      "Yet here"},
+  {"Peculiar",       "Strange"},
   };
 
 void drawBackgroundImage(const uint16_t *image, int16_t width, int16_t height) {
@@ -266,14 +253,13 @@ void ShowTime::runShowTellTime()
 {
   if ( showStep == 0 )
   {
-    gfx->begin();
     gfx->invertDisplay(true);
     gfx->fillScreen( COLOR_BACKGROUND );
     showStep = 1;
     fadeset = 1;
     theTime = getRTCtime();
 
-    int index = random(0, 52);
+    int index = random(0, 35);
     theMsg1 = timetext[ index ][ 0 ];
     theMsg2 = timetext[ index ][ 1 ];
 
