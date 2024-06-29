@@ -73,7 +73,6 @@ USB Mode: Hardware CDC and JTAG
 #include "Storage.h"
 #include "Logger.h"
 #include "Battery.h"
-#include "Player.h"
 #include "Video.h"
 #include "MjpegClass.h"
 #include <ESPmDNS.h>
@@ -95,17 +94,18 @@ USB Mode: Hardware CDC and JTAG
 #include "Hardware.h"
 #include "Wire.h"
 #include "Parallax.h"
-#include "ShowTime.h"
+#include "TimeService.h"
+#include "Inveigle.h"
 
 Utils utils;
 Storage storage;
-Player player;
 Video video;
 Haptic haptic;
 Audio audio;
 TOF tof;
 Parallax parallax;
-ShowTime showtime;
+TimeService timeservice;
+Inveigle inveigle;
 
 static Wifi wifi;
 static GPS gps;
@@ -130,6 +130,8 @@ String devicename;
 
 long locationUpdate;
 long locationUpdateTimer;
+unsigned long msitime;
+unsigned long msiwhen;
 
 #include <Arduino_GFX_Library.h>
 
@@ -169,22 +171,19 @@ static void smartdelay( unsigned long ms )
 
   do {
     battery.loop();
-    //accel.loop();
-
-    //player.loop();
-    video.loop();
-
-    storage.loop();
-    logger.loop();
+    accel.loop();
     tof.loop();
-    
-    //ble.loop();
-
-    //parallax.loop();
-    showtime.loop();
-    wifi.loop();
+    video.loop();
+    storage.loop();
+    timeservice.loop();
+    wifi.loop();  
+    inveigle.loop();
   
     /*
+    logger.loop();
+    ble.loop();
+    parallax.loop();
+
     audio.loop();
     utils.loop();
     compass.loop();
@@ -217,8 +216,6 @@ void setup() {
   video.begin();
   randomSeed( 382182738 );
 
-  player.begin();
-
   //wifi.reset();  // Optionally reset any previous connection settings
   wifi.begin();  // Non-blocking, until guest uses it to connect
 
@@ -238,7 +235,7 @@ void setup() {
 
   locationUpdateTimer = millis();
 
-  //storage.replicateServerFiles();
+  storage.replicateServerFiles();
   
   //Serial.println( "Files on board:" );
   //storage.listDir(SD, "/", 100, true);
@@ -257,15 +254,15 @@ void setup() {
   compass.begin();
   tof.begin();
   parallax.begin();
-  showtime.begin();
+  timeservice.begin();
+  inveigle.begin();
+  utils.begin();
+  ble.begin();
 
   haptic.playEffect(14);  // 14 Strong Buzz
 
   //accel.setTraining( true );    // Put accelermoeter into training mode
-  //accel.loadGestures();           // Load the prerecorded accelermeter gestures
-
-  utils.begin();
-  ble.begin();
+  //accel.loadGestures();         // Load the prerecorded accelermeter gestures
 
 /*
   //assertI2Cdevice(41, "Gesture");
@@ -292,38 +289,36 @@ void setup() {
   assertTest(gesture.test(), "Gesture sensor");
   smartdelay(200);
 
-  // startMSC();     // Calliope mounts as a flash drive, showing NAND contents over USB on your computer
+  startMSC();     // Calliope mounts as a flash drive, showing NAND contents over USB on your computer
+
 */
 
-  wifi.setRTCfromNTP();
+  // wifi.setRTCfromNTP();           // Set the Real Time Clock from an Internet time server.
 
-  video.setTofEyes( true );
+  // video.setTofEyes( true );    // Eyes Follow Finger experience
 
-  showtime.startShow( 0 );
+  msitime = millis();
+  msiwhen = random( 3000, 10000 );  
+
+  inveigle.startExperience( 0 );
 
   logger.info(F("Setup complete"));
 }
-
-int msi = 0;
-long msitime = millis();
 
 void loop() {
   smartdelay(1000);
 
 
-  /*
-  if ((millis() - msitime) > 5000) 
+  if ( inveigle.getCurrentState() == 3 )
   {
-    msitime = millis();
-    String mef = "Just me logging ";
-    mef += msi++;
-    logger.info( mef );
+    if ( millis() - msitime > msiwhen ) 
+    {
+      msitime = millis();
+      msiwhen = random( 3000, 15000 );  
+      inveigle.startExperience( 0 );
+    }
   }
-  */
-
-  // Send telemetry of sensors to Cloud City for analysis
-
-
+    
   // Update BLE beacon heading for other devices
 
   if ((millis() - locationUpdateTimer) > 2000) {

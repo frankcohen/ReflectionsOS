@@ -91,7 +91,7 @@ bool OTA::update()
 
   File ota_bin_file;
   int finished = 0;
-  struct stat entry_stat;
+  //struct stat entry_stat;
   uint32_t file_size = 0;
 
   Serial.print( F( "OTA Bin File Path = " ) );

@@ -49,8 +49,12 @@ Read the license in the license.txt file that comes with this code.
 #define LOGNAME_START "/REFLECTIONS/log"
 #define LOGNAME_END ".txt"
 
+/* Experience videos */
+#define Settime_video "00b7fe23d605baa7e5b422dd965cad90"
+#define videoname_end ".mjpeg"
+
 // Accelerometer template storage
-#define ACCEL_BASE_DIR "agesture"
+#define ACCEL_BASE_DIR "REFLECTIONS"
 #define ACCEL_BASE_FILE "fantastic4"
 #define ACCEL_BASE_EXT ".ages"
 
@@ -89,6 +93,13 @@ Read the license in the license.txt file that comes with this code.
 
 // Compass
 
+
+// TOF Gesture Sensing
+
+#define tof_detectionThreshold 1
+#define tof_pollingInterval 1000
+#define tof_majorityThreshold 1
+#define tof_expiration 2000
 
 // Accellerometer Interrupt pins
 #define INT1_PIN GPIO_NUM_14
@@ -138,5 +149,8 @@ Read the license in the license.txt file that comes with this code.
 #define COLOR_TEXT_YELLOW RGB565( 210, 200, 102 )
 #define COLOR_STRIPE_MEDIUM_GRAY RGB565( 153, 105, 140 )
 #define COLOR_STRIPE_PINK RGB565( 166, 139, 186 )
+
+#define COLOR_BLACK RGB565(0, 0, 0)
+
 
 #endif // _config_

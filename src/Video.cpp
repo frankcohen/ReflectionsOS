@@ -55,16 +55,21 @@ void Video::begin()
 
   gfx->begin();
   gfx->invertDisplay(true);
-  gfx->fillScreen( COLOR_BACKGROUND );
-
-  #ifdef GFX_BL
-    pinMode(GFX_BL, OUTPUT);
-    digitalWrite(GFX_BL, HIGH);
-  #endif
+  gfx->fillScreen( COLOR_BLACK );
 
   videoStatus = 0;   // idle
   firsttime = true;
   vidtimer = millis();
+  paused = false;
+
+  playerStatus = 0;
+  checktime = millis();
+  showIteratorFlag = false;
+}
+
+void Video::addReadTime( unsigned long rtime )
+{
+  totalReadVideo += rtime;
 }
 
 /* Show error on display, then halt */
@@ -138,9 +143,192 @@ void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, Str
   }
 }
 
-void Video::addReadTime( unsigned long rtime )
+/* Uses showIteratorFlag to scan through the subdirectories in /REFLECTIONS/
+   Subdirectories contain a manifest file in json format. The manifest identifies
+   the mjpeg and audio file to play.
+   Note: this was previously used to play multiple videos in sequence
+*/
+   
+bool Video::findNextVideo()
+{ 
+  if ( ! showIteratorFlag )
+  {
+    String mef = "/";
+    mef += NAND_BASE_DIR;
+
+    showDirectoryIterator = SD.open( mef.c_str() );
+    if( ! showDirectoryIterator )
+    {
+      showIteratorFlag = false;
+      logger.error( F( "Player failed to open directory iterator" ) );
+      return false;
+    }
+
+    showIteratorFlag = true;
+  }
+
+  findMore = true;
+  twice = 0;
+  File file;
+
+  while ( ( findMore ) && ( twice < 2 ) )
+  {
+    file = showDirectoryIterator.openNextFile();
+    if ( ! file )
+    {
+      twice++;
+
+      String mef = "/";
+      mef += NAND_BASE_DIR;
+
+      showDirectoryIterator = SD.open( mef.c_str() );
+      if( ! showDirectoryIterator )
+      {
+        logger.error( F( "Player, showDirectoryIterator failed" ) );
+        showDirectoryIterator.close();
+        showIteratorFlag = false;
+      }
+    }
+
+    if( file.isDirectory() )
+    {
+      findMore = false;
+    }
+  }
+
+  if ( twice >= 2 )
+  {
+    logger.error( F( "Player, showDirectoryIterator failed" ) );
+    return false;
+  }
+
+  String showName = file.path();
+
+  String msg = "Player findNext nextDir is ";
+  msg += showName;
+  logger.info( msg );
+
+  if ( nextDir.startsWith("/.") )
+  {
+    String msg = "Player findNext skipping directory ";
+    msg += showName;
+    logger.info( msg );
+    return false;
+  }
+
+  String sc = NAND_BASE_DIR;
+  String lilname = showName.substring( sc.length() + 2 );
+
+  String script = "/";
+  script += NAND_BASE_DIR;
+  script += "/";
+  script += lilname;
+  script += "/";
+  script += lilname;
+  script += ".json";
+  
+  File scriptFile = SD.open( script );
+
+  if ( ! scriptFile )
+  {
+    String mef = F( "Player, file not found: " );
+    mef += script;
+    logger.info( mef );
+    return false;
+  }
+
+  /* Fixme later: JSON data size limited */
+  DynamicJsonDocument doc(500);
+
+  //Serial.print( F( "Shows: deserialize " ) );
+  //Serial.println( scriptFile.name() );
+
+  DeserializationError error = deserializeJson(doc, scriptFile );
+  if (error) {
+    Serial.print(F("Shows, deserializeJson() failed: "));
+    Serial.println(error.c_str());
+    return false;
+  }
+
+  //serializeJsonPretty(doc, Serial);
+
+  String thevideofile;
+  String theaudiofile;
+
+  JsonObject eventseq = doc["ReflectionsShow"]["events"];
+  //serializeJsonPretty(eventseq, Serial);
+
+  for (JsonObject::iterator it = eventseq.begin(); it!=eventseq.end(); ++it)
+  {
+    String itkey = it->key().c_str();
+    String itvalue = it->value().as<const char*>();
+
+    //Serial.print( "itkey: ");
+    //Serial.println( itkey );
+
+    JsonArray sequence = doc["ReflectionsShow"]["events"][itkey]["sequence"];
+    for (JsonObject step : sequence)
+    {
+      String nv = step["playvideo"];
+      nextVideo = nv;
+      String na = step["playaudio"];
+      nextAudio = na;
+      nextDir = showName;
+
+      /*
+      String mef = F( "Player, nextVideo ");
+      mef += nextVideo;
+      logger.info( mef );
+      String mef2 = F( "Player, nextAudio ");
+      mef2 += nextAudio;
+      logger.info( mef2 );
+      */
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// Returns milliseconds since the video started playing
+
+unsigned long Video::getVideoTime()
 {
-  totalReadVideo += rtime;
+  return millis() - videoStartTime;
+}
+
+// Utility to scan /REFLECTIONS directory for tar files
+
+bool Video::tarsExist()
+{
+  String mef = "/";
+  mef += NAND_BASE_DIR;
+  File dirIter = SD.open( mef.c_str() );
+
+  if( !dirIter )
+  {
+    logger.info( F( "Player failed to open directory / finding tars" ) );
+    return false;
+  }
+
+  File file = dirIter.openNextFile();
+  if ( ! file )
+  {
+    return false;
+  }
+  else
+  {
+    if( ! file.isDirectory() )
+    {
+      String myname = file.name();
+      if ( myname.indexOf( ".tar" ) > 0 )
+      {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 void Video::resetStats()
@@ -157,21 +345,31 @@ int Video::getStatus()
   return videoStatus;
 }
 
+/* Play a .mjpeg file to the display */
+
 void Video::startVideo( String vname )
 {
-  mjpegFile = SD.open( vname );
+  String mef = "/";
+  mef += NAND_BASE_DIR;
+  mef += "/";
+  mef += vname;
+  mef += "/";
+  mef += vname;
+  mef += videoname_end;
+
+  String msg = "startVideo ";
+  msg += mef;
+  logger.info( msg );
+
+  mjpegFile = SD.open( mef );
   if ( ! mjpegFile )
   {
     videoStatus = 0;
-    String msg = "Video startVideo failed to open ";
-    msg += vname;
+    String msg = "startVideo failed to open ";
+    msg += mef;
     logger.error( msg );
     return;
   }
-
-  String msg = "mjpegFile = ";
-  msg += mjpegFile.path();
-  logger.info( msg );
 
   if ( mjpeg.setup(
     &mjpegFile, mjpeg_buf, jpegDrawCallback, true /* useBigEndian */,
@@ -186,12 +384,19 @@ void Video::startVideo( String vname )
     Serial.println( F( "Could not set-up mjpeg") );
     videoStatus = 0;
   }
+
+  videoStartTime = millis();
 }
 
 void Video::stopVideo()
 {
   mjpegFile.close();
   videoStatus = 0;
+}
+
+void Video::setPaused( bool p )
+{
+  paused = p;
 }
 
 void Video::setTofEyes( bool status )
@@ -206,35 +411,10 @@ void Video::setTofEyes( bool status )
 
 void Video::drawTofEyes()
 { 
-  if ( tof.getMyimager().isDataReady() == false ) return;
-
-  if ( ! tof.getMyimager().getRangingData(&measurementData) ) return;    //Read distance data into array
-
-  int pointx = 0;
-  int pointy = 0;
-  int pointd = 0;
-
-  for (int x = 0; x < 8; x++)
-  {
-    for ( int y = 0; y < 8; y++)
-    {
-      int d = measurementData.distance_mm[ y + ( x * 8 ) ];
-      if ( ( d > pointd ) && ( d < maxdist ) )
-      {
-        pointx = x;
-        pointy = y;
-        pointd = d;
-
-        pointx++;
-        pointy++;
-      }
-    }
-  }
-
   int basey = 40;
 
-  int basex = 0;
-  basex += pointx * ( ( 240 - 30 - 30 - smallcircle ) / 8 );
+  int basex = tof.getXFingerPosition();
+  //basex += pointx * ( ( 240 - 30 - 30 - smallcircle ) / 8 );
 
   int topx = basex;
   topx += bigcircle / 2;
@@ -277,11 +457,9 @@ void Video::printCentered( int y2, String text, uint16_t color, const GFXfont * 
   gfx->println( text );
 }
 
-int onceplease = 0;
-
 void Video::loop()
 {
-  if ( videoStatus == 0 ) return;
+  if ( ( videoStatus == 0 ) || ( paused == 1 ) ) return;
 
   if ( mjpegFile.available() )
   {
@@ -295,22 +473,7 @@ void Video::loop()
 
       if ( ! mjpeg.readMjpegBuf() )
       {
-        logger.error( F("readMjpegBuf returned false") );
-
-        /* Checks the Nand/SD is still working
-        Serial.println("Testing SD, contents of foo");
-        File mickey = SD.open( "/foo.txt" );
-        if (!mickey)
-        {
-          Serial.println("Filed to open mickey");
-        }
-        while ( mickey.available() )
-        {
-          Serial.print( mickey.read() );
-        }
-        Serial.println("Testing SD, done");
-        */
-
+        //logger.error( F("readMjpegBuf returned false") );
         stopVideo();
         return;
       }
@@ -360,5 +523,57 @@ void Video::loop()
     stats += ( 1000.0 * ( totalFrames / totalTime ) );
     logger.info( stats );
   }
+
+  /*
+
+  if ( getStatus() == 1 )
+  {
+    if ( ( millis() - checktime ) > 2000 )
+    {
+      checktime = millis();
+
+      {
+        video.stopVideo();
+
+        if ( findNext() )
+        {
+          playerStatus = 1;
+          logger.info( F( "Player next video" ) );
+
+          //mef = nextDir + "/" + nextAudio;
+          //audio.play( mef );
+          //logger.info( "audio play " + mef );
+          
+        }
+      }
+
+    }
+
+    return;
+  }
+  
+  if ( ( millis() - checktime ) > 2000 )
+  {
+    checktime = millis();
+
+    if ( findNext() )
+    {
+      playerStatus = 1;
+
+      String mef = nextDir + "/" + nextVideo;
+      video.startVideo( mef );
+      paused = false;
+      logger.info( "video startVideo " + mef );
+
+      //mef = nextDir + "/" + nextAudio;
+      //audio.play( mef );
+      //logger.info( "audio play " + mef );
+      
+    }
+    else
+    {
+    }
+  }
+*/
 
 }

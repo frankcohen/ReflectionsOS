@@ -123,12 +123,11 @@ void Accelerometer::begin()
   ny0 = 1, ny1 = 1, ny2 = 1, ny3 = 1;
   nz0 = 1, nz1 = 1, nz2 = 1, nz3 = 1;
 
-  // Make sure /REFECTIONS/agesture/ + gesturename directory exists
-
   String mef = "/";
-  mef += NAND_BASE_DIR;
-  mef += "/";
   mef += ACCEL_BASE_DIR;
+  mef += "/";
+  mef += ACCEL_BASE_FILE;
+  mef += ACCEL_BASE_EXT;
 
   if ( ! SD.exists( mef ) )
   {
@@ -169,8 +168,6 @@ void Accelerometer::setTraining( bool mode )
 
   String mef = "/";
   mef += NAND_BASE_DIR;
-  mef += "/";
-  mef += ACCEL_BASE_DIR;
   mef += "/";
   mef += ACCEL_BASE_FILE;
   mef += ACCEL_BASE_EXT;
@@ -368,7 +365,6 @@ float Accelerometer::timeWarp( int gestureIndex, int typen )
   float yper = 0;
   float zper = 0;
   float frames = maxframes;
-  float weightedCount = 0;
 
   for ( int i = 0; i < maxframes; i++ )
   {
@@ -395,8 +391,6 @@ float Accelerometer::timeWarp( int gestureIndex, int typen )
 bool Accelerometer::saveGestures()
 {
   String mef = "/";
-  mef += NAND_BASE_DIR;
-  mef += "/";
   mef += ACCEL_BASE_DIR;
   mef += "/";
   mef += ACCEL_BASE_FILE;
@@ -638,8 +632,8 @@ void Accelerometer::loop()
 
           // Pick a winner, the DTWgpt way
 
-          int dtwtype = 0;
-          float dtwbottomval = 0;
+          //int dtwtype = 0;
+          //float dtwbottomval = 0;
           float dtwhold = 0;
 
           for ( int t = 0; t < gesturetypes; t++ )
@@ -683,7 +677,7 @@ void Accelerometer::loop()
               //logger.info( ",\t" );
             }
 
-            float myvg = dtwavg[ t ] / maxgestures;
+            //float myvg = dtwavg[ t ] / maxgestures;
             //logger.info( String( myvg ) );
             //logger.info( ",\t" );
             //logger.info( String( dtwlow[ t ] ) );

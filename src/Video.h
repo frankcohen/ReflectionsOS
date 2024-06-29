@@ -37,6 +37,7 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 #include "MjpegClass.h"
 #include "Logger.h"
 #include "TOF.h"
+#include <ArduinoJson.h>
 
 #include <Arduino_GFX_Library.h>
 
@@ -54,14 +55,6 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 #define linespacing 20
 #define maxchars 16
 
-// Definitions for TOFeyes
-#define tofdiam 18
-#define xdistance 30
-#define ydistance 30
-#define xspace 30
-#define yspace 30
-#define maxdist 50
-
 #define COLOR_BACKGROUND RGB565(115, 58, 0)
 #define COLOR_LEADING RGB565(123, 63, 0)
 #define COLOR_RING RGB565(234, 68, 0)
@@ -75,27 +68,46 @@ class Video
     Video();
     void begin();
     void loop();
+
+    void stopOnError( String msg1, String msg2, String msg3, String msg4, String msg5 );
+ 
     void resetStats();
-    void addReadTime( unsigned long rtime );
     void startVideo( String vname );
     void stopVideo();
-    void stopOnError( String msg1, String msg2, String msg3, String msg4, String msg5 );
     int getStatus();
-    boolean startAtTop();
-    boolean StartAtTopOrReplicate();
+    void setPaused( bool p );
+    unsigned long getVideoTime();
+
+    // No longer used
+    bool startAtTop();
+    bool findNextVideo();
+    bool tarsExist();
+
     void setTofEyes( bool status );
-    void printCentered( int y2, String text, uint16_t color, const GFXfont * font );
+
+    void addReadTime( unsigned long rtime );
 
   private:
+    void printCentered( int y2, String text, uint16_t color, const GFXfont * font );
+
     File mjpegFile;
     long ringtimer;
-    boolean firsttime;
+    bool firsttime;
     File vidfile;
     int videoStatus;
     unsigned long vidtimer;
-        
+    unsigned long videoStartTime;
+    bool paused;
+
+    File showDirectoryIterator;
+    bool findMore;
+    int twice;
+    bool showIteratorFlag;
+    File showDirectory;
+    File showDir;
+    File show;
+
     void drawTofEyes();
-    VL53L5CX_ResultsData measurementData;
 
     float totalFrames;
     float totalReadVideo;
@@ -105,6 +117,21 @@ class Video
     float totalTime;
 
     bool tofEyes;
+
+    unsigned long checktime;
+    
+    String nextVideo;
+    String nextAudio;
+    String nextDir;
+
+    String showTitle;
+    String showName;
+    String onStartEventName;
+    String showingEventNumber;
+    String showingAudioFile;
+    String showingVideoFile;
+
+    int playerStatus;
 };
 
 #endif // _video_

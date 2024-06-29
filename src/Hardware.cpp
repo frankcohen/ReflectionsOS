@@ -38,12 +38,15 @@ void Hardware::begin()
   pinMode(Display_SPI_RST, OUTPUT);
   digitalWrite(Display_SPI_RST, HIGH);
 
-  pinMode(Display_SPI_BK, OUTPUT);
+  pinMode(Display_SPI_BK, OUTPUT);      // Turns backlight on
   digitalWrite(Display_SPI_BK, LOW);
 
   // Turns the speaker amp on
   pinMode(AudioPower, OUTPUT);
   digitalWrite(AudioPower, HIGH);
+
+  pinMode( TOFPower, OUTPUT);    // Power control for TOF sensor
+  digitalWrite( TOFPower, LOW);
 
   // Create an SPIClass instance
   SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI, NAND_SPI_CS);

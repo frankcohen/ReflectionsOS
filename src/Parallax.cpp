@@ -32,8 +32,8 @@ Parallax::Parallax(){}
 
 void Parallax::begin()
 {   
-  gfx->begin();
-  gfx->fillScreen( BLUE );
+  //gfx->begin();
+  //gfx->fillScreen( BLUE );
   gfx->invertDisplay(true);
 
   ParallaxWaitTime = millis();
