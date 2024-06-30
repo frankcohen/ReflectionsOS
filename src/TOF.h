@@ -30,12 +30,17 @@ class TOF
     bool cancelGestureDetected();
 
   private:
+    TaskHandle_t sensorInitTaskHandle;
+    SparkFun_VL53L5CX tofSensor;
+    
+    static void sensorInitTaskWrapper(void * parameter);
+    void sensorInitTask();
+
     VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
     int imageResolution = 0;  //Used to pretty print output
     int imageWidth = 0;       //Used to pretty print output
     bool started;
-
-    SparkFun_VL53L5CX tofSensor;
+        
     int detectionThreshold;
     int pollingInterval;
     int majorityThreshold;

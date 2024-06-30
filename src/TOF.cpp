@@ -19,22 +19,15 @@ void TOF::begin()
 { 
   started = false;
 
-  Serial.println( F( "Initializing TOF sensor" ) );
-
-  if ( tofSensor.begin( 0x29, Wire ) == false )
-  {
-    Serial.println( F("TOF sensor not found") );
-    return;
-  }
-
-  tofSensor.setResolution(8*8); //Enable all 64 pads
-  
-  imageResolution = tofSensor.getResolution(); //Query sensor for current resolution - either 4x4 or 8x8
-  imageWidth = sqrt(imageResolution); //Calculate printing width
-
-  tofSensor.setRangingFrequency(15); // 15Hz for low latency
-
-  tofSensor.startRanging();
+  // Create the task for sensor initialization
+  xTaskCreate(
+    TOF::sensorInitTaskWrapper,      // Function that implements the task
+    "SensorInitTask",    // Text name for the task
+    10000,               // Stack size in words, not bytes
+    this,                // Parameter passed into the task
+    1,                   // Priority at which the task is created
+    &sensorInitTaskHandle // Handle to the created task
+  );
 
   lastPollTime = millis();
 
@@ -42,6 +35,29 @@ void TOF::begin()
   cancelGestureTimeout = millis();
 
   started = true;
+}
+
+void TOF::sensorInitTaskWrapper( void * parameter ) 
+{
+  // Cast the parameter to a VL53L5CX_Sensor pointer
+  TOF *self = static_cast<TOF*>(parameter);
+  // Call the instance task function
+  self->sensorInitTask();
+}
+
+void TOF::sensorInitTask() 
+{
+  if ( tofSensor.begin( 0x29, Wire ) ) 
+  {
+    Serial.println("VL53L5CX sensor initialized successfully.");
+    started = true; // Set the flag to true if initialization is successful
+  }
+  else
+  {
+    Serial.println("Failed to initialize VL53L5CX sensor.");
+  }
+  
+  vTaskDelete(NULL); // Delete this task when done
 }
 
 int TOF::getXFingerPosition()
@@ -174,6 +190,8 @@ void TOF::removeExpiredGestures()
 void TOF::loop()
 {
   //removeExpiredGestures();
+
+  if ( ! started ) return;
 
   if ( millis() - lastPollTime >= 2000 ) 
   {

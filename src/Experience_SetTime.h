@@ -15,11 +15,13 @@ class Experience_SetTime : public Experience {
     void setup() override;
     void run() override;
     void teardown() override;
+    void init() override;
 
   private:
     unsigned long timer;
     bool tearflag;
     bool timeflag;
+    bool vidflag;
     
 };
 

@@ -65,6 +65,8 @@ void Video::begin()
   playerStatus = 0;
   checktime = millis();
   showIteratorFlag = false;
+
+  videoStartTime = millis();
 }
 
 void Video::addReadTime( unsigned long rtime )
@@ -357,10 +359,12 @@ void Video::startVideo( String vname )
   mef += vname;
   mef += videoname_end;
 
+  /*
   String msg = "startVideo ";
   msg += mef;
   logger.info( msg );
-
+  */
+  
   mjpegFile = SD.open( mef );
   if ( ! mjpegFile )
   {
@@ -375,7 +379,7 @@ void Video::startVideo( String vname )
     &mjpegFile, mjpeg_buf, jpegDrawCallback, true /* useBigEndian */,
     0 /* x */, 0 /* y */, gfx->width() /* widthLimit */, gfx->height() /* heightLimit */, firsttime ) )
   {
-    logger.info( F( "Mjpeg is set-up" ) );
+    //logger.info( F( "Mjpeg is set-up" ) );
     firsttime = false;
     videoStatus = 1;
   }

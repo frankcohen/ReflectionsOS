@@ -30,6 +30,10 @@ the #include list and class instantiation method below.
 
 #include "Experience_Settime.h"
 
+#include "Video.h"
+
+extern Video video;
+
 // and add the experience here too
 
 Inveigle::Inveigle() : currentExperience(nullptr), currentState(SETUP) 
@@ -41,39 +45,18 @@ Inveigle::Inveigle() : currentExperience(nullptr), currentState(SETUP)
   // Add other experiences here
 }
 
-void Inveigle::overrideExperience(Experience* newExperience) {
-    clearCurrentExperience();
-    currentExperience = newExperience;
-    currentExperience->setup();
-    currentState = SETUP;
-}
-
 void Inveigle::begin() 
 {
-  previousMillis = millis();
-  idleStartMillis = millis();
-  noGestureStartTime = millis();
   isBusy = false;
-}
-
-void Inveigle::clearCurrentExperience() 
-{
-  if (currentExperience) 
-  {
-    delete currentExperience;
-    currentExperience = nullptr;
-  }
 }
 
 void Inveigle::startExperience( int exper )
 {
-  clearCurrentExperience();
   currentExperience = experiences[ exper ];
-  currentExperience->setup();
+  currentExperience->init();
   currentState = SETUP;
   isBusy = true;
-  idleStartMillis = millis(); // Reset idle timer
- }
+}
 
 int Inveigle::getCurrentState()
 {
@@ -82,8 +65,6 @@ int Inveigle::getCurrentState()
 
 void Inveigle::operateExperience()
 {
-  if ( ! currentExperience ) return;
-  
   switch ( currentState ) 
   {
     case SETUP:
@@ -111,7 +92,10 @@ void Inveigle::operateExperience()
       break;
 
     case STOPPED:
-      currentState = STOPPED;
+      isBusy = false;
+      break;
+
+    case IDLE:
       isBusy = false;
       break;
   }

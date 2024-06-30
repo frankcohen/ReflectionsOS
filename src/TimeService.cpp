@@ -47,45 +47,44 @@ String TimeService::getRTCtime()
 
   // Clock fun messages
   
-  const char* timetext[52][2] = {
+  const char* timetext[51][2] = {
   { "It's early",    "to be exact" },
   { "It's late",     "to be exact"},
   { "Wait, wait",    "you waited!"},
   { "Peekaboo",      "i see you"},
   { "Why?",          "why not?"},
   { "When?",         "and where?"},
-  { "So little time","to be exact"},
-  { "Will this end?","and when?"},
+  { "Little time",   "to be exact"},
+  { "Will it end?",  "and when?"},
   { "Cats forever!", "meow"},
   { "Hug please",    "forever"},
   { "I'm late",      "important date"},
-  {"We're all mad",  "don't worry"},
-  {"Grin",           "like a cat."},
-  {"Curiouser",      "and curiouser"},
-  {"Most everyone",  "is mad here"},
-  {"A dream",        "within a dream"},
-  {"I've gone",      "entirely mad"},
-  {"We're all mad",  "indeed"},
-  {"Simply mad",     "as a hatter"},
-  {"Twiddledee",     "and Twiddledum"},
-  {"I vanish",       "like a ghost"},
-  {"Very, very",     "mysterious"},
-  {"Truly, very",    "wonderland"},
-  {"I appear",       "and disappear"},
-  {"Slithy toves",   "Brillig?"},
-  {"Did gyre?",      "Borogroves?"},
-  {"Do you play?",   "Croquet"},
-  {"Follow",         "White rabbit"},
-  {"See me?",        "Or not"},
-  {"White rabbit",   "Who?"},
-  {"I am mad",       "So are you"},
-  {"Find me",        "if you can"},
-  {"A place",        "like no other"},
-  {"Do you?",        "Believe?"},
-  {"Look closely",   "See nothing"},
-  {"Smiling",        "Ear to ear"},
-  {"Invisible",      "Yet here"},
-  {"Peculiar",       "Strange"},
+  { "No panic",      "no worries"},
+  { "Grin",          "like a cat"},
+  { "Curiouser",     "and curiouser"},
+  { "A dream",       "within a dream"},
+  { "I've gone",     "entirely mad"},
+  { "All mad",       "all of us"},
+  { "Simply mad",    "as a hatter"},
+  { "Twiddledee",    "and Twiddledum"},
+  { "I vanish",      "like a ghost"},
+  { "Very, very",    "mysterious"},
+  { "Truly, very",   "wonderland"},
+  { "I appear",      "and disappear"},
+  { "Slithy toves",  "Brillig?"},
+  { "Did gyre?",     "Borogroves?"},
+  { "Do you play?",  "Croquet"},
+  { "Follow",        "White rabbit"},
+  { "See me?",       "Or not"},
+  { "A rabbit?",     "White even?"},
+  { "I am mad",      "So are you"},
+  { "Find me",       "if you can"},
+  { "A place",       "like no other"},
+  { "Do you?",       "Believe?"},
+  { "Look closely",  "See nothing"},
+  { "Smiling",       "Ear to ear"},
+  { "Invisible",     "Yet here"},
+  { "Peculiar",      "Strange"},
   };
 
 void TimeService::begin()
@@ -274,7 +273,7 @@ void TimeService::runShowTellTime()
   {
     if ( fadeOutCenteredText( theMsg1, 70, 100, COLOR_TEXT_YELLOW, &Some_Time_Later20pt7b ) )
     {
-      activated = 0;
+      activated = false;
       showStep = 0;
       fadeset = 1;
       ShowTimeWaitTime = millis();
@@ -294,20 +293,15 @@ bool TimeService::getActivated()
 
 void TimeService::loop()
 {
+  if ( ( millis() - ShowTimeWaitTime ) > stepDelay )
+  {
+    ShowTimeWaitTime = millis();
 
-    if ( ( millis() - ShowTimeWaitTime ) > stepDelay )
-    {
-      ShowTimeWaitTime = millis();
+    if ( ! activated ) return;
 
-      if ( ! activated )
-      {
-        // startShow( 0 );
-        return;
-      }
+    // Show the time
 
-      // Show the time
+    if ( showNum == 0 ) runShowTellTime();
 
-      if ( showNum == 0 ) runShowTellTime();
-
-    }
+  }
 }

@@ -69,7 +69,8 @@ void Hardware::begin()
     NANDMounted = true;
   }
 
-  randomSeed(analogRead(0));
+  uint32_t seed = esp_random();
+  randomSeed( seed );
 }
 
 bool Hardware::getMounted()

@@ -18,33 +18,31 @@ extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
 extern TimeService timeservice;
 
+void Experience_SetTime::init()
+{
+  vidflag = true;  
+  setupComplete = false;
+  runComplete = false;
+  teardownComplete = false;
+  stopped = false;
+  idle = false;
+} 
+
 void Experience_SetTime::setup() 
 {
-  if ( video.getStatus() == 0 )
+  if ( vidflag )
   {
     video.startVideo( Settime_video );
-    Serial.print( "Experience_SetTime setup, start video " );
-    Serial.println( Settime_video );
+    timeflag = true;
+    vidflag = false;
   }
 
   if ( video.getVideoTime() > 2500 )
   {
-    Serial.println( "SetTime setup complete" );
     video.setPaused( true );
-    timeflag = true;
     setSetupComplete(true);  // Signal that setup is complete
   }
-
-  if ( video.getStatus() == 0 )
-  { 
-    Serial.println( "SetTime setup moved to stopped" );
-    setStopped( true );
-    return;
-  }
-
 }
-
-// Run code for Experience_SetTime
 
 void Experience_SetTime::run() 
 {
@@ -59,7 +57,7 @@ void Experience_SetTime::run()
     {
       video.setPaused( false );
       tearflag = true;
-      setRunComplete(true);  // Signal that run is complete
+      setRunComplete(true);  // Signal run complete
     }
   }
 }
@@ -69,6 +67,7 @@ void Experience_SetTime::teardown() {
 
     if ( video.getStatus() == 0 )
     {
-      setTeardownComplete ( true );  // Signal that run is complete
+      video.stopVideo();
+      setTeardownComplete( true );  // Signal teardown complete
     }
 }

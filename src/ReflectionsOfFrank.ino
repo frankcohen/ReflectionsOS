@@ -235,7 +235,7 @@ void setup() {
 
   locationUpdateTimer = millis();
 
-  storage.replicateServerFiles();
+  //storage.replicateServerFiles();
   
   //Serial.println( "Files on board:" );
   //storage.listDir(SD, "/", 100, true);
@@ -298,8 +298,7 @@ void setup() {
   // video.setTofEyes( true );    // Eyes Follow Finger experience
 
   msitime = millis();
-  msiwhen = random( 3000, 10000 );  
-
+  msiwhen = 1000; //random( 3000, 10000 );
   inveigle.startExperience( 0 );
 
   logger.info(F("Setup complete"));
@@ -309,12 +308,15 @@ void loop() {
   smartdelay(1000);
 
 
-  if ( inveigle.getCurrentState() == 3 )
+  if ( ( inveigle.getCurrentState() == 3 ) && ( video.getStatus() == 0 ) )
   {
     if ( millis() - msitime > msiwhen ) 
     {
       msitime = millis();
       msiwhen = random( 3000, 15000 );  
+
+      Serial.println( "Starting experience " );
+      
       inveigle.startExperience( 0 );
     }
   }
