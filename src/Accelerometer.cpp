@@ -23,6 +23,17 @@
   Future:
   Add a gesture pruning service to remove lowest rated gestures
 
+
+  Used to wake the ESP32-S3 from deep sleep by moving it. Here are some steps 
+  to fine-tune the sensitivity:
+
+  a) Increase the Interrupt Threshold: This makes the accelerometer less 
+     sensitive to small movements.
+  b) Increase the Interrupt Duration: This ensures that only movements lasting 
+     longer than a specified time will trigger an interrupt.
+  c) Enable the High-Pass Filter: This filters out low-frequency signals 
+     (such as gravity) and focuses on higher-frequency signals (such as sudden movements).
+
 */
 
 #include "Accelerometer.h"
@@ -32,75 +43,163 @@ extern Haptic haptic;
 extern Utils utils;
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 
-Accelerometer::Accelerometer() : myIMU(I2C_MODE, 0x18) {}
+LIS3DH myIMU( I2C_MODE, 0x18 );
+
+Accelerometer::Accelerometer(){}
 
 void Accelerometer::begin()
 { 
-  delay(100);
+  if (myIMU.begin() != 0) 
+  {
+    Serial.println("Could not start LIS3DH");
+  }
+
+  myIMU.settings.accelSampleRate = 50;  //Hz.  Can be: 0,1,10,25,50,100,200,400,1600,5000 Hz
+  myIMU.settings.accelRange = 2;        //Max G force readable.  Can be: 2, 4, 8, 16
 
   myIMU.settings.adcEnabled = 1;
   myIMU.settings.tempEnabled = 1;
-  myIMU.settings.accelSampleRate = 50;  //Hz.  Can be: 0,1,10,25,50,100,200,400,1600,5000 Hz
-  myIMU.settings.accelRange = 16;      //Max G force readable.  Can be: 2, 4, 8, 16
   myIMU.settings.xAccelEnabled = 1;
   myIMU.settings.yAccelEnabled = 1;
   myIMU.settings.zAccelEnabled = 1;
 
-  myIMU.begin();
+  myIMU.applySettings();
+
+  // Deep sleep awaken sensativity package
+
+  uint8_t ctrlReg2;
+  myIMU.readRegister(&ctrlReg2, LIS3DH_CTRL_REG2);
+  ctrlReg2 |= 0x08; // Enable high-pass filter
+  myIMU.writeRegister(LIS3DH_CTRL_REG2, ctrlReg2);
+
+  myIMU.writeRegister(LIS3DH_INT1_THS, 16 );        // threshold is 1 - 127
+  myIMU.writeRegister(LIS3DH_INT1_DURATION, 10 );   // interrupt duration 1 - 127 (increase to make it less sensitive)
 
   uint8_t dataToWrite = 0;
 
-  // Configure interrupts
-  // LIS3DH_INT1_CFG   
-  dataToWrite = 0x08; // Enable Y high interrupt
-  myIMU.writeRegister(LIS3DH_INT1_CFG, dataToWrite);
-
-  // LIS3DH_INT1_THS   
-  dataToWrite = 0x10; // Set threshold (adjust as needed)
-  myIMU.writeRegister(LIS3DH_INT1_THS, dataToWrite);
+  //LIS3DH_INT1_CFG   
+  //dataToWrite |= 0x80;//AOI, 0 = OR 1 = AND
+  //dataToWrite |= 0x40;//6D, 0 = interrupt source, 1 = 6 direction source
+  //Set these to enable individual axes of generation source (or direction)
+  // -- high and low are used generically
+  dataToWrite |= 0x20;//Z high
+  //dataToWrite |= 0x10;//Z low
+  dataToWrite |= 0x08;//Y high
+  //dataToWrite |= 0x04;//Y low
+  dataToWrite |= 0x02;//X high
+  //dataToWrite |= 0x01;//X low
+  myIMU.writeRegister(LIS3DH_INT2_CFG, dataToWrite);
   
-  // LIS3DH_INT1_DURATION  
-  dataToWrite = 0x01; // Set duration (1 * 1/50 s = 20ms)
-  myIMU.writeRegister(LIS3DH_INT1_DURATION, dataToWrite);
-
-  // Configure click detection (optional)
-  // LIS3DH_CLICK_CFG   
-  dataToWrite = 0x15; // Enable click detection on X, Y, and Z axes
+  //LIS3DH_INT1_THS   
+  dataToWrite = 0;
+  //Provide 7 bit value, 0x7F always equals max range by accelRange setting
+  dataToWrite |= 0x10; // 1/8 range
+  myIMU.writeRegister(LIS3DH_INT2_THS, dataToWrite);
+  
+  //LIS3DH_INT1_DURATION  
+  dataToWrite = 1;
+  //minimum duration of the interrupt
+  //LSB equals 1/(sample rate)
+  dataToWrite |= 0x01; // 1 * 1/50 s = 20ms
+  myIMU.writeRegister(LIS3DH_INT2_DURATION, dataToWrite);
+  
+  //LIS3DH_CLICK_CFG   
+  dataToWrite = 0;
+  //Set these to enable individual axes of generation source (or direction)
+  // -- set = 1 to enable
+  //dataToWrite |= 0x20;//Z double-click
+  dataToWrite |= 0x10;//Z click
+  //dataToWrite |= 0x08;//Y double-click 
+  dataToWrite |= 0x04;//Y click
+  //dataToWrite |= 0x02;//X double-click
+  dataToWrite |= 0x01;//X click
   myIMU.writeRegister(LIS3DH_CLICK_CFG, dataToWrite);
-
-  // LIS3DH_CLICK_SRC
-  dataToWrite = 0x07; // Enable single clicks on X, Y, and Z axes
-  myIMU.writeRegister(LIS3DH_CLICK_SRC, dataToWrite);
-
-  // LIS3DH_CLICK_THS   
-  dataToWrite = 0x0A; // Set click threshold
-  myIMU.writeRegister(LIS3DH_CLICK_THS, dataToWrite);
-
-  // LIS3DH_TIME_LIMIT  
-  dataToWrite = 0x08; // Set time limit for click detection
-  myIMU.writeRegister(LIS3DH_TIME_LIMIT, dataToWrite);
-
-  // LIS3DH_TIME_LATENCY
-  dataToWrite = 0x08; // Set time latency for click detection
-  myIMU.writeRegister(LIS3DH_TIME_LATENCY, dataToWrite);
-
-  // LIS3DH_TIME_WINDOW 
-  dataToWrite = 0x10; // Set time window for double-click detection
-  myIMU.writeRegister(LIS3DH_TIME_WINDOW, dataToWrite);
   
-  // LIS3DH_CTRL_REG5
+  //LIS3DH_CLICK_SRC
+  dataToWrite = 0;
+  //Set these to enable click behaviors (also read to check status)
+  // -- set = 1 to enable
+  //dataToWrite |= 0x20;//Enable double clicks
+  dataToWrite |= 0x04;//Enable single clicks
+  //dataToWrite |= 0x08;//sine (0 is positive, 1 is negative)
+  dataToWrite |= 0x04;//Z click detect enabled
+  dataToWrite |= 0x02;//Y click detect enabled
+  dataToWrite |= 0x01;//X click detect enabled
+  myIMU.writeRegister(LIS3DH_CLICK_SRC, dataToWrite);
+  
+  //LIS3DH_CLICK_THS   
+  dataToWrite = 0;
+  //This sets the threshold where the click detection process is activated.
+  //Provide 7 bit value, 0x7F always equals max range by accelRange setting
+  dataToWrite |= 0x0A; // ~1/16 range
+  myIMU.writeRegister(LIS3DH_CLICK_THS, dataToWrite);
+  
+  //LIS3DH_TIME_LIMIT  
+  dataToWrite = 0;
+  //Time acceleration has to fall below threshold for a valid click.
+  //LSB equals 1/(sample rate)
+  dataToWrite |= 0x08; // 8 * 1/50 s = 160ms
+  myIMU.writeRegister(LIS3DH_TIME_LIMIT, dataToWrite);
+  
+  //LIS3DH_TIME_LATENCY
+  dataToWrite = 0;
+  //hold-off time before allowing detection after click event
+  //LSB equals 1/(sample rate)
+  dataToWrite |= 0x08; // 4 * 1/50 s = 160ms
+  myIMU.writeRegister(LIS3DH_TIME_LATENCY, dataToWrite);
+  
+  //LIS3DH_TIME_WINDOW 
+  dataToWrite = 0;
+  //hold-off time before allowing detection after click event
+  //LSB equals 1/(sample rate)
+  dataToWrite |= 0x10; // 16 * 1/50 s = 320ms
+  myIMU.writeRegister(LIS3DH_TIME_WINDOW, dataToWrite);
+
+  //LIS3DH_CTRL_REG5
+  //Int1 latch interrupt and 4D on  int1 (preserve fifo en)
   myIMU.readRegister(&dataToWrite, LIS3DH_CTRL_REG5);
-  dataToWrite &= 0xF3; // Clear bits of interest
-  dataToWrite |= 0x08; // Latch interrupt
+  dataToWrite &= 0xF3; //Clear bits of interest
+  dataToWrite |= 0x08; //Latch interrupt (Cleared by reading int1_src)
+  //dataToWrite |= 0x04; //Pipe 4D detection from 6D recognition to int1?
   myIMU.writeRegister(LIS3DH_CTRL_REG5, dataToWrite);
 
-  // LIS3DH_CTRL_REG3
-  dataToWrite = 0x60; // Enable AOI1 and AOI2 events on INT1 pin
+  //LIS3DH_CTRL_REG3
+  //Choose source for pin 1
+  dataToWrite = 0;
+  dataToWrite |= 0x80; //Click detect on pin 1
+  //dataToWrite |= 0x40; //AOI1 event (Generator 1 interrupt on pin 1)
+  //dataToWrite |= 0x20; //AOI2 event ()
+  //dataToWrite |= 0x10; //Data ready
+  //dataToWrite |= 0x04; //FIFO watermark
+  //dataToWrite |= 0x02; //FIFO overrun
   myIMU.writeRegister(LIS3DH_CTRL_REG3, dataToWrite);
 
-  // LIS3DH_CTRL_REG6
-  dataToWrite = 0x80; // Enable click interrupt on INT2 pin
+  //LIS3DH_CTRL_REG6
+  //Choose source for pin 2 and both pin output inversion state
+  dataToWrite = 0;
+  dataToWrite |= 0x80; //Click int on pin 2
+  //dataToWrite |= 0x40; //Generator 1 interrupt on pin 2
+  //dataToWrite |= 0x10; //boot status on pin 2
+  //dataToWrite |= 0x02; //invert both outputs
   myIMU.writeRegister(LIS3DH_CTRL_REG6, dataToWrite);
+
+  // Enable ESP32 to wake up on INT2 (GPIO13) high level
+  esp_sleep_enable_ext1_wakeup(BIT(GPIO_NUM_14), ESP_EXT1_WAKEUP_ANY_HIGH);
+
+  esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+
+  if ( wakeup_reason == ESP_SLEEP_WAKEUP_EXT1 ) 
+  {
+    // This is a warm start
+    Serial.println("ESP32 woke up from deep sleep due to an external wake-up (movement detected).");
+    return;
+  } 
+  else 
+  {
+    // This is a cold start
+    Serial.println("ESP32 cold start...");
+
+  }
 
   movetimer = millis();
   detecttimer = millis();

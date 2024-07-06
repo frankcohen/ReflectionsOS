@@ -4,8 +4,9 @@
 #include "config.h"
 #include "secrets.h"
 
-#include <Wire.h>
+#include "Logger.h"
 
+#include <Wire.h>
 #include <SparkFun_VL53L5CX_Library.h>
 
 // Definitions for TOFeyes
@@ -15,6 +16,12 @@
 #define xspace 30
 #define yspace 30
 #define maxdist 50
+
+// Definitions for Cancel gesture
+#define cancelDuration 2000
+#define detectionThresholdLow 4
+#define detectionThresholdHigh 20
+#define majorityThreshold 38
 
 class TOF
 {
@@ -28,8 +35,13 @@ class TOF
     int getNextGesture();
     int getXFingerPosition();
     bool cancelGestureDetected();
+    int getReadingsCount();
 
   private:
+    enum Gestured { cancelled, none } recentGesture;
+
+    int closeReadingsCount;
+    
     TaskHandle_t sensorInitTaskHandle;
     SparkFun_VL53L5CX tofSensor;
     
@@ -41,15 +53,13 @@ class TOF
     int imageWidth = 0;       //Used to pretty print output
     bool started;
         
-    int detectionThreshold;
-    int pollingInterval;
-    int majorityThreshold;
-
     unsigned long lastPollTime;
 
     unsigned long cancelGestureTimeout;
 
     bool cancelDetected;
+    unsigned long nextCanceltime;
+    bool nextCancelflag;
 
     void checkForCancelGesture();
     void removeExpiredGestures();

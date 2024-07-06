@@ -32,6 +32,7 @@ class TimeService
     boolean fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, const GFXfont * font);
     void startShow( int shownum );
     bool getActivated();
+    void setActivated( bool act );
 
     String getRTCtime();
 

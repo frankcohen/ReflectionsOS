@@ -507,6 +507,10 @@ static CharacteristicCallbacks chrCallbacks;
 
 void BLE::begin()
 {
+  Serial.println( "BLE begin" );
+
+  bleStarted = false;
+
   devname = host_name_me;
   std::string mac = WiFi.macAddress().c_str();
   devname.append( mac.substr( 15, 2 ) );
@@ -535,7 +539,6 @@ void BLE::begin()
   showWaitTime = millis();
 
   // Server set-up
-
   pServer = NimBLEDevice::createServer();
   pServer->setCallbacks( new ServerCallbacks() );
 
@@ -548,8 +551,8 @@ void BLE::begin()
 
   pService->start();
 
-  Serial.print( devicename );
-  Serial.println(": Server advertising starts");
+  //Serial.print( devicename );
+  //Serial.println(": Server advertising starts");
 
   NimBLEAdvertising* pAdvertising = NimBLEDevice::getAdvertising();
   pAdvertising -> addServiceUUID( pService -> getUUID() );
@@ -563,6 +566,7 @@ void BLE::begin()
   // Retrieve a Scanner and set the callback we want to use to be informed when we
   // have detected a new device.  Specify that we want active scanning and start the
   // scan to run for 5 seconds.
+
   BLEScan* pBLEScan = BLEDevice::getScan();
   pBLEScan -> setAdvertisedDeviceCallbacks( new MyAdvertisedDeviceCallbacks() );
   pBLEScan -> setInterval(1349);
@@ -570,8 +574,15 @@ void BLE::begin()
   pBLEScan -> setActiveScan(true);
   pBLEScan -> start(5, false);
 
+  bleStarted = true;
+
   Serial.print( devicename );
-  Serial.println(": Begin finished");
+  Serial.println(": BLE begin finished");
+}
+
+bool BLE::isStarted()
+{
+  return bleStarted;
 }
 
 bool BLE::matchHeading( float measured_angle ) 

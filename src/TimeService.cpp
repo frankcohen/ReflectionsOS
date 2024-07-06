@@ -56,7 +56,7 @@ String TimeService::getRTCtime()
   { "When?",         "and where?"},
   { "Little time",   "to be exact"},
   { "Will it end?",  "and when?"},
-  { "Cats forever!", "meow"},
+  { "Cats forever",  "meow"},
   { "Hug please",    "forever"},
   { "I'm late",      "important date"},
   { "No panic",      "no worries"},
@@ -73,7 +73,7 @@ String TimeService::getRTCtime()
   { "I appear",      "and disappear"},
   { "Slithy toves",  "Brillig?"},
   { "Did gyre?",     "Borogroves?"},
-  { "Do you play?",  "Croquet"},
+  { "Play time?",    "Croquet"},
   { "Follow",        "White rabbit"},
   { "See me?",       "Or not"},
   { "A rabbit?",     "White even?"},
@@ -197,6 +197,8 @@ void TimeService::runShowTellTime()
     fadeset = 1;
     theTime = getRTCtime();
 
+    if ( theTime == "0 o'clock" ) theTime = " ";
+
     int index = random(0, 35);
     theMsg1 = timetext[ index ][ 0 ];
     theMsg2 = timetext[ index ][ 1 ];
@@ -290,6 +292,12 @@ bool TimeService::getActivated()
 {
   return activated;
 }
+
+void TimeService::setActivated( bool act )
+{
+  activated = act;
+}
+
 
 void TimeService::loop()
 {

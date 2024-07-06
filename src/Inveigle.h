@@ -25,43 +25,40 @@ class Inveigle
   public:
     Inveigle();  // Constructor
 
+    enum State { SETUP, RUN, TEARDOWN, STOPPED };
     void begin();  // Initialization method
     void loop();  // Method called repeatedly in the main loop
     void startExperience( int exper );
     int getCurrentState();
- 
-  private:
-    std::vector<Experience*> experiences;
-    Experience* currentExperience;
-
-    enum State { SETUP, RUN, TEARDOWN, STOPPED, IDLE } currentState;
-
-    void operateExperience();
-
-    bool isBusy;  // Flag to indicate if a task is currently being executed
+    void setCurrentState( State state );
 
     enum ExperienceName
     {
-      None,
-      CatsPlay,
-      PlayTime,
-      EyesFollowFinger,
+      Awake,
       ShowTime,
+      Sleep,
+      CatsPlay,
+      MysticCat,
+      EyesFollowFinger,
       ParallaxCat,
       Shaken,
       SwipeFinger,
-      Chastise,
-      UserCancels
+      Chastise
     };
 
-    enum ExperiencePhase 
-    {
-      Startup,
-      Run,
-      Teardown,
-      Idle
-    };
+  private:
+    Experience* currentExperience;
+    State currentState;
+    std::vector<Experience*> experiences;
+
+    void operateExperience();
+
+    bool sleepStarting;
+
+    unsigned long msitime;
+    unsigned long msiwhen;
     
+    unsigned long toftimer;
 };
 
 #endif   //INVEIGLE_H

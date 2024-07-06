@@ -13,11 +13,15 @@
 
 #include "TOF.h"
 
+extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
+
 TOF::TOF(){}
 
 void TOF::begin()
 { 
   started = false;
+  lastPollTime = millis();
+  nextCancelflag = false;
 
   // Create the task for sensor initialization
   xTaskCreate(
@@ -28,13 +32,6 @@ void TOF::begin()
     1,                   // Priority at which the task is created
     &sensorInitTaskHandle // Handle to the created task
   );
-
-  lastPollTime = millis();
-
-  cancelDetected = false;
-  cancelGestureTimeout = millis();
-
-  started = true;
 }
 
 void TOF::sensorInitTaskWrapper( void * parameter ) 
@@ -49,14 +46,26 @@ void TOF::sensorInitTask()
 {
   if ( tofSensor.begin( 0x29, Wire ) ) 
   {
-    Serial.println("VL53L5CX sensor initialized successfully.");
-    started = true; // Set the flag to true if initialization is successful
+    logger.info( F( "TOF sensor started" ) );
+
+    cancelDetected = false;
+    cancelGestureTimeout = millis();
+    lastPollTime = millis();
+
+    tofSensor.setResolution(8*8); //Enable all 64 pads
+    
+    imageResolution = tofSensor.getResolution();  //Query sensor for current resolution - either 4x4 or 8x8
+    imageWidth = sqrt(imageResolution);           //Calculate printing width
+
+    tofSensor.startRanging();
+
+    started = true;
   }
   else
   {
-    Serial.println("Failed to initialize VL53L5CX sensor.");
-  }
-  
+    logger.info( F( "TOF sensor failed to initialize" ) );
+  }  
+
   vTaskDelete(NULL); // Delete this task when done
 }
 
@@ -111,41 +120,86 @@ void TOF::printTOF()
   {
     if ( tofSensor.getRangingData( &measurementData ) ) //Read distance data into array
     {
+      closeReadingsCount = 0;
+
       //The ST library returns the data transposed from zone mapping shown in datasheet
       //Pretty-print data with increasing y, decreasing x to reflect reality
       for ( int y = 0 ; y <= imageWidth * (imageWidth - 1) ; y += imageWidth )
       {
         for (int x = imageWidth - 1 ; x >= 0 ; x--)
         {
+          int distance = measurementData.distance_mm[x + y];
+
           Serial.print( F( "\t" ) );
-          Serial.print(measurementData.distance_mm[x + y]);
+          Serial.print( distance );
+
+          // Check if the detected distance is within the 1-2 inch range
+          if ( ( distance > detectionThresholdLow ) && ( distance < detectionThresholdHigh ) ) 
+          {
+            closeReadingsCount++;
+          }
         }
         Serial.println();
       }
       Serial.println();
     }
+
+    if (closeReadingsCount > majorityThreshold)
+    {
+      cancelDetected = true;
+      cancelGestureTimeout = millis();
+      nextCanceltime = millis();
+    }
+
   }
 }
 
 bool TOF::cancelGestureDetected()
 {
-  return cancelDetected;
+  if ( cancelDetected )
+  {
+    cancelDetected = false;
+    nextCancelflag = true;
+    return true;
+  }
+  else
+  {
+    return false;
+  }  
 }
+
+/*
+  Hold your palm over the sensor to indicate a Cancel gesture
+*/
 
 void TOF::checkForCancelGesture() 
 {
-  if ( tofSensor.isDataReady() )
+  if ( ! started ) return;
+
+  if ( nextCancelflag )
+  {
+    if ( millis() - nextCanceltime < 5000 )
+    {
+      cancelDetected = false;
+      return;
+    }
+    nextCancelflag = false;
+  }
+
+  cancelDetected = false;
+
+  if ( tofSensor.isDataReady() == true )
   {
     tofSensor.getRangingData(&measurementData);
 
-    int closeReadingsCount = 0;
+    closeReadingsCount = 0;
 
     for ( int i = 0; i < 64; i++ ) 
     {
       int distance = measurementData.distance_mm[ i ];
 
       // Check if the detected distance is within the 1-2 inch range
-      if (distance > 0 && distance < detectionThreshold) 
+      if ( ( distance > detectionThresholdLow ) && ( distance < detectionThresholdHigh ) ) 
       {
         closeReadingsCount++;
       }
@@ -154,11 +208,16 @@ void TOF::checkForCancelGesture()
     // If the number of close readings exceeds the majority threshold, register a cancel gesture
     if (closeReadingsCount > majorityThreshold)
     {
-      Serial.println("Cancel gesture detected");
       cancelDetected = true;
       cancelGestureTimeout = millis();
+      nextCanceltime = millis();
     }
   }
+}
+
+int TOF::getReadingsCount()
+{
+  return closeReadingsCount;
 }
 
 int TOF::getNextGesture()
@@ -166,7 +225,7 @@ int TOF::getNextGesture()
   if ( cancelDetected )
   {
     cancelDetected = false;
-    return 1;
+    return cancelled;
   }
 
   return 0;
@@ -178,7 +237,7 @@ void TOF::removeExpiredGestures()
 {
   unsigned long timely = millis();
 
-  if ( timely - cancelGestureTimeout > 2000 )
+  if ( timely - cancelGestureTimeout > cancelDuration )
   {
     cancelDetected = false;
   }
@@ -189,11 +248,11 @@ void TOF::removeExpiredGestures()
 
 void TOF::loop()
 {
-  //removeExpiredGestures();
-
   if ( ! started ) return;
 
-  if ( millis() - lastPollTime >= 2000 ) 
+  //removeExpiredGestures();
+
+  if ( millis() - lastPollTime > 2000 ) 
   {
     lastPollTime = millis();
     checkForCancelGesture();

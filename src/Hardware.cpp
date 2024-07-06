@@ -48,6 +48,9 @@ void Hardware::begin()
   pinMode( TOFPower, OUTPUT);    // Power control for TOF sensor
   digitalWrite( TOFPower, LOW);
 
+  pinMode(INT1_PIN, INPUT);
+  pinMode(INT2_PIN, INPUT);
+
   // Create an SPIClass instance
   SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI, NAND_SPI_CS);
 

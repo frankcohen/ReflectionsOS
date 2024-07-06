@@ -12,13 +12,13 @@
 
 */
 
-#include "Experience_SetTime.h"
+#include "Experience_Awake.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
 extern TimeService timeservice;
 
-void Experience_SetTime::init()
+void Experience_Awake::init()
 {
   vidflag = true;  
   setupComplete = false;
@@ -28,48 +28,28 @@ void Experience_SetTime::init()
   idle = false;
 } 
 
-void Experience_SetTime::setup() 
+void Experience_Awake::setup() 
 {
   if ( vidflag )
   {
-    video.startVideo( SetTime_video );
+    video.startVideo( OutOfTheBox_video );
     timeflag = true;
     vidflag = false;
-  }
-
-  if ( video.getVideoTime() > 2500 )
-  {
-    video.setPaused( true );
     setSetupComplete(true);  // Signal that setup is complete
   }
 }
 
-void Experience_SetTime::run() 
+void Experience_Awake::run() 
 {
-  if ( timeflag )
-  {
-    timeservice.startShow( 0 );     // Show saying plus hour and minute
-    timeflag = false;
-  }
-  else
-  {
-    if ( ! timeservice.getActivated() )
-    {
-      video.setPaused( false );
-      tearflag = true;
-      setRunComplete(true);  // Signal run complete
-    }
-  }
+  tearflag = true;
+  setRunComplete(true);  // Signal run complete
 }
 
-void Experience_SetTime::teardown() {
-    // Teardown code for Experience_SetTime
+void Experience_Awake::teardown() {
+  // Teardown code for Experience_Awake
 
-    video.setPaused( false );
-
-    if ( video.getStatus() == 0 )
-    {
-      video.stopVideo();
-      setTeardownComplete( true );  // Signal teardown complete
-    }
+  if ( video.getStatus() == 0 )
+  {
+    setTeardownComplete( true );  // Signal teardown complete
+  }
 }

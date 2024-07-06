@@ -34,21 +34,30 @@ class BLE
     float getRemoteHeading();
     void setLocalHeading( float myd );
     float getLocalHeading();
-    bool matchHeading( float measured_angle ); 
+    bool matchHeading( float measured_angle );
+    bool isStarted();
 
   private:
+    TaskHandle_t bleInitTaskHandle;
+    static void bleInitTaskWrapper(void * parameter);
+    void bleInitTask();
+
     void areDevicesPointedToEachOther();
     void showCatFaceDirection( int pose );
     uint8_t* loadFileToBuffer( String filePath );
+
+    bool bleStarted;
 
     std::string devname;
     int msgCounter;
     unsigned long serverWaitTime;
     unsigned long clientWaitTime;
     String message;
+
     NimBLECharacteristic* pHeadingCharacteristic;
     NimBLEServer* pServer;
     NimBLEClient* pClient;
+
     int runningDistance [ maxDistanceReadings ];
     float localHeading;
     float remoteHeading;
@@ -56,6 +65,7 @@ class BLE
     float oldAverageDistance;
     long showWaitTime;
     long fileSize;
+
     JPEGDEC jpeg;
 };
 

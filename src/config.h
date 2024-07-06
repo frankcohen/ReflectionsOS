@@ -18,6 +18,34 @@ Read the license in the license.txt file that comes with this code.
 #ifndef _config_
 #define _config_
 
+/* Experience videos */
+
+#define Sleep_video "bad372bfc9bf9719ce5658406d1013c5"
+
+#define OutOfTheBox_video "68995be890503a75e641eec9dd58cf00"
+
+#define ShowTime_video "4b88178d0cc908a426df4da665854c6d"
+
+#define SetTime_video "e0e2f0ca7da627e1bdb25f49e15cc5e4"
+
+#define MysticCat_video "6d3b8059a63901a9fcea8ddc66d57e34"
+
+#define ParallaxCat_video "f5e1f94eda02bf045cbd1b313c31ce84"
+
+#define EyesFollowFinger_video "9091437d4bf6363942280205194785e8"
+
+#define CatsPlay_video "9d5084f044cce66bd8725ac7a1b60cca"
+
+#define Getting_Sleepy_video "77cb2dc2cb42e714ed617dab50900fb7"
+
+#define Shaken_video "db81a87936e0945a8c6278595932fe90"
+
+// Not yet available
+#define SwipeFinger_video "77cb2dc2cb42e714ed617dab50900fb7"
+#define Chastise_video "77cb2dc2cb42e714ed617dab50900fb7"
+
+#define videoname_end ".mjpeg"
+
 // Host identification
 #define host_name_me "REFLECTIONS-"
 
@@ -48,10 +76,6 @@ Read the license in the license.txt file that comes with this code.
 #define NAND_BASE_DIR "REFLECTIONS"
 #define LOGNAME_START "/REFLECTIONS/log"
 #define LOGNAME_END ".txt"
-
-/* Experience videos */
-#define Settime_video "00b7fe23d605baa7e5b422dd965cad90"
-#define videoname_end ".mjpeg"
 
 // Accelerometer template storage
 #define ACCEL_BASE_DIR "REFLECTIONS"

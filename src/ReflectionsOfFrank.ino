@@ -130,8 +130,6 @@ String devicename;
 
 long locationUpdate;
 long locationUpdateTimer;
-unsigned long msitime;
-unsigned long msiwhen;
 
 #include <Arduino_GFX_Library.h>
 
@@ -177,6 +175,7 @@ static void smartdelay( unsigned long ms )
     storage.loop();
     timeservice.loop();
     wifi.loop();  
+    
     inveigle.loop();
   
     /*
@@ -211,19 +210,18 @@ void setup() {
   storage.begin();
   storage.setMounted( hardware.getMounted() );
 
-  utils.WireScan();
+  //utils.WireScan();
 
   video.begin();
-  randomSeed( 382182738 );
 
   //wifi.reset();  // Optionally reset any previous connection settings
   wifi.begin();  // Non-blocking, until guest uses it to connect
 
   logger.begin();
-  logger.setEchoToSerial(true);
-  logger.setEchoToServer(true);
+  logger.setEchoToSerial( true );
+  logger.setEchoToServer( false );
 
-  logger.info(F("Reflections of Frank"));
+  logger.info( F("Reflections of Frank") );
 
   devname = host_name_me;
   std::string mac = WiFi.macAddress().c_str();
@@ -234,17 +232,18 @@ void setup() {
   logger.info(hostinfo);  
 
   locationUpdateTimer = millis();
+  
+  // Self-test: NAND, I2C, SPI
+
+  assertI2Cdevice(24, "Acclerometer");
+  assertI2Cdevice(48, "Compass");
+  assertI2Cdevice(90, "Haptic");
+  assertI2Cdevice(41, "TOF Accel");
 
   //storage.replicateServerFiles();
   
   //Serial.println( "Files on board:" );
   //storage.listDir(SD, "/", 100, true);
-  
-  // Self-test: NAND, I2C, SPI
-
-  assertI2Cdevice(48, "Compass");
-  assertI2Cdevice(90, "Haptic");
-  assertI2Cdevice(24, "TOF Accel");
 
   haptic.begin();
   battery.begin();
@@ -297,40 +296,28 @@ void setup() {
 
   // video.setTofEyes( true );    // Eyes Follow Finger experience
 
-  msitime = millis();
-  msiwhen = 1000; //random( 3000, 10000 );
-  inveigle.startExperience( 0 );
+  inveigle.startExperience( Inveigle::Awake );
 
   logger.info(F("Setup complete"));
 }
 
 void loop() {
   smartdelay(1000);
-
-
-  if ( ( inveigle.getCurrentState() == 3 ) && ( video.getStatus() == 0 ) )
-  {
-    if ( millis() - msitime > msiwhen ) 
-    {
-      msitime = millis();
-      msiwhen = random( 3000, 15000 );  
-
-      Serial.println( "Starting experience " );
-      
-      inveigle.startExperience( 0 );
-    }
-  }
     
   // Update BLE beacon heading for other devices
 
-  if ((millis() - locationUpdateTimer) > 2000) {
-    locationUpdateTimer = millis();
+  if ( ble.isStarted() )
+  {
+    if ( (millis() - locationUpdateTimer) > 2000 )
+    {
+      locationUpdateTimer = millis();
 
-    // Tell other devices the heading you are pointing towards
-    float headfl = compass.getHeading();
-    String myh = String(headfl);
-    ble.setMessage(myh);
-    ble.setLocalHeading(headfl);
+      // Tell other devices the heading you are pointing towards
+      float headfl = compass.getHeading();
+      String myh = String(headfl);
+      ble.setMessage(myh);
+      ble.setLocalHeading(headfl);
+    }
   }
 
 }

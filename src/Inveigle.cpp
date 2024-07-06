@@ -27,10 +27,9 @@ the #include list and class instantiation method below.
 #include "Inveigle.h"
 
 // Add an include for each experience here
-
+#include "Experience_Awake.h"
 #include "Experience_Settime.h"
-
-#include "Video.h"
+#include "Experience_Sleep.h"
 
 extern Video video;
 
@@ -40,14 +39,23 @@ Inveigle::Inveigle() : currentExperience(nullptr), currentState(SETUP)
 {
   // Add instances of each experience to the vector
 
+  experiences.push_back( new Experience_Awake() );
   experiences.push_back( new Experience_SetTime() );
+  experiences.push_back( new Experience_Sleep() );
 
   // Add other experiences here
 }
 
 void Inveigle::begin() 
 {
-  isBusy = false;
+  currentState = STOPPED;
+
+  sleepStarting = false;
+
+  msitime = millis();
+  msiwhen = random( 5000, 10000 );
+
+  toftimer = millis();
 }
 
 void Inveigle::startExperience( int exper )
@@ -55,7 +63,11 @@ void Inveigle::startExperience( int exper )
   currentExperience = experiences[ exper ];
   currentExperience->init();
   currentState = SETUP;
-  isBusy = true;
+}
+
+void Inveigle::setCurrentState( State state )
+{
+  currentState = state;
 }
 
 int Inveigle::getCurrentState()
@@ -92,11 +104,6 @@ void Inveigle::operateExperience()
       break;
 
     case STOPPED:
-      isBusy = false;
-      break;
-
-    case IDLE:
-      isBusy = false;
       break;
   }
 }
@@ -104,21 +111,83 @@ void Inveigle::operateExperience()
 void Inveigle::loop() 
 {
   // Give time to running experience
-  if ( isBusy )
+  if ( currentState != STOPPED )
   {
     operateExperience();
   }
+
+  if ( millis() - toftimer > 2000 )
+  {
+    toftimer = millis();
+
+/*
+    tof.printTOF();
+    if ( tof.cancelGestureDetected() )
+    {
+      Serial.print( tof.getReadingsCount() );
+      Serial.println( " CANCEL DETECTED" );
+    }
+    else
+    {
+      Serial.print( tof.getReadingsCount() );
+      Serial.println( " --" );
+    }
+*/
+  }
+
+
+
+
+  // Interruptions
+
+
+  // Detect cancel
+
+  if ( sleepStarting == false )
+  {
+    if ( tof.cancelGestureDetected() )
+    {
+      setCurrentState( TEARDOWN );  // Put in teardown state
+      sleepStarting = true;
+    }
+  }
+
+  if ( sleepStarting )
+  {
+    //Wait until current experience stops
+
+    if ( getCurrentState() == STOPPED )
+    {
+      startExperience( Inveigle::Sleep );   // Sleep experience
+    }
+  }
+
+  /*
+
+  // if no experience, start ShowTime
+
+  if ( ( ! sleepStarting ) && ( getCurrentState() == STOPPED ) && ( video.getStatus() == 0 ) )
+  {
+    if ( millis() - msitime > msiwhen ) 
+    {
+      msitime = millis();
+      msiwhen = random( 3000, 15000 );  
+
+      Serial.print( "Starting experience " );
+      Serial.println( Inveigle:: );
+
+      startExperience( Inveigle::ShowTime );  // Settime experience
+    }
+  }
+
+  */
+
+  /*
 
   // Notifications, for example low-battery
 
   //checkBatteryStatus();
 
-  // Interruptions
-
-  // User cancels experience, holds hand over TOF sensor
-
-  /* 
-  
   Coming soon: Machine learning around running random experiences
   For now it's only the Experience_SetTime
 

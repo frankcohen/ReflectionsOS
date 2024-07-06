@@ -4,6 +4,8 @@
 #include "config.h"
 #include "secrets.h"
 
+#include <esp_sleep.h>
+
 #include "Storage.h"
 #include "Haptic.h"
 #include "Utils.h"
@@ -14,6 +16,27 @@
 #include "SD.h"
 #include "SPI.h"
 
+// Interrupt pins
+#define INT1_PIN GPIO_NUM_14
+#define INT2_PIN GPIO_NUM_13
+
+// For Wake on Movement
+#define LIS3DH_INT2_CFG               0x34
+#define LIS3DH_INT2_SRC               0x35
+#define LIS3DH_INT2_THS               0x36
+#define LIS3DH_INT2_DURATION          0x37
+
+/*
+When using the deep sleep capability of the ESP32-S3, the microcontroller effectively powers down, 
+losing any data stored in its RAM, including the values of variables. To retain the value of the 
+wakecount variable across deep sleep cycles, you need to store it in a non-volatile memory area that 
+persists through resets and power cycles. The ESP32 provides a feature called "RTC memory" that 
+can be used for this purpose. Requires esp_sleep.h
+*/
+
+//RTC_DATA_ATTR int wakecount;
+
+// Gesture detection
 #define tollerance 0.10
 #define windowtime 1000
 #define scaler 200
@@ -62,8 +85,6 @@ class Accelerometer
     float DTWgpt( float seq1[][3], float seq2[][3], int len );
     float DTWdistance(float x1, float y1, float z1, float x2, float y2, float z2);
     float DTWmin(float a, float b, float c);
-
-    LIS3DH myIMU;
 
     int recentGesture;
     long recenttimer;
