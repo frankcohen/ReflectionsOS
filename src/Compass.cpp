@@ -106,7 +106,7 @@ void Compass::begin()
     Mid[i] = 0;
   }
 
-  lastDisplayTime = millis();
+  ctimer = millis();
 
   started = true;
 }
@@ -229,6 +229,13 @@ float Compass::getHeading(void) {
     }
   }
 
+  // Correct for watch "north" direction
+  // With TOF sensor facing up, and TOF on left, and USB on right
+  // North is the direction of the SD/NAND chip
+
+  deg += ( 180 + 40 );
+  if ( deg > 360 ) deg -= 360;
+
   return deg;
 }
 
@@ -281,4 +288,18 @@ boolean Compass::test()
 
 void Compass::loop()
 {
+
+/*
+  if ( millis() - ctimer > 2000 )
+  {
+    ctimer = millis();
+
+    Serial.print( "getHeading " );
+    Serial.print( getHeading() );
+    Serial.print( ", " );
+    Serial.println( decodeHeading( getHeading() ) );
+  }
+*/
+
+
 }

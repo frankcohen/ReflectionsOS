@@ -19,7 +19,6 @@ LED::LED(){}
 
 void LED::begin()
 {
-  pinMode(LED_Pin, OUTPUT);
 }
 
 void LED::show()

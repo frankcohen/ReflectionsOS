@@ -28,10 +28,12 @@ the #include list and class instantiation method below.
 
 // Add an include for each experience here
 #include "Experience_Awake.h"
-#include "Experience_Settime.h"
+#include "Experience_ShowTime.h"
 #include "Experience_Sleep.h"
+#include "Experience_SetTime.h"
 
 extern Video video;
+extern TimeService timeservice;
 
 // and add the experience here too
 
@@ -40,9 +42,18 @@ Inveigle::Inveigle() : currentExperience(nullptr), currentState(SETUP)
   // Add instances of each experience to the vector
 
   experiences.push_back( new Experience_Awake() );
-  experiences.push_back( new Experience_SetTime() );
+  experiences.push_back( new Experience_ShowTime() );
   experiences.push_back( new Experience_Sleep() );
+  experiences.push_back( new Experience_SetTime() );
 
+  // CatsPlay,
+  // MysticCat,
+  // EyesFollowFinger,
+  // ParallaxCat,
+  // Shaken,
+  // SwipeFinger,
+  // Chastise
+ 
   // Add other experiences here
 }
 
@@ -54,8 +65,6 @@ void Inveigle::begin()
 
   msitime = millis();
   msiwhen = random( 5000, 10000 );
-
-  toftimer = millis();
 }
 
 void Inveigle::startExperience( int exper )
@@ -116,32 +125,16 @@ void Inveigle::loop()
     operateExperience();
   }
 
-  if ( millis() - toftimer > 2000 )
-  {
-    toftimer = millis();
+  // Respond to Gestures
+  
 
-/*
-    tof.printTOF();
-    if ( tof.cancelGestureDetected() )
-    {
-      Serial.print( tof.getReadingsCount() );
-      Serial.println( " CANCEL DETECTED" );
-    }
-    else
-    {
-      Serial.print( tof.getReadingsCount() );
-      Serial.println( " --" );
-    }
-*/
-  }
+  // Set time
 
 
+  //startExperience( Inveigle::SetTime );  // Settime experience
+  
 
-
-  // Interruptions
-
-
-  // Detect cancel
+  // Detect deep sleep
 
   if ( sleepStarting == false )
   {

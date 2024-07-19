@@ -31,7 +31,7 @@ class Wifi
     void reset();
     void loop();
     bool isConnected();
-
+    bool isTurnedOn();
     void setRTCfromNTP();
 
   private:

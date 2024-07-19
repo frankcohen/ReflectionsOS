@@ -119,6 +119,18 @@ bool Wifi::isConnected()
   return false;
 }
 
+bool Wifi::isTurnedOn()
+{
+  if ( WiFi.status() == WL_CONNECTED )
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
 void Wifi::loop()
 {
   if ( (millis() - lastWifiTime) > 500)

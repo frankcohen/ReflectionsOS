@@ -31,7 +31,8 @@ void Experience_Sleep::init()
 void Experience_Sleep::setup() 
 {
   Serial.println( "Sleep SETUP" );
-  timeservice.setActivated( false );
+  timeservice.setDialActivated( false );
+  timeservice.setTimeAnimationActivated( false );
   video.startVideo( Sleep_video );
   setSetupComplete(true);  // Signal that setup is complete
 }

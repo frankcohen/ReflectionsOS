@@ -18,10 +18,8 @@ class Compass
     void begin();
     void loop();
     String updateHeading();
-    String getHeadings();
     bool test();
     void callibrate();
-
     String decodeHeading( float measured_angle );
     float getHeading();
     void read_XYZ();
@@ -34,9 +32,10 @@ class Compass
 
     //store highest, middle and lowest values, x component and y component
     float Max[2], Mid[2], Min[2], X, Y;
-    long lastDisplayTime;
 
     String heading;
+
+    unsigned long ctimer;
 };
 
 #endif // _COMPASS_

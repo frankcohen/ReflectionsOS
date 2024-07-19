@@ -17,6 +17,8 @@ This file is for operating the video display.
 // Defined in ReflectionsOfFrank.ino
 extern LOGGER logger;
 extern TOF tof;
+extern Battery battery;
+extern Wifi wifi;
 
 static MjpegClass mjpeg;
 uint8_t *mjpeg_buf;
@@ -61,12 +63,15 @@ void Video::begin()
   firsttime = true;
   vidtimer = millis();
   paused = false;
+  fading = false;
 
   playerStatus = 0;
   checktime = millis();
   showIteratorFlag = false;
 
   videoStartTime = millis();
+
+  fadeTime = millis();
 }
 
 void Video::addReadTime( unsigned long rtime )
@@ -417,7 +422,10 @@ void Video::drawTofEyes()
 { 
   int basey = 40;
 
-  int basex = tof.getXFingerPosition();
+  //int basex = tof.getXFingerPosition();
+
+  int basex = 10;
+  
   //basex += pointx * ( ( 240 - 30 - 30 - smallcircle ) / 8 );
 
   int topx = basex;
@@ -461,8 +469,98 @@ void Video::printCentered( int y2, String text, uint16_t color, const GFXfont * 
   gfx->println( text );
 }
 
+/* Draws sprite, does not draw for transparent pixels */
+
+void Video::drawSpriteOverBackground(const uint16_t *sprite, int16_t spriteWidth, int16_t spriteHeight, int16_t x, int16_t y, uint16_t transparent) 
+{
+  for ( int16_t i = 0; i < spriteHeight; i++ )
+  {
+    for ( int16_t j = 0; j < spriteWidth; j++ )
+    {
+      uint16_t pixelColor = sprite[i * spriteWidth + j];
+      if ( pixelColor != transparent ) 
+      {
+        gfx->drawPixel( x + j, y + i, pixelColor );
+      }
+    }
+  }
+}
+
+void Video::drawIcons()
+{
+  // Draws low battery warning icon
+
+  int batlev = battery.getBatteryLevel();
+
+  if ( batlev == 0 )
+  {
+    drawSpriteOverBackground( BatteryEmpty, BATTERYEMPTY_WIDTH, BATTERYEMPTY_HEIGHT, BATTERY_X, BATTERY_Y, TRANSPARENT_COLOR );
+  }
+
+  if ( batlev == 1 )
+  {
+    drawSpriteOverBackground( BatteryLow, BATTERYLOW_WIDTH, BATTERYLOW_HEIGHT, BATTERY_X, BATTERY_Y, TRANSPARENT_COLOR );
+  }
+
+  if ( batlev == 2 )
+  {
+    drawSpriteOverBackground( BatteryMedium, BATTERYMEDIUM_WIDTH, BATTERYMEDIUM_HEIGHT, BATTERY_X, BATTERY_Y, TRANSPARENT_COLOR );
+  }
+
+  if ( batlev == 3 )
+  {
+    drawSpriteOverBackground( BatteryHigh, BATTERYLOW_WIDTH, BATTERYLOW_HEIGHT, BATTERY_X, BATTERY_Y, TRANSPARENT_COLOR );
+  }
+
+  if ( wifi.isTurnedOn() )
+  {
+    drawSpriteOverBackground( WifiOn, WIFION_WIDTH, WIFION_HEIGHT, WIFI_X, WIFI_Y, TRANSPARENT_COLOR );
+  }
+  else
+  {
+    drawSpriteOverBackground( WifiOff, WIFION_WIDTH, WIFION_HEIGHT, WIFI_X, WIFI_Y, TRANSPARENT_COLOR );
+  }
+
+}
+
+void Video::fadeToBlack()
+{
+  fading = true;
+  fadeStep = 0;
+  fadeTime = millis();
+}
+
+bool Video::getFadingStatus()
+{
+  return fading;
+}
+
+void Video::fadeUpdate()
+{
+  if ( ! fading ) return;
+
+  if ( ( millis() - fadeTime ) > 50 )
+  {
+    fadeTime = millis();
+
+    int16_t x = random( 240 );
+    uint16_t y = random( 240 );
+    gfx -> fillCircle( x, y, 35, COLOR_BLACK );
+
+    fadeStep++;
+
+    if ( fadeStep >= 25 )
+    {
+      fading = false;
+      gfx->fillScreen( COLOR_BLACK );
+    }
+  }
+}
+
 void Video::loop()
 {
+  fadeUpdate();
+
   if ( ( videoStatus == 0 ) || ( paused == 1 ) ) return;
 
   if ( mjpegFile.available() )

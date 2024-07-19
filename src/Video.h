@@ -37,6 +37,10 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 #include "MjpegClass.h"
 #include "Logger.h"
 #include "TOF.h"
+#include "Battery.h"
+#include "Wifi.h"
+#include "icons.h"
+
 #include <ArduinoJson.h>
 
 #include <Arduino_GFX_Library.h>
@@ -54,13 +58,6 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 #define topmargin 75
 #define linespacing 20
 #define maxchars 16
-
-#define COLOR_BACKGROUND RGB565(115, 58, 0)
-#define COLOR_LEADING RGB565(123, 63, 0)
-#define COLOR_RING RGB565(234, 68, 0)
-#define COLOR_TRAILING RGB565(178, 67, 0 )
-
-#define COLOR_BLUE RGB565( 12, 30, 29 )
 
 class Video
 {
@@ -87,8 +84,14 @@ class Video
 
     void addReadTime( unsigned long rtime );
 
+    void drawIcons();
+
+    void fadeToBlack();
+    bool getFadingStatus();
+
   private:
     void printCentered( int y2, String text, uint16_t color, const GFXfont * font );
+    void drawSpriteOverBackground(const uint16_t *sprite, int16_t spriteWidth, int16_t spriteHeight, int16_t x, int16_t y, uint16_t transparent);
 
     File mjpegFile;
     long ringtimer;
@@ -132,6 +135,12 @@ class Video
     String showingVideoFile;
 
     int playerStatus;
+
+    void fadeUpdate();
+    
+    bool fading;
+    unsigned long fadeTime;
+    uint16_t fadeStep;
 };
 
 #endif // _video_

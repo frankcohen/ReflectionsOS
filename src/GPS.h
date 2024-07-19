@@ -6,6 +6,7 @@
 
 #include <TinyGPSPlus.h>
 #include <HardwareSerial.h>
+#include "time.h"
 
 #define GPSBaud 9600
 
@@ -24,8 +25,12 @@ class GPS
     void printDateTime(TinyGPSDate &d, TinyGPSTime &t);
     void printStr(const char *str, int len);
 
+    bool isActive();
+
   private:
     TinyGPSPlus gps;
+    bool active;
+    unsigned long gpstime;
 };
 
 #endif // _GPS_

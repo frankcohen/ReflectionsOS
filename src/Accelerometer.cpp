@@ -41,7 +41,8 @@
 extern Storage storage;   // Defined in ReflectionsOfFrank.ino
 extern Haptic haptic;
 extern Utils utils;
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
+extern LOGGER logger;
+extern Video video;
 
 LIS3DH myIMU( I2C_MODE, 0x18 );
 
@@ -49,16 +50,11 @@ Accelerometer::Accelerometer(){}
 
 void Accelerometer::begin()
 { 
-  if (myIMU.begin() != 0) 
-  {
-    Serial.println("Could not start LIS3DH");
-  }
-
-  myIMU.settings.accelSampleRate = 50;  //Hz.  Can be: 0,1,10,25,50,100,200,400,1600,5000 Hz
+  myIMU.settings.accelSampleRate = 100;  //Hz.  Can be: 0,1,10,25,50,100,200,400,1600,5000 Hz
   myIMU.settings.accelRange = 2;        //Max G force readable.  Can be: 2, 4, 8, 16
 
-  myIMU.settings.adcEnabled = 1;
-  myIMU.settings.tempEnabled = 1;
+  myIMU.settings.adcEnabled = 0;
+  myIMU.settings.tempEnabled = 0;
   myIMU.settings.xAccelEnabled = 1;
   myIMU.settings.yAccelEnabled = 1;
   myIMU.settings.zAccelEnabled = 1;
@@ -186,6 +182,12 @@ void Accelerometer::begin()
   // Enable ESP32 to wake up on INT2 (GPIO13) high level
   esp_sleep_enable_ext1_wakeup(BIT(GPIO_NUM_14), ESP_EXT1_WAKEUP_ANY_HIGH);
 
+  if (myIMU.begin() != 0) 
+  {
+    Serial.println("Could not start LIS3DH");
+    video.stopOnError("Could not", "start", "accelerometer", "Stopping", " " ); 
+  }
+
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
 
   if ( wakeup_reason == ESP_SLEEP_WAKEUP_EXT1 ) 
@@ -197,16 +199,16 @@ void Accelerometer::begin()
   else 
   {
     // This is a cold start
-    Serial.println("ESP32 cold start...");
+    Serial.println("ESP32 cold start");
 
   }
 
   movetimer = millis();
   detecttimer = millis();
+  recordtimer = millis();
   firsttime = true;
   olddtw = 0;
   recordi = 0;
-  movetimer = millis();
   firstnotice = false;
   
   gesturenumber = 0;
@@ -221,23 +223,6 @@ void Accelerometer::begin()
   nx0 = 1, nx1 = 1, nx2 = 1, nx3 = 1;
   ny0 = 1, ny1 = 1, ny2 = 1, ny3 = 1;
   nz0 = 1, nz1 = 1, nz2 = 1, nz3 = 1;
-
-  String mef = "/";
-  mef += ACCEL_BASE_DIR;
-  mef += "/";
-  mef += ACCEL_BASE_FILE;
-  mef += ACCEL_BASE_EXT;
-
-  if ( ! SD.exists( mef ) )
-  {
-    logger.info( F( "Creating wrist gesture sensing directory " ) );
-    logger.info( mef );
-    storage.createDir( SD, mef.c_str() );
-  }
-  else
-  {
-    logger.info( F( "Accel directory exists" ) );    
-  }
 
   state = 0;
   co = 0;
@@ -265,6 +250,8 @@ void Accelerometer::setTraining( bool mode )
 {
   trainingMode = mode;
 
+  Serial.println( F("Accel gesture training mode on" ) );
+  
   String mef = "/";
   mef += NAND_BASE_DIR;
   mef += "/";
@@ -296,6 +283,11 @@ float Accelerometer::getXreading()
   return myIMU.readFloatAccelX();
 }
 
+float Accelerometer::getXaccelReading()
+{
+  return myIMU.readFloatAccelY();
+}
+
 // Get values from accelermoter, apply scale and filter
 
 bool Accelerometer::getAccelValues()
@@ -304,11 +296,18 @@ bool Accelerometer::getAccelValues()
   ny = myIMU.readFloatAccelY() * scaler ;
   nz = myIMU.readFloatAccelZ() * scaler ;
 
-  nx += 300;
+  nx += 300;    // Force the readings into positive territory
   ny += 300;
   nz += 300;
 
   return true;
+}
+
+bool Accelerometer::isOutsidePercent( float oldposition, float newposition, float perc )
+{
+  float lowerBound = oldposition * ( 1 - perc );
+  float upperBound = oldposition * ( 1 + perc );
+  return (newposition < lowerBound || newposition > upperBound);
 }
 
 // Returns true when accelerator is moving
@@ -319,6 +318,7 @@ bool Accelerometer::detectStartOfGesture()
   {
     movetimer = millis();
     firsttime = false; 
+    
     getAccelValues();
 
     nx0 = nx;
@@ -356,22 +356,37 @@ bool Accelerometer::detectStartOfGesture()
   nz2 = nz;
   nz3 =  ( nz0 + nz1 + nz2 ) / 3 ;
 
-  if ( ( nx < ( nx3 * ( 1 - tollerance ) ) ) || ( nx > ( nx3 * ( 1 + tollerance ) ) ) ) 
+  if ( isOutsidePercent( nx3, nx, tollerance ) )
   {
+    Serial.print( "X " );
+    Serial.print( nx );
+    Serial.print( ", " );
+    Serial.println( nx3 );
+
     firsttime = true;  
     movetimer = millis();
     return true;
   }
 
-  if ( ( ny < ( ny3 * ( 1 - tollerance ) ) ) || ( ny > ( ny3 * ( 1 + tollerance ) ) ) )
+  if ( isOutsidePercent( ny3, ny, tollerance ) )
   {
+    Serial.print( "Y " );
+    Serial.print( ny );
+    Serial.print( ", " );
+    Serial.println( ny3 );
+
     firsttime = true;  
     movetimer = millis();
     return true;
   }
 
-  if ( ( nz < ( nz3 * ( 1 - tollerance ) ) ) || ( nz > ( nz3 * ( 1 + tollerance ) ) ) )
-  {
+   if ( isOutsidePercent( nz3, nz, tollerance ) )
+   {
+    Serial.print( "Z " );
+    Serial.print( nz );
+    Serial.print( ", " );
+    Serial.println( nz3 );
+
     firsttime = true;  
     movetimer = millis();
     return true;
@@ -547,8 +562,6 @@ bool Accelerometer::loadGestures()
   String mef = "/";
   mef += NAND_BASE_DIR;
   mef += "/";
-  mef += ACCEL_BASE_DIR;
-  mef += "/";
   mef += ACCEL_BASE_FILE;
   mef += ACCEL_BASE_EXT;
 
@@ -590,11 +603,19 @@ bool Accelerometer::loadGestures()
   return true;
 }
 
+float Accelerometer::getAngle()
+{
+  float accel_x = myIMU.readFloatAccelX();  // Read X-axis value
+  float accel_y = myIMU.readFloatAccelY();  // Read Y-axis value
+
+  return atan2(accel_y, accel_x) * 180 / PI;
+}
+
 void Accelerometer::loop()
 {
   // Training mode, records gesture templates, stores to .ages file (Accelerometer Gesture Template)
 
-  // Record 10 templates, then stop
+  // Record multiple templates, then stop
 
   if ( ( trainingMode ) && ( ! recordingTemplate ) ) 
   {
@@ -602,15 +623,16 @@ void Accelerometer::loop()
     {
       firstnotice = true;
 
-      logger.info("Template recording, ");
-      logger.info( String( gesturecount ) );
-      logger.info( ", ");
+      String mef = "Template recording, ";
+      mef += String( gesturecount );
+      mef += ", ";
 
-      if ( typecounter == 0 ) { logger.info( type1 ); }
-      if ( typecounter == 1 ) { logger.info( type2 ); }
-      if ( typecounter == 2 ) { logger.info( type3 ); }
-      if ( typecounter == 3 ) { logger.info( type4 ); }
-      logger.info( " gesture" );
+      if ( typecounter == 0 ) { mef += type1; }
+      if ( typecounter == 1 ) { mef += type2; }
+      if ( typecounter == 2 ) { mef += type3; }
+      if ( typecounter == 3 ) { mef += type4; }
+
+      logger.info( mef );
     }
 
     if ( detectStartOfGesture() )
@@ -663,8 +685,6 @@ void Accelerometer::loop()
             String mef = "/";
             mef += NAND_BASE_DIR;
             mef += "/";
-            mef += ACCEL_BASE_DIR;
-            mef += "/";
             mef += ACCEL_BASE_FILE;
             mef += ACCEL_BASE_EXT;
             File gfile = SD.open( mef );
@@ -701,7 +721,7 @@ void Accelerometer::loop()
 
       if ( detectStartOfGesture() )
       {
-        //logger.info("Sensing gesture");
+        logger.info("Sensing gesture");
         gesturestart = true;
         recordtimer = millis();
         recordi = 0;
@@ -827,7 +847,7 @@ void Accelerometer::loop()
           else
           {
             recentGesture = 0;
-            logger.info( "Inconclusive" );
+            logger.info( "Accellerometer gesture detection inconclusive" );
           }
 
           // Pick a winner, the Sum Of Averages and Highest Average way

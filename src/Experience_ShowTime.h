@@ -1,6 +1,6 @@
 // Experience1.h
-#ifndef Experience_SetTime_H
-#define Experience_SetTime_H
+#ifndef Experience_ShowTime_H
+#define Experience_ShowTime_H
 
 #include <Arduino.h>
 
@@ -10,7 +10,7 @@
 #include "Video.h"
 #include "TimeService.h"
 
-class Experience_SetTime : public Experience {
+class Experience_ShowTime : public Experience {
   public:
     void setup() override;
     void run() override;
@@ -21,7 +21,8 @@ class Experience_SetTime : public Experience {
     unsigned long timer;
     bool tearflag;
     bool timeflag;
+    bool vidflag;
     
 };
 
-#endif // Experience_SetTime_H
+#endif // Experience_ShowTime_H

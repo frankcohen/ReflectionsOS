@@ -51,6 +51,15 @@ void Hardware::begin()
   pinMode(INT1_PIN, INPUT);
   pinMode(INT2_PIN, INPUT);
 
+  pinMode(LED_Pin, OUTPUT);
+
+  // Turn GPS module on
+  pinMode(GPSPower, OUTPUT);
+  digitalWrite(GPSPower, HIGH);
+
+  uint32_t seed = esp_random();
+  randomSeed( seed );
+
   // Create an SPIClass instance
   SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI, NAND_SPI_CS);
 
@@ -72,8 +81,6 @@ void Hardware::begin()
     NANDMounted = true;
   }
 
-  uint32_t seed = esp_random();
-  randomSeed( seed );
 }
 
 bool Hardware::getMounted()

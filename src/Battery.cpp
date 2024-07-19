@@ -37,6 +37,14 @@ String Battery::batLevel( float analogVolts )
   return " ";
 }
 
+int Battery::getBatteryLevel()
+{
+  if ( analogVolts < batterylow ) return 1;
+  if ( analogVolts < battermedium ) return 2;
+  if ( analogVolts > batteryhigh ) return 3;
+  return 0;
+}
+
 bool Battery::isBatteryLow()
 {
   if ( analogVolts < batterylow ) return true;
@@ -45,7 +53,7 @@ bool Battery::isBatteryLow()
 
 void Battery::loop()
 {
-  if ( ( millis() - batteryWaitTime ) > 60000 )
+  if ( ( millis() - batteryWaitTime ) > ( 60000 * 5 ) )
   {
     batteryWaitTime = millis();
 
@@ -69,25 +77,3 @@ void Battery::loop()
     */
   }
 }
-
-/* Draws sprite, does not draw for transparent pixels */
-
-void Battery::drawSpriteOverBackground(const uint16_t *sprite, int16_t spriteWidth, int16_t spriteHeight, int16_t x, int16_t y, uint16_t transparent) {
-  for (int16_t i = 0; i < spriteHeight; i++) {
-    for (int16_t j = 0; j < spriteWidth; j++) {
-      uint16_t pixelColor = sprite[i * spriteWidth + j];
-      if (pixelColor != transparent) {
-        // gfx->drawPixel(x + j, y + i, pixelColor);
-      }
-    }
-  }
-}
-
-void Battery::drawLowBatteryIcon()
-{
-  // Draws low battery warning icon
-
-  // drawSpriteOverBackground( BatteryIcon, BATTERYLOW_WIDTH, BATTERYLOW_HEIGHT, BATTERY_X, BATTERY_Y, BATTERY_TRANSPARENT_COLOR );
-}
-
-

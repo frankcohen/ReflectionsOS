@@ -96,6 +96,7 @@ USB Mode: Hardware CDC and JTAG
 #include "Parallax.h"
 #include "TimeService.h"
 #include "Inveigle.h"
+#include <Arduino_GFX_Library.h>
 
 Utils utils;
 Storage storage;
@@ -106,21 +107,19 @@ TOF tof;
 Parallax parallax;
 TimeService timeservice;
 Inveigle inveigle;
-
-static Wifi wifi;
-static GPS gps;
-static Compass compass;
-static LED led;
-static USBFlashDrive flash;
-static BLE ble;
-static OTA ota;
-
-const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
-
+GPS gps;
+Wifi wifi;
+Compass compass;
+LED led;
+USBFlashDrive flash;
+BLE ble;
+OTA ota;
 LOGGER logger;
 Battery battery;
 Hardware hardware;
 Accelerometer accel;
+
+const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
 
 // Host name
 std::string devname;
@@ -128,10 +127,12 @@ String devicename;
 
 // Timers
 
-long locationUpdate;
+long locationUpdate;        // For BLE service
 long locationUpdateTimer;
 
-#include <Arduino_GFX_Library.h>
+unsigned long startvidtime;
+bool startvidflag;
+int startcnt;
 
 /* Test for a device number on the I2C bus, display error when not found */
 
@@ -147,16 +148,11 @@ void assertI2Cdevice(byte deviceNum, String devName) {
     delay( 2000 );
   }
 
-  //video.stopOnError(devName, "not found", "", "", "");
-
   Serial.print( devName );
-  Serial.println( " not found.");
-}
+  Serial.println( F( " not found." ) );
 
-void assertTest(bool result, String deviceName) {
-  if (!result) {
-    video.stopOnError(deviceName, "test fail", "", "", "");
-  }
+  video.stopOnError(devName, "not found", "", "", "");
+
 }
 
 /*
@@ -169,25 +165,23 @@ static void smartdelay( unsigned long ms )
 
   do {
     battery.loop();
-    accel.loop();
+    //accel.loop();
     tof.loop();
     video.loop();
     storage.loop();
     timeservice.loop();
     wifi.loop();  
-    
+    utils.loop();    
     inveigle.loop();
-  
-    /*
-    logger.loop();
-    ble.loop();
-    parallax.loop();
-
-    audio.loop();
-    utils.loop();
     compass.loop();
     haptic.loop();
     led.loop();
+    //ble.loop();
+
+    /*
+    logger.loop();
+    parallax.loop();
+    audio.loop();
     */
 
   } while (millis() - start < ms);
@@ -215,7 +209,7 @@ void setup() {
   video.begin();
 
   //wifi.reset();  // Optionally reset any previous connection settings
-  wifi.begin();  // Non-blocking, until guest uses it to connect
+  //wifi.begin();  // Non-blocking, until guest uses it to connect
 
   logger.begin();
   logger.setEchoToSerial( true );
@@ -256,54 +250,57 @@ void setup() {
   timeservice.begin();
   inveigle.begin();
   utils.begin();
-  ble.begin();
-
-  haptic.playEffect(14);  // 14 Strong Buzz
+  //ble.begin();
+  led.begin();
 
   //accel.setTraining( true );    // Put accelermoeter into training mode
   //accel.loadGestures();         // Load the prerecorded accelermeter gestures
 
 /*
-  //assertI2Cdevice(41, "Gesture");
-  //smartdelay(200);
-
   ota.begin();
   ota.update();     // Just in case previous use of the host replicated an OTA update file
 
-  tof.begin();
-
-  flash.begin();
-  led.begin();
-
-  assertTest(storage.testNandStorage(), "NAND storage");
-  smartdelay(200);
-  assertTest(gps.test(), "NAND storage");
-  smartdelay(200);
-  assertTest(gps.test(), "GPS");
-  smartdelay(200);
-  assertTest(accel.test(), "Accelerometer");
-  smartdelay(200);
-  assertTest(compass.test(), "Compass");
-  smartdelay(200);
-  assertTest(gesture.test(), "Gesture sensor");
-  smartdelay(200);
-
   startMSC();     // Calliope mounts as a flash drive, showing NAND contents over USB on your computer
-
 */
 
-  // wifi.setRTCfromNTP();           // Set the Real Time Clock from an Internet time server.
+  //inveigle.startExperience( Inveigle::SetTime );
 
-  // video.setTofEyes( true );    // Eyes Follow Finger experience
+  haptic.playEffect(14);  // 14 Strong Buzz
 
-  inveigle.startExperience( Inveigle::Awake );
+startvidtime = millis();
+startvidflag = true;
 
   logger.info(F("Setup complete"));
 }
 
+
+const char* msgtext[5][2] = {
+  { "It's early",    "why yes" },
+  { "It's late",     "to be exact"},
+  { "Wait, wait",    "you waited!"},
+  { "Peekaboo",      "i see you"},
+  { "Why?",          "why not?"},
+};
+
+
 void loop() {
   smartdelay(1000);
-    
+
+ if ( millis() - startvidtime > 500 )
+ {
+  startvidtime = millis();
+
+  startcnt++;
+  //Serial.println( startcnt );
+
+  if ( startvidflag )
+  {
+    inveigle.startExperience( Inveigle::Awake );
+    startvidflag = false;
+  }
+
+ }
+
   // Update BLE beacon heading for other devices
 
   if ( ble.isStarted() )
@@ -312,10 +309,15 @@ void loop() {
     {
       locationUpdateTimer = millis();
 
+
+      int index = random(0, 4);
+      String theMsg1 = msgtext[ index ][ 0 ];
+      String theMsg2 = msgtext[ index ][ 1 ];
+
+
       // Tell other devices the heading you are pointing towards
       float headfl = compass.getHeading();
-      String myh = String(headfl);
-      ble.setMessage(myh);
+      ble.setMessage( theMsg2 );
       ble.setLocalHeading(headfl);
     }
   }

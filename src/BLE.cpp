@@ -371,7 +371,7 @@ bool BLE::connectToServer()
   //Serial.println( pClient -> getRssi() );
 
   /** Now we can read/write/subscribe the charateristics of the services we are interested in */
-  NimBLERemoteDescriptor* pDsc = nullptr;
+  //unused NimBLERemoteDescriptor* pDsc = nullptr;
   NimBLERemoteService* pSvc;
   NimBLERemoteCharacteristic* pChr;
 
@@ -659,17 +659,17 @@ bool BLE::lookingTowardsEachOther( float avgDistance )
   float c = a;
   float csquared = pow( c, 2 );
   
-  float tot = csquared - asquared - bsquared;
-  float totfac = tot / ( -1 * ( 2 * a * b ) );
-  float acostot = acos( totfac );
-  float C = acostot * ( 180/PI );   // convert to degrees
+  //unused float tot = csquared - asquared - bsquared;
+  //unused float totfac = tot / ( -1 * ( 2 * a * b ) );
+  //unused float acostot = acos( totfac );
+  //unused float C = acostot * ( 180/PI );   // convert to degrees
   
   float Ctot = asquared - bsquared - csquared;
   float Ctotsmall = Ctot / ( -1 * ( 2 * b * c) );
   float acosCtot = acos( Ctotsmall );
   float A = acosCtot * ( 180 / PI );   // convert to degrees
 
-  float B = 180 - C - A;
+  //unused float B = 180 - C - A;
 
   /*
   Serial.print( "asquared = ");
@@ -803,9 +803,11 @@ int JPEGDrawDirection(JPEGDRAW *pDraw)
 
 uint8_t* BLE::loadFileToBuffer( String filePath )
 {
+  /*
   String myl = F( "BLE loading file " );
   myl += String( filePath );
   logger.info( myl );
+  */
 
   File file = SD.open(filePath, FILE_READ);
   if ( !file ) 
@@ -895,6 +897,7 @@ void BLE::showCatFaceDirection( int pose )
 
 void BLE::loop()
 {
+
   // Server
   if ((millis() - serverWaitTime) > 1000)
   {
@@ -946,10 +949,38 @@ void BLE::loop()
     areDevicesPointedToEachOther();
   }
 
+  
+
+  /*
   int pose = getLocalHeading();
   if ( ( pose > 0 ) && ( pose < 360 ) )
   {
     showCatFaceDirection( ( pose / ( 360 / 8 ) ) + 1 );
+  }
+  */
+
+  if ((millis() - clientWaitTime) > 3000)
+  {
+    clientWaitTime = millis();
+
+  int v = 0;
+  String me = compass.decodeHeading( compass.getHeading() );
+  if ( me == "N" ) v = 1;   
+  if ( me == "NE" ) v = 2;  
+  if ( me == "E" ) v = 3;   
+  if ( me == "SE" ) v = 4;  
+  if ( me == "S" ) v = 5;   
+  if ( me == "SW" ) v = 6;  
+  if ( me == "W" ) v = 7;   
+  if ( me == "NW" ) v = 8;  
+  Serial.print( "v = " );
+  Serial.print( v );
+  Serial.print( ", " );
+  Serial.print( compass.getHeading() );
+  Serial.print( ", " );
+  Serial.println( compass.decodeHeading( compass.getHeading() ) );
+  
+  showCatFaceDirection( v );
   }
 
 }

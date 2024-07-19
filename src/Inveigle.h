@@ -37,6 +37,7 @@ class Inveigle
       Awake,
       ShowTime,
       Sleep,
+      SetTime,
       CatsPlay,
       MysticCat,
       EyesFollowFinger,
@@ -56,9 +57,7 @@ class Inveigle
     bool sleepStarting;
 
     unsigned long msitime;
-    unsigned long msiwhen;
-    
-    unsigned long toftimer;
+    unsigned long msiwhen;    
 };
 
 #endif   //INVEIGLE_H

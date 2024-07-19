@@ -20,29 +20,37 @@ Read the license in the license.txt file that comes with this code.
 
 /* Experience videos */
 
-#define Sleep_video "bad372bfc9bf9719ce5658406d1013c5"
+#define Chastise_video "62107b530f9076acf3246db961e99dab"
 
-#define OutOfTheBox_video "68995be890503a75e641eec9dd58cf00"
+#define CatsPlay_video "fb84d719af3ed385f732e0b8be30a8d8"
 
-#define ShowTime_video "4b88178d0cc908a426df4da665854c6d"
+#define EyesFollowFinger_video "f99c9b5031e6102ef45fbdf71cb09134"
+
+#define MysticCat_video "bc481c1a678e0f62e2838e7fc8cd922f"
+
+#define OutOfTheBox_video "5826fbcd1e0ee8fff31a3ad6ea1a0ecf"
+
+#define ParallaxCat_video "7f4f62c859d8a8638cb9126c23775372"
+
+#define Shaken_video "538b9f5360a511bf20e1b85a1dc6250d"
+
+#define Sleep_video "c13cccc1f14b431659a70127aa276452"
+
+#define Swipe_video "0bd4f8f2b46c59e8303401134eb129ae"
+
+#define ShowTime_video "0c694842005c6e03d2abe845e530815e"
+
+
+
+
 
 #define SetTime_video "e0e2f0ca7da627e1bdb25f49e15cc5e4"
 
-#define MysticCat_video "6d3b8059a63901a9fcea8ddc66d57e34"
-
-#define ParallaxCat_video "f5e1f94eda02bf045cbd1b313c31ce84"
-
-#define EyesFollowFinger_video "9091437d4bf6363942280205194785e8"
-
-#define CatsPlay_video "9d5084f044cce66bd8725ac7a1b60cca"
-
 #define Getting_Sleepy_video "77cb2dc2cb42e714ed617dab50900fb7"
 
-#define Shaken_video "db81a87936e0945a8c6278595932fe90"
 
 // Not yet available
 #define SwipeFinger_video "77cb2dc2cb42e714ed617dab50900fb7"
-#define Chastise_video "77cb2dc2cb42e714ed617dab50900fb7"
 
 #define videoname_end ".mjpeg"
 
@@ -79,7 +87,7 @@ Read the license in the license.txt file that comes with this code.
 
 // Accelerometer template storage
 #define ACCEL_BASE_DIR "REFLECTIONS"
-#define ACCEL_BASE_FILE "fantastic4"
+#define ACCEL_BASE_FILE "fantastic4b"
 #define ACCEL_BASE_EXT ".ages"
 
 // GPS
@@ -173,7 +181,7 @@ Read the license in the license.txt file that comes with this code.
 #define COLOR_TEXT_YELLOW RGB565( 210, 200, 102 )
 #define COLOR_STRIPE_MEDIUM_GRAY RGB565( 153, 105, 140 )
 #define COLOR_STRIPE_PINK RGB565( 166, 139, 186 )
-
+#define COLOR_BLUE RGB565( 0, 0, 140 )
 #define COLOR_BLACK RGB565(0, 0, 0)
 
 

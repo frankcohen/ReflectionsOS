@@ -20,56 +20,34 @@ extern TimeService timeservice;
 
 void Experience_SetTime::init()
 {
-  vidflag = true;  
   setupComplete = false;
   runComplete = false;
   teardownComplete = false;
   stopped = false;
   idle = false;
-} 
+  timeflag = true;
+}
 
 void Experience_SetTime::setup() 
 {
-  if ( vidflag )
-  {
-    video.startVideo( SetTime_video );
-    timeflag = true;
-    vidflag = false;
-  }
-
-  if ( video.getVideoTime() > 2500 )
-  {
-    video.setPaused( true );
-    setSetupComplete(true);  // Signal that setup is complete
-  }
+  timeservice.setDialActivated( true );
+  setSetupComplete(true);  // Signal that setup is complete
 }
 
 void Experience_SetTime::run() 
 {
-  if ( timeflag )
+  if ( ! timeservice.getDialActivated() )
   {
-    timeservice.startShow( 0 );     // Show saying plus hour and minute
-    timeflag = false;
-  }
-  else
-  {
-    if ( ! timeservice.getActivated() )
-    {
-      video.setPaused( false );
-      tearflag = true;
-      setRunComplete(true);  // Signal run complete
-    }
+    video.fadeToBlack();
+    setRunComplete(true);  // Signal run complete
   }
 }
 
-void Experience_SetTime::teardown() {
-    // Teardown code for Experience_SetTime
+void Experience_SetTime::teardown() 
+{
+  if ( ! video.getFadingStatus() )
+  {
+    setTeardownComplete( true );  // Signal teardown complete
+  }
 
-    video.setPaused( false );
-
-    if ( video.getStatus() == 0 )
-    {
-      video.stopVideo();
-      setTeardownComplete( true );  // Signal teardown complete
-    }
 }

@@ -37,8 +37,8 @@ can be used for this purpose. Requires esp_sleep.h
 //RTC_DATA_ATTR int wakecount;
 
 // Gesture detection
-#define tollerance 0.10
-#define windowtime 1000
+#define tollerance 0.07
+#define windowtime 2000
 #define scaler 200
 #define scalemax 300
 #define scalemin -300
@@ -78,9 +78,12 @@ class Accelerometer
     bool loadGestures();
     int getRecentGesture();
     float getXreading();
+    float getAngle();
+    float getXaccelReading();
     
   private:
     bool getAccelValues();
+    bool isOutsidePercent( float oldposition, float newposition, float perc );
     float timeWarp( int gestureIndex, int typen );
     float DTWgpt( float seq1[][3], float seq2[][3], int len );
     float DTWdistance(float x1, float y1, float z1, float x2, float y2, float z2);
