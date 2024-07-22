@@ -31,6 +31,7 @@ the #include list and class instantiation method below.
 #include "Experience_ShowTime.h"
 #include "Experience_Sleep.h"
 #include "Experience_SetTime.h"
+#include "Experience_Mystic.h"
 
 extern Video video;
 extern TimeService timeservice;
@@ -45,6 +46,7 @@ Inveigle::Inveigle() : currentExperience(nullptr), currentState(SETUP)
   experiences.push_back( new Experience_ShowTime() );
   experiences.push_back( new Experience_Sleep() );
   experiences.push_back( new Experience_SetTime() );
+  experiences.push_back( new Experience_Mystic() );
 
   // CatsPlay,
   // MysticCat,
