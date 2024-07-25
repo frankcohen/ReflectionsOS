@@ -16,13 +16,7 @@
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Arduino_GFX *gfx;
 
-#define GRID_ROWS 8
-#define GRID_COLS 8
-
-TOF::TOF() 
-  : bufferIndex(0), currentBlockID(0) {
-    initGestureBuffer();
-}
+TOF::TOF(){}
 
 void TOF::begin()
 { 
@@ -36,9 +30,6 @@ void TOF::begin()
 
     sensor.setRangingFrequency( CAPTURE_RATE );
 
-    imageResolution = sensor.getResolution();  //Query sensor for current resolution - either 4x4 or 8x8
-    imageWidth = sqrt( imageResolution );           //Calculate printing width
-
     sensor.startRanging();
 
     started = true;
@@ -46,36 +37,47 @@ void TOF::begin()
   else
   {
     logger.info( F( "TOF sensor failed to initialize" ) );
+    while(1);
   }
 
-  lastPollTime = millis();
+  gestureBuffer = (GestureData*) malloc( TOF_BUFFER_SIZE * sizeof( GestureData ) );
+
+  if (gestureBuffer == nullptr) 
+  {
+    Serial.println( F( "TOF failed to allocate memory for TOF gesture buffer" ) );
+    while (1); // Halt execution if allocation fails
+  }
+
+  memset( gestureBuffer, 0, TOF_BUFFER_SIZE * sizeof( GestureData ) );
+
+  currentBlockID = 0;
 
   fingerTime = millis();
   fingerTipInRange = false;
   fingerPosRow = 0;
   fingerPosCol = 0;
 
-  circularTimeOut = millis();
-  accumulator[0] = false;
-  accumulator[1] = false;
-  accumulator[2] = false;
-  accumulator[3] = false;
+  for ( int mia = 0; mia < 4; mia++ )
+  {
+    accumulator[ mia ] = false;
+    accumulator[ mia ] = false;
+    bombaccumulator[ mia ] = false;
+    vertaccumulator[ mia ] = false;
+    horizaccumulator[ mia ] = false;
+    flyaccumulator[ mia ] = false;
+  }
+
+  circularTimeOut  = millis();
+  horizTimeOut = millis();
+  vertTimeOut = millis();
+  bombTimeOut = millis();
+  flyTimeOut = millis();
+
   lastPollTime = millis();
   delayTime = millis();
   paceTime = millis();
-  delayTime = millis();
 
-  horizTimeOut = millis();
-  recentGesture = TOF::None;  
-}
-
-void TOF::initGestureBuffer() 
-{
-  gestureBuffer = (GestureData*) malloc( TOF_BUFFER_SIZE * sizeof( GestureData ) );
-  if (gestureBuffer == nullptr) {
-    Serial.println( F( "TOF failed to allocate memory for TOF gesture buffer" ) );
-    while (1); // Halt execution if allocation fails
-  }
+  recentGesture = TOFGesture::None;  
 }
 
 bool TOF::tofStatus()
@@ -127,33 +129,28 @@ void TOF::getMostRecentValues(GestureData recentValues[], int count)
 
 void TOF::detectGestures()
 {
-  if ( recentGesture != TOF::None ) return;
+  if ( recentGesture != TOFGesture::None ) return;
 
   if ( millis() - delayTime < 180 ) return;
   delayTime = millis();
 
-  if (sensor.isDataReady() == false ) return; 
+  if ( ! sensor.isDataReady() ) return; 
 
   int distance;
 
   sensor.getRangingData( &measurementData );
 
-  for (int i = 0; i < 8; i++) 
+  for ( int angela = 0; angela < 8; angela++ ) 
   {
-    for (int j = 0; j < 8; j++) 
+    for ( int heather = 0; heather < 8; heather++ ) 
     {
-      distance = measurementData.distance_mm[ j + ( i * 8 ) ];
-      gestureBuffer[bufferIndex] = { distance, currentBlockID };
-      bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
+      distance = measurementData.distance_mm[ heather + ( angela * 8 ) ];
+      gestureBuffer[ bufferIndex ] = { distance, currentBlockID };
+      bufferIndex = ( bufferIndex + 1 ) % BUFFER_SIZE;
     }
   }
 
   currentBlockID++;
-
-
-  return;
-
-
   
   // Finger tip coordinates used by Pounce, Eyes, Parallax
 
@@ -164,24 +161,20 @@ void TOF::detectGestures()
     Serial.print( " column ");
     Serial.println( fingerPosCol );
   }
-Serial.println("c");
 
   if ( detectSleepGesture() )
   {
     Serial.println( "TOF Sleep gesture detected" );
     recentGesture = TOFGesture::Sleep;
   }
-Serial.println("d");
 
   if ( ! fingerTipInRange ) return;
-Serial.println("d2");
 
   if ( detectCircularGesture() )
   {
     Serial.println( "TOF Circular gesture detected" );
     recentGesture = TOFGesture::Circular;
   }
-Serial.println("e");
 
   if ( detectHorizontalGesture() )
   {
@@ -206,7 +199,6 @@ Serial.println("e");
     Serial.println( "TOF FlyAway gesture detected" );    
     recentGesture = TOFGesture::FlyAway;
   }
-Serial.println("x");
 
 }
 
@@ -268,60 +260,50 @@ bool TOF::detectSleepGesture()
 
 bool TOF::detectCircularGesture() 
 {
-Serial.println("0");
   if ( millis() - circularTimeOut > circularDetectionDuration ) 
   {
     circularTimeOut = millis();
-Serial.println("5");
+
     accumulator[ 0 ] = false;
     accumulator[ 1 ] = false;
     accumulator[ 2 ] = false;
     accumulator[ 3 ] = false;
-Serial.println("6");
+
     return false;
   }
 
-Serial.println("1");
   if ( fingerTipInRange )
   {
 
     if ( ( fingerPosRow >= 0 ) && ( fingerPosRow < 4 ) )
     {
       // upper quadrant
-Serial.println("2");
-
       if ( ( fingerPosCol >= 0 ) && ( fingerPosCol < 4 ) )
       {
         // upper left
-Serial.println("7");
         accumulator[ 0 ] = true;
       }
       else
       {
         // upper right
-Serial.println("8");
         accumulator[ 1 ] = true;
       }
     }
     else
     {
       // lower quadrant
-
       if ( ( fingerPosCol >= 0 ) && ( fingerPosCol < 4 ) )
       {
         // lower left
-Serial.println("9");
         accumulator[ 2 ] = true;
       }
       else
       {
         // lower right
-Serial.println("10");
         accumulator[ 3 ] = true;
       }
     }
   }
-Serial.println("11");
 
   Serial.print( "Circular gesture " );
   Serial.print( accumulator[0] );
@@ -686,12 +668,14 @@ void TOF::loop()
 
   detectGestures();
 
+/*
   if ( millis() - lastPollTime > 1000 ) 
   {
     lastPollTime = millis();
 
-    //showBubbles();
-    //printTOF();
+    showBubbles();
+    printTOF();
   }
+*/
 
 }

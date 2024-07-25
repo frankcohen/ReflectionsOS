@@ -14,10 +14,13 @@
 #define BUFFER_SIZE 100
 #define CAPTURE_RATE 50
 
-#define TOF_BUFFER_SIZE 20
+// Saves thee most recent 10 blocks
+#define TOF_BUFFER_SIZE 640
+
+// Each block has these many readings
 #define TOF_BLOCK_SIZE 64
 
-// Definitions for TOFeyes
+// Definitions for Bubles
 #define tofdiam 18
 #define xdistance 30
 #define ydistance 30
@@ -102,31 +105,28 @@ class TOF
     bool detectBombDropGesture();
     bool detectFlyAwayGesture();
 
-    int recentGesture;
-
-    bool fingerTipInRange;
-    int fingerPosRow;
-    int fingerPosCol;
-    float fingerDist;
+    bool started;
+    TOFGesture recentGesture;
 
     SparkFun_VL53L5CX sensor;
 
     VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
-    int imageResolution = 0;      //Used to pretty print output
-    int imageWidth = 0;           //Used to pretty print output
-    bool started;
 
-    GestureData* gestureBuffer;       // Buffer to store most recent measurements
-    int bufferIndex;
+    GestureData* gestureBuffer;           // Buffer to store most recent measurements
+    unsigned int bufferIndex;
     int currentBlockID;
+
+    int closeReadingsCount;
+    int maxCount;
 
     unsigned long paceTime;
     unsigned long delayTime;
 
     unsigned long fingerTime;
-
-    int closeReadingsCount;
-    int maxCount;
+    bool fingerTipInRange;
+    int fingerPosRow;
+    int fingerPosCol;
+    float fingerDist;
 
     unsigned long circularTimeOut;
     bool accumulator[ 4 ];

@@ -167,7 +167,7 @@ static void smartdelay( unsigned long ms )
   {
     battery.loop();
     //accel.loop();
-    //tof.loop();
+    tof.loop();
     video.loop();
     storage.loop();
     timeservice.loop();
@@ -246,7 +246,7 @@ void setup() {
   gps.begin();
   accel.begin();
   compass.begin();
-  //tof.begin();
+  tof.begin();
   parallax.begin();
   timeservice.begin();
   inveigle.begin();
