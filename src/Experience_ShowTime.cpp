@@ -30,22 +30,35 @@ void Experience_ShowTime::init()
 
 void Experience_ShowTime::setup() 
 {
+
+  video.startVideo( ShowTime_video );
+  setSetupComplete(true);  // Signal that setup is complete
+
+  /*
   if ( vidflag )
   {
-    video.startVideo( SetTime_video );
+    video.startVideo( ShowTime_video );
     timeflag = true;
     vidflag = false;
   }
+  */
 
+
+  /*
   if ( video.getVideoTime() > 2500 )
   {
     video.setPaused( true );
     setSetupComplete(true);  // Signal that setup is complete
   }
+  */
 }
 
 void Experience_ShowTime::run() 
 {
+
+  setRunComplete(true);  // Signal run complete
+
+  /*
   if ( timeflag )
   {
     timeservice.startShow( 0 );     // Show saying plus hour and minute
@@ -60,16 +73,17 @@ void Experience_ShowTime::run()
       setRunComplete(true);  // Signal run complete
     }
   }
+  */
+
 }
 
 void Experience_ShowTime::teardown() {
     // Teardown code for Experience_ShowTime
 
-    video.setPaused( false );
+    //video.setPaused( false );
 
     if ( video.getStatus() == 0 )
     {
-      video.stopVideo();
       setTeardownComplete( true );  // Signal teardown complete
     }
 }

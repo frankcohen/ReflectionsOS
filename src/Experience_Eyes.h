@@ -1,6 +1,6 @@
 // Experience1.h
-#ifndef Experience_Awake_H
-#define Experience_Awake_H
+#ifndef Experience_Eyes_H
+#define Experience_Eyes_H
 
 #include <Arduino.h>
 
@@ -10,7 +10,7 @@
 #include "Video.h"
 #include "TimeService.h"
 
-class Experience_Awake : public Experience {
+class Experience_Eyes : public Experience {
   public:
     void setup() override;
     void run() override;
@@ -18,7 +18,11 @@ class Experience_Awake : public Experience {
     void init() override;
 
   private:
+    unsigned long timer;
+    bool tearflag;
+    bool timeflag;
+    bool vidflag;
     
 };
 
-#endif // Experience_Awake_H
+#endif // Experience_Eyes_H

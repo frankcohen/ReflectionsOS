@@ -16,11 +16,9 @@
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
-extern TimeService timeservice;
 
 void Experience_Awake::init()
 {
-  vidflag = true;  
   setupComplete = false;
   runComplete = false;
   teardownComplete = false;
@@ -30,24 +28,17 @@ void Experience_Awake::init()
 
 void Experience_Awake::setup() 
 {
-  if ( vidflag )
-  {
-    video.startVideo( OutOfTheBox_video );
-    timeflag = true;
-    vidflag = false;
-    setSetupComplete(true);  // Signal that setup is complete
-  }
+  video.startVideo( OutOfTheBox_video );
+  setSetupComplete(true);  // Signal that setup is complete
 }
 
 void Experience_Awake::run() 
 {
-  tearflag = true;
   setRunComplete(true);  // Signal run complete
 }
 
 void Experience_Awake::teardown() {
   // Teardown code for Experience_Awake
-
   if ( video.getStatus() == 0 )
   {
     setTeardownComplete( true );  // Signal teardown complete

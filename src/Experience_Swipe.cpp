@@ -12,13 +12,13 @@
 
 */
 
-#include "Experience_Sleep.h"
+#include "Experience_Swipe.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
 extern TimeService timeservice;
 
-void Experience_Sleep::init()
+void Experience_Swipe::init()
 {
   vidflag = true;  
   setupComplete = false;
@@ -28,16 +28,16 @@ void Experience_Sleep::init()
   idle = false;
 } 
 
-void Experience_Sleep::setup() 
+void Experience_Swipe::setup() 
 {
-  Serial.println( "Sleep SETUP" );
+  Serial.println( "Swipe SETUP" );
   timeservice.setDialActivated( false );
   timeservice.setTimeAnimationActivated( false );
-  video.startVideo( Sleep_video );
+  video.startVideo( Swipe_video );
   setSetupComplete(true);  // Signal that setup is complete
 }
 
-void Experience_Sleep::run() 
+void Experience_Swipe::run() 
 {
   if ( video.getStatus() == 0 )
   {
@@ -45,14 +45,8 @@ void Experience_Sleep::run()
   }
 }
 
-void Experience_Sleep::teardown() 
+void Experience_Swipe::teardown() 
 {
-  Serial.println( "Sleep TEARDOWN" );
-
-  // Put cat to deep sleep
-  // esp_deep_sleep_start();
-
-  Serial.println( "Sleep after sleep start" );
-
+  Serial.println( "Swipe TEARDOWN" );
   setTeardownComplete( true );  // Signal teardown complete
 }

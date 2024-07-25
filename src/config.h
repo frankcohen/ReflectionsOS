@@ -20,15 +20,15 @@ Read the license in the license.txt file that comes with this code.
 
 /* Experience videos */
 
-#define Chastise_video "62107b530f9076acf3246db961e99dab"
+#define OutOfTheBox_video "a1d7900fc81c714ccbdb692231c16d70"
 
-#define CatsPlay_video "fb84d719af3ed385f732e0b8be30a8d8"
+#define Chastise_video "29eebc0d0804260f934575ceaedc50b1"
+
+#define CatsPlay_video "5784febffcbc6bee7c5621e7489b8db5"
 
 #define EyesFollowFinger_video "f99c9b5031e6102ef45fbdf71cb09134"
 
 #define MysticCat_video "bc481c1a678e0f62e2838e7fc8cd922f"
-
-#define OutOfTheBox_video "5826fbcd1e0ee8fff31a3ad6ea1a0ecf"
 
 #define ParallaxCat_video "7f4f62c859d8a8638cb9126c23775372"
 
@@ -36,21 +36,13 @@ Read the license in the license.txt file that comes with this code.
 
 #define Sleep_video "c13cccc1f14b431659a70127aa276452"
 
-#define Swipe_video "0bd4f8f2b46c59e8303401134eb129ae"
+#define Swipe_video "4e93a6c65511b257e959b0cdc9f9709f"
 
 #define ShowTime_video "0c694842005c6e03d2abe845e530815e"
 
+#define SetTime_video "c0fad0b76200936d73785cfc220d22cd"
 
-
-
-
-#define SetTime_video "e0e2f0ca7da627e1bdb25f49e15cc5e4"
-
-#define Getting_Sleepy_video "77cb2dc2cb42e714ed617dab50900fb7"
-
-
-// Not yet available
-#define SwipeFinger_video "77cb2dc2cb42e714ed617dab50900fb7"
+#define Getting_Sleepy_video "69e2f5a6b7bfffab4a787be11f57fbcd"
 
 #define videoname_end ".mjpeg"
 
