@@ -86,8 +86,7 @@ const char* timetext[51][2] = {
   { "Do you?",       "Believe?"},
   { "Look closely",  "See nothing"},
   { "Smiling",       "Ear to ear"},
-  { "Invisible",     "Yet here"},
-  { "Peculiar",      "Strange"},
+  { "Invisible!",    "Yet here"},
 };
 
 void TimeService::begin()

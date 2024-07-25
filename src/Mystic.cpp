@@ -1,5 +1,18 @@
+/*
+ Reflections, mobile connected entertainment device
+
+ Repository is at https://github.com/frankcohen/ReflectionsOS
+ Includes board wiring directions, server side components, examples, support
+
+ Licensed under GPL v3 Open Source Software
+ (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
+ Read the license in the license.txt file that comes with this code.
+
+ Support class for Experience_MysticCat
+ 
+*/
+
 #include "Mystic.h"
-#include <Arduino_GFX_Library.h>
 
 extern LOGGER logger;
 extern Arduino_GFX *gfx;
