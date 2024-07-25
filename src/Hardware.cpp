@@ -41,21 +41,23 @@ void Hardware::begin()
   pinMode(Display_SPI_BK, OUTPUT);      // Turns backlight on
   digitalWrite(Display_SPI_BK, LOW);
 
-  // Turns the speaker amp on
-  pinMode(AudioPower, OUTPUT);
-  digitalWrite(AudioPower, HIGH);
-
-  pinMode( TOFPower, OUTPUT);    // Power control for TOF sensor
-  digitalWrite( TOFPower, LOW);
-
-  pinMode(INT1_PIN, INPUT);
+  pinMode(INT1_PIN, INPUT);     // Accelerometer awake on movement pins
   pinMode(INT2_PIN, INPUT);
 
   pinMode(LED_Pin, OUTPUT);
 
+  pinMode( TOFPower, OUTPUT);    // Power control for TOF sensor
+  digitalWrite( TOFPower, LOW);
+
+  // For heat study, keep these off at start
+
+  // Turns the speaker amp on
+  pinMode(AudioPower, OUTPUT);
+  digitalWrite(AudioPower, LOW);    // HIGH is on
+
   // Turn GPS module on
   pinMode(GPSPower, OUTPUT);
-  digitalWrite(GPSPower, HIGH);
+  digitalWrite(GPSPower, LOW);      // HIGH is on
 
   uint32_t seed = esp_random();
   randomSeed( seed );

@@ -1,6 +1,6 @@
 // Experience1.h
-#ifndef Experience_Awake_H
-#define Experience_Awake_H
+#ifndef Experience_CatsPlay_H
+#define Experience_CatsPlay_H
 
 #include <Arduino.h>
 
@@ -10,7 +10,7 @@
 #include "Video.h"
 #include "TimeService.h"
 
-class Experience_Awake : public Experience {
+class Experience_CatsPlay : public Experience {
   public:
     void setup() override;
     void run() override;
@@ -21,4 +21,4 @@ class Experience_Awake : public Experience {
     
 };
 
-#endif // Experience_Awake_H
+#endif // Experience_CatsPlay

@@ -163,10 +163,11 @@ static void smartdelay( unsigned long ms )
 {
   unsigned long start = millis();
 
-  do {
+  do 
+  {
     battery.loop();
     //accel.loop();
-    tof.loop();
+    //tof.loop();
     video.loop();
     storage.loop();
     timeservice.loop();
@@ -245,7 +246,7 @@ void setup() {
   gps.begin();
   accel.begin();
   compass.begin();
-  tof.begin();
+  //tof.begin();
   parallax.begin();
   timeservice.begin();
   inveigle.begin();
@@ -263,12 +264,10 @@ void setup() {
   startMSC();     // Calliope mounts as a flash drive, showing NAND contents over USB on your computer
 */
 
-  //inveigle.startExperience( Inveigle::SetTime );
-
   haptic.playEffect(14);  // 14 Strong Buzz
 
-startvidtime = millis();
-startvidflag = true;
+  startvidtime = millis();
+  startvidflag = true;
 
   logger.info(F("Setup complete"));
 }
@@ -286,22 +285,9 @@ const char* msgtext[5][2] = {
 void loop() {
   smartdelay(1000);
 
- if ( millis() - startvidtime > 500 )
- {
-  startvidtime = millis();
-
-  startcnt++;
-  //Serial.println( startcnt );
-
-  if ( startvidflag )
-  {
-    inveigle.startExperience( Inveigle::Awake );
-    startvidflag = false;
-  }
-
- }
-
   // Update BLE beacon heading for other devices
+
+  /*
 
   if ( ble.isStarted() )
   {
@@ -321,5 +307,7 @@ void loop() {
       ble.setLocalHeading(headfl);
     }
   }
+
+  */
 
 }

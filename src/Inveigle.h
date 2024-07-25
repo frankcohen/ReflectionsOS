@@ -38,22 +38,30 @@ class Inveigle
       ShowTime,
       Sleep,
       SetTime,
-      CatsPlay,
-      MysticCat,
+      Chastise,
       EyesFollowFinger,
       ParallaxCat,
-      Shaken,
       SwipeFinger,
-      Chastise
+      CatsPlay,
+      MysticCat,
+      Shaken,
+      GettingSleepy,
+      ExperienceCount   // Used to iterate through the list,  add new elements above
     };
 
   private:
     Experience* currentExperience;
+    Experience* makeExp;
     State currentState;
     std::vector<Experience*> experiences;
 
     void operateExperience();
 
+    void loop2();
+
+    int experienceIndex;  // used for testing
+    unsigned long klezcount;
+    
     bool sleepStarting;
 
     unsigned long msitime;

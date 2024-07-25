@@ -12,15 +12,13 @@
 
 */
 
-#include "Experience_Sleep.h"
+#include "Experience_Shaken.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
-extern TimeService timeservice;
 
-void Experience_Sleep::init()
+void Experience_Shaken::init()
 {
-  vidflag = true;  
   setupComplete = false;
   runComplete = false;
   teardownComplete = false;
@@ -28,31 +26,21 @@ void Experience_Sleep::init()
   idle = false;
 } 
 
-void Experience_Sleep::setup() 
+void Experience_Shaken::setup() 
 {
-  Serial.println( "Sleep SETUP" );
-  timeservice.setDialActivated( false );
-  timeservice.setTimeAnimationActivated( false );
-  video.startVideo( Sleep_video );
+  video.startVideo( Shaken_video );
   setSetupComplete(true);  // Signal that setup is complete
 }
 
-void Experience_Sleep::run() 
+void Experience_Shaken::run() 
+{
+  setRunComplete(true);  // Signal run complete
+}
+
+void Experience_Shaken::teardown() 
 {
   if ( video.getStatus() == 0 )
   {
-    setRunComplete(true);  // Signal run complete
+    setTeardownComplete( true );  // Signal teardown complete
   }
-}
-
-void Experience_Sleep::teardown() 
-{
-  Serial.println( "Sleep TEARDOWN" );
-
-  // Put cat to deep sleep
-  // esp_deep_sleep_start();
-
-  Serial.println( "Sleep after sleep start" );
-
-  setTeardownComplete( true );  // Signal teardown complete
 }

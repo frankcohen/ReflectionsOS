@@ -12,15 +12,13 @@
 
 */
 
-#include "Experience_Sleep.h"
+#include "Experience_MysticCat.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
-extern TimeService timeservice;
 
-void Experience_Sleep::init()
+void Experience_MysticCat::init()
 {
-  vidflag = true;  
   setupComplete = false;
   runComplete = false;
   teardownComplete = false;
@@ -28,31 +26,21 @@ void Experience_Sleep::init()
   idle = false;
 } 
 
-void Experience_Sleep::setup() 
+void Experience_MysticCat::setup() 
 {
-  Serial.println( "Sleep SETUP" );
-  timeservice.setDialActivated( false );
-  timeservice.setTimeAnimationActivated( false );
-  video.startVideo( Sleep_video );
+  video.startVideo( MysticCat_video );
   setSetupComplete(true);  // Signal that setup is complete
 }
 
-void Experience_Sleep::run() 
+void Experience_MysticCat::run() 
 {
-  if ( video.getStatus() == 0 )
-  {
-    setRunComplete(true);  // Signal run complete
-  }
+  setRunComplete(true);  // Signal run complete
 }
 
-void Experience_Sleep::teardown() 
-{
-  Serial.println( "Sleep TEARDOWN" );
+void Experience_MysticCat::teardown() {
 
-  // Put cat to deep sleep
-  // esp_deep_sleep_start();
-
-  Serial.println( "Sleep after sleep start" );
-
-  setTeardownComplete( true );  // Signal teardown complete
+  if ( video.getStatus() == 0 )
+  {
+    setTeardownComplete( true );  // Signal teardown complete
+  }
 }

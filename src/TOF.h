@@ -9,6 +9,10 @@
 #include <Wire.h>
 #include <SparkFun_VL53L5CX_Library.h>
 #include <Arduino_GFX_Library.h>
+#include <cmath> // for abs function
+
+#define BUFFER_SIZE 100
+#define CAPTURE_RATE 50
 
 #define TOF_BUFFER_SIZE 20
 #define TOF_BLOCK_SIZE 64
@@ -19,13 +23,27 @@
 #define ydistance 30
 #define xspace 30
 #define yspace 30
-#define maxdist 50
+#define tofmaxdist 100
 
 // Definitions for Cancel gesture
 #define cancelDuration 2000
-#define detectionThresholdLow 4
-#define detectionThresholdHigh 25
-#define majorityThreshold 38
+#define detectionThresholdLow 18
+#define detectionThresholdHigh 30
+#define cancelHighRejection 100
+#define cancelRejectCount 5
+#define majorityThreshold 50
+
+// Definitions for fingerTip dected gesture
+#define fingerDetectionThresholdLow 25
+#define fingerDetectionThresholdHigh 50
+#define fingerWiggleRoom 7
+
+// Definitions for Circular gesture
+#define circularDetectionDuration 1500
+
+// Definitions for BombDrop and FlyAway gesture
+#define bombFlyDistLow 25    // Cannot be smaller than fingerDetectionThresholdLow
+#define bombFlyDistHigh 50   // Cannot be larger than fingerDetectionThresholdHigh
 
 #define gestureframes 5
 
@@ -35,8 +53,6 @@
 // Structure to store a single measurement
 
 struct GestureData {
-    int x;
-    int y;
     int distance;
     int blockID;
 };
@@ -48,100 +64,90 @@ class TOF
     void begin();
     void loop();
     bool test();
-    void printTOF();
+
+    static void sensorInitTaskWrapper(void *parameter);
+    void sensorInitTask();
 
     bool tofStatus();
+
+    int getGesture();
+
+    void printTOF();
     void showBubbles();
 
-    int getNextGesture();
-    bool cancelGestureDetected();
-    int getReadingsCount();
+    enum TOFGesture
+    {
+      None,
+      Sleep,
+      Circular,
+      Horizontal,
+      Vertical,
+      BombDrop,
+      FlyAway
+    };
 
   private:
-    // Buffer to store measurements
-
-    GestureData* gestureBuffer;
-    int bufferIndex;
-    int currentBlockID;
+    TaskHandle_t sensorInitTaskHandle;
 
     void detectGestures();
     void getMostRecentValues(GestureData recentValues[], int count);
     void initGestureBuffer();
 
-    enum Gestured { cancelled, none } recentGesture;
+    // Helper methods for gesture detection
+    bool detectSleepGesture();
+    bool detectCircularGesture();
+    bool detectFingerTip();
+    bool detectHorizontalGesture();
+    bool detectVerticalGesture();
+    bool detectBombDropGesture();
+    bool detectFlyAwayGesture();
+
+    int recentGesture;
+
+    bool fingerTipInRange;
+    int fingerPosRow;
+    int fingerPosCol;
+    float fingerDist;
+
+    SparkFun_VL53L5CX sensor;
+
+    VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
+    int imageResolution = 0;      //Used to pretty print output
+    int imageWidth = 0;           //Used to pretty print output
+    bool started;
+
+    GestureData* gestureBuffer;       // Buffer to store most recent measurements
+    int bufferIndex;
+    int currentBlockID;
 
     unsigned long paceTime;
     unsigned long delayTime;
 
+    unsigned long fingerTime;
+
     int closeReadingsCount;
+    int maxCount;
 
-    int horizx;
-    int horizy;
-    int horizd;
+    unsigned long circularTimeOut;
+    bool accumulator[ 4 ];
 
-    uint16_t horizontal_distances[GRID_ROWS][GRID_COLS];
-    uint16_t vertical_distances[GRID_ROWS][GRID_COLS];
-    
-    TaskHandle_t sensorInitTaskHandle;
-    SparkFun_VL53L5CX sensor;
-    
-    static void sensorInitTaskWrapper(void * parameter);
-    void sensorInitTask();
+    unsigned long horizTimeOut;
+    #define horizDetectionDuration 1500
+    bool horizaccumulator[ 4 ];
 
-    VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
-    int imageResolution = 0;  //Used to pretty print output
-    int imageWidth = 0;       //Used to pretty print output
-    bool started;
-        
-    unsigned long lastPollTime;
+    unsigned long vertTimeOut;
+    #define vertDetectionDuration 1500
+    bool vertaccumulator[ 4 ];
 
-    unsigned long cancelGestureTimeout;
+    unsigned long bombTimeOut;
+    #define bombDetectionDuration 1500
+    bool bombaccumulator[ 4 ];
 
-    bool cancelDetected;
-    unsigned long nextCanceltime;
-    bool nextCancelflag;
+    unsigned long flyTimeOut;
+    #define flyDetectionDuration 1500
+    bool flyaccumulator[ 4 ];
 
-    void checkForCancelGesture();
-    void removeExpiredGestures();
-
-    // Helper methods for gesture detection
-    bool detectCancelGesture();
-    bool detectCircularGesture();
-    bool detectLinearGesture(int x, int y);
-    bool detectVerticalGesture();
-    bool detectBombDropGesture();
-    bool detectFlyAwayGesture();
-    bool detectFingerTip();
-
-    // Gesture handlers
-    void Cancel_Gesture();
-    void Pounce_Gesture();
-    void EyesFollow_Gesture(int position);
-    void Parallax_Gesture();
-    void Shaken_Gesture();
-    void Chastise_Gesture();
-    void BombDrop_Gesture();
-    void FlyAway_Gesture();
-
-    // Constants for buffer and accumulator space
-    static const int BUFFER_SIZE = 100;
-    static const int CAPTURE_RATE = 50;
-    static const int ACCUMULATOR_SIZE = 50;
-    static const int MAX_RADIUS = 25;
-
-    // Gesture detection parameters
-    static const int linearThreshold = 10;
-    static const int minPointsForLine = 5;
-    static const int centerThreshold = 5;
-    static const int radiusRange = 10;
-    static const int gestureCooldown = 3000;
-    
-    // Parameters for gesture detection
-    unsigned long lastGestureTime;
-    bool eyesFollowMode;
-    bool bombDropDetected;
-    bool flyAwayDetected;
-
+    unsigned long lastPollTime;    
 };
 
 #endif // _TOF_

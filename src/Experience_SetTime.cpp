@@ -30,24 +30,42 @@ void Experience_SetTime::init()
 
 void Experience_SetTime::setup() 
 {
-  timeservice.setDialActivated( true );
+  video.startVideo( SetTime_video );
+
+  //timeservice.setDialActivated( true );
+
   setSetupComplete(true);  // Signal that setup is complete
 }
 
 void Experience_SetTime::run() 
 {
+  if ( video.getStatus() == 0 )
+  {
+    setRunComplete(true);  // Signal run complete
+  }
+
+  /*
   if ( ! timeservice.getDialActivated() )
   {
     video.fadeToBlack();
     setRunComplete(true);  // Signal run complete
   }
+  */
 }
 
 void Experience_SetTime::teardown() 
 {
-  if ( ! video.getFadingStatus() )
+  setTeardownComplete( true );  // Signal teardown complete
+
+  /*
+  if ( video.getStatus() == 0 )
   {
     setTeardownComplete( true );  // Signal teardown complete
   }
 
+  if ( ! video.getFadingStatus() )
+  {
+    setTeardownComplete( true );  // Signal teardown complete
+  }
+  */
 }
