@@ -1,6 +1,8 @@
 #ifndef _TOF_
 #define _TOF_
 
+#include "Arduino.h"
+
 #include "config.h"
 #include "secrets.h"
 
@@ -11,14 +13,8 @@
 #include <Arduino_GFX_Library.h>
 #include <cmath> // for abs function
 
-#define BUFFER_SIZE 100
-#define CAPTURE_RATE 50
-
-// Saves thee most recent 10 blocks
-#define TOF_BUFFER_SIZE 640
-
-// Each block has these many readings
-#define TOF_BLOCK_SIZE 64
+const int SET_SIZE = 64;      // Each block has these many readings
+const int NUM_SETS = 100;     // Saves the most recent 100 blocks
 
 // Definitions for Bubles
 #define tofdiam 18
@@ -33,16 +29,17 @@
 #define detectionThresholdLow 18
 #define detectionThresholdHigh 30
 #define cancelHighRejection 100
-#define cancelRejectCount 5
-#define majorityThreshold 50
+#define cancelRejectCount 2
+#define minorityThreshold 15
+#define majorityThreshold 19
 
 // Definitions for fingerTip dected gesture
-#define fingerDetectionThresholdLow 25
+#define fingerDetectionThresholdLow 28
 #define fingerDetectionThresholdHigh 50
 #define fingerWiggleRoom 7
 
 // Definitions for Circular gesture
-#define circularDetectionDuration 1500
+#define circularDetectionDuration 2000
 
 // Definitions for BombDrop and FlyAway gesture
 #define bombFlyDistLow 25    // Cannot be smaller than fingerDetectionThresholdLow
@@ -53,30 +50,10 @@
 #define GRID_ROWS 8
 #define GRID_COLS 8
 
-// Structure to store a single measurement
-
-struct GestureData {
-    int distance;
-    int blockID;
-};
-
 class TOF
 {
   public:
     TOF();
-    void begin();
-    void loop();
-    bool test();
-
-    static void sensorInitTaskWrapper(void *parameter);
-    void sensorInitTask();
-
-    bool tofStatus();
-
-    int getGesture();
-
-    void printTOF();
-    void showBubbles();
 
     enum TOFGesture
     {
@@ -89,12 +66,19 @@ class TOF
       FlyAway
     };
 
-  private:
-    TaskHandle_t sensorInitTaskHandle;
+    void begin();
+    void loop();
+    bool test();
 
+    bool tofStatus();
+
+    TOFGesture getGesture();
+
+    void printTOF();
+    void showBubbles();
+
+  private:
     void detectGestures();
-    void getMostRecentValues(GestureData recentValues[], int count);
-    void initGestureBuffer();
 
     // Helper methods for gesture detection
     bool detectSleepGesture();
@@ -112,9 +96,8 @@ class TOF
 
     VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
 
-    GestureData* gestureBuffer;           // Buffer to store most recent measurements
-    unsigned int bufferIndex;
-    int currentBlockID;
+    int16_t* buffer;          // Wrap around buffer stores most recent measurements
+    int currentSetIndex = 0;
 
     int closeReadingsCount;
     int maxCount;
@@ -127,6 +110,12 @@ class TOF
     int fingerPosRow;
     int fingerPosCol;
     float fingerDist;
+
+    float ssmin;
+    float ssmax;
+    float ssavg;
+    float ssttl;
+    float sscnt;
 
     unsigned long circularTimeOut;
     bool accumulator[ 4 ];

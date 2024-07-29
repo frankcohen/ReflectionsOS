@@ -252,6 +252,26 @@ void Inveigle::loop()
   }
   else
   {
+
+
+
+  int mygs = tof.getGesture();
+  if ( mygs != TOF::None )
+  {
+    Serial.print( "TOF gesture detected " );
+    if ( mygs == TOF::BombDrop ) Serial.println( "bombdrop");
+    if ( mygs == TOF::Circular ) Serial.println( "circular");
+    if ( mygs == TOF::FlyAway ) Serial.println( "flyaway");
+    if ( mygs == TOF::Horizontal ) Serial.println( "horizontal");
+    if ( mygs == TOF::Sleep ) Serial.println( "sleep");
+    if ( mygs == TOF::Vertical ) Serial.println( "vertical");
+  }
+
+
+
+
+
+
     if ( millis() - klezcount > 5000 )
     {
       klezcount = millis();

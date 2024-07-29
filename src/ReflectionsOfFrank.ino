@@ -134,6 +134,8 @@ unsigned long startvidtime;
 bool startvidflag;
 int startcnt;
 
+bool tofstarted;
+
 /* Test for a device number on the I2C bus, display error when not found */
 
 void assertI2Cdevice(byte deviceNum, String devName) {
@@ -167,7 +169,6 @@ static void smartdelay( unsigned long ms )
   {
     battery.loop();
     //accel.loop();
-    tof.loop();
     video.loop();
     storage.loop();
     timeservice.loop();
@@ -246,7 +247,6 @@ void setup() {
   gps.begin();
   accel.begin();
   compass.begin();
-  tof.begin();
   parallax.begin();
   timeservice.begin();
   inveigle.begin();
@@ -264,6 +264,19 @@ void setup() {
   startMSC();     // Calliope mounts as a flash drive, showing NAND contents over USB on your computer
 */
 
+  tofstarted = true;
+
+  // Create a new task for TOF processing, pin it to core 0
+  xTaskCreatePinnedToCore(
+    TOFTask,   // Task function
+    "TOFTask", // Name of the task
+    10000,     // Stack size (in words, not bytes)
+    NULL,      // Task input parameter
+    1,         // Priority of the task
+    NULL,      // Task handle
+    0          // Core where the task should run (core 0)
+  );
+
   haptic.playEffect(14);  // 14 Strong Buzz
 
   startvidtime = millis();
@@ -272,6 +285,23 @@ void setup() {
   logger.info(F("Setup complete"));
 }
 
+/* Runs TOF gesture sensor in core 0 */
+
+void TOFTask(void *pvParameters) 
+{
+  while (true) 
+  {
+    if ( tofstarted ) 
+    {
+      tof.begin();
+      tofstarted = false;
+    }
+
+    tof.loop(); // Process and update gesture data
+    // Delay to prevent task from monopolizing the CPU
+    vTaskDelay( pdMS_TO_TICKS(10) ); // Delay for 10 milliseconds
+  }
+}
 
 const char* msgtext[5][2] = {
   { "It's early",    "why yes" },
