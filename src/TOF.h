@@ -24,14 +24,15 @@ const int NUM_SETS = 100;     // Saves the most recent 100 blocks
 #define yspace 30
 #define tofmaxdist 100
 
-// Definitions for Cancel gesture
-#define cancelDuration 2000
+// Definitions for Sleep gesture
 #define detectionThresholdLow 18
-#define detectionThresholdHigh 30
-#define cancelHighRejection 100
-#define cancelRejectCount 2
-#define minorityThreshold 15
-#define majorityThreshold 19
+#define detectionThresholdHigh 21
+#define sleepHighRejection 26
+#define sleepRejectCount 0
+#define minorityThreshold 20
+#define majorityThreshold 22
+#define sleepDuration 4000
+#define sleepRepeat 8
 
 // Definitions for fingerTip dected gesture
 #define fingerDetectionThresholdLow 28
@@ -111,6 +112,8 @@ class TOF
     int fingerPosCol;
     float fingerDist;
 
+    unsigned long sleepTime;
+    int sleepCount;
     float ssmin;
     float ssmax;
     float ssavg;

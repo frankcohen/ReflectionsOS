@@ -602,6 +602,7 @@ void Video::loop()
 
     totalTime = millis() - startMs;
 
+    /*
     String stats = "Video stats, ";
     stats += "Total frames ";
     stats += totalFrames;
@@ -624,6 +625,8 @@ void Video::loop()
     stats += "%, fps ";
     stats += ( 1000.0 * ( totalFrames / totalTime ) );
     logger.info( stats );
+    */
+    
   }
 
   /*

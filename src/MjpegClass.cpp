@@ -128,7 +128,7 @@ bool MjpegClass::readMjpegBuf()
       {
         if ((_mjpeg_buf_offset > 0) && (_mjpeg_buf[_mjpeg_buf_offset - 1] == 0xFF) && (_p[0] == 0xD9)) // JPEG trailer
         {
-          Serial.printf("Found FFD9 at: %d.\n", i);
+          //Serial.printf("Found FFD9 at: %d.\n", i);
           found_FFD9 = true;
         }
         else

@@ -2,71 +2,80 @@
 #define _BLE_
 
 #include "Arduino.h"
-#include <WiFi.h>
-#include <SPI.h>
-#include <SD.h>
-
-#include <NimBLEDevice.h>
 
 #include "config.h"
 #include "secrets.h"
 
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+#include <BLE2902.h>
+#include <ArduinoJson.h>
+
 #include "Logger.h"
-#include "Accelerometer.h"
-#include <Arduino_GFX_Library.h>
-#include <JPEGDEC.h>
+#include "TOF.h"
 #include "Compass.h"
 
-#define maxDistanceReadings 3
-
-class BLE
-{
+// Define BLEServerClass
+class BLEServerClass 
+{ 
   public:
-    BLE();
+    BLEServerClass();
+
     void begin();
-    void loop();
-    String getMessage();
-    void setMessage( String heading );
-    bool connectToServer();
-    bool getServerValue();
-    bool lookingTowardsEachOther( float avgDistance );
-    void setRemoteHeading( float myh );
-    float getRemoteHeading();
-    void setLocalHeading( float myd );
-    float getLocalHeading();
-    bool matchHeading( float measured_angle );
-    bool isStarted();
+    void handleClientData();
+    void sendJsonData(String jsonData);
+
+    int getLatestHeading();
+    void setLatestHeading( int myh );
+    bool isPounced();
+
+    BLEServer* pServer;
+    BLEService* pService;
+    BLECharacteristic* pCharacteristic;
+    BLEClient* pClient;
+    BLERemoteCharacteristic* pRemoteCharacteristic;
+    BLEAdvertising* pAdvertising;
+
+    class MyServerCallbacks : public BLEServerCallbacks {
+        void onConnect(BLEServer* pServer) override;
+        void onDisconnect(BLEServer* pServer) override;
+    };
+
+    class MyCharacteristicCallbacks : public BLECharacteristicCallbacks {
+        void onWrite(BLECharacteristic* pCharacteristic) override;
+    };
 
   private:
-    TaskHandle_t bleInitTaskHandle;
-    static void bleInitTaskWrapper(void * parameter);
-    void bleInitTask();
-
-    void areDevicesPointedToEachOther();
-    void showCatFaceDirection( int pose );
-    uint8_t* loadFileToBuffer( String filePath );
-
     bool bleStarted;
+};
 
-    std::string devname;
-    int msgCounter;
-    unsigned long serverWaitTime;
-    unsigned long clientWaitTime;
-    String message;
 
-    NimBLECharacteristic* pHeadingCharacteristic;
-    NimBLEServer* pServer;
-    NimBLEClient* pClient;
+// Define BLEClientClass
+class BLEClientClass 
+{
+  public:
+    BLEClientClass();
+    void begin();
+    void loop();
+    void handleClientData();
+    void sendJsonData(String jsonData);
+    int getDistance();
+    void sendPounce();
 
-    int runningDistance [ maxDistanceReadings ];
-    float localHeading;
-    float remoteHeading;
-    String hottercolder;
-    float oldAverageDistance;
-    long showWaitTime;
-    long fileSize;
+    BLEClient* pClient;
+    BLERemoteCharacteristic* pRemoteCharacteristic;
 
-    JPEGDEC jpeg;
+    class MyClientCallbacks : public BLEClientCallbacks {
+        void onConnect(BLEClient* pClient) override;
+        void onDisconnect(BLEClient* pClient) override;
+    };
+
+  private:
+    int latestrssi;
+    unsigned long sendHeadingTimer;
+    unsigned long checkRSSItimer;
+
 };
 
 #endif // _BLE_

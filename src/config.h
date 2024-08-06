@@ -24,7 +24,16 @@ Read the license in the license.txt file that comes with this code.
 
 #define Chastise_video "29eebc0d0804260f934575ceaedc50b1"
 
-#define CatsPlay_video "5784febffcbc6bee7c5621e7489b8db5"
+#define CatsPlayFound_video "8e1cb81b32d7fb3ecb6ac9f16286d1f7"
+#define Pounce_video "c4e530e40e5f99e1c8a7afd6cb202423"
+#define CatsPlay1_video "52bfa7cd386d6882f49cbdfd04379270"
+#define CatsPlay2_video "dfaafa5d7737fa608f562dc65d6a57f4"
+#define CatsPlay3_video "e2668735da694ecf0d4208f03e065b1d"
+#define CatsPlay4_video "03f9a11699c463e1a5ace6c2f978eecd"
+#define CatsPlay5_video "6f37e50a4f148fb74801df10370552bb"
+#define CatsPlay6_video "4253ae461e66bd7b04cfd1f1a773f1cd"
+#define CatsPlay7_video "7d75dbfe1ac31dd914f6ead0706d38c1"
+#define CatsPlay8_video "3f5f5e3f087b6db73a39fad9a7ec4217"
 
 #define EyesFollowFinger_video "f99c9b5031e6102ef45fbdf71cb09134"
 
@@ -105,8 +114,9 @@ Read the license in the license.txt file that comes with this code.
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
-#define SERVICE_UUID_CALLIOPE "7d9029fe-48d5-49e0-b9ad-8fd7dac70354"
-#define CHARACTERISTIC_UUID_HEADING "33a03886-0db0-43c8-90a2-bca6a8c7eaf0"
+#define MY_SERVICE_UUID "7d9029fe-48d5-49e0-b9ad-8fd7dac70354"
+#define MY_CHARACTERISTIC_UUID "33a03886-0db0-43c8-90a2-bca6a8c7eaf0"
+
 #define bleServerName "REFLECTIONS"
 
 // LED

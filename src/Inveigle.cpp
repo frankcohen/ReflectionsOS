@@ -39,9 +39,12 @@ the #include list and class instantiation method below.
 #include "Experience_CatsPlay.h"
 #include "Experience_Shaken.h"
 #include "Experience_GettingSleepy.h"
+#include "Experience_Pounce.h"
 
 extern Video video;
 extern TimeService timeservice;
+extern BLEServerClass bleServer;
+extern BLEClientClass bleClient;
 
 Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED ) 
 {
@@ -149,6 +152,14 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   }
   experiences.push_back( makeExp );
 
+  makeExp = new Experience_Pounce();
+  if ( makeExp == nullptr )
+  {
+    Serial.println( F( "Inveigle error making Experience_Pounce" ) );
+    while(1);
+  }
+  experiences.push_back( makeExp );
+
 }
 
 void Inveigle::begin() 
@@ -163,6 +174,8 @@ void Inveigle::begin()
   klezcount = millis();
 
   experienceIndex = 0;
+
+  startExperience( Inveigle::Awake );   // Sleep experience
 }
 
 void Inveigle::startExperience( int exper )
@@ -175,6 +188,9 @@ void Inveigle::startExperience( int exper )
     Serial.println( exper );
     return;
   }
+
+  Serial.print( "Inveigle startExperience " );
+  Serial.println( exper );
 
   currentExperience->init();
   currentState = SETUP;
@@ -243,121 +259,58 @@ void Inveigle::operateExperience()
   }
 }
 
-void Inveigle::loop() 
+void Inveigle::loop()
 {
   // Give time to running experience
   if ( currentState != STOPPED )
   {
     operateExperience();
   }
-  else
+
+  // Run CatsPlay Experience when RSSI says they are close
+
+  int mrs = bleClient.getDistance();
+  if ( ( mrs > catsplayCloser ) && ( mrs != 0 ) ) 
   {
-
-
-
-  int mygs = tof.getGesture();
-  if ( mygs != TOF::None )
-  {
-    Serial.print( "TOF gesture detected " );
-    if ( mygs == TOF::BombDrop ) Serial.println( "bombdrop");
-    if ( mygs == TOF::Circular ) Serial.println( "circular");
-    if ( mygs == TOF::FlyAway ) Serial.println( "flyaway");
-    if ( mygs == TOF::Horizontal ) Serial.println( "horizontal");
-    if ( mygs == TOF::Sleep ) Serial.println( "sleep");
-    if ( mygs == TOF::Vertical ) Serial.println( "vertical");
-  }
-
-
-
-
-
-
-    if ( millis() - klezcount > 5000 )
+    if ( millis() - catsplayTimer > 5000 )
     {
-      klezcount = millis();
+      catsplayTimer = millis();
+
+      Serial.print("Device is within 1 meter. RSSI = " );
+      Serial.println( mrs );
 
       if ( video.getStatus() == 0 )
       {
-        Serial.print("Inveigle starting experience ");
-        Serial.println( experienceIndex );
-        startExperience( experienceIndex );
-        experienceIndex++;
-        if ( experienceIndex == ExperienceCount ) experienceIndex = 0;
+        startExperience( Inveigle::CatsPlay );
       }
     }
-    
-  }
-}
-
-void Inveigle::loop2()
-{
-
-  // Detect deep sleep
-
-  if ( sleepStarting == false )
-  { 
-    if ( tof.getGesture() == TOF::Sleep )
-    {
-      Serial.println( "Inveigle Sleep gesture sensed" );
-      setCurrentState( TEARDOWN );  // Put in teardown state
-      sleepStarting = true;
-    }
-  }
-
-  if ( sleepStarting )
-  {
-    //Wait until current experience stops
-
-    if ( getCurrentState() == STOPPED )
-    {
-      startExperience( Inveigle::Sleep );   // Sleep experience
-    }
   }
 
 
-  // Handle gestures
-
-  if ( ( ! sleepStarting ) && ( getCurrentState() == STOPPED ) && ( video.getStatus() == 0 ) )
-  {
-    if ( millis() - msitime > msiwhen ) 
-    {
-      msitime = millis();
-
-      Serial.print( "Starting experience " );
-
-      int ng = tof.getGesture();
-      
-      if ( ng == TOF::Circular )
-      {
-        //startExperience( Inveigle:: );
-      } 
-
-      if ( ng == TOF::Horizontal )
-      {
-        startExperience( Inveigle::EyesFollowFinger );
-      } 
-
-      if ( ng == TOF::Vertical )
-      {
-        startExperience( Inveigle::ParallaxCat );
-      } 
-
-      if ( ng == TOF::BombDrop )
-      {
-        startExperience( Inveigle::Chastise );
-      } 
-
-      if ( ng == TOF::FlyAway )
-      {
-        startExperience( Inveigle::SwipeFinger );
-      } 
-
-    }
-  }
 
   /*
-  // Notifications, for example low-battery
-  //checkBatteryStatus();
+  int mygs = tof.getGesture();
+  if ( mygs == TOF::None ) return;
+
+  Serial.print( "TOF gesture detected " );
+  if ( mygs == TOF::BombDrop ) Serial.println( "bombdrop" );
+  if ( mygs == TOF::Circular ) Serial.println( "circular" );
+  if ( mygs == TOF::FlyAway ) Serial.println( "flyaway" );
+  if ( mygs == TOF::Horizontal ) Serial.println( "horizontal" );
+  if ( mygs == TOF::Vertical ) Serial.println( "vertical" );
+  if ( mygs == TOF::Sleep ) Serial.println( "sleep" );
   */
+  
+  /*
+  if ( mygs == TOF::Sleep ) 
+  {
+    Serial.println( "sleep");
+    startExperience( Inveigle::Sleep );   // Sleep experience and puts hardware into deep sleep    
+  }
+  */
+
+
+
+
 
 }

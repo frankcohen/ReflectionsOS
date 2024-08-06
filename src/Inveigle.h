@@ -11,6 +11,7 @@
 #include "TOF.h"
 #include "Accelerometer.h"
 #include "Battery.h"
+#include "BLE.h"
 
 extern Battery battery;  // External Battery class
 extern LOGGER logger;
@@ -18,6 +19,17 @@ extern Battery battery;
 //extern Hardware hardware;
 extern Accelerometer accel;
 extern TOF tof;
+
+/*
+ChatGPT says RSSI values:
+-30 dBm to -50 dBm: Very strong signal; the devices are very close (within a few centimeters to about 1 meter).
+-50 dBm to -70 dBm: Strong signal; the devices are likely within 1 to 5 meters.
+-70 dBm to -90 dBm: Moderate signal; the devices might be within 5 to 10 meters.
+-90 dBm and below: Weak signal; the devices are likely farther apart or there are significant obstacles/interference.
+*/
+
+#define catsplayClose -30
+#define catsplayCloser -50
 
 class Inveigle 
 {
@@ -46,6 +58,7 @@ class Inveigle
       MysticCat,
       Shaken,
       GettingSleepy,
+      Pounce,
       ExperienceCount   // Used to iterate through the list,  add new elements above
     };
 
@@ -57,11 +70,11 @@ class Inveigle
 
     void operateExperience();
 
-    void loop2();
-
     int experienceIndex;  // used for testing
     unsigned long klezcount;
-    
+
+    unsigned long catsplayTimer;    
+
     bool sleepStarting;
 
     unsigned long msitime;

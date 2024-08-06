@@ -112,12 +112,13 @@ Wifi wifi;
 Compass compass;
 LED led;
 USBFlashDrive flash;
-BLE ble;
 OTA ota;
 LOGGER logger;
 Battery battery;
 Hardware hardware;
 Accelerometer accel;
+BLEServerClass bleServer;
+BLEClientClass bleClient;
 
 const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
 
@@ -126,9 +127,6 @@ std::string devname;
 String devicename;
 
 // Timers
-
-long locationUpdate;        // For BLE service
-long locationUpdateTimer;
 
 unsigned long startvidtime;
 bool startvidflag;
@@ -178,7 +176,7 @@ static void smartdelay( unsigned long ms )
     compass.loop();
     haptic.loop();
     led.loop();
-    //ble.loop();
+    bleClient.loop();
 
     /*
     logger.loop();
@@ -226,8 +224,6 @@ void setup() {
   String hostinfo = "Host: ";
   hostinfo += devicename;
   logger.info(hostinfo);  
-
-  locationUpdateTimer = millis();
   
   // Self-test: NAND, I2C, SPI
 
@@ -251,8 +247,10 @@ void setup() {
   timeservice.begin();
   inveigle.begin();
   utils.begin();
-  //ble.begin();
   led.begin();
+
+  bleServer.begin();  // Initializes the BLE server
+  bleClient.begin();  // Initializes the BLE client
 
   //accel.setTraining( true );    // Put accelermoeter into training mode
   //accel.loadGestures();         // Load the prerecorded accelermeter gestures
@@ -303,41 +301,7 @@ void TOFTask(void *pvParameters)
   }
 }
 
-const char* msgtext[5][2] = {
-  { "It's early",    "why yes" },
-  { "It's late",     "to be exact"},
-  { "Wait, wait",    "you waited!"},
-  { "Peekaboo",      "i see you"},
-  { "Why?",          "why not?"},
-};
-
-
 void loop() {
   smartdelay(1000);
-
-  // Update BLE beacon heading for other devices
-
-  /*
-
-  if ( ble.isStarted() )
-  {
-    if ( (millis() - locationUpdateTimer) > 2000 )
-    {
-      locationUpdateTimer = millis();
-
-
-      int index = random(0, 4);
-      String theMsg1 = msgtext[ index ][ 0 ];
-      String theMsg2 = msgtext[ index ][ 1 ];
-
-
-      // Tell other devices the heading you are pointing towards
-      float headfl = compass.getHeading();
-      ble.setMessage( theMsg2 );
-      ble.setLocalHeading(headfl);
-    }
-  }
-
-  */
 
 }

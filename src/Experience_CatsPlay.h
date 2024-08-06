@@ -6,6 +6,9 @@
 
 #include "Experience.h"
 
+#include "BLE.h"
+#include "Compass.h"
+
 #include "Logger.h"
 #include "Video.h"
 #include "TimeService.h"
@@ -18,7 +21,11 @@ class Experience_CatsPlay : public Experience {
     void init() override;
 
   private:
-    
+    bool setupVidplayed;
+    unsigned long directionTimer;
+    unsigned long overallTimer;
+    float calculateBearing( float headingA, float headingB, float rssi );
+
 };
 
 #endif // Experience_CatsPlay
