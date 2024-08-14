@@ -26,6 +26,7 @@ extern BLEServerClass bleServer;
 extern BLEClientClass bleClient;
 extern TOF tof;
 extern Compass compass;
+extern Haptic haptic;
 
 void Experience_CatsPlay::init()
 {
@@ -60,6 +61,7 @@ void Experience_CatsPlay::setup()
   {
     setupVidplayed = true;
     video.startVideo( CatsPlayFound_video );
+    haptic.playEffect( 12 );  //  12 − Triple Click - 100%
   }
 
   if ( video.getStatus() == 0 )
@@ -77,9 +79,9 @@ void Experience_CatsPlay::run()
   if ( millis() - directionTimer > 2000 )
   {
     directionTimer = millis();
-    
+
     float headingA = compass.getHeading();
-    float headingB =   bleServer.getLatestHeading();
+    float headingB = bleServer.getLatestHeading();
     
     // Placeholder RSSI value (should be obtained via BLE communication)
     float rssi = bleClient.getDistance();
@@ -131,7 +133,15 @@ void Experience_CatsPlay::run()
     Serial.println( "CatsPlay pounced" );
 
     // Pounce gesture message received?
+    video.stopVideo();
     video.startVideo( Pounce_video );
+
+    /*
+    haptic.playEffect( 12 );  //  12 − Triple Click - 100%
+    haptic.playEffect( 13 );  //  13 − Soft Fuzz - 60%
+    haptic.playEffect( 25 );  //  25 − Sharp Tick 2 - 80%
+    haptic.playEffect( 71 );  //  71 − Transition Ramp Down Long Smooth 2 – 100 to 0%
+    */
   }
 
   // Play time done?
@@ -146,11 +156,12 @@ void Experience_CatsPlay::run()
   int mygs = tof.getGesture();
   if ( mygs == TOF::None ) return;
 
-  Serial.print( "CatsPlay detects TOF gesture " );
   Serial.print( mygs );
   Serial.println( " sending pounce");
 
   bleClient.sendPounce();
+
+  Serial.println( "Asked client to send pounce");
 }
 
 void Experience_CatsPlay::teardown() 

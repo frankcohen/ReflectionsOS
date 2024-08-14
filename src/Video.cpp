@@ -559,7 +559,7 @@ void Video::fadeUpdate()
 
 void Video::loop()
 {
-  fadeUpdate();
+  //fadeUpdate();
 
   if ( ( videoStatus == 0 ) || ( paused == 1 ) ) return;
 

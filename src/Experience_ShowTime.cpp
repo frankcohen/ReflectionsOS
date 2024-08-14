@@ -31,37 +31,29 @@ void Experience_ShowTime::init()
 void Experience_ShowTime::setup() 
 {
 
-  video.startVideo( ShowTime_video );
-  setSetupComplete(true);  // Signal that setup is complete
+  //video.startVideo( ShowTime_video );
+  //setSetupComplete(true);  // Signal that setup is complete
 
-  /*
   if ( vidflag )
   {
     video.startVideo( ShowTime_video );
     timeflag = true;
     vidflag = false;
   }
-  */
 
-
-  /*
-  if ( video.getVideoTime() > 2500 )
+  if ( video.getVideoTime() > 3500 )
   {
     video.setPaused( true );
     setSetupComplete(true);  // Signal that setup is complete
   }
-  */
 }
 
 void Experience_ShowTime::run() 
 {
-
-  setRunComplete(true);  // Signal run complete
-
-  /*
   if ( timeflag )
   {
-    timeservice.startShow( 0 );     // Show saying plus hour and minute
+    timeservice.startShow( 0 );                     // Show saying plus hour and minute
+    timeservice.setTimeAnimationActivated( true );
     timeflag = false;
   }
   else
@@ -73,7 +65,6 @@ void Experience_ShowTime::run()
       setRunComplete(true);  // Signal run complete
     }
   }
-  */
 
 }
 

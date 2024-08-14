@@ -48,6 +48,7 @@ class BLEServerClass
 
   private:
     bool bleStarted;
+
 };
 
 
@@ -62,7 +63,7 @@ class BLEClientClass
     void sendJsonData(String jsonData);
     int getDistance();
     void sendPounce();
-
+    
     BLEClient* pClient;
     BLERemoteCharacteristic* pRemoteCharacteristic;
 
@@ -72,8 +73,10 @@ class BLEClientClass
     };
 
   private:
+    void clientConnect();
     int latestrssi;
     unsigned long sendHeadingTimer;
+    unsigned long clientReconnectTimer;
     unsigned long checkRSSItimer;
 
 };

@@ -358,11 +358,13 @@ bool Accelerometer::detectStartOfGesture()
 
   if ( isOutsidePercent( nx3, nx, tollerance ) )
   {
+    /*
     Serial.print( "X " );
     Serial.print( nx );
     Serial.print( ", " );
     Serial.println( nx3 );
-
+    */
+    
     firsttime = true;  
     movetimer = millis();
     return true;
@@ -370,10 +372,12 @@ bool Accelerometer::detectStartOfGesture()
 
   if ( isOutsidePercent( ny3, ny, tollerance ) )
   {
+    /*
     Serial.print( "Y " );
     Serial.print( ny );
     Serial.print( ", " );
     Serial.println( ny3 );
+    */
 
     firsttime = true;  
     movetimer = millis();
@@ -382,10 +386,12 @@ bool Accelerometer::detectStartOfGesture()
 
    if ( isOutsidePercent( nz3, nz, tollerance ) )
    {
+    /*
     Serial.print( "Z " );
     Serial.print( nz );
     Serial.print( ", " );
     Serial.println( nz3 );
+    */
 
     firsttime = true;  
     movetimer = millis();
@@ -715,7 +721,7 @@ void Accelerometer::loop()
     {
       if ( ! firstnotice )
       {
-        //logger.info("Make a gesture... ");
+        logger.info("Make a gesture... ");
         firstnotice = true;
       }
 

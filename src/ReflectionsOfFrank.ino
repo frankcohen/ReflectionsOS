@@ -171,12 +171,12 @@ static void smartdelay( unsigned long ms )
     storage.loop();
     timeservice.loop();
     wifi.loop();  
-    utils.loop();    
-    inveigle.loop();
+    utils.loop();
     compass.loop();
     haptic.loop();
     led.loop();
     bleClient.loop();
+    inveigle.loop();
 
     /*
     logger.loop();
@@ -241,7 +241,7 @@ void setup() {
   battery.begin();
   audio.begin();
   gps.begin();
-  accel.begin();
+  //accel.begin();
   compass.begin();
   parallax.begin();
   timeservice.begin();
@@ -253,7 +253,7 @@ void setup() {
   bleClient.begin();  // Initializes the BLE client
 
   //accel.setTraining( true );    // Put accelermoeter into training mode
-  //accel.loadGestures();         // Load the prerecorded accelermeter gestures
+  accel.loadGestures();         // Load the prerecorded accelermeter gestures
 
 /*
   ota.begin();

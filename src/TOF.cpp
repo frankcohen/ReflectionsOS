@@ -14,6 +14,7 @@
 #include "TOF.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
+
 //extern Arduino_GFX *gfx;
 
 TOF::TOF(){}
@@ -51,7 +52,6 @@ void TOF::begin()
   // Initialize the buffer (optional, e.g., set all values to 0)
   memset( buffer, 0, NUM_SETS * SET_SIZE * sizeof(int16_t) );
 
-  fingerTime = millis();
   fingerTipInRange = false;
   fingerPosRow = 0;
   fingerPosCol = 0;
@@ -59,26 +59,24 @@ void TOF::begin()
   for ( int mia = 0; mia < 4; mia++ )
   {
     accumulator[ mia ] = false;
-    accumulator[ mia ] = false;
-    bombaccumulator[ mia ] = false;
     vertaccumulator[ mia ] = false;
     horizaccumulator[ mia ] = false;
     flyaccumulator[ mia ] = false;
+    bombaccumulator[ mia ] = false;
   }
 
-  circularTimeOut  = millis();
-  horizTimeOut = millis();
-  vertTimeOut = millis();
-  bombTimeOut = millis();
-  flyTimeOut = millis();
+  gestureTime= millis();
   
-  lastPollTime = millis();
-  delayTime = millis();
-  paceTime = millis();
-
-  sleepTime = millis();
-
   recentGesture = TOFGesture::None;
+
+  sleepTimer = millis();
+  sleepCount = 0;
+  maxCount = 0;
+  ssmin = 3000;
+  ssmax = 0;
+  ssavg = 0;
+  ssttl = 0;
+  sscnt = 0;
 
   started = true;
 }
@@ -102,10 +100,25 @@ TOF::TOFGesture TOF::getGesture()
 
 void TOF::detectGestures()
 {
-  if ( recentGesture != TOFGesture::None ) return;
+  //if ( recentGesture != TOFGesture::None ) return;
 
-  if ( millis() - delayTime < 180 ) return;
-  delayTime = millis();
+  if ( millis() - gestureTime > gestureSensingDuration )
+  {
+    gestureTime = millis();
+
+    //displayStatus();
+
+    // Clear everything to try again
+
+    for ( int mei = 0; mei < 4; mei++ )
+    {
+      accumulator[ mei ] = false;
+      horizaccumulator[ mei ] = false;
+      vertaccumulator[ mei ] = false;
+      bombaccumulator[ mei ] = false;
+      flyaccumulator[ mei ] = false;
+    }
+  }
 
   if ( ! sensor.isDataReady() ) return; 
 
@@ -128,19 +141,10 @@ void TOF::detectGestures()
 
   // Finger tip coordinates used by Pounce, Eyes, Parallax, Horiz, Vert
 
-  if ( detectFingerTip() )
-  { 
-    /*   
-    Serial.print("TOF Finger tip row " );
-    Serial.print( fingerPosRow );
-    Serial.print( " column ");
-    Serial.println( fingerPosCol );
-    */
-  }
+  detectFingerTip();
 
   if ( detectSleepGesture() )
   {
-    //Serial.println( "TOF Sleep gesture detected" );
     recentGesture = TOFGesture::Sleep;
   }
 
@@ -148,31 +152,26 @@ void TOF::detectGestures()
 
   if ( detectCircularGesture() )
   {
-    //Serial.println( "TOF Circular gesture detected" );
     recentGesture = TOFGesture::Circular;
   }
 
   if ( detectHorizontalGesture() )
   {
-    //Serial.println( "TOF Horizontal gesture detected" );
     recentGesture = TOFGesture::Horizontal;
   }
 
   if ( detectVerticalGesture() )
   {
-    //Serial.println( "TOF Vertical gesture detected" );
     recentGesture = TOFGesture::Vertical;
   }
 
   if ( detectBombDropGesture() )
   {
-    //Serial.println( "TOF BombDrop gesture detected" );
     recentGesture = TOFGesture::BombDrop;
   }
 
   if ( detectFlyAwayGesture() )
   {
-    //Serial.println( "TOF FlyAway gesture detected" );    
     recentGesture = TOFGesture::FlyAway;
   }
 
@@ -184,18 +183,14 @@ void TOF::detectGestures()
 
 bool TOF::detectSleepGesture() 
 {
-  if ( millis() - sleepTime > sleepDuration )   // Takes multiple sleep gestures to go to sleep
+  if ( millis() - sleepTimer > 5000 )
   {
-    sleepTime = millis();
+    sleepTimer = millis();
     sleepCount = 0;
+    ssavg = 0;
+    ssttl = 0;
+    sscnt = 0;
   }
-
-  maxCount = 0;
-  ssmin = 3000;
-  ssmax = 0;
-  ssavg = 0;
-  ssttl = 0;
-  sscnt = 0;
 
   // Calculate the index of the most recent set
   int recentSetIndex = (currentSetIndex - 1 + NUM_SETS) % NUM_SETS;
@@ -203,119 +198,71 @@ bool TOF::detectSleepGesture()
   // Get the pointer to the most recent set's storage in the buffer
   int16_t* recentSet = buffer + ( recentSetIndex * SET_SIZE );
 
+  ssavg = 0;
+  ssttl = 0;
+  sscnt = 0;
+
   // Process each value in the most recent set
   for ( int mia = 0; mia < SET_SIZE - 9; mia++ )
   {
-    // Check if the detected distance is within the 1-2 inch range
-
     int dist = recentSet[ mia ];
-
-    if ( ( dist > detectionThresholdLow ) && ( dist < detectionThresholdHigh ) ) 
-    {
-      if ( dist > ssmax ) ssmax = dist;
-      if ( dist < ssmin ) ssmin = dist;
-      ssttl = ssttl + dist;
-      ssavg = ssttl / sscnt;
-      sscnt ++;
-    }
-
-    if ( dist > sleepHighRejection ) maxCount++;
+    ssttl = ssttl + dist;
+    sscnt ++;
   }
 
-  /*
-  String mef = "S ";
-  mef += maxCount;
-  mef += ", ";
-  mef += ssavg;
-  Serial.println( mef );
-  */  
+  ssavg = ssttl / sscnt;
+/*
+  Serial.print( "Sleep " );
+  Serial.print( sleepCount );
+  Serial.print( ", ");
+  Serial.print( ssavg );
+  Serial.print( ", ");
+  Serial.print( sscnt );
+  Serial.print( ", ");
+  Serial.print( ssttl );
+  Serial.print( ", ");
+  Serial.println( maxCount );
+*/
 
-  if ( maxCount > sleepRejectCount )
-  {
-    sleepCount = 0;
-    return false;
-  }
-
-  // If the number of close readings exceeds the majority threshold, register a cancel gesture
-  if ( ( ssavg > minorityThreshold ) && ( ssavg < majorityThreshold  ) )
+  if ( ( ssavg > minorityThreshold ) && ( ssavg < majorityThreshold ) )
   {
     sleepCount++;
-    //Serial.println( sleepCount );
-    if ( sleepCount < sleepRepeat ) return false;
+    if ( sleepCount > sleepRepeat ) return true;
+  }
 
-    return true;
-  }
-  else
-  {
-    return false;
-  }
+  return false;
 }
 
 bool TOF::detectCircularGesture() 
 {
-  if ( millis() - circularTimeOut > circularDetectionDuration ) 
+  if ( ( fingerPosRow >= 0 ) && ( fingerPosRow < 3 ) )
   {
-    circularTimeOut = millis();
-
-    accumulator[ 0 ] = false;
-    accumulator[ 1 ] = false;
-    accumulator[ 2 ] = false;
-    accumulator[ 3 ] = false;
-
-    return false;
-  }
-
-  if ( fingerTipInRange )
-  {
-
-    if ( ( fingerPosRow >= 0 ) && ( fingerPosRow < 3 ) )
+    // upper quadrant
+    if ( ( fingerPosCol >= 0 ) && ( fingerPosCol < 4 ) )
     {
-      // upper quadrant
-      if ( ( fingerPosCol >= 0 ) && ( fingerPosCol < 4 ) )
-      {
-        // upper left
-        accumulator[ 0 ] = true;
-      }
-      else
-      {
-        // upper right
-        accumulator[ 1 ] = true;
-      }
+      // upper left
+      accumulator[ 0 ] = true;
     }
     else
     {
-      // lower quadrant
-      if ( ( fingerPosCol >= 0 ) && ( fingerPosCol < 4 ) )
-      {
-        // lower right
-        accumulator[ 3 ] = true;        // this isn't working!
-      }
-      else
-      {
-        // lower left
-        accumulator[ 2 ] = true;
-      }
+      // upper right
+      accumulator[ 1 ] = true;
     }
-/*
-    String mef = "F ";
-    mef += String( fingerPosCol );
-    mef += ", ";
-    mef += String( fingerPosRow );
-    Serial.println( mef );  
-    */
   }
-
-  /*
-  String mef = "C ";
-  mef += String( accumulator[0] );
-  mef += ", ";
-  mef += String( accumulator[1] );
-  mef += ", ";
-  mef += String( accumulator[2] );
-  mef += ", ";
-  mef += String( accumulator[3] );
-  Serial.println( mef );  
-  */
+  else
+  {
+    // lower quadrant
+    if ( ( fingerPosCol >= 0 ) && ( fingerPosCol < 3 ) )
+    {
+      // lower right
+      accumulator[ 3 ] = true;        // this isn't working!
+    }
+    else
+    {
+      // lower left
+      accumulator[ 2 ] = true;
+    }
+  }
 
   bool yahtzee = true;
   for ( int accx = 0; accx < 4; accx++ )
@@ -337,16 +284,6 @@ bool TOF::detectCircularGesture()
 
 bool TOF::detectHorizontalGesture()
 {
-  if ( millis() - horizTimeOut > horizDetectionDuration ) 
-  {
-    horizTimeOut = millis();
-
-    for ( int accx = 0; accx < 4; accx++ )
-    {
-      horizaccumulator[ accx ] = false;
-    }    
-  }
-
   if ( fingerTipInRange )
   {
     if ( fingerPosRow == 0 ) horizaccumulator[ 0 ] = true;
@@ -357,21 +294,7 @@ bool TOF::detectHorizontalGesture()
     if ( fingerPosRow == 5 ) horizaccumulator[ 2 ] = true;
     if ( fingerPosRow == 5 ) horizaccumulator[ 3 ] = true;
     if ( fingerPosRow == 5 ) horizaccumulator[ 3 ] = true;
-
-    //Serial.println( fingerPosRow );
   }
-
-  /*
-  String mef = "H ";
-  mef += String( horizaccumulator[0] );
-  mef += ", ";
-  mef += String( horizaccumulator[1] );
-  mef += ", ";
-  mef += String( horizaccumulator[2] );
-  mef += ", ";
-  mef += String( horizaccumulator[3] );
-  Serial.println( mef );  
-  */
 
   bool yahtzee = true;
   for ( int accx = 0; accx < 4; accx++ )
@@ -379,55 +302,19 @@ bool TOF::detectHorizontalGesture()
     if ( ! horizaccumulator[ accx ] ) yahtzee = false;
   }
 
-  if ( yahtzee )
-  {
-    for ( int accx = 0; accx < 4; accx++ )
-    {
-      horizaccumulator[ accx ] = false;
-    }    
-    return true;
-  }
-
-  return false;
+  return yahtzee;
 }
 
 bool TOF::detectVerticalGesture()
 {
-  if ( millis() - vertTimeOut > vertDetectionDuration ) 
-  {
-    vertTimeOut = millis();
-
-    for ( int accx = 0; accx < 4; accx++ )
-    {
-      vertaccumulator[ accx ] = false;
-    }
-  }
-
-  if ( fingerTipInRange )
-  {
-    if ( fingerPosCol == 0 ) vertaccumulator[ 0 ] = true;
-    if ( fingerPosCol == 1 ) vertaccumulator[ 0 ] = true;
-    if ( fingerPosCol == 2 ) vertaccumulator[ 1 ] = true;
-    if ( fingerPosCol == 3 ) vertaccumulator[ 1 ] = true;
-    if ( fingerPosCol == 4 ) vertaccumulator[ 2 ] = true;
-    if ( fingerPosCol == 5 ) vertaccumulator[ 2 ] = true;
-    if ( fingerPosCol == 6 ) vertaccumulator[ 3 ] = true;
-    if ( fingerPosCol == 7 ) vertaccumulator[ 3 ] = true;
-
-    //Serial.println( fingerPosCol );
-  }
-
-  /*
-  String mef = "V ";
-  mef += String( vertaccumulator[0] );
-  mef += ", ";
-  mef += String( vertaccumulator[1] );
-  mef += ", ";
-  mef += String( vertaccumulator[2] );
-  mef += ", ";
-  mef += String( vertaccumulator[3] );
-  Serial.println( mef );  
-  */
+  if ( fingerPosCol == 0 ) vertaccumulator[ 0 ] = true;
+  if ( fingerPosCol == 1 ) vertaccumulator[ 0 ] = true;
+  if ( fingerPosCol == 2 ) vertaccumulator[ 1 ] = true;
+  if ( fingerPosCol == 3 ) vertaccumulator[ 1 ] = true;
+  if ( fingerPosCol == 4 ) vertaccumulator[ 2 ] = true;
+  if ( fingerPosCol == 5 ) vertaccumulator[ 2 ] = true;
+  if ( fingerPosCol == 6 ) vertaccumulator[ 3 ] = true;
+  if ( fingerPosCol == 7 ) vertaccumulator[ 3 ] = true;
 
   bool yahtzee = true;
   for ( int accx = 0; accx < 4; accx++ )
@@ -435,47 +322,12 @@ bool TOF::detectVerticalGesture()
     if ( ! vertaccumulator[ accx ] ) yahtzee = false;
   }
 
-  if ( yahtzee )
-  {
-    for ( int accx = 0; accx < 4; accx++ )
-    {
-      vertaccumulator[ accx ] = false;
-    }    
-    return true;
-  }
-
-  return false;
+  return yahtzee;
 }
 
 bool TOF::detectBombDropGesture()
 {
- if ( millis() - bombTimeOut > bombDetectionDuration ) 
-  {
-    bombTimeOut = millis();
-
-    for ( int accx = 0; accx < 4; accx++ )
-    {
-      bombaccumulator[ accx ] = false;
-    }
-    
-    return false;
-  }
-
-  if ( fingerTipInRange )
-  {
-    bombaccumulator[ map( fingerDist, bombFlyDistLow, bombFlyDistHigh, 0, 3 ) ] = true;
-  }
-
-  /*
-  Serial.print( "Bombdrop gesture " );
-  Serial.print( bombaccumulator[0] );
-  Serial.print( " " );
-  Serial.print( bombaccumulator[1] );
-  Serial.print( " " );
-  Serial.print( bombaccumulator[2] );
-  Serial.print( " " );
-  Serial.println( bombaccumulator[3] );
-  */
+  bombaccumulator[ map( fingerDist, bombFlyDistLow, bombFlyDistHigh, 0, 3 ) ] = true;
 
   bool yahtzee = true;
   for ( int accx = 0; accx < 4; accx++ )
@@ -483,47 +335,12 @@ bool TOF::detectBombDropGesture()
     if ( ! bombaccumulator[ accx ] ) yahtzee = false;
   }
 
-  if ( yahtzee )
-  {
-    for ( int accx = 0; accx < 4; accx++ )
-    {
-      bombaccumulator[ accx ] = false;
-    }    
-    return true;
-  }
-
-  return false;
+  return yahtzee;
 }
 
 bool TOF::detectFlyAwayGesture()
 {
-  if ( millis() - flyTimeOut > flyDetectionDuration ) 
-  {
-    flyTimeOut = millis();
-
-    for ( int accx = 0; accx < 4; accx++ )
-    {
-      flyaccumulator[ accx ] = false;
-    }
-    
-    return false;
-  }
-
-  if ( fingerTipInRange )
-  {
-    flyaccumulator[ map( fingerDist, bombFlyDistLow, bombFlyDistHigh, 0, 3 ) ] = true;
-  }
-
-  /*
-  Serial.print( "FlyAway gesture " );
-  Serial.print( flyaccumulator[0] );
-  Serial.print( " " );
-  Serial.print( flyaccumulator[1] );
-  Serial.print( " " );
-  Serial.print( flyaccumulator[2] );
-  Serial.print( " " );
-  Serial.println( flyaccumulator[3] );
-  */
+  flyaccumulator[ map( fingerDist, bombFlyDistLow, bombFlyDistHigh, 0, 3 ) ] = true;
 
   bool yahtzee = true;
   for ( int accx = 0; accx < 4; accx++ )
@@ -531,16 +348,7 @@ bool TOF::detectFlyAwayGesture()
     if ( ! flyaccumulator[ accx ] ) yahtzee = false;
   }
 
-  if ( yahtzee )
-  {
-    for ( int accx = 0; accx < 4; accx++ )
-    {
-      flyaccumulator[ accx ] = false;
-    }    
-    return true;
-  }
-
-  return false;
+  return yahtzee;
 }
 
 bool TOF::detectFingerTip() 
@@ -558,27 +366,15 @@ bool TOF::detectFingerTip()
   // Process each value in the most recent set
   for ( int mia = 0; mia < SET_SIZE - 9; mia++ )
   {
-    int16_t dist = recentSet[ mia ];
-    int16_t dist2 = recentSet[ mia + 1 ];
-    int16_t dist3 = recentSet[ mia + 8 ];
-    int16_t dist4 = recentSet[ mia + 9 ];
-
-    /*
-    Serial.print( myhappyindex );
-    Serial.print( "\t" );
-    Serial.print( dist );
-    Serial.print( "\t" );
-    Serial.print( dist2 );
-    Serial.print( "\t" );
-    Serial.print( dist3 );
-    Serial.print( "\t" );
-    Serial.println( dist4 );
-    */
+    int dist = recentSet[ mia ];
+    int dist2 = recentSet[ mia + 1 ];
+    int dist3 = recentSet[ mia + 8 ];
+    int dist4 = recentSet[ mia + 9 ];
 
     if ( ( dist > fingerDetectionThresholdLow ) && ( dist < fingerDetectionThresholdHigh ) )
-    {
+    {       
       if ( (dist <= dist2 + fingerWiggleRoom ) && (dist >= dist2 - fingerWiggleRoom ) )
-      {
+      {                                
         if ( (dist <= dist3 + fingerWiggleRoom ) && (dist >= dist3 - fingerWiggleRoom ) )
         {
           if ( (dist <= dist4 + fingerWiggleRoom ) && (dist >= dist4 - fingerWiggleRoom ) )
@@ -588,8 +384,8 @@ bool TOF::detectFingerTip()
             // between 0 and 7 using the formula (originalColumn * 7) / 5.
             // If the original value is 6 or 7, it maps directly to 7.
 
-            fingerPosRow = mia / 8;
-
+            fingerPosRow = mia >> 3;
+/*
             if (fingerPosRow < 6) 
             {
               fingerPosRow = (fingerPosRow * 7) / 5;
@@ -599,11 +395,11 @@ bool TOF::detectFingerTip()
               // If original is 6 or 7, it maps directly to 7
               fingerPosRow = 7;
             }
-
+*/
             // Same scaling for columns
 
             fingerPosCol = mia % 8;
-
+/*
             if (fingerPosCol < 6) 
             {
               fingerPosCol = (fingerPosCol * 7) / 5;
@@ -613,6 +409,7 @@ bool TOF::detectFingerTip()
               // If originalColumn is 6 or 7, it maps directly to 7
               fingerPosCol = 7;
             }
+*/
 
             fingerDist = dist;
             fingerTipInRange = true;
@@ -622,6 +419,7 @@ bool TOF::detectFingerTip()
       }
     }
   }
+
   return false;
 }
 
@@ -689,20 +487,68 @@ void TOF::showBubbles()
   }
 }
 
+void TOF::displayStatus()
+{
+  if (!started) return;
+
+  String mef = " ";
+
+  mef += "Finger: (";
+  mef += fingerPosRow;
+  mef += ", ";
+  mef += fingerPosCol;
+  mef += ") | ";
+
+  // Circular gesture accumulators
+  mef += "Circ: [";
+  for (int i = 0; i < 4; i++) {
+      mef += accumulator[i] ? "1" : "0";
+      if (i < 3) mef += ", ";
+  }
+  mef += "] | ";
+
+  // Horizontal gesture accumulators
+  mef += "Horiz: [";
+  for (int i = 0; i < 4; i++) {
+      mef += horizaccumulator[i] ? "1" : "0";
+      if (i < 3) mef += ", ";
+  }
+  mef += "] | ";
+
+  // Vertical gesture accumulators
+  mef += "Vert: [";
+  for (int i = 0; i < 4; i++) {
+      mef += vertaccumulator[i] ? "1" : "0";
+      if (i < 3) mef += ", ";
+  }
+  mef += "] | ";
+
+  // BombDrop gesture accumulators
+  mef += "Bomb: [";
+  for (int i = 0; i < 4; i++) {
+      mef += bombaccumulator[i] ? "1" : "0";
+      if (i < 3) mef += ", ";
+  }
+  mef += "] | ";
+
+  // FlyAway gesture accumulators
+  mef += "Fly: [";
+  for (int i = 0; i < 4; i++) {
+      mef += flyaccumulator[i] ? "1" : "0";
+      if (i < 3) mef += ", ";
+  }
+  mef += "], Sleep ";
+  mef += String( sleepCount );
+
+  mef += ", index ";
+  mef += String( currentSetIndex );
+
+  Serial.println( mef );
+}
+
 void TOF::loop()
 {
   if ( ! started ) return;
 
   detectGestures();
-
-
-  if ( millis() - lastPollTime > 1000 ) 
-  {
-    lastPollTime = millis();
-
-    //showBubbles();
-    //printTOF();
-  }
-
-
 }

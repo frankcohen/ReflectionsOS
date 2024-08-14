@@ -5,7 +5,6 @@
 
 #include "config.h"
 #include "secrets.h"
-
 #include "Logger.h"
 
 #include <Wire.h>
@@ -16,6 +15,9 @@
 const int SET_SIZE = 64;      // Each block has these many readings
 const int NUM_SETS = 100;     // Saves the most recent 100 blocks
 
+// Gesture timing
+#define gestureSensingDuration 1500   // Take 1.5 seconds to sense a gesture, then try again
+
 // Definitions for Bubles
 #define tofdiam 18
 #define xdistance 30
@@ -25,14 +27,12 @@ const int NUM_SETS = 100;     // Saves the most recent 100 blocks
 #define tofmaxdist 100
 
 // Definitions for Sleep gesture
-#define detectionThresholdLow 18
-#define detectionThresholdHigh 21
 #define sleepHighRejection 26
-#define sleepRejectCount 0
-#define minorityThreshold 20
-#define majorityThreshold 22
+#define sleepRejectCount 5
+#define minorityThreshold 12
+#define majorityThreshold 18
 #define sleepDuration 4000
-#define sleepRepeat 8
+#define sleepRepeat 6
 
 // Definitions for fingerTip dected gesture
 #define fingerDetectionThresholdLow 28
@@ -75,6 +75,7 @@ class TOF
 
     TOFGesture getGesture();
 
+    void displayStatus();
     void printTOF();
     void showBubbles();
 
@@ -100,43 +101,28 @@ class TOF
     int16_t* buffer;          // Wrap around buffer stores most recent measurements
     int currentSetIndex = 0;
 
+    unsigned long gestureTime;
+
     int closeReadingsCount;
     int maxCount;
 
-    unsigned long paceTime;
-    unsigned long delayTime;
-
-    unsigned long fingerTime;
     bool fingerTipInRange;
     int fingerPosRow;
     int fingerPosCol;
     float fingerDist;
 
-    unsigned long sleepTime;
     int sleepCount;
+    unsigned long sleepTimer;
     float ssmin;
     float ssmax;
     float ssavg;
     float ssttl;
     float sscnt;
 
-    unsigned long circularTimeOut;
     bool accumulator[ 4 ];
-
-    unsigned long horizTimeOut;
-    #define horizDetectionDuration 1500
     bool horizaccumulator[ 4 ];
-
-    unsigned long vertTimeOut;
-    #define vertDetectionDuration 1500
     bool vertaccumulator[ 4 ];
-
-    unsigned long bombTimeOut;
-    #define bombDetectionDuration 1500
     bool bombaccumulator[ 4 ];
-
-    unsigned long flyTimeOut;
-    #define flyDetectionDuration 1500
     bool flyaccumulator[ 4 ];
 
     unsigned long lastPollTime;    

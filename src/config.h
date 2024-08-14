@@ -88,7 +88,7 @@ Read the license in the license.txt file that comes with this code.
 
 // Accelerometer template storage
 #define ACCEL_BASE_DIR "REFLECTIONS"
-#define ACCEL_BASE_FILE "fantastic4b"
+#define ACCEL_BASE_FILE "fantastic4"
 #define ACCEL_BASE_EXT ".ages"
 
 // GPS

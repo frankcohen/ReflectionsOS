@@ -71,14 +71,14 @@ class Inveigle
     void operateExperience();
 
     int experienceIndex;  // used for testing
-    unsigned long klezcount;
 
-    unsigned long catsplayTimer;    
+    unsigned long catsplayTimer;
+    unsigned long catsplayTimer2;
+    unsigned long shakenTimer;
 
-    bool sleepStarting;
+    unsigned long noopTimer;
+    bool noopFlag;
 
-    unsigned long msitime;
-    unsigned long msiwhen;    
 };
 
 #endif   //INVEIGLE_H

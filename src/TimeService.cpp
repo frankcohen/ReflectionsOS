@@ -99,6 +99,8 @@ void TimeService::begin()
   dialActivated = false;
   stTime = millis();
 
+  stepDelay = 100;
+
   carrotAngle = 0.0;
   lastMoveTime = millis();
   moving = false;
@@ -122,7 +124,6 @@ boolean TimeService::fadeInCenteredText( String text, int16_t y, uint16_t durati
     fadestep = 1;
     steps = 128; // One step per color intensity value
     stepDelay = ( duration / steps ) / 4; // Delay between steps in milliseconds
-
     return false;
   }
   else
@@ -198,14 +199,15 @@ bool TimeService::isTimeSet()
 void TimeService::runShowTellTime()
 {
   if ( showStep == 0 )
-  {
-    gfx->invertDisplay(true);
+  {    
+    gfx->invertDisplay( true );
     //gfx->fillScreen( COLOR_BACKGROUND );
     showStep = 1;
     fadeset = 1;
-    theTime = getRTCtime();
+    //theTime = getRTCtime();       // This introduces a 3-5 second delay
 
-    if ( theTime == "0 o'clock" ) theTime = " ";
+    theTime = "2:43 o'clock";
+    //if ( theTime == "0 o'clock" ) theTime = " ";
 
     int index = random(0, 37);
     theMsg1 = timetext[ index ][ 0 ];
@@ -216,7 +218,7 @@ void TimeService::runShowTellTime()
 
   if ( showStep == 1 )
   {
-    if ( fadeInCenteredText( theMsg1, 70, 100, COLOR_TEXT_YELLOW, &Some_Time_Later20pt7b ) )
+    if ( fadeInCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, &Some_Time_Later20pt7b ) )
     {
       showStep = 2;
       fadeset = 1;
@@ -229,7 +231,7 @@ void TimeService::runShowTellTime()
 
   if ( showStep == 2 )
   {
-    if ( fadeInCenteredText( theTime, 105, 50, COLOR_STRIPE_MEDIUM_GRAY, &Minya16pt7b ) )
+    if ( fadeInCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, &Minya16pt7b ) )
     {
       showStep = 3;
       fadeset = 1;
@@ -242,7 +244,7 @@ void TimeService::runShowTellTime()
 
   if ( showStep == 3 )
   {
-   if ( fadeInCenteredText( theMsg2, 135, 10, COLOR_STRIPE_PINK, &ScienceFair14pt7b ) )
+   if ( fadeInCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, &ScienceFair14pt7b ) )
     {
       showStep = 4;
       fadeset = 1;
@@ -255,7 +257,7 @@ void TimeService::runShowTellTime()
 
   if ( showStep == 4 )
   {
-   if ( fadeOutCenteredText( theMsg2, 135, 10, COLOR_STRIPE_PINK, &ScienceFair14pt7b ) )
+   if ( fadeOutCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, &ScienceFair14pt7b ) )
     {
       showStep = 5;
       fadeset = 1;
@@ -268,7 +270,7 @@ void TimeService::runShowTellTime()
 
   if ( showStep == 5 )
   {
-    if ( fadeOutCenteredText( theTime, 105, 50, COLOR_STRIPE_MEDIUM_GRAY, &Minya16pt7b ) )
+    if ( fadeOutCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, &Minya16pt7b ) )
     {
       showStep = 6;
       fadeset = 1;
@@ -281,7 +283,7 @@ void TimeService::runShowTellTime()
 
   if ( showStep == 6 )
   {
-    if ( fadeOutCenteredText( theMsg1, 70, 100, COLOR_TEXT_YELLOW, &Some_Time_Later20pt7b ) )
+    if ( fadeOutCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, &Some_Time_Later20pt7b ) )
     {
       activated = false;
       showStep = 0;
@@ -528,11 +530,9 @@ void TimeService::loop()
     {
       ShowTimeWaitTime = millis();
 
-
       // Show the time
 
       if ( showNum == 0 ) runShowTellTime();
-
     }
   }
 

@@ -23,6 +23,7 @@ extern Compass compass;
 
 static int latestheading;
 static bool gotAPounce;
+static unsigned long pounceTimer;
 
 extern BLEServerClass bleServer;
 extern BLEClientClass bleClient;
@@ -32,6 +33,7 @@ BLEServerClass::BLEServerClass() : pServer(nullptr), pCharacteristic(nullptr), p
 void BLEServerClass::begin() 
 {
   gotAPounce = false;
+  pounceTimer = millis();
 
   uint8_t mac[6];
   char name[32];
@@ -60,6 +62,9 @@ void BLEServerClass::begin()
   pCharacteristic->addDescriptor(new BLE2902());
 
   pService->start();
+
+  // Initialize GAP callback
+  // esp_ble_gap_register_callback(gapEventHandler);
 
   pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID( MY_SERVICE_UUID );
@@ -119,15 +124,21 @@ void BLEServerClass::MyCharacteristicCallbacks::onWrite(BLECharacteristic* pChar
     if (doc.containsKey("heading")) 
     {
         latestheading = doc[ "heading" ];
-        Serial.print("Heading: " );
-        Serial.println( latestheading );
+        //Serial.print("Heading: " );
+        //Serial.println( latestheading );
     }
     
     else if (doc.containsKey("pounce")) 
     {
       int pounce = doc["pounce"];
       Serial.println("Pounce: " + String(pounce));
-      gotAPounce = true;
+
+      if ( millis() - pounceTimer > 5000 )
+      {
+        pounceTimer = millis();
+        gotAPounce = true;      
+      }
+
     } 
     
     else if (doc.containsKey("location")) 
@@ -141,10 +152,13 @@ void BLEServerClass::MyCharacteristicCallbacks::onWrite(BLECharacteristic* pChar
 
 BLEClientClass::BLEClientClass() : pClient(nullptr), pRemoteCharacteristic(nullptr) {}
 
+
+
 void BLEClientClass::begin() 
 {
   sendHeadingTimer = millis();
   checkRSSItimer = millis();
+  clientReconnectTimer = millis();
 
   uint8_t mac[6];
   char name[32];
@@ -152,6 +166,16 @@ void BLEClientClass::begin()
   sprintf(name, "Reflections-C-%02X%02X", mac[4], mac[5]);
 
   BLEDevice::init( name );
+
+  clientConnect();
+}
+
+void BLEClientClass::clientConnect()
+{
+  if ( pClient != nullptr )
+  {
+    if ( pClient->isConnected() ) return;
+  }
 
   BLEScan* pScan = BLEDevice::getScan();
   pScan->setActiveScan(true);
@@ -234,15 +258,20 @@ void BLEClientClass::handleClientData()
 {
   if ( pClient != nullptr )
   {
-    if ( millis() - checkRSSItimer > 1000 )
+    if ( ! pClient->isConnected() )
     {
-      checkRSSItimer = millis();
-      latestrssi = pClient->getRssi();
-      //Serial.print( "handleClientData RSSI = " );
-      //Serial.println( latestrssi );
+      latestrssi = 0;
     }
-
-
+    else
+    {
+      if ( millis() - checkRSSItimer > 2000 )
+      {
+        checkRSSItimer = millis();
+        latestrssi = pClient->getRssi();
+        Serial.print( "handleClientData RSSI = " );
+        Serial.println( latestrssi );
+      }
+    }
   }
 
 }
@@ -272,9 +301,26 @@ void BLEClientClass::sendPounce()
 
 void BLEClientClass::loop()
 {
+  if ( millis() - clientReconnectTimer > 15000 )
+  {
+    if ( pClient == nullptr )
+    {
+      Serial.println("Reconnecting - pClient null");
+      clientConnect();
+    }
+    else
+    {
+      if ( ! pClient->isConnected() )
+      {
+        Serial.println("Reconnecting");
+        clientConnect();
+      }
+    }
+  }
+
   handleClientData();
 
-  if ( millis() - sendHeadingTimer > 5000 )
+  if ( millis() - sendHeadingTimer > 2000 )
   {
     sendHeadingTimer = millis();
 
@@ -283,8 +329,8 @@ void BLEClientClass::loop()
     jsonData += String( compass.getHeading() );
     jsonData += ",\"time\":\"12:15:01 PST\"}";      // TODO: Use the ESP32 built-in RTC to provide the time
     bleClient.sendJsonData(jsonData);
-    Serial.print( "Sending Heading to server: ");
-    Serial.println( jsonData );
+    //Serial.print( "Sending compas heading to server: ");
+    //Serial.println( jsonData );
   }
 
 }

@@ -166,16 +166,17 @@ void Inveigle::begin()
 {
   currentState = STOPPED;
 
-  sleepStarting = false;
+  shakenTimer = millis();
 
-  msitime = millis();
-  msiwhen = random( 5000, 10000 );
+  catsplayTimer = millis();
+  catsplayTimer2 = millis();
 
-  klezcount = millis();
+  noopTimer = millis();
+  noopFlag = false;
 
   experienceIndex = 0;
 
-  startExperience( Inveigle::Awake );   // Sleep experience
+  //startExperience( Inveigle::Awake );   // Sleep experience
 }
 
 void Inveigle::startExperience( int exper )
@@ -194,6 +195,8 @@ void Inveigle::startExperience( int exper )
 
   currentExperience->init();
   currentState = SETUP;
+
+  noopFlag = true;
 }
 
 void Inveigle::setCurrentState( State state )
@@ -261,56 +264,126 @@ void Inveigle::operateExperience()
 
 void Inveigle::loop()
 {
-  // Give time to running experience
-  if ( currentState != STOPPED )
+  operateExperience();      // Run the current experience, if any
+
+  if ( getCurrentState() != STOPPED ) return;
+
+  /*
+  // ShowTime from accel next gesture
+
+  if ( accel.getRecentGesture() != 0 )
   {
-    operateExperience();
+    startExperience( Inveigle::ShowTime );
+    return;
   }
+  */
 
   // Run CatsPlay Experience when RSSI says they are close
 
   int mrs = bleClient.getDistance();
+
   if ( ( mrs > catsplayCloser ) && ( mrs != 0 ) ) 
   {
-    if ( millis() - catsplayTimer > 5000 )
-    {
-      catsplayTimer = millis();
+    catsplayTimer = millis();
 
-      Serial.print("Device is within 1 meter. RSSI = " );
-      Serial.println( mrs );
+    Serial.print("Device is close. RSSI = " );
+    Serial.println( mrs );
 
-      if ( video.getStatus() == 0 )
-      {
-        startExperience( Inveigle::CatsPlay );
-      }
-    }
+    startExperience( Inveigle::CatsPlay );
+    return;
   }
 
+  // Getting sleepy after 1 minute of not operations
 
+  if ( ( millis() - noopTimer ) > ( 1000 * 30 ) )
+  {
+    noopTimer = millis();
 
-  /*
-  int mygs = tof.getGesture();
-  if ( mygs == TOF::None ) return;
+    if ( 1 )   // ! noopFlag
+    {
+      if ( video.getStatus() == 0 )
+      {
+        switch ( random( 1, 7 ) )
+        {
+          case 1:
+            startExperience( Inveigle::ShowTime );
+            Serial.println( "ShowTime" );
+            break;
+          case 2:
+            startExperience( Inveigle::ShowTime );
+            Serial.println( "ShowTime" );
+            break;
+          case 3:
+            startExperience( Inveigle::Chastise ); 
+            Serial.println( "Chastise" );
+            break;
+          case 4:
+            startExperience( Inveigle::Shaken );
+            Serial.println( "Shaken" );
+            break;
+          case 5:
+            startExperience( Inveigle::SwipeFinger );
+            Serial.println( "Shaken" );
+            break;
+          case 6:
+            startExperience( Inveigle::ParallaxCat );
+            Serial.println( "Shaken" );
+            break;
+        }
+      }
+    }
 
-  Serial.print( "TOF gesture detected " );
-  if ( mygs == TOF::BombDrop ) Serial.println( "bombdrop" );
-  if ( mygs == TOF::Circular ) Serial.println( "circular" );
-  if ( mygs == TOF::FlyAway ) Serial.println( "flyaway" );
-  if ( mygs == TOF::Horizontal ) Serial.println( "horizontal" );
-  if ( mygs == TOF::Vertical ) Serial.println( "vertical" );
-  if ( mygs == TOF::Sleep ) Serial.println( "sleep" );
-  */
-  
-  /*
+    noopFlag = false;
+    return;
+  }
+
+return;
+
+/*
   if ( mygs == TOF::Sleep ) 
   {
     Serial.println( "sleep");
     startExperience( Inveigle::Sleep );   // Sleep experience and puts hardware into deep sleep    
+    return;
   }
-  */
+*/
 
+  int mygs = tof.getGesture();
 
+  if ( video.getStatus() == 0 )
+  {
+    if ( millis() - shakenTimer > 20000 )
+    {
+      shakenTimer = millis();
 
+      Serial.print( "TOF gesture detected " );
+      if ( mygs == TOF::BombDrop ) Serial.println( "bombdrop" );
+      if ( mygs == TOF::Circular ) Serial.println( "circular" );
+      if ( mygs == TOF::FlyAway ) Serial.println( "flyaway" );
+      if ( mygs == TOF::Horizontal ) Serial.println( "horizontal" );
+      if ( mygs == TOF::Vertical ) Serial.println( "vertical" );
 
+      switch ( random( 1, 5 ) )
+      {
+        case 1:
+          startExperience( Inveigle::Shaken );
+          Serial.println( "Shaken" );
+          break;
+        case 2:
+          startExperience( Inveigle::SwipeFinger );
+          Serial.println( "Swipe" );
+          break;
+        case 3:
+          startExperience( Inveigle::Chastise );
+          Serial.println( "Chastise" );
+          break;
+        case 4:
+          startExperience( Inveigle::Shaken );
+          Serial.println( "Shaken" );
+          break;
+      }
 
+    return;
+    }
+  }
 }
