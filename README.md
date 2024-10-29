@@ -63,7 +63,7 @@ I made an air-guitar project to learn about streaming music over Bluetooth Clasi
 
 I made a fun Magic 8 Ball experience for the Maker Faire Bay Area. It was October 18 to 20, 2024 on Mar Island in the California Bay area and 25,000 people attended.
 
-[![Reflections controls Maxwell animatronic at Maker Faire 2024](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/Maxwell.jpg)](https://www.youtube.com/watch?v=HIWHx4NLKUU)
+[![Reflections controls Maxwell animatronic at Maker Faire 2024](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/Maxwell.jpg)](https://youtu.be/2h5V32wpsNU)
 
 For Maker Faire I had a Reflections board connect and control Maxwell wirelessly. Ask a question, shake the board and the display shows an answer. Maxwell animates the answer to yes, no, and maybe movements.
 
