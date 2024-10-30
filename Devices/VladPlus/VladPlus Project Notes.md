@@ -1,4 +1,4 @@
-# Vlad project notes, Reflections
+# VladPlus project notes, Reflections
 
 Started: June 15, 2024
 
