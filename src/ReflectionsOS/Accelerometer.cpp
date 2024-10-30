@@ -1,7 +1,7 @@
 /*
 Reflections is a hardware and software platform for building entertaining mobile experiences.
 
-Repository is at [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS)
+Repository is at [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS/tree/main/src/ReflectionsOS)
 Includes board wiring directions, server side components, examples, support
 
 Licensed under GPL v3 Open Source Software

@@ -6,7 +6,7 @@ arm as a wristwatch, grew to be a platform for making entertaining experiences.
 This is the software component. It runs on an ESP32-based platform with display,
 audio player, flash memory, GPS, gesture sensor, accelerometer/compass, and more.
 
-Repository is at [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS)
+Repository is at [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS/)
 Includes board wiring directions, server side components, examples, support
 
 Licensed under GPL v3 Open Source Software
