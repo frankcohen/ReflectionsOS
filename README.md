@@ -67,7 +67,7 @@ I made a fun Magic 8 Ball experience for the Maker Faire Bay Area. It was Octobe
 
 For Maker Faire I had a Reflections board connect and control Maxwell wirelessly. Ask a question, shake the board and the display shows an answer. Maxwell animates the answer to yes, no, and maybe movements.
 
-Source code for this fun project is in the /src/makerfaire2024 directory
+Source code for this fun project is in the [/src/MakerFaire2024Maxwell](https://github.com/frankcohen/ReflectionsOS/tree/main/src/MakerFaire2024Maxwell) directory
 
 ## Update as of June 18, 2024
 
