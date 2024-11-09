@@ -32,6 +32,8 @@ Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/fr
 
 I publish articles on the technology needed to make Reflections.
 
+[ESP32-S3 partition tables and optimizing memory for Arduino IDE 2.x](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Partition%20tables%20and%20optimizing%20memory%20in%20Arduino%20IDE.md)
+
 [Deep Sleep, Extending Battery Life for ESP32-S3 Projects](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/Deep%20Sleep)
 
 [Wrist Gesture Sensing on ESP32 and Accelerometer](https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Gesture_Sensing_Accelerometer/Gesture_Sensing_Experiment.md)
