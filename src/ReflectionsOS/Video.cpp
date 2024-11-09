@@ -14,6 +14,9 @@ Static JPEG images must be 240x240 and use JPEG baseline encoding. I use ffmpeg 
 JPEG created in Pixelmator on Mac OS to baseline encoding using:
 ffmpeg -i cat1_parallax.jpg -q:v 2 -vf "format=yuvj420p" cat1_parallax_baseline.jpg
 
+Some classes use the framebuffer capability in Arduino_GFX. Tutorial is at
+https://github.com/moononournation/Arduino_GFX/wiki/Canvas-Class
+
 */
 
 #include "Video.h"
@@ -29,7 +32,7 @@ uint8_t *mjpeg_buf;
 
 static Arduino_DataBus *bus = new Arduino_HWSPI(Display_SPI_DC, Display_SPI_CS, SPI_SCK, SPI_MOSI, SPI_MISO);
 Arduino_GFX *gfx = new Arduino_GC9A01(bus, Display_SPI_RST, 1 /* rotation */, false /* IPS */);
-Arduino_GFX *bufgfx = new Arduino_Canvas( 240 /* width */, 240 /* height */, gfx );
+Arduino_Canvas *bufferCanvas = new Arduino_Canvas(240, 240, gfx);
 
 #define MJPEG_BUFFER_SIZE (240 * 240 * 2 / 10) // memory for a single JPEG frame
 
@@ -48,10 +51,6 @@ Video::Video() {}
 
 void Video::begin()
 {
-  #ifdef GFX_EXTRA_PRE_INIT
-    GFX_EXTRA_PRE_INIT();
-  #endif
-
   mjpeg_buf = (uint8_t *) malloc( MJPEG_BUFFER_SIZE );
   if ( !mjpeg_buf )
   {
@@ -59,9 +58,38 @@ void Video::begin()
     stopOnError( "Video buffer", "fail", "", "", "" );
   }
 
-  gfx->begin();
+  if ( ! gfx->begin() )
+  {
+    Serial.println("gfx->begin() failed. Stopping.");
+    while(1);
+  }
+  else
+  {
+    Serial.println("gfx->begin() suceeded" );
+  }
+
   gfx->invertDisplay(true);
   gfx->fillScreen( COLOR_BLACK );
+
+  // Init Display
+
+  Serial.print( "Heap size " );
+  Serial.println( esp_get_free_heap_size() );
+
+  if ( ! bufferCanvas->begin() )
+  {
+    Serial.println("bufferCanvas->begin() failed. Stopping.");
+    while(1);
+  }
+  else
+  {
+    Serial.println("bufferCanvas->begin() suceeded" );
+  }
+  bufferCanvas->fillScreen( BLACK );
+
+  #ifdef GFX_EXTRA_PRE_INIT
+    GFX_EXTRA_PRE_INIT();
+  #endif
 
   videoStatus = 0;   // idle
   firsttime = true;
@@ -87,11 +115,11 @@ void Video::addReadTime( unsigned long rtime )
 
 void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, String msg5 )
 {
-  bufgfx->begin();
+  bufferCanvas->begin();
   gfx->invertDisplay(true);
   gfx->fillScreen( COLOR_BACKGROUND );
-  bufgfx->invertDisplay(true);
-  bufgfx->fillScreen( COLOR_BACKGROUND );
+  bufferCanvas->invertDisplay(true);
+  bufferCanvas->fillScreen( COLOR_BACKGROUND );
 
   String errmsg = "Video stopOnError ";
   errmsg += msg1;
@@ -113,42 +141,42 @@ void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, Str
     int16_t x = random( 40, 200 );
     int16_t y = random( 40, 200 );
 
-    bufgfx -> drawCircle( x, y, diam, COLOR_BACKGROUND);
-    bufgfx -> drawCircle( x, y, diam - 1, COLOR_BACKGROUND);
-    bufgfx -> drawCircle( x, y, diam - 2, COLOR_LEADING);
+    bufferCanvas -> drawCircle( x, y, diam, COLOR_BACKGROUND);
+    bufferCanvas -> drawCircle( x, y, diam - 1, COLOR_BACKGROUND);
+    bufferCanvas -> drawCircle( x, y, diam - 2, COLOR_LEADING);
 
-    bufgfx -> drawCircle( x, y, diam - 3, COLOR_RING);
-    bufgfx -> drawCircle( x, y, diam - 4, COLOR_TRAILING);
+    bufferCanvas -> drawCircle( x, y, diam - 3, COLOR_RING);
+    bufferCanvas -> drawCircle( x, y, diam - 4, COLOR_TRAILING);
 
-    bufgfx -> fillRect( 40, 40, 160, 160, COLOR_TEXT_BACKGROUND );
-    bufgfx -> drawRect( 39, 39, 162, 162, COLOR_TEXT_BORDER );
-    bufgfx -> drawRect( 40, 40, 160, 160, COLOR_TEXT_BORDER );
+    bufferCanvas -> fillRect( 40, 40, 160, 160, COLOR_TEXT_BACKGROUND );
+    bufferCanvas -> drawRect( 39, 39, 162, 162, COLOR_TEXT_BORDER );
+    bufferCanvas -> drawRect( 40, 40, 160, 160, COLOR_TEXT_BORDER );
 
-    bufgfx->setFont(&FreeSansBold10pt7b);
-    bufgfx->setTextColor( COLOR_LEADING );
-    bufgfx->setCursor( leftmargin, topmargin - 5 );
-    bufgfx->println("REFLECTIONS");
+    bufferCanvas->setFont(&FreeSansBold10pt7b);
+    bufferCanvas->setTextColor( COLOR_LEADING );
+    bufferCanvas->setCursor( leftmargin, topmargin - 5 );
+    bufferCanvas->println("REFLECTIONS");
 
-    bufgfx->setCursor( leftmargin, topmargin + ( 1 * linespacing ) );
-    bufgfx->setFont(&FreeSerif8pt7b);
-    bufgfx->setTextColor( COLOR_TEXT );
-    bufgfx->println( msg1 );
+    bufferCanvas->setCursor( leftmargin, topmargin + ( 1 * linespacing ) );
+    bufferCanvas->setFont(&FreeSerif8pt7b);
+    bufferCanvas->setTextColor( COLOR_TEXT );
+    bufferCanvas->println( msg1 );
 
-    bufgfx->setCursor( leftmargin, topmargin + ( 2 * linespacing ) );
-    bufgfx->setTextColor( COLOR_TEXT );
-    //bufgfx->setFont(&FreeSerifBoldItalic12pt7b);
-    bufgfx->println( msg2 );
+    bufferCanvas->setCursor( leftmargin, topmargin + ( 2 * linespacing ) );
+    bufferCanvas->setTextColor( COLOR_TEXT );
+    //bufferCanvas->setFont(&FreeSerifBoldItalic12pt7b);
+    bufferCanvas->println( msg2 );
 
-    bufgfx->setCursor( leftmargin, topmargin + ( 3 * linespacing ) );
-    bufgfx->println( msg3 );
+    bufferCanvas->setCursor( leftmargin, topmargin + ( 3 * linespacing ) );
+    bufferCanvas->println( msg3 );
 
-    bufgfx->setCursor( leftmargin, topmargin + ( 4 * linespacing ) );
-    bufgfx->println( msg4 );
+    bufferCanvas->setCursor( leftmargin, topmargin + ( 4 * linespacing ) );
+    bufferCanvas->println( msg4 );
 
-    bufgfx->setCursor( leftmargin, topmargin + ( 5 * linespacing ) );
-    bufgfx->println( msg5 );
+    bufferCanvas->setCursor( leftmargin, topmargin + ( 5 * linespacing ) );
+    bufferCanvas->println( msg5 );
 
-    bufgfx -> flush();
+    bufferCanvas -> flush();
 
     delay(500);
   }

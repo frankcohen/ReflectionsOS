@@ -1,0 +1,16 @@
+# Espressif ESP32 Partition Table
+# for Reflections project, 
+# https://github.com/frankcohen/ReflectionsOS
+# Put this file here 
+# ~/Library/Arduino15/packages/esp32/hardware/esp32/3.0.7/tools/partitions/reflections.csv
+# and it appears in Arduino IDE Tools menu as
+# Reflections App (8MB OTA No SPIFFS)
+# 
+# Name, Type, SubType, Offset, Size, Flags
+nvs,data,nvs,0x9000,20K,
+otadata,data,ota,0xe000,8K,
+ota_0,app,ota_0,0x10000,3712K,
+ota_1,app,ota_1,0x3b0000,3712K,
+eeprom,data,153,0x750000,4K,
+spiffs,data,spiffs,0x751000,128K,
+coredump,data,coredump,0x771000,64K,

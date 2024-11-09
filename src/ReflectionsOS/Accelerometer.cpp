@@ -1,15 +1,18 @@
 /*
-Reflections is a hardware and software platform for building entertaining mobile experiences.
+  Reflections is a hardware and software platform for building entertaining mobile experiences.
 
-Repository is at [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS/tree/main/src/ReflectionsOS)
-Includes board wiring directions, server side components, examples, support
+  Repository is at [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS/)
+  Includes board wiring directions, server side components, examples, support
 
-Licensed under GPL v3 Open Source Software
-(c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
-Read the license in the license.txt file that comes with this code.
+  Licensed under GPL v3 Open Source Software
+  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
+  Read the license in the license.txt file that comes with this code.
+
+  Reflections board usees an (LIS3DHTR 3-Axis Accelerometer) to
+  identify user gestures with their wrists and to wake the
+  processor from sleep.
 
   Recognizes gestures by moving the Reflections board 
-  (LIS3DHTR 3-Axis Accelerometer)
 
   Repository is at https://github.com/frankcohen/ReflectionsOS
   Includes board wiring directions, server side components, examples, support
@@ -25,7 +28,6 @@ Read the license in the license.txt file that comes with this code.
 
   Future:
   Add a gesture pruning service to remove lowest rated gestures
-
 
   Used to wake the ESP32-S3 from deep sleep by moving it. Here are some steps 
   to fine-tune the sensitivity:

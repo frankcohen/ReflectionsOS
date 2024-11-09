@@ -9,8 +9,8 @@
  Read the license in the license.txt file that comes with this code.
 */
 
-#ifndef WATCHFACE_H
-#define WATCHFACE_H
+#ifndef WATCHFACEMAIN_H
+#define WATCHFACEMAIN_H
 
 #include "config.h"
 #include "secrets.h"
@@ -23,28 +23,38 @@
 #include <PNGdec.h>
 #include <Arduino_GFX_Library.h>
 
+#include "WatchFaceBase.h"
+
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-extern Arduino_GFX *gfx;
 extern Battery battery;
 extern TimeService timeservice;
 
+extern Arduino_GFX *gfx;
+extern Arduino_Canvas *bufferCanvas;
+
 #define transparent_color 0xFFE0
 
-class WatchFace 
+class WatchFaceMain : public WatchFaceBase 
 {
   public:
-    WatchFace();
+    WatchFaceMain();
     
-    void begin();
-    void loop();
+    void begin() override;
+    void loop() override;    
     
-    void drawImageTransparent( String filename );
-    void drawImage( String filename );
-    void drawImagePNG( String filename);
-
     void drawMainFace();
 
   private:
+
+    // Hours and minutes animate clockwise and counterclockwist into position
+    uint32_t lastUpdate;
+    uint32_t animationStartTime;
+    int currentHour;
+    int currentMinute;
+    int targetHour;
+    int targetMinute;
+    bool animating;
+
     long facetime;
     File jpegFile;
     JPEGDEC jpeg;

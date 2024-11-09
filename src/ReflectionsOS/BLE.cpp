@@ -37,7 +37,7 @@ void BLEServerClass::begin()
 
   uint8_t mac[6];
   char name[32];
-  esp_read_mac(mac, ESP_MAC_BT);
+  //esp_read_mac(mac, 0 );   //ESP_MAC_BT
   sprintf(name, "Reflections-S-%02X%02X", mac[4], mac[5]);
 
   Serial.println ( name );
@@ -113,7 +113,7 @@ int BLEServerClass::getLatestHeading()
 }
 
 void BLEServerClass::MyCharacteristicCallbacks::onWrite(BLECharacteristic* pCharacteristic) {
-    std::string value = pCharacteristic->getValue();
+    std::string value = pCharacteristic->getValue().c_str();
 
     Serial.print( "getValue = " );
     Serial.println( pCharacteristic->getValue().c_str() );
@@ -162,7 +162,7 @@ void BLEClientClass::begin()
 
   uint8_t mac[6];
   char name[32];
-  esp_read_mac(mac, ESP_MAC_BT);
+  // esp_read_mac(mac, ESP_MAC_BT);
   sprintf(name, "Reflections-C-%02X%02X", mac[4], mac[5]);
 
   BLEDevice::init( name );
@@ -179,7 +179,7 @@ void BLEClientClass::clientConnect()
 
   BLEScan* pScan = BLEDevice::getScan();
   pScan->setActiveScan(true);
-  BLEScanResults results = pScan->start(5);
+  BLEScanResults results; //pScan->start(5);
 
   // Iterate through the discovered devices
   for (int i = 0; i < results.getCount(); i++) 

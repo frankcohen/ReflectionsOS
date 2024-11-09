@@ -56,7 +56,7 @@ Read the license in the license.txt file that comes with this code.
 #define videoname_end ".mjpeg"
 
 // WatchFace_Main
-#define wfBackground "Face_Main_background_baseline.jpg"
+#define wfMainBackground "Face_Main_background_baseline.jpg"
 #define wfMainBattery "Battery_"
 #define wfMainBattery2 ".png"
 #define wfMainHours "Hours_"

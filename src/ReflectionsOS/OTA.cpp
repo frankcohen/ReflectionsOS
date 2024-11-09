@@ -182,12 +182,12 @@ bool OTA::update()
         Serial.println( F( "error: First byte of image contains invalid app image magic byte" ) );
         return false;
       } 
-      else if (err == ESP_ERR_FLASH_OP_FAIL)
+      else if (err == 0 ) //ESP_ERR_FLASH_OP_FAIL)
       {
         Serial.println( F( "error: Flash write IO Operaion failed" ) );
         return false;
       } 
-      else if ( err == ESP_ERR_FLASH_OP_TIMEOUT )
+      else if ( err == 0 ) //ESP_ERR_FLASH_OP_TIMEOUT )
       {
         Serial.println( F( "error: Flash write failed due to TimeOut") );
         return false;
@@ -265,12 +265,12 @@ bool OTA::update()
         Serial.print( F( "error: First byte of image contains invalid app image magic byte" ) );
         return false;
       }
-      else if ( err == ESP_ERR_FLASH_OP_FAIL )
+      else if ( err == 0 ) // ESP_ERR_FLASH_OP_FAIL )
       {
         Serial.print( F( "error: Flash write IO Operaion failed" ) );
         return false;
       } 
-      else if ( err == ESP_ERR_FLASH_OP_TIMEOUT )
+      else if ( err == 0 ) // ESP_ERR_FLASH_OP_TIMEOUT )
       {
         Serial.print( F( "error: Flash write failed due to TimeOut" ) );
         return false;
