@@ -13,20 +13,18 @@ Reflections goes beyond the wearable device to deliver server side architecture.
 
 ![Reflections Server Side Architecture](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/ReflectionsServerSide.jpg)
 
-I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry pocket watches with Disney Imagineer and Mupeteer Terri Hardin. We are working on a new experience powere by Reflections. Announcement coming soon.
+I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry pocket watches with Disney Imagineer and Mupeteer Terri Hardin. We are working on a new experience powered by Reflections. Announcement coming in Spring 2025.
 
 I love working with a group of creative makers and the Arduino community. Please feel free to let me know your feedback and ideas.
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/HIWHx4NLKUU/0.jpg)](https://www.youtube.com/watch?v=HIWHx4NLKUU)
 
-Yertle is the latest version of the Reflections main board. Everything fits into a wrist watch case and I actually wear it on my wrist! Plus the software to drive experiences (codename ReflectionsOfFrank) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the main board.
+[VladPlus](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/VladPlus/VladPlus%20Project%20Notes.md) is the latest version of the Reflections main board. Everything fits into a wrist watch case and I actually wear it on my wrist! Plus the software to drive experiences (codename ReflectionsOS) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the board.
 
-Yertle Gerber files and schematic are at:
-https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Yertle
-EasyEDA project for the previous main board project is at:
-https://oshwlab.com/fcohen/horton-main-board
+VladPlus Gerber files and schematic are at:
+[https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/VladPlus/VladPlus%20Project%20Notes.md](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/VladPlus/VladPlus%20Project%20Notes.md)
 
-Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS), February 14, 2024
+Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS), November 9, 2024
 
 ## Articles
 
