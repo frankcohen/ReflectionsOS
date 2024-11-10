@@ -7,6 +7,8 @@ My [Reflections project](https://github.com/frankcohen/ReflectionsOS) is a 34 mm
 
 I created a custom ESP32 partition scheme to maximize available memory with 8 MB overall, 2 application spaces, OTA, and little or no SPIFFS file storage.
 
+***Note: Members of the Arduino Forums pointed me to an easier solution: Simply name a custom partition file to partitions.csv, copy it into the sketch folder and select custom partition from the tools menu of the Arduino IDE.***
+
 A custom partition file is a comma separated value (CSV) text file. Espressif documents the possible contents well [here](https://docs.espressif.com/projects/esp-idf/en/v5.3.1/esp32s3/api-guides/partition-tables.html). Here is my starting point:
 
 ```
