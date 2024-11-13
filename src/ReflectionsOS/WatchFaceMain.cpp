@@ -243,58 +243,65 @@ void WatchFaceMain::begin()
   WatchFaceBase::begin();  // This ensures the base method is executed
 
   facetime = millis();
-
   hoursmintimer = millis();
-  cycleComplete = false;
+  startupComplete = false;
 }
 
 /* Hours and minutes animate clockwise and counterclockwist into position */
 
-void WatchFaceMain::StartAnimateHoursMinutes()
+void WatchFaceMain::beginStartupAnimation()
 {
   struct tm timeinfo;
 
   if ( getLocalTime( &timeinfo ) ) 
   {
-    currentHour = timeinfo.tm_hour % 12; // Convert to 12-hour format
-    currentMinute = timeinfo.tm_min / 3;  // Convert to 1 of 20 positions around dial
+    startHour = timeinfo.tm_hour % 12; // Convert to 12-hour format
+    startMinute = timeinfo.tm_min / 3;  // Convert to 1 of 20 positions around dial
   }
   else
   {
-    currentHour = 3;
-    currentMinute = 5;
+    startHour = 2;
+    startMinute = 15;
   }
   
   counter = 0;
-  cycleComplete = false;
+
+  startupComplete = false;
+
   battimer = millis();
   batcount = 0;
+  batlev = 0;
+
 }
 
-bool WatchFaceMain::AnimateHoursMinutes(int startHour, int startMinute, int &currentHour, int &currentMinute)
+bool WatchFaceMain::startupAnimation()
 {
-  if ( ( millis() - hoursmintimer ) < 250 ) return false;
+  if ( ( millis() - hoursmintimer ) < 100 ) return false;
   hoursmintimer = millis();
 
-    // Normalize the startHour (1 to 12) and startMinute (1 to 20)
-    startHour = (startHour % 12 == 0) ? 12 : startHour;
-    startMinute = (startMinute % 20 == 0) ? 20 : startMinute;
+  // Normalize the startHour (1 to 12) and startMinute (1 to 20)
+  startHour = (startHour % 12 == 0) ? 12 : startHour;
+  startMinute = (startMinute % 20 == 0) ? 20 : startMinute;
 
-    // Calculate the current minute position in counterclockwise direction
-    currentMinute = (startMinute - counter - 1 + 20) % 20 + 1;
+  // Calculate the current minute position in counterclockwise direction
+  currentMinute = (startMinute - counter - 1 + 20) % 20 + 1;
 
-    // Calculate the relative hour position based on minute progress
-    int hourProgress = (counter * 12) / 20;  // The hour hand moves 12 positions in 20 minute steps
-    currentHour = (startHour + hourProgress - 1) % 12 + 1;
+  // Calculate the relative hour position based on minute progress
+  float hourProgressFloat = (counter * 12.0) / 20.0;  // The hour hand moves 12 positions in 20 minute steps
+  int hourProgress = (int)ceil(hourProgressFloat);
+  currentHour = (startHour + hourProgress - 1) % 12 + 1;
 
-    // Increment the counter to move to the next position
-    counter++;
+  // Increment the counter to move to the next position
+  counter++;
 
-    // If the counter has reached 20, it means we've gone through a full cycle
-    if (counter >= 20) {
-        counter = 0;  // Reset counter for next cycle
-        return true;  // Full cycle completed
-    }
+  // If the counter has reached 20, it means we've gone through a full cycle
+  if (counter >= 20) 
+  {
+    counter = 0;  // Reset counter for next cycle
+    return true;  // Full cycle completed
+  }
+
+  // Draw the elements to the buffer
 
   start();    // Clear frame buffer
 
@@ -312,19 +319,63 @@ bool WatchFaceMain::AnimateHoursMinutes(int startHour, int startMinute, int &cur
   mef += wfMainMinutes2;
   drawImageFromFile( mef, true, 0, 0 );
 
+  // Battery indicator
+
+  if ( ( millis() - battimer ) > 2000 )
+  {
+    battimer = millis();
+
+    batlev = battery.getBatteryLevel();
+    if ( ( batlev != batcount ) && ( batcount < 4 ) ) batcount++;
+  }
+
+  mef = wfMainBattery;
+  mef += batcount + 1;
+  mef += wfMainBattery2;
+  drawImageFromFile( mef, true, 0, 0 );
+
   show();
 
-  Serial.print("Hour: ");
+  /*
+  Serial.print( counter );
+  Serial.print(", Start: ");
+  Serial.print( startHour);
+  Serial.print(":" );
+  Serial.print( startMinute);
+  Serial.print(" Current: ");
   Serial.print(currentHour);
-  Serial.print(" | Minute: ");
-  Serial.println(currentMinute);
-
+  Serial.print(":");
+  Serial.print(currentMinute);
+  Serial.print( " Battery " );
+  Serial.print( batlev );
+  Serial.print( ":" );
+  Serial.println( batcount );
+  */
+  
   // Return false if there's more to go
   return false;
 }
 
 void WatchFaceMain::loop()
 {
+
+
+  // Restructure this code:
+  //   Start everything all at once
+  //   Update the watch face ( hands animate, battery leaves bloom, cat face blinks and smiles, then push)
+  //   Add interrupts for time, alarm
+  
+  // Then in WatchFaceExperiences, add the wrist and tof gestures
+
+  // Set time
+  // Clear health stats
+  // Set alarm
+
+
+
+
+
+
   if ( ( millis() - facetime ) > 20000 )
   {
     facetime = millis();
@@ -338,40 +389,12 @@ void WatchFaceMain::loop()
 
     // Sleep processor, keep display on
 
-    StartAnimateHoursMinutes();
-  }
- 
-  if ( ! cycleComplete )
-  {
-    cycleComplete = AnimateHoursMinutes(startHour, startMinute, currentHour, currentMinute);
+    beginStartupAnimation();
   }
 
-  // Battery indicator
-
-  if ( cycleComplete )
+  if ( ! startupComplete )
   {
-    if ( ( millis() - battimer ) > 2000 )
-    {
-      battimer = millis();
-
-      int batlev = battery.getBatteryLevel();
-      Serial.print( "Battery " );
-      Serial.print( batlev );
-      Serial.print( ", " );
-      Serial.println( batcount );
-    
-      if ( batlev >= batcount )
-      {
-        start();    // Clear frame buffer
-        String mef = wfMainBattery;
-        mef += batlev + 1;
-        mef += wfMainBattery2;
-        drawImageFromFile( mef, true, 0, 0 );
-        show();
-
-        batcount++;
-      }
-    }
+    startupComplete = startupAnimation();
   }
 
 }

@@ -47,8 +47,8 @@ class WatchFaceMain : public WatchFaceBase
   private:
 
     // Hours and minutes animate clockwise and counterclockwist into position
-    bool AnimateHoursMinutes(int startHour, int startMinute, int &currentHour, int &currentMinute);
-    void StartAnimateHoursMinutes();
+    bool startupAnimation();
+    void beginStartupAnimation();
      
     uint32_t lastUpdate;
 
@@ -56,11 +56,12 @@ class WatchFaceMain : public WatchFaceBase
     int startHour;
     int startMinute;
     int currentHour, currentMinute;
-    bool cycleComplete;
+    bool startupComplete;
     unsigned long hoursmintimer;
 
     unsigned long battimer;
     int batcount;
+    int batlev;
 
     long facetime;
 };
