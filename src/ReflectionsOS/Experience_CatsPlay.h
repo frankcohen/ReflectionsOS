@@ -16,7 +16,7 @@
 
 #include "Experience.h"
 
-#include "BLE.h"
+//#include "BLE.h"
 #include "Compass.h"
 
 #include "Logger.h"

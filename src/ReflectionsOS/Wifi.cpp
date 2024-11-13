@@ -16,44 +16,32 @@ This file is for operating the video display.
 
 Wifi::Wifi() {}
 
-static WiFiManager wm;
-
 void Wifi::begin()
 { 
-  Serial.println("Wifi begin");
-  
-  WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
-  
-  lastWifiTime = millis();
+  //Serial.println("Wifi begin");
 
-  // Automatically connects using saved credentials,
-  // if connection fails, it starts an access point with the specified name ( "AutoConnectAP"),
-  // if empty will auto generate SSID, if password is blank it will be anonymous AP (wm.autoConnect())
-  // then goes into a blocking loop awaiting configuration and will return success result
+  WiFi.begin( "FranksFree-passwordFrank123", "Frank123");
 
   std::string devname = host_name_me;
   std::string mac = WiFi.macAddress().c_str();
   devname.append( mac.substr( 15, 2 ) );
   devicename = devname.c_str();
 
-  wm.setConfigPortalBlocking(false);
-  wm.setConfigPortalTimeout(60);
+  bool again = true;
 
-  wm.setConfigPortalBlocking(false);
-  wm.setConfigPortalTimeout(60);
-
-  bool res = wm.autoConnect( devicename.c_str(), CALLIOPE_WIFI_PASS ); // password protected ap
-
-  if(!res) {
-    Serial.print( devicename );
-    Serial.println(": WifiManager connect failed");
-    // ESP.restart();
-  } 
-  else {
-    Serial.print( devicename );
-    Serial.println(": WifiManager connected");
+  // Wait for connection
+  while ( again )
+  {
+    int Wifistatus = WiFi.status();
+    if ( Wifistatus == WL_CONNECTED) again = false;
+    delay(1000);
   }
 
+  // Once connected, print the IP address
+  Serial.print("Connected to WiFi, ");
+  Serial.println(WiFi.localIP());
+
+  lastWifiTime = millis();
   checkNTP = millis();
 }
 
@@ -65,7 +53,6 @@ void Wifi::begin()
 
 void Wifi::reset()
 {
-  wm.resetSettings();
 }
 
 /*
@@ -136,7 +123,6 @@ void Wifi::loop()
   if ( (millis() - lastWifiTime) > 500)
   {
     lastWifiTime = millis();
-    wm.process();     // Non-blocking Wifi manager
   }
 
   if ( ( (millis() - checkNTP ) > ( 1 * (60 * 1000) ) ) && isConnected() )

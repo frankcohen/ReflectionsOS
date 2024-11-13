@@ -31,7 +31,7 @@ static MjpegClass mjpeg;
 uint8_t *mjpeg_buf;
 
 static Arduino_DataBus *bus = new Arduino_HWSPI(Display_SPI_DC, Display_SPI_CS, SPI_SCK, SPI_MOSI, SPI_MISO);
-Arduino_GFX *gfx = new Arduino_GC9A01(bus, Display_SPI_RST, 1 /* rotation */, false /* IPS */);
+Arduino_GFX *gfx = new Arduino_GC9A01(bus, Display_SPI_RST, 1 /* rotation */, true /* IPS */);
 Arduino_Canvas *bufferCanvas = new Arduino_Canvas(240, 240, gfx);
 
 #define MJPEG_BUFFER_SIZE (240 * 240 * 2 / 10) // memory for a single JPEG frame
@@ -40,10 +40,7 @@ Arduino_Canvas *bufferCanvas = new Arduino_Canvas(240, 240, gfx);
 
 static int jpegDrawCallback( JPEGDRAW *pDraw )
 {
-  //Serial.printf("Draw pos = %d,%d. size = %d x %d\n", pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight);
-  gfx->draw16bitBeRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);
-  // output_display -> flush();
-  
+  gfx->draw16bitBeRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);  
   return 1;
 }
 
@@ -51,6 +48,10 @@ Video::Video() {}
 
 void Video::begin()
 {
+  #ifdef GFX_EXTRA_PRE_INIT
+    GFX_EXTRA_PRE_INIT();
+  #endif
+
   mjpeg_buf = (uint8_t *) malloc( MJPEG_BUFFER_SIZE );
   if ( !mjpeg_buf )
   {
@@ -65,31 +66,27 @@ void Video::begin()
   }
   else
   {
-    Serial.println("gfx->begin() suceeded" );
+    //Serial.println("gfx->begin() suceeded" );
   }
 
-  gfx->invertDisplay(true);
-  gfx->fillScreen( COLOR_BLACK );
+  //gfx->invertDisplay(true);
+  gfx->fillScreen( COLOR_BLUE );
 
   // Init Display
 
-  Serial.print( "Heap size " );
-  Serial.println( esp_get_free_heap_size() );
+  //Serial.print( "Heap size " );
+  //Serial.println( esp_get_free_heap_size() );
 
   if ( ! bufferCanvas->begin() )
   {
-    Serial.println("bufferCanvas->begin() failed. Stopping.");
+    Serial.println( F( "bufferCanvas->begin() failed. Stopping." ) );
     while(1);
   }
   else
   {
-    Serial.println("bufferCanvas->begin() suceeded" );
+    //Serial.println( F( "bufferCanvas->begin() suceeded" ) );
   }
-  bufferCanvas->fillScreen( BLACK );
-
-  #ifdef GFX_EXTRA_PRE_INIT
-    GFX_EXTRA_PRE_INIT();
-  #endif
+  bufferCanvas->invertDisplay(true);
 
   videoStatus = 0;   // idle
   firsttime = true;
@@ -115,11 +112,11 @@ void Video::addReadTime( unsigned long rtime )
 
 void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, String msg5 )
 {
-  bufferCanvas->begin();
-  gfx->invertDisplay(true);
+  //bufferCanvas->begin();
+  //gfx->invertDisplay(true);
   gfx->fillScreen( COLOR_BACKGROUND );
-  bufferCanvas->invertDisplay(true);
-  bufferCanvas->fillScreen( COLOR_BACKGROUND );
+  //bufferCanvas->invertDisplay(true);
+  //bufferCanvas->fillScreen( COLOR_BACKGROUND );
 
   String errmsg = "Video stopOnError ";
   errmsg += msg1;

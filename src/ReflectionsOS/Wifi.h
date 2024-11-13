@@ -21,7 +21,6 @@ Depends on WiFiManager by Tzapu, https://github.com/tzapu/WiFiManager
 #include <WiFiUdp.h>
 #include "secrets.h"
 #include <WiFiMulti.h>
-#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
 
 class Wifi
 {

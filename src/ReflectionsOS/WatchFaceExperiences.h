@@ -25,7 +25,8 @@ enum WatchFaceState {
     DISPLAYING_HEALTH_STATISTICS,
     SETTING_HEALTH_STATISTICS,
     DISPLAYING_TIMER,
-    SETTING_TIMER
+    SETTING_TIMER,
+    DISPLAY_OFF
 };
 
 class WatchFaceExperiences 

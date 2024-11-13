@@ -22,8 +22,8 @@ Inveigle will also call BLEmessaging to see if it received a Pounce from another
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
-extern BLEServerClass bleServer;
-extern BLEClientClass bleClient;
+//extern BLEServerClass bleServer;
+//extern BLEClientClass bleClient;
 extern TOF tof;
 extern Compass compass;
 extern Haptic haptic;
@@ -81,10 +81,10 @@ void Experience_CatsPlay::run()
     directionTimer = millis();
 
     float headingA = compass.getHeading();
-    float headingB = bleServer.getLatestHeading();
+    float headingB; // = bleServer.getLatestHeading();
     
     // Placeholder RSSI value (should be obtained via BLE communication)
-    float rssi = bleClient.getDistance();
+    float rssi; // bleClient.getDistance();
 
     // Calculate bearing from A to B
     float bearingAB = calculateBearing(headingA, headingB, rssi);
@@ -128,7 +128,7 @@ void Experience_CatsPlay::run()
 
   // Pounce gesture made? Send pounce message
 
-  if ( bleServer.isPounced() )
+  if ( 0 ) // bleServer.isPounced() )
   {
     Serial.println( "CatsPlay pounced" );
 
@@ -159,7 +159,7 @@ void Experience_CatsPlay::run()
   Serial.print( mygs );
   Serial.println( " sending pounce");
 
-  bleClient.sendPounce();
+  //bleClient.sendPounce();
 
   Serial.println( "Asked client to send pounce");
 }
