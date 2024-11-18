@@ -24,7 +24,34 @@ void WatchFaceExperiences::begin()
 void WatchFaceExperiences::loop() 
 {
 
-  // Sense for display off mode
+
+
+  // Gesture sensing
+
+  // Move to next mode
+  // Set time
+  // Clear health stats
+  // Set alarm
+
+  // Time-out of a mode
+
+  /*
+
+  if ( currentState == MAIN ) return;
+
+  if ( currentState == DISPLAYING_DIGITAL_TIME || 
+    currentState == SETTING_DIGITAL_TIME || 
+    currentState == DISPLAYING_HEALTH_STATISTICS || 
+    currentState == SETTING_HEALTH_STATISTICS || 
+    currentState == DISPLAYING_TIMER || 
+    currentState == SETTING_TIMER ) )
+  {
+    currentState == MAIN;
+  }
+    
+
+  */
+
 
 
 
@@ -37,13 +64,6 @@ void WatchFaceExperiences::loop()
       // Sense gestures
 
       // Change mode Gesture
-
-
-
-
-
-
-
 
       break;
     case DISPLAYING_DIGITAL_TIME:
@@ -70,26 +90,6 @@ void WatchFaceExperiences::loop()
       // Placeholder for setting timer state
       break;
   }
-
-  // Time-out of modes
-
-  /*
-
-  if ( currentState == MAIN ) return;
-
-  if ( currentState == DISPLAYING_DIGITAL_TIME || 
-    currentState == SETTING_DIGITAL_TIME || 
-    currentState == DISPLAYING_HEALTH_STATISTICS || 
-    currentState == SETTING_HEALTH_STATISTICS || 
-    currentState == DISPLAYING_TIMER || 
-    currentState == SETTING_TIMER ) )
-  {
-    currentState == MAIN;
-  }
-    
-
-  */
-
 }
 
 void WatchFaceExperiences::setState(WatchFaceState newState) {

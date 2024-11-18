@@ -14,10 +14,6 @@
 
 #include "Experience_Chastise.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-extern Video video;
-extern TimeService timeservice;
-
 void Experience_Chastise::init()
 {
   vidflag = true;  

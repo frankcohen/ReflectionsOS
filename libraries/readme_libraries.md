@@ -20,10 +20,22 @@ Read the license in the license.txt file that comes with this code.
 For convenience, these libraries are in the [https://github.com/frankcohen/ReflectionsOS/libraries](https://github.com/frankcohen/ReflectionsOS/libraries) directory. Copy the contents to your Arduino IDE installation under documents/libraries.
 
 ```
+Depends on these libraries:
+
+For convenience, these libraries are in the [https://github.com/frankcohen/ReflectionsOS/libraries](https://github.com/frankcohen/ReflectionsOS)
+directory. Copy the contents to your Arduino IDE installation under documents/libraries.
+
+ESP32 board, https://github.com/espressif/arduino-esp32
 esp32FOTA, OTA updates, https://github.com/chrisjoyce911/esp32FOTA
 Adafruit DRV2605 Library, haptic controller, https://github.com/adafruit/Adafruit_DRV2605_Library
+Sparkfun LIS3DH, https://github.com/sparkfun/SparkFun_LIS3DH_Arduino_Library
+
 Adafruit MMC56x3, compass, magnetometer, https://github.com/adafruit/Adafruit_MMC56x3
+The Adafruit I2C libraries, like MMC56x3, depend on these
 Adafruit Unified Sensor, https://github.com/adafruit/Adafruit_Sensor
+Adafrruit BusIO, I2C support, https://github.com/adafruit/Adafruit_BusIO
+Adafruit SSD1306, compass support, https://github.com/adafruit/Adafruit_SSD1306
+
 Adafruit seesaw Library, https://github.com/adafruit/Adafruit_Seesaw
 ArduinoJson, https://arduinojson.org/
 ESP32-targz, https://github.com/tobozo/ESP32-targz/
@@ -32,13 +44,15 @@ ESP8266Audio, https://github.com/earlephilhower/ESP8266Audio
 FastLED, https://github.com/FastLED/FastLED
 GFX Library for Arduino, https://github.com/moononournation/Arduino_GFX
 JPEGDEC, https://github.com/bitbank2/JPEGDEC.git
-NimBLE-Arduino, https://github.com/h2zero/NimBLE-Arduino
-LISDHTR Acellerometer, https://travis-ci.com/Seeed-Studio/Seeed_Arduino_LIS3DHTR.svg?branch=master
 SparkFun_VL53L5CX_Arduino_Library, https://github.com/sparkfun/SparkFun_VL53L5CX_Arduino_Library
 Time, https://playground.arduino.cc/Code/Time/
 TinyGPSPlus-ESP32, https://github.com/Tinyu-Zhao/TinyGPSPlus-ESP32
 URLEncode, https://github.com/plageoj/urlencode
-WiFiManager by Tzapu, https://github.com/tzapu/WiFiManager
+AutoConnect by Hieromon, https://github.com/Hieromon/AutoConnect
+PNGdec library, https://github.com/bitbank2/PNGdec
+
+Depends on Esspresif ESP32 libraries at
+[https://github.com/espressif/arduino-esp32](https://github.com/espressif/arduino-esp32)
 ```
 
 Depends on Esspresif ESP32 libraries at

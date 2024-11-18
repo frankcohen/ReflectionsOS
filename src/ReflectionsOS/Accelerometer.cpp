@@ -43,23 +43,20 @@
 
 #include "Accelerometer.h"
 
-extern Storage storage;   // Defined in ReflectionsOfFrank.ino
-extern Haptic haptic;
-extern Utils utils;
-extern LOGGER logger;
-extern Video video;
-
 LIS3DH myIMU( I2C_MODE, 0x18 );
 
 Accelerometer::Accelerometer(){}
 
 void Accelerometer::begin()
 { 
-  myIMU.settings.accelSampleRate = 100;  //Hz.  Can be: 0,1,10,25,50,100,200,400,1600,5000 Hz
-  myIMU.settings.accelRange = 2;        //Max G force readable.  Can be: 2, 4, 8, 16
+  oldxPos = 120;
+  oldyPos = 120;
 
-  myIMU.settings.adcEnabled = 0;
-  myIMU.settings.tempEnabled = 0;
+  myIMU.settings.accelSampleRate = 50;  //Hz.  Can be: 0,1,10,25,50,100,200,400,1600,5000 Hz
+  myIMU.settings.accelRange = 16;        //Max G force readable.  Can be: 2, 4, 8, 16
+
+  myIMU.settings.adcEnabled = 1;
+  myIMU.settings.tempEnabled = 1;
   myIMU.settings.xAccelEnabled = 1;
   myIMU.settings.yAccelEnabled = 1;
   myIMU.settings.zAccelEnabled = 1;
@@ -205,8 +202,9 @@ void Accelerometer::begin()
   {
     // This is a cold start
     Serial.println("ESP32 cold start");
-
   }
+
+  angleTimer = millis();
 
   movetimer = millis();
   detecttimer = millis();
@@ -622,8 +620,51 @@ float Accelerometer::getAngle()
   return atan2(accel_y, accel_x) * 180 / PI;
 }
 
+
 void Accelerometer::loop()
 {
+
+// Experimenting with accel, plotting white ball around perimeter of screen
+
+  if ( millis() - angleTimer > 500 )
+  {
+    angleTimer = millis();
+ 
+    xAccel = myIMU.readFloatAccelX();
+    yAccel = myIMU.readFloatAccelY();
+
+    Serial.print( "Accel x = " );
+    Serial.print( xAccel, 4 );
+    Serial.print( " Accel y = " );
+    Serial.println( yAccel, 4 );
+
+    
+    float rad = atan2( yAccel, xAccel );  
+    float degree = rad * 180.0 / PI;  // Convert radians to degrees
+    
+    // Make sure the angle is between 0 and 360 degrees
+    if (degree < 0) degree += 360;
+    
+    angle = degree;
+    
+    int radius = 120;  // Radius of the circle (half of the 240x240 display size)
+    int xPos = 120 + radius * cos(radians(angle));  // Convert angle to radians for math
+    int yPos = 120 + radius * sin(radians(angle));
+    
+    oldxPos = xPos;
+    oldyPos = yPos;
+
+    // Draw a 20-pixel circle at the calculated position
+
+    gfx->fillCircle(oldxPos, oldyPos, 15, BLACK);  // Use 10 to make it a 20px diameter
+
+    gfx->fillCircle(xPos, yPos, 10, BLUE);  // Use 10 to make it a 20px diameter
+
+  }
+
+
+
+
   // Training mode, records gesture templates, stores to .ages file (Accelerometer Gesture Template)
 
   // Record multiple templates, then stop

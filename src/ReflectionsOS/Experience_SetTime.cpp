@@ -14,10 +14,6 @@
 
 #include "Experience_SetTime.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-extern Video video;
-extern TimeService timeservice;
-
 void Experience_SetTime::init()
 {
   setupComplete = false;
@@ -32,8 +28,6 @@ void Experience_SetTime::setup()
 {
   video.startVideo( SetTime_video );
 
-  //timeservice.setDialActivated( true );
-
   setSetupComplete(true);  // Signal that setup is complete
 }
 
@@ -44,28 +38,9 @@ void Experience_SetTime::run()
     setRunComplete(true);  // Signal run complete
   }
 
-  /*
-  if ( ! timeservice.getDialActivated() )
-  {
-    video.fadeToBlack();
-    setRunComplete(true);  // Signal run complete
-  }
-  */
 }
 
 void Experience_SetTime::teardown() 
 {
   setTeardownComplete( true );  // Signal teardown complete
-
-  /*
-  if ( video.getStatus() == 0 )
-  {
-    setTeardownComplete( true );  // Signal teardown complete
-  }
-
-  if ( ! video.getFadingStatus() )
-  {
-    setTeardownComplete( true );  // Signal teardown complete
-  }
-  */
 }

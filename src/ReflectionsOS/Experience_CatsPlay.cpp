@@ -12,21 +12,13 @@
 
 Next up I am incorporating the ble code into the ReflectionsOfFrank project. There will be two classes: BLE.cpp and BLEMessaging.cpp
 BLEMessaging will provide the message level tasks
-Inveigle will start a CatsPlay experience based on RSSI distance values from BLE.cpp
+AnimationService starts a CatsPlay experience based on RSSI distance values from BLE.cpp
 CatsPlay experience is going to be big. SetUp will determine the heading to the other cat and play 1 of 8 videos where the cat looks to the other cat. Run will let the user make a TOF gesture to send a Pounce method to the other cat, and making no gestures after 10 seconds runs TearDown to show the cat video ending the play
-Inveigle will also call BLEmessaging to see if it received a Pounce from another cat
+AnimationService also calls BLEmessaging to see if it received a Pounce from another cat
 
 */
 
 #include "Experience_CatsPlay.h"
-
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-extern Video video;
-//extern BLEServerClass bleServer;
-//extern BLEClientClass bleClient;
-extern TOF tof;
-extern Compass compass;
-extern Haptic haptic;
 
 void Experience_CatsPlay::init()
 {

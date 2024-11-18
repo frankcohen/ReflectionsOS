@@ -39,7 +39,7 @@ void Hardware::begin()
   digitalWrite(Display_SPI_RST, HIGH);
 
   pinMode(Display_SPI_BK, OUTPUT);      // Turns backlight on
-  digitalWrite(Display_SPI_BK, LOW);
+  digitalWrite(Display_SPI_BK, HIGH);
 
   pinMode(INT1_PIN, INPUT);     // Accelerometer awake on movement pins
   pinMode(INT2_PIN, INPUT);

@@ -8,23 +8,20 @@
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
 
-Inveigle - verb. To persuade (someone) to do something by means of deception or flattery
+AnimationService runs entertainment experiences.
 
-That describes the nature of an entertainment experience controller. The
-Inveigle controls which part of the experience happens and when.
-
-Experiences.cpp is an abstract base class to implement the Inveigle's actions.
-Each experience has a startup, run, and teardown method. Inveigle uses gesture,
+Experiences.cpp is an abstract base class to implement the AnimationService actions.
+Each experience has a startup, run, and teardown method. AnimationService uses gesture,
 time, and event sensing to run an experience. It runs the startup and run
 methods. It uses gesture and event sensing to interrupt the run method and
 skip to the teardown method. 
 
-Connect experiences to the Inveigle by adding an Experience implementation to 
+Connect experiences to the AnimationService by adding an Experience implementation to 
 the #include list and class instantiation method below.
 
 */
 
-#include "Inveigle.h"
+#include "AnimationService.h"
 
 // Add an include for each experience here
 #include "Experience_Awake.h"
@@ -42,11 +39,11 @@ the #include list and class instantiation method below.
 #include "Experience_Pounce.h"
 
 extern Video video;
-extern TimeService timeservice;
+extern TextMessageService textmessageservice;
 extern BLEServerClass bleServer;
 extern BLEClientClass bleClient;
 
-Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED ) 
+AnimationService::AnimationService() : currentExperience( nullptr ), currentState( STOPPED ) 
 {
   // Add instances of each experience to the vector, do not change the order
 
@@ -55,7 +52,7 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_Awake();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_Awake" ) );
+    Serial.println( F( "AnimationService error making Experience_Awake" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -63,7 +60,7 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_ShowTime();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_ShowTime" ) );
+    Serial.println( F( "AnimationService error making Experience_ShowTime" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -71,7 +68,7 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_Sleep();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_Sleep" ) );
+    Serial.println( F( "AnimationService error making Experience_Sleep" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -79,7 +76,7 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_SetTime();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_SetTime" ) );
+    Serial.println( F( "AnimationService error making Experience_SetTime" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -87,7 +84,7 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_Chastise();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_Chastise" ) );
+    Serial.println( F( "AnimationService error making Experience_Chastise" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -95,7 +92,7 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_Eyes();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_Eyes" ) );
+    Serial.println( F( "AnimationService error making Experience_Eyes" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -103,7 +100,7 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_Parallax();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_Parallax" ) );
+    Serial.println( F( "AnimationService error making Experience_Parallax" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -111,7 +108,7 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_Swipe();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_Swipe" ) );
+    Serial.println( F( "AnimationService error making Experience_Swipe" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -121,7 +118,7 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_CatsPlay();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_CatsPlay" ) );
+    Serial.println( F( "AnimationService error making Experience_CatsPlay" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -131,7 +128,7 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_MysticCat();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_MysticCat" ) );
+    Serial.println( F( "AnimationService error making Experience_MysticCat" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -139,7 +136,7 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_Shaken();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_Shaken" ) );
+    Serial.println( F( "AnimationService error making Experience_Shaken" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -147,7 +144,7 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_GettingSleepy();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_GettingSleepy" ) );
+    Serial.println( F( "AnimationService error making Experience_GettingSleepy" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -155,14 +152,14 @@ Inveigle::Inveigle() : currentExperience( nullptr ), currentState( STOPPED )
   makeExp = new Experience_Pounce();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "Inveigle error making Experience_Pounce" ) );
+    Serial.println( F( "AnimationService error making Experience_Pounce" ) );
     while(1);
   }
   experiences.push_back( makeExp );
 
 }
 
-void Inveigle::begin() 
+void AnimationService::begin() 
 {
   currentState = STOPPED;
 
@@ -176,10 +173,10 @@ void Inveigle::begin()
 
   experienceIndex = 0;
 
-  //startExperience( Inveigle::Awake );   // Sleep experience
+  //startExperience( AnimationService::Awake );   // Sleep experience
 }
 
-void Inveigle::startExperience( int exper )
+void AnimationService::startExperience( int exper )
 {
   currentExperience = experiences[ exper ];
   
@@ -190,7 +187,7 @@ void Inveigle::startExperience( int exper )
     return;
   }
 
-  Serial.print( "Inveigle startExperience " );
+  Serial.print( "AnimationService startExperience " );
   Serial.println( exper );
 
   currentExperience->init();
@@ -199,24 +196,24 @@ void Inveigle::startExperience( int exper )
   noopFlag = true;
 }
 
-void Inveigle::setCurrentState( State state )
+void AnimationService::setCurrentState( State state )
 {
   currentState = state;
 }
 
-int Inveigle::getCurrentState()
+int AnimationService::getCurrentState()
 {
   return currentState;
 }
 
-void Inveigle::operateExperience()
+void AnimationService::operateExperience()
 {
   switch ( currentState ) 
   {
     case SETUP:
       if ( currentExperience == NULL )
       {
-        Serial.println( "Inveigle setup currentExperience is null");
+        Serial.println( "AnimationService setup currentExperience is null");
         while(1);
       }
 
@@ -230,7 +227,7 @@ void Inveigle::operateExperience()
     case RUN:
       if ( currentExperience == NULL )
       {
-        Serial.println( "Inveigle run currentExperience is null");
+        Serial.println( "AnimationService run currentExperience is null");
         while(1);
       }
 
@@ -246,7 +243,7 @@ void Inveigle::operateExperience()
 
       if ( currentExperience == nullptr )
       {
-        Serial.println( "Inveigle teardown currentExperience is null");
+        Serial.println( "AnimationService teardown currentExperience is null");
       }
       
       currentExperience->teardown();
@@ -262,7 +259,7 @@ void Inveigle::operateExperience()
   }
 }
 
-void Inveigle::loop()
+void AnimationService::loop()
 {
   operateExperience();      // Run the current experience, if any
 
@@ -273,7 +270,7 @@ void Inveigle::loop()
 
   if ( accel.getRecentGesture() != 0 )
   {
-    startExperience( Inveigle::ShowTime );
+    startExperience( AnimationService::ShowTime );
     return;
   }
   */
@@ -289,7 +286,7 @@ void Inveigle::loop()
     Serial.print("Device is close. RSSI = " );
     Serial.println( mrs );
 
-    startExperience( Inveigle::CatsPlay );
+    startExperience( AnimationService::CatsPlay );
     return;
   }
 
@@ -306,27 +303,27 @@ void Inveigle::loop()
         switch ( random( 1, 7 ) )
         {
           case 1:
-            startExperience( Inveigle::ShowTime );
+            startExperience( AnimationService::ShowTime );
             Serial.println( "ShowTime" );
             break;
           case 2:
-            startExperience( Inveigle::ShowTime );
+            startExperience( AnimationService::ShowTime );
             Serial.println( "ShowTime" );
             break;
           case 3:
-            startExperience( Inveigle::Chastise ); 
+            startExperience( AnimationService::Chastise ); 
             Serial.println( "Chastise" );
             break;
           case 4:
-            startExperience( Inveigle::Shaken );
+            startExperience( AnimationService::Shaken );
             Serial.println( "Shaken" );
             break;
           case 5:
-            startExperience( Inveigle::SwipeFinger );
+            startExperience( AnimationService::SwipeFinger );
             Serial.println( "Shaken" );
             break;
           case 6:
-            startExperience( Inveigle::ParallaxCat );
+            startExperience( AnimationService::ParallaxCat );
             Serial.println( "Shaken" );
             break;
         }
@@ -343,7 +340,7 @@ return;
   if ( mygs == TOF::Sleep ) 
   {
     Serial.println( "sleep");
-    startExperience( Inveigle::Sleep );   // Sleep experience and puts hardware into deep sleep    
+    startExperience( AnimationService::Sleep );   // Sleep experience and puts hardware into deep sleep    
     return;
   }
 */
@@ -366,19 +363,19 @@ return;
       switch ( random( 1, 5 ) )
       {
         case 1:
-          startExperience( Inveigle::Shaken );
+          startExperience( AnimationService::Shaken );
           Serial.println( "Shaken" );
           break;
         case 2:
-          startExperience( Inveigle::SwipeFinger );
+          startExperience( AnimationService::SwipeFinger );
           Serial.println( "Swipe" );
           break;
         case 3:
-          startExperience( Inveigle::Chastise );
+          startExperience( AnimationService::Chastise );
           Serial.println( "Chastise" );
           break;
         case 4:
-          startExperience( Inveigle::Shaken );
+          startExperience( AnimationService::Shaken );
           Serial.println( "Shaken" );
           break;
       }

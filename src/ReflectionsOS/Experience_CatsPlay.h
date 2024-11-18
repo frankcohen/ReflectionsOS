@@ -15,13 +15,21 @@
 #include <Arduino.h>
 
 #include "Experience.h"
+#include "Haptic.h"
 
 //#include "BLE.h"
 #include "Compass.h"
 
 #include "Logger.h"
 #include "Video.h"
-#include "TimeService.h"
+
+extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
+extern Video video;
+//extern BLEServerClass bleServer;
+//extern BLEClientClass bleClient;
+extern TOF tof;
+extern Compass compass;
+extern Haptic haptic;
 
 class Experience_CatsPlay : public Experience {
   public:

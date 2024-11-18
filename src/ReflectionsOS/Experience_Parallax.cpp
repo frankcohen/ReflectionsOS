@@ -14,10 +14,6 @@
 
 #include "Experience_Parallax.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-extern Video video;
-extern TimeService timeservice;
-
 void Experience_Parallax::init()
 {
   vidflag = true;  
@@ -31,8 +27,6 @@ void Experience_Parallax::init()
 void Experience_Parallax::setup() 
 {
   Serial.println( "Parallax SETUP" );
-  timeservice.setDialActivated( false );
-  timeservice.setTimeAnimationActivated( false );
   video.startVideo( ParallaxCat_video );
   setSetupComplete(true);  // Signal that setup is complete
 }

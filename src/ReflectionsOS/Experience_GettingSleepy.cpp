@@ -14,10 +14,6 @@
 
 #include "Experience_GettingSleepy.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-extern Video video;
-extern TimeService timeservice;
-
 void Experience_GettingSleepy::init()
 {
   vidflag = true;  
@@ -31,8 +27,6 @@ void Experience_GettingSleepy::init()
 void Experience_GettingSleepy::setup() 
 {
   Serial.println( "Getting Sleepy SETUP" );
-  timeservice.setDialActivated( false );
-  timeservice.setTimeAnimationActivated( false );
   video.startVideo( Getting_Sleepy_video );
   setSetupComplete(true);  // Signal that setup is complete
 }

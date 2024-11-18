@@ -9,8 +9,8 @@
  Read the license in the license.txt file that comes with this code.
 */
 
-#ifndef INVEIGLE_H
-#define INVEIGLE_H
+#ifndef ANIMATIONSERVICE_H
+#define ANIMATIONSERVICE_H
 
 #include <Arduino.h>
 #include <stdlib.h>  // For random number generation
@@ -41,11 +41,11 @@ ChatGPT says RSSI values:
 #define catsplayClose -30
 #define catsplayCloser -50
 
-class Inveigle 
+class AnimationService 
 {
 
   public:
-    Inveigle();  // Constructor
+    AnimationService();  // Constructor
 
     enum State { SETUP, RUN, TEARDOWN, STOPPED };
     void begin();  // Initialization method
@@ -91,4 +91,4 @@ class Inveigle
 
 };
 
-#endif   //INVEIGLE_H
+#endif   // ANIMATIONSERVICE_H

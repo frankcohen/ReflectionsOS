@@ -14,10 +14,6 @@
 
 #include "Experience_Swipe.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-extern Video video;
-extern TimeService timeservice;
-
 void Experience_Swipe::init()
 {
   vidflag = true;  
@@ -31,8 +27,6 @@ void Experience_Swipe::init()
 void Experience_Swipe::setup() 
 {
   Serial.println( "Swipe SETUP" );
-  timeservice.setDialActivated( false );
-  timeservice.setTimeAnimationActivated( false );
   video.startVideo( Swipe_video );
   setSetupComplete(true);  // Signal that setup is complete
 }

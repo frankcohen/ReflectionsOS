@@ -9,7 +9,7 @@
  Read the license in the license.txt file that comes with this code.
 */
 
-#include "TimeService.h"
+#include "TextMessageService.h"
 
 extern LOGGER logger;
 extern Arduino_GFX *gfx;
@@ -19,9 +19,9 @@ extern GPS gps;
 extern Accelerometer accel;
 extern Video video;
 
-TimeService::TimeService(){}
+TextMessageService::TextMessageService(){}
 
-String TimeService::getRTCtime()
+String TextMessageService::getRTCtime()
 {
   struct tm timeinfo;
   if ( ! getLocalTime( &timeinfo ) ) 
@@ -89,7 +89,7 @@ const char* timetext[51][2] = {
   { "Invisible!",    "Yet here"},
 };
 
-void TimeService::begin()
+void TextMessageService::begin()
 { 
   ShowTimeWaitTime = millis();
   activated = false;
@@ -108,12 +108,12 @@ void TimeService::begin()
   String pastTimeStr = " ";
 }
 
-bool TimeService::test()
+bool TextMessageService::test()
 {
   return true;
 }
 
-boolean TimeService::fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font)
+boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font)
 {
   if ( fadeset )
   {
@@ -146,7 +146,7 @@ boolean TimeService::fadeInCenteredText( String text, int16_t y, uint16_t durati
   return false;
 }
 
-boolean TimeService::fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font)
+boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font)
 {
   if ( fadeset )
   {
@@ -181,7 +181,7 @@ boolean TimeService::fadeOutCenteredText( String text, int16_t y, uint16_t durat
   return false;
 }
 
-void TimeService::startShow( int shownum )
+void TextMessageService::startShow( int shownum )
 {
   showNum = shownum;
   showStep = 0;
@@ -190,13 +190,13 @@ void TimeService::startShow( int shownum )
   stepDelay = 100;
 }
 
-bool TimeService::isTimeSet()
+bool TextMessageService::isTimeSet()
 {
   if ( theTime == "0 o'clock" ) return false;
   return true;
 }
 
-void TimeService::runShowTellTime()
+void TextMessageService::runShowTellTime()
 {
   if ( showStep == 0 )
   {    
@@ -300,7 +300,7 @@ void TimeService::runShowTellTime()
 
 // For WatchFace shows digital time
 
-void TimeService::runDigitalTime()
+void TextMessageService::runDigitalTime()
 {
   if ( showStep == 0 )
   {    
@@ -406,22 +406,22 @@ void TimeService::runDigitalTime()
   */
 }
 
-bool TimeService::getTimeAnimationActivated()
+bool TextMessageService::getTimeAnimationActivated()
 {
   return activated;
 }
 
-void TimeService::setTimeAnimationActivated( bool act )
+void TextMessageService::setTimeAnimationActivated( bool act )
 {
   activated = act;
 }
 
-bool TimeService::getDialActivated()
+bool TextMessageService::getDialActivated()
 {
   return dialActivated;
 }
 
-void TimeService::setDialActivated( bool set )
+void TextMessageService::setDialActivated( bool set )
 {
   dialActivated = set;
 
@@ -432,7 +432,7 @@ void TimeService::setDialActivated( bool set )
   } 
 }
 
-String TimeService::getTimeStringFromAngle( float angle )
+String TextMessageService::getTimeStringFromAngle( float angle )
 {
   angle -= 90;
   if (angle < 0) angle += 360;
@@ -450,14 +450,14 @@ String TimeService::getTimeStringFromAngle( float angle )
   return String( timeString );
 }
 
-void TimeService::setCarrotAngleFromRTC() 
+void TextMessageService::setCarrotAngleFromRTC() 
 {
   // Assuming RTC is already initialized and set
   struct tm timeinfo;
 
   if ( !getLocalTime( &timeinfo ) ) 
   {
-    // Serial.println( "TimeService RTC not set" );
+    // Serial.println( "TextMessageService RTC not set" );
     carrotAngle = 0;
     drawCarrot( carrotAngle );
     return;
@@ -477,7 +477,7 @@ void TimeService::setCarrotAngleFromRTC()
   drawCarrot(carrotAngle);
   
   // Debug output
-  Serial.print("TimeService RTC reports: ");
+  Serial.print("TextMessageService RTC reports: ");
   Serial.print(hour);
   Serial.print(":");
   Serial.println(minute);
@@ -485,7 +485,7 @@ void TimeService::setCarrotAngleFromRTC()
   Serial.println(carrotAngle);
 }
 
-void TimeService::showDigitalTime()
+void TextMessageService::showDigitalTime()
 { 
 
   if ( ! ( pastTimeStr == getTimeStringFromAngle( carrotAngle ) ) )
@@ -513,7 +513,7 @@ void TimeService::showDigitalTime()
   gfx->println( phrase );
 }
 
-void TimeService::drawClockFace() 
+void TextMessageService::drawClockFace() 
 {
   // Draw hour tick marks
 
@@ -543,7 +543,7 @@ void TimeService::drawClockFace()
   }
 }
 
-void TimeService::drawCarrot( float angle ) 
+void TextMessageService::drawCarrot( float angle ) 
 {
   static float lastAngle = 0;
   
@@ -567,7 +567,7 @@ void TimeService::drawCarrot( float angle )
   lastAngle = angle;  
 }
 
-void TimeService::getTimeFromAngle(float angle, int &hour, int &minute) 
+void TextMessageService::getTimeFromAngle(float angle, int &hour, int &minute) 
 {
   // Adjust for the display rotation
   angle += 90;
@@ -579,7 +579,7 @@ void TimeService::getTimeFromAngle(float angle, int &hour, int &minute)
   minute = ((int)angle % 30) * 2;
 }
 
-void TimeService::updateSetTime()
+void TextMessageService::updateSetTime()
 {
   if ( ! dialActivated ) return;
 
@@ -626,9 +626,9 @@ void TimeService::updateSetTime()
   //video.drawIcons();
 }
 
-// TimeService loop
+// TextMessageService loop
 
-void TimeService::loop()
+void TextMessageService::loop()
 {
   // Run the Show Time text animation
 

@@ -14,10 +14,6 @@
 
 #include "Experience_ShowTime.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-extern Video video;
-extern TimeService timeservice;
-
 void Experience_ShowTime::init()
 {
   vidflag = true;  
@@ -52,13 +48,13 @@ void Experience_ShowTime::run()
 {
   if ( timeflag )
   {
-    timeservice.startShow( 0 );                     // Show saying plus hour and minute
-    timeservice.setTimeAnimationActivated( true );
+    textmessageservice.startShow( 0 );                     // Show saying plus hour and minute
+    textmessageservice.setTimeAnimationActivated( true );
     timeflag = false;
   }
   else
   {
-    if ( ! timeservice.getTimeAnimationActivated() )
+    if ( ! textmessageservice.getTimeAnimationActivated() )
     {
       video.setPaused( false );
       tearflag = true;

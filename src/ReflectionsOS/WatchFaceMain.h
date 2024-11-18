@@ -18,7 +18,8 @@
 #include "Arduino.h"
 #include "Logger.h"
 #include "Video.h"
-#include "TimeService.h"
+#include "TextMessageService.h"
+#include "RealTimeClock.h"
 
 #include <PNGdec.h>
 #include <Arduino_GFX_Library.h>
@@ -27,7 +28,7 @@
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Battery battery;
-extern TimeService timeservice;
+extern RealTimeClock realtimeclock;
 
 extern Arduino_GFX *gfx;
 extern Arduino_Canvas *bufferCanvas;
@@ -42,15 +43,20 @@ class WatchFaceMain : public WatchFaceBase
     void begin() override;
     void loop() override;    
     
-    void drawMainFace();
-
   private:
+    void updateDisplay();
 
     // Hours and minutes animate clockwise and counterclockwist into position
     bool startupAnimation();
     void beginStartupAnimation();
-     
+
+    void blinks();
+    void timelyHoursAndMinutes();
+    void batteryMove();
+
     uint32_t lastUpdate;
+
+    bool displayUpdateable;
 
     int counter;
     int startHour;
@@ -58,10 +64,18 @@ class WatchFaceMain : public WatchFaceBase
     int currentHour, currentMinute;
     bool startupComplete;
     unsigned long hoursmintimer;
+    bool honce;
+    bool monce;
 
     unsigned long battimer;
     int batcount;
     int batlev;
+
+    unsigned long catFaceTimer;
+    int catFaceWait;
+    bool blinking;
+    int catFaceIndex;
+    bool catFaceDirection;
 
     long facetime;
 };

@@ -104,11 +104,12 @@ Arduino IDE 2.x automatically uses partitions.csv in the source code directory
 #include "Hardware.h"
 #include "Wire.h"
 #include "Parallax.h"
-#include "TimeService.h"
-#include "Inveigle.h"
+#include "TextMessageService.h"
+#include "AnimationService.h"
 #include <Arduino_GFX_Library.h>
 #include "WatchFaceExperiences.h"
 #include "nvs_flash.h"
+#include "RealTimeClock.h"
 
 Video video;
 Utils utils;
@@ -117,8 +118,8 @@ Haptic haptic;
 Audio audio;
 TOF tof;
 //Parallax parallax;
-TimeService timeservice;
-Inveigle inveigle;
+TextMessageService textmessageservice;
+AnimationService animationservice;
 GPS gps;
 Wifi wifi;
 Compass compass;
@@ -132,6 +133,7 @@ Accelerometer accel;
 //BLEServerClass bleServer;
 //BLEClientClass bleClient;
 WatchFaceExperiences watchFaceExperiences;
+RealTimeClock realtimeclock;
 
 const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
 
@@ -181,20 +183,21 @@ static void smartdelay( unsigned long ms )
     
     video.loop();
     battery.loop();
-    //accel.loop();
+    accel.loop();
     storage.loop();
-    timeservice.loop();
     wifi.loop();  
     utils.loop();
     compass.loop();
     haptic.loop();
     //led.loop();
     //bleClient.loop();
-    //inveigle.loop();
+    realtimeclock.loop();
 
     // Watch experience operations
 
-    watchFaceExperiences.loop();
+    //watchFaceExperiences.loop();
+    //animationservice.loop();
+    //TextMessagingService.loop();
     
     /*
     logger.loop();
@@ -212,6 +215,8 @@ void setup() {
   Serial.setDebugOutput(true);
 
   Serial.println("Starting");
+
+  realtimeclock.begin();
 
   //wifi.reset();  // Optionally reset any previous connection settings
   //wifi.begin();  // Non-blocking, until guest uses it to connect
@@ -272,11 +277,11 @@ void setup() {
   battery.begin();
   audio.begin();
   gps.begin();
-  //accel.begin();
+  accel.begin();
   compass.begin();
   //parallax.begin();
-  timeservice.begin();
-  inveigle.begin();
+  textmessageservice.begin();
+  animationservice.begin();
   utils.begin();
   //led.begin();
 
@@ -288,7 +293,7 @@ void setup() {
   //bleClient.begin();  // Initializes the BLE client
 
   //accel.setTraining( true );    // Put accelermoeter into training mode
-  accel.loadGestures();         // Load the prerecorded accelermeter gestures
+  //accel.loadGestures();         // Load the prerecorded accelermeter gestures
 
   //ota.begin();
   //ota.update();     // Just in case previous use of the host replicated an OTA update file

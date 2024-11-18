@@ -14,10 +14,6 @@
 
 #include "Experience_Sleep.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-extern Video video;
-extern TimeService timeservice;
-
 void Experience_Sleep::init()
 {
   vidflag = true;  
@@ -31,8 +27,6 @@ void Experience_Sleep::init()
 void Experience_Sleep::setup() 
 {
   Serial.println( "Sleep SETUP" );
-  timeservice.setDialActivated( false );
-  timeservice.setTimeAnimationActivated( false );
   video.startVideo( Sleep_video );
   setSetupComplete(true);  // Signal that setup is complete
 }

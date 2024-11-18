@@ -69,8 +69,7 @@ void Video::begin()
     //Serial.println("gfx->begin() suceeded" );
   }
 
-  //gfx->invertDisplay(true);
-  gfx->fillScreen( COLOR_BLUE );
+  gfx->fillScreen( BLACK );
 
   // Init Display
 
@@ -87,6 +86,7 @@ void Video::begin()
     //Serial.println( F( "bufferCanvas->begin() suceeded" ) );
   }
   bufferCanvas->invertDisplay(true);
+  bufferCanvas->fillScreen( BLACK );
 
   videoStatus = 0;   // idle
   firsttime = true;

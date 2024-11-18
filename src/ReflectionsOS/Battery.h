@@ -38,7 +38,6 @@ class Battery
     long batteryWaitTime;
     float analogVolts;
     
-    void drawSpriteOverBackground( const uint16_t *sprite, int16_t spriteWidth, int16_t spriteHeight, int16_t x, int16_t y, uint16_t transparent );
 };
 
 #endif // _BATTERY_

@@ -15,10 +15,14 @@
 #include <Arduino.h>
 
 #include "Experience.h"
+#include "TextMessageService.h"
 
 #include "Logger.h"
 #include "Video.h"
-#include "TimeService.h"
+
+extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
+extern Video video;
+extern TextMessageService textmessageservice;
 
 class Experience_Eyes : public Experience {
   public:

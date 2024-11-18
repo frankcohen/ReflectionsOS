@@ -14,10 +14,6 @@
 
 #include "Experience_Eyes.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-extern Video video;
-extern TimeService timeservice;
-
 void Experience_Eyes::init()
 {
   vidflag = true;  
@@ -31,8 +27,8 @@ void Experience_Eyes::init()
 void Experience_Eyes::setup() 
 {
   Serial.println( "Eyes SETUP" );
-  timeservice.setDialActivated( false );
-  timeservice.setTimeAnimationActivated( false );
+  textmessageservice.setDialActivated( false );
+  textmessageservice.setTimeAnimationActivated( false );
   video.startVideo( EyesFollowFinger_video );
   setSetupComplete(true);  // Signal that setup is complete
 }

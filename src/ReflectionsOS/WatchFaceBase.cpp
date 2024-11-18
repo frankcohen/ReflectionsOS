@@ -66,9 +66,8 @@ void WatchFacePNGDraw(PNGDRAW *pDraw)
   uint16_t usPixels[320];
   uint8_t usMask[320];
 
-  // Serial.printf("Draw pos = 0,%d. size = %d x 1\n", pDraw->y, pDraw->iWidth);
-  png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
-  png.getAlphaMask(pDraw, usMask, 255);
+  png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_LITTLE_ENDIAN, 0x00000000);
+  png.getAlphaMask(pDraw, usMask, 1);
   bufferCanvas->draw16bitRGBBitmapWithMask(0, pDraw->y, usPixels, usMask, pDraw->iWidth, 1);
 }
 

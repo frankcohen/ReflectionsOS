@@ -18,7 +18,9 @@
 
 #include "Logger.h"
 #include "Video.h"
-#include "TimeService.h"
+
+extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
+extern Video video;
 
 class Experience_SetTime : public Experience {
   public:

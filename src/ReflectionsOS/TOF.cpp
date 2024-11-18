@@ -9,6 +9,11 @@
  Read the license in the license.txt file that comes with this code.
 
  Depends on https://github.com/sparkfun/SparkFun_VL53L5CX_Arduino_Library
+
+ Reflections board usees an (LIS3DHTR 3-Axis Accelerometer) to
+ identify user gestures with their wrists and to wake the
+ processor from sleep.
+
 */
 
 #include "TOF.h"

@@ -9,8 +9,8 @@
  Read the license in the license.txt file that comes with this code.
 */
 
-#ifndef _TIMESERVICE_
-#define _TIMESERVICE_
+#ifndef _TEXTMESSAGESERVICE_
+#define _TEXTMESSAGESERVICE_
 
 #include "config.h"
 #include "secrets.h"
@@ -45,10 +45,10 @@ extern const char* pairs[][2];
 #define SETTIME_TIMEOUT 7000
 #define SNAP_ANGLE_INCREMENT 7.5 // Increment for angle movement, smaller value for fine adjustment
 
-class TimeService
+class TextMessageService
 {
   public:
-    TimeService();
+    TextMessageService();
     void begin();
     void loop();
     bool test();
@@ -110,4 +110,4 @@ class TimeService
     String pastTimeStr;
 };
 
-#endif // _TIMESERVICE_
+#endif // _TEXTMESSAGESERVICE_

@@ -20,9 +20,7 @@ void GPS::begin()
 { 
   Serial2.begin(GPSBaud, SERIAL_8N1, RXPin, TXPin);
   active = false;
-  long gpstime = millis();
-  
-  //configTime(0, 0, "pool.ntp.org"); // Use NTP server for initial sync (optional)
+  long gpstime = millis();  
 }
 
 bool GPS::isActive()

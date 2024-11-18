@@ -14,9 +14,6 @@
 
 #include "Experience_Pounce.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-extern Video video;
-
 void Experience_Pounce::init()
 {
   setupComplete = false;

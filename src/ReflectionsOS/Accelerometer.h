@@ -27,6 +27,13 @@
 #include "SD.h"
 #include "SPI.h"
 
+extern Storage storage;   // Defined in ReflectionsOfFrank.ino
+extern Haptic haptic;
+extern Utils utils;
+extern LOGGER logger;
+extern Video video;
+extern Arduino_GFX *gfx;
+
 // Interrupt pins
 #define INT1_PIN GPIO_NUM_14
 #define INT2_PIN GPIO_NUM_13
@@ -100,6 +107,9 @@ class Accelerometer
     float DTWdistance(float x1, float y1, float z1, float x2, float y2, float z2);
     float DTWmin(float a, float b, float c);
 
+    float calculateAngle(int16_t x, int16_t y);
+    void drawImageAtAngle(float angle);
+
     int recentGesture;
     long recenttimer;
     bool trainingMode;
@@ -117,6 +127,10 @@ class Accelerometer
     bool firstnotice;
     int typecounter;
 
+    float xAccel, yAccel, zAccel;  // Accelerometer data
+
+    int oldxPos, oldyPos;
+    
     float accxt[maxframes];
     float accyt[maxframes];
     float acczt[maxframes];
@@ -153,6 +167,9 @@ class Accelerometer
     float dz = 0;
 
     float threshold = 0;
+
+    float angle;                 // Angle for the image placement
+    unsigned long angleTimer;
 
 };
 

@@ -14,9 +14,6 @@
 
 #include "Experience_MysticCat.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-extern Video video;
-
 void Experience_MysticCat::init()
 {
   setupComplete = false;
