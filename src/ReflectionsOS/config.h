@@ -35,6 +35,8 @@ Read the license in the license.txt file that comes with this code.
 #define CatsPlay7_video "7d75dbfe1ac31dd914f6ead0706d38c1"
 #define CatsPlay8_video "3f5f5e3f087b6db73a39fad9a7ec4217"
 
+#define WatchFaceOpener_video "069ffb4a070f6f86cd281f949a7f29b5"
+
 #define EyesFollowFinger_video "f99c9b5031e6102ef45fbdf71cb09134"
 
 #define MysticCat_video "bc481c1a678e0f62e2838e7fc8cd922f"
@@ -63,7 +65,7 @@ Read the license in the license.txt file that comes with this code.
 #define wfMainHours2 ".png"
 #define wfMainMinutes "Minutes_"
 #define wfMainMinutes2 ".png"
-#define wfMainFace "Main_Cat_Face_"
+#define wfMainFace "Blink_"
 #define wfMainFace2 ".png"
 #define blinkspeed 100
 #define wfMainFlip "Flip_"

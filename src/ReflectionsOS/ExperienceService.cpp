@@ -8,20 +8,20 @@
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
 
-AnimationService runs entertainment experiences.
+ExperienceService runs entertainment experiences.
 
-Experiences.cpp is an abstract base class to implement the AnimationService actions.
-Each experience has a startup, run, and teardown method. AnimationService uses gesture,
+Experiences.cpp is an abstract base class to implement the ExperienceService actions.
+Each experience has a startup, run, and teardown method. ExperienceService uses gesture,
 time, and event sensing to run an experience. It runs the startup and run
 methods. It uses gesture and event sensing to interrupt the run method and
 skip to the teardown method. 
 
-Connect experiences to the AnimationService by adding an Experience implementation to 
+Connect experiences to the ExperienceService by adding an Experience implementation to 
 the #include list and class instantiation method below.
 
 */
 
-#include "AnimationService.h"
+#include "ExperienceService.h"
 
 // Add an include for each experience here
 #include "Experience_Awake.h"
@@ -38,12 +38,7 @@ the #include list and class instantiation method below.
 #include "Experience_GettingSleepy.h"
 #include "Experience_Pounce.h"
 
-extern Video video;
-extern TextMessageService textmessageservice;
-extern BLEServerClass bleServer;
-extern BLEClientClass bleClient;
-
-AnimationService::AnimationService() : currentExperience( nullptr ), currentState( STOPPED ) 
+ExperienceService::ExperienceService() : currentExperience( nullptr ), currentState( STOPPED ) 
 {
   // Add instances of each experience to the vector, do not change the order
 
@@ -52,7 +47,7 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_Awake();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_Awake" ) );
+    Serial.println( F( "ExperienceService error making Experience_Awake" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -60,7 +55,7 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_ShowTime();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_ShowTime" ) );
+    Serial.println( F( "ExperienceService error making Experience_ShowTime" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -68,7 +63,7 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_Sleep();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_Sleep" ) );
+    Serial.println( F( "ExperienceService error making Experience_Sleep" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -76,7 +71,7 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_SetTime();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_SetTime" ) );
+    Serial.println( F( "ExperienceService error making Experience_SetTime" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -84,7 +79,7 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_Chastise();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_Chastise" ) );
+    Serial.println( F( "ExperienceService error making Experience_Chastise" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -92,7 +87,7 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_Eyes();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_Eyes" ) );
+    Serial.println( F( "ExperienceService error making Experience_Eyes" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -100,7 +95,7 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_Parallax();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_Parallax" ) );
+    Serial.println( F( "ExperienceService error making Experience_Parallax" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -108,7 +103,7 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_Swipe();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_Swipe" ) );
+    Serial.println( F( "ExperienceService error making Experience_Swipe" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -118,7 +113,7 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_CatsPlay();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_CatsPlay" ) );
+    Serial.println( F( "ExperienceService error making Experience_CatsPlay" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -128,7 +123,7 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_MysticCat();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_MysticCat" ) );
+    Serial.println( F( "ExperienceService error making Experience_MysticCat" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -136,7 +131,7 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_Shaken();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_Shaken" ) );
+    Serial.println( F( "ExperienceService error making Experience_Shaken" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -144,7 +139,7 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_GettingSleepy();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_GettingSleepy" ) );
+    Serial.println( F( "ExperienceService error making Experience_GettingSleepy" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -152,14 +147,14 @@ AnimationService::AnimationService() : currentExperience( nullptr ), currentStat
   makeExp = new Experience_Pounce();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "AnimationService error making Experience_Pounce" ) );
+    Serial.println( F( "ExperienceService error making Experience_Pounce" ) );
     while(1);
   }
   experiences.push_back( makeExp );
 
 }
 
-void AnimationService::begin() 
+void ExperienceService::begin() 
 {
   currentState = STOPPED;
 
@@ -173,10 +168,10 @@ void AnimationService::begin()
 
   experienceIndex = 0;
 
-  //startExperience( AnimationService::Awake );   // Sleep experience
+  //startExperience( ExperienceService::Awake );   // Sleep experience
 }
 
-void AnimationService::startExperience( int exper )
+void ExperienceService::startExperience( int exper )
 {
   currentExperience = experiences[ exper ];
   
@@ -187,7 +182,7 @@ void AnimationService::startExperience( int exper )
     return;
   }
 
-  Serial.print( "AnimationService startExperience " );
+  Serial.print( "ExperienceService startExperience " );
   Serial.println( exper );
 
   currentExperience->init();
@@ -196,24 +191,24 @@ void AnimationService::startExperience( int exper )
   noopFlag = true;
 }
 
-void AnimationService::setCurrentState( State state )
+void ExperienceService::setCurrentState( State state )
 {
   currentState = state;
 }
 
-int AnimationService::getCurrentState()
+int ExperienceService::getCurrentState()
 {
   return currentState;
 }
 
-void AnimationService::operateExperience()
+void ExperienceService::operateExperience()
 {
   switch ( currentState ) 
   {
     case SETUP:
       if ( currentExperience == NULL )
       {
-        Serial.println( "AnimationService setup currentExperience is null");
+        Serial.println( "ExperienceService setup currentExperience is null");
         while(1);
       }
 
@@ -227,7 +222,7 @@ void AnimationService::operateExperience()
     case RUN:
       if ( currentExperience == NULL )
       {
-        Serial.println( "AnimationService run currentExperience is null");
+        Serial.println( "ExperienceService run currentExperience is null");
         while(1);
       }
 
@@ -243,7 +238,7 @@ void AnimationService::operateExperience()
 
       if ( currentExperience == nullptr )
       {
-        Serial.println( "AnimationService teardown currentExperience is null");
+        Serial.println( "ExperienceService teardown currentExperience is null");
       }
       
       currentExperience->teardown();
@@ -259,7 +254,7 @@ void AnimationService::operateExperience()
   }
 }
 
-void AnimationService::loop()
+void ExperienceService::loop()
 {
   operateExperience();      // Run the current experience, if any
 
@@ -270,7 +265,7 @@ void AnimationService::loop()
 
   if ( accel.getRecentGesture() != 0 )
   {
-    startExperience( AnimationService::ShowTime );
+    startExperience( ExperienceService::ShowTime );
     return;
   }
   */
@@ -286,7 +281,7 @@ void AnimationService::loop()
     Serial.print("Device is close. RSSI = " );
     Serial.println( mrs );
 
-    startExperience( AnimationService::CatsPlay );
+    startExperience( ExperienceService::CatsPlay );
     return;
   }
 
@@ -303,27 +298,27 @@ void AnimationService::loop()
         switch ( random( 1, 7 ) )
         {
           case 1:
-            startExperience( AnimationService::ShowTime );
+            startExperience( ExperienceService::ShowTime );
             Serial.println( "ShowTime" );
             break;
           case 2:
-            startExperience( AnimationService::ShowTime );
+            startExperience( ExperienceService::ShowTime );
             Serial.println( "ShowTime" );
             break;
           case 3:
-            startExperience( AnimationService::Chastise ); 
+            startExperience( ExperienceService::Chastise ); 
             Serial.println( "Chastise" );
             break;
           case 4:
-            startExperience( AnimationService::Shaken );
+            startExperience( ExperienceService::Shaken );
             Serial.println( "Shaken" );
             break;
           case 5:
-            startExperience( AnimationService::SwipeFinger );
+            startExperience( ExperienceService::SwipeFinger );
             Serial.println( "Shaken" );
             break;
           case 6:
-            startExperience( AnimationService::ParallaxCat );
+            startExperience( ExperienceService::ParallaxCat );
             Serial.println( "Shaken" );
             break;
         }
@@ -340,7 +335,7 @@ return;
   if ( mygs == TOF::Sleep ) 
   {
     Serial.println( "sleep");
-    startExperience( AnimationService::Sleep );   // Sleep experience and puts hardware into deep sleep    
+    startExperience( ExperienceService::Sleep );   // Sleep experience and puts hardware into deep sleep    
     return;
   }
 */
@@ -363,19 +358,19 @@ return;
       switch ( random( 1, 5 ) )
       {
         case 1:
-          startExperience( AnimationService::Shaken );
+          startExperience( ExperienceService::Shaken );
           Serial.println( "Shaken" );
           break;
         case 2:
-          startExperience( AnimationService::SwipeFinger );
+          startExperience( ExperienceService::SwipeFinger );
           Serial.println( "Swipe" );
           break;
         case 3:
-          startExperience( AnimationService::Chastise );
+          startExperience( ExperienceService::Chastise );
           Serial.println( "Chastise" );
           break;
         case 4:
-          startExperience( AnimationService::Shaken );
+          startExperience( ExperienceService::Shaken );
           Serial.println( "Shaken" );
           break;
       }

@@ -33,8 +33,6 @@ extern RealTimeClock realtimeclock;
 extern Arduino_GFX *gfx;
 extern Arduino_Canvas *bufferCanvas;
 
-#define transparent_color 0xFFE0
-
 class WatchFaceMain : public WatchFaceBase 
 {
   public:
@@ -42,42 +40,37 @@ class WatchFaceMain : public WatchFaceBase
     
     void begin() override;
     void loop() override;    
+
+    enum Panel { MAIN, TIME, TIMER, HEALTH };
     
   private:
     void updateDisplay();
 
-    // Hours and minutes animate clockwise and counterclockwist into position
-    bool startupAnimation();
-    void beginStartupAnimation();
+    void updateBlink();
+    void updateHoursAndMinutes();
+    void updateBattery();
+    bool startBlinkAnimation();
 
-    void blinks();
-    void timelyHoursAndMinutes();
-    void batteryMove();
+    int panel;
 
-    uint32_t lastUpdate;
-
+    unsigned long maintimer;
+    
     bool displayUpdateable;
 
-    int counter;
-    int startHour;
-    int startMinute;
-    int currentHour, currentMinute;
-    bool startupComplete;
-    unsigned long hoursmintimer;
-    bool honce;
-    bool monce;
+    int currentHour, currentHour2, currentMinute, currentMinute2;
+    int oldHour, oldMinute, oldBattery, oldBlink;
 
     unsigned long battimer;
     int batcount;
     int batlev;
 
+    bool blinking;
     unsigned long catFaceTimer;
     int catFaceWait;
-    bool blinking;
     int catFaceIndex;
     bool catFaceDirection;
 
-    long facetime;
+    bool drawitall;
 };
 
 #endif // WATCHFACE_H

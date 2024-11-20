@@ -105,7 +105,7 @@ Arduino IDE 2.x automatically uses partitions.csv in the source code directory
 #include "Wire.h"
 #include "Parallax.h"
 #include "TextMessageService.h"
-#include "AnimationService.h"
+#include "ExperienceService.h"
 #include <Arduino_GFX_Library.h>
 #include "WatchFaceExperiences.h"
 #include "nvs_flash.h"
@@ -119,7 +119,7 @@ Audio audio;
 TOF tof;
 //Parallax parallax;
 TextMessageService textmessageservice;
-AnimationService animationservice;
+ExperienceService experienceservice;
 GPS gps;
 Wifi wifi;
 Compass compass;
@@ -183,7 +183,7 @@ static void smartdelay( unsigned long ms )
     
     video.loop();
     battery.loop();
-    accel.loop();
+    //accel.loop();
     storage.loop();
     wifi.loop();  
     utils.loop();
@@ -195,9 +195,10 @@ static void smartdelay( unsigned long ms )
 
     // Watch experience operations
 
-    //watchFaceExperiences.loop();
-    //animationservice.loop();
-    //TextMessagingService.loop();
+    watchFaceExperiences.loop();
+    
+    //experienceservice.loop();
+    //TextMessageService.loop();
     
     /*
     logger.loop();
@@ -216,10 +217,10 @@ void setup() {
 
   Serial.println("Starting");
 
-  realtimeclock.begin();
-
   //wifi.reset();  // Optionally reset any previous connection settings
   //wifi.begin();  // Non-blocking, until guest uses it to connect
+
+  realtimeclock.begin();
   
   hardware.begin();   // Sets all the hardware pins
 
@@ -281,7 +282,7 @@ void setup() {
   compass.begin();
   //parallax.begin();
   textmessageservice.begin();
-  animationservice.begin();
+  experienceservice.begin();
   utils.begin();
   //led.begin();
 
@@ -319,7 +320,7 @@ void setup() {
 
   startvidtime = millis();
   startvidflag = true;
-
+  
   logger.info(F("Setup complete"));
 }
 

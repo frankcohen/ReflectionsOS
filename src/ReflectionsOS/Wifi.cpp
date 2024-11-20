@@ -20,7 +20,7 @@ void Wifi::begin()
 { 
   //Serial.println("Wifi begin");
 
-  WiFi.begin( "FranksFree-passwordFrank123", "Frank123");
+  WiFi.begin( SECRET_SSID, SECRET_PASS);
 
   std::string devname = host_name_me;
   std::string mac = WiFi.macAddress().c_str();
@@ -40,6 +40,8 @@ void Wifi::begin()
   // Once connected, print the IP address
   Serial.print("Connected to WiFi, ");
   Serial.println(WiFi.localIP());
+
+  setRTCfromNTP();
 
   lastWifiTime = millis();
   checkNTP = millis();

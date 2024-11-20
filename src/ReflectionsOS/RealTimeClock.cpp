@@ -17,7 +17,7 @@ RealTimeClock::RealTimeClock(){}
 
 void RealTimeClock::begin()
 { 
-  Serial.println( "RealTimeClock begin");
+  //Serial.println( "RealTimeClock begin");
 
   struct tm timeinfo;
 
@@ -39,13 +39,7 @@ void RealTimeClock::begin()
     time_t t = mktime(&timeinfo);       // Convert struct tm to time_t (seconds since the Unix epoch)
     struct timeval tv = {t, 0};  // time_t and microseconds
     settimeofday(&tv, nullptr);  // Set the time on the ESP32
-  } 
-
-  getLocalTime( &timeinfo );
-  Serial.print( "RTC " );
-  Serial.print( timeinfo.tm_hour % 12 );
-  Serial.print( ":" );
-  Serial.println( timeinfo.tm_min / 3 );
+  }
 }
 
 // Function to get the current hour from the RTC

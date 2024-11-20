@@ -134,7 +134,7 @@ void WatchFaceBase::start()
 void WatchFaceBase::show() 
 {
   bufferCanvas->flush();
-  bufferCanvas->fillScreen( BLACK ); // Clear the buffer to prepare for new drawings
+  //bufferCanvas->fillScreen( BLACK ); // Clear the buffer to prepare for new drawings
 }
 
 /* Uses file extension for image type, .png, .jpg */

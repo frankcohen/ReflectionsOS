@@ -27,6 +27,8 @@
 #include "SD.h"
 #include "SPI.h"
 
+#include <Kalman.h>
+
 extern Storage storage;   // Defined in ReflectionsOfFrank.ino
 extern Haptic haptic;
 extern Utils utils;
@@ -128,8 +130,6 @@ class Accelerometer
     int typecounter;
 
     float xAccel, yAccel, zAccel;  // Accelerometer data
-
-    int oldxPos, oldyPos;
     
     float accxt[maxframes];
     float accyt[maxframes];
@@ -171,6 +171,8 @@ class Accelerometer
     float angle;                 // Angle for the image placement
     unsigned long angleTimer;
 
+    Kalman kalmanX; // Create the Kalman instances
+    int oldxPos, oldyPos;
 };
 
 #endif // _ACCELEROMETER_

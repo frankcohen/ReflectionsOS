@@ -12,97 +12,67 @@
 
 */
 
+/*
+WatchFace Main todo:
+
+DONE Main face opener video - hands move in both directions, cat appears smile first
+DONE Display correct hours and minutes from RTC
+Download new blink graphics
+DONE Display main face with speed (mjpeg's at 8 FPS, so should you)
+  DONE The strategy: skip the start, clear the buffer when the blink is done, draw the elements when they changed
+DONE Remove horizontal lines from top and bottom of cat face pngs
+Single tap to move from MainPanel, TimePanel, HealthPanel, TimerPanel, movement animation, haptic for single and double tap
+Double tap in TimePanel to see SetTimePanel
+SetTimePanel left-right tilt for minutes, top-bottom tilt for hours, wait 3 seconds to accept and see MainPanel, larger font, hours/minute animation
+HealthPanel double tap to clear steps, see MainPanel
+TimerPanel shows countdown, double tap to clear, single tap for MainPanel,
+   left-right tilt to choose timer length (5, 10, 20, 30, 60, 90), wait 3 seconds to start and see MainPanel
+
+*/
+
 #include "WatchFaceMain.h"
 
 WatchFaceMain::WatchFaceMain() 
-    : WatchFaceBase(), // Call to the base class constructor
-      currentHour(0), 
-      currentMinute(0), 
-      lastUpdate(0)
+    : WatchFaceBase() // Call to the base class constructor
 {}
 
 void WatchFaceMain::begin() 
 {
   WatchFaceBase::begin();  // This ensures the base method is executed
 
-  facetime = millis();
-  hoursmintimer = millis();
+  // video.startVideo( WatchFaceOpener_video );
 
-  beginStartupAnimation();
+  panel = MAIN;
+  maintimer = millis();
+
+  drawitall = true;
 
   catFaceIndex = 1;
   catFaceTimer = millis();
   catFaceDirection = true;
-  blinking = false;
   catFaceWait = rand() % 30000;
-
-  displayUpdateable = true;
-}
-
-/* Hours and minutes animate clockwise and counterclockwist into position */
-
-void WatchFaceMain::beginStartupAnimation()
-{
-  struct tm timeinfo;
-  startHour = realtimeclock.getCurrentHourFromRTC() % 12;
-  if ( startHour == -1 ) startHour = 2;
-
-  startMinute = realtimeclock.getCurrentMinuteFromRTC() % 20;
-  if ( startMinute == -1 ) startMinute = 15;
-  
-  counter = 0;
-
-  startupComplete = false;
 
   battimer = millis();
   batcount = 0;
   batlev = 0;
 
-  startHour = 0;
-  startMinute = 0;
-  currentHour = 0;
-  currentMinute = 0;
-  honce = true;
-  monce = true;
+  oldHour = 0;
+  oldMinute = 0;
+  oldBattery = 0;
+  oldBlink = 0;
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
+
 }
 
-bool WatchFaceMain::startupAnimation()
+bool WatchFaceMain::startBlinkAnimation()
 {
-  // Hours and Minutes hands revolve around the cat face
 
-  // Normalize the startHour (1 to 12) and startMinute (1 to 20)
-  startHour = (startHour % 12 == 0) ? 12 : startHour;
-  startMinute = (startMinute % 20 == 0) ? 20 : startMinute;
-
-  // Calculate the current minute position in counterclockwise direction
-  int currentMinute2 = (startMinute - counter - 1 + 20) % 20 + 1;
-  if ( currentMinute != currentMinute2 ) displayUpdateable = true;
-  currentMinute = currentMinute2;
-
-  // Calculate the relative hour position based on minute progress
-  float hourProgressFloat = (counter * 12.0) / 20.0;  // The hour hand moves 12 positions in 20 minute steps
-  int hourProgress = (int)ceil(hourProgressFloat);
-  int currentHour2 = (startHour + hourProgress - 1) % 12 + 1;
-
-  if ( currentHour != currentHour2 ) displayUpdateable = true;
-  currentHour = currentHour2;
-
-  // If the counter has reached 20, it means we've gone through a full cycle
-  counter++;
-  if (counter >= 20) 
-  {
-    startupComplete = true;
-    return true;
-  }
-
-  return false;
 }
 
 // Battery indicator grows/loses leaves
 
-void WatchFaceMain::batteryMove()
+void WatchFaceMain::updateBattery()
 {
   if ( ( millis() - battimer ) > 2000 )
   {
@@ -119,38 +89,35 @@ void WatchFaceMain::batteryMove()
 
 // Hour and minutes hands to current time
 
-void WatchFaceMain::timelyHoursAndMinutes()
+void WatchFaceMain::updateHoursAndMinutes()
 {
   int currentHour2 = realtimeclock.getCurrentHourFromRTC();
 
   if ( currentHour2 == -1 ) currentHour2 = 2;
-
-  currentHour2 = currentHour2 % 12;
   
-  if ( currentHour2 != currentHour || honce )
+  if ( currentHour2 != currentHour )
   {
     currentHour = currentHour2;
     displayUpdateable = true;
-    honce = false;
+    drawitall = true;
   }
 
   int currentMinute2 = realtimeclock.getCurrentMinuteFromRTC();
+
   if ( currentMinute2 == -1 ) currentMinute2 = 15;
 
-  currentMinute2 = currentMinute2 % 20;
-
-  if ( currentMinute2 != currentMinute || monce )
+  if ( currentMinute2 != currentMinute )
   {
     currentMinute = currentMinute2;
     displayUpdateable = true;
-    monce = false;
+    drawitall = true;
   }
 
 }
 
 // Cat blinks eyes
 
-void WatchFaceMain::blinks()
+void WatchFaceMain::updateBlink()
 {
   if ( ! blinking )
   {
@@ -187,6 +154,7 @@ void WatchFaceMain::blinks()
         blinking = false;
         catFaceTimer = millis();
         catFaceWait = rand() % 30000;
+        drawitall = true;
 
         Serial.print( "catFaceWait ");
         Serial.println( catFaceWait );
@@ -202,85 +170,124 @@ void WatchFaceMain::updateDisplay()
   if ( ! displayUpdateable ) return;
   displayUpdateable = false;
 
-  start();    // Clear frame buffer
+  unsigned long mytime = millis();
+  unsigned long mytime2 = millis();
+
+  if ( drawitall ) start();    // Clear frame buffer
+
+  if ( drawitall )
+  {
+    Serial.print( "dia ");
+  }
+
+  Serial.print( "a: " );
+  Serial.print( millis() - mytime );
+  mytime = millis();
 
   // Background
 
-  drawImageFromFile( wfMainBackground, true, 0, 0 );
+  if ( drawitall ) drawImageFromFile( wfMainBackground, true, 0, 0 );
+
+  Serial.print( " b: " );
+  Serial.print( millis() - mytime );
+  mytime = millis();
 
   String mef;
 
-  if ( startupComplete )
+  // Draw hour image
+  if ( ( currentHour != oldHour ) || drawitall )
   {
-    // Draw hour image
-    if ( currentHour < 13 )
-    {
-      mef = wfMainHours;
-      mef += currentHour;
-      mef += wfMainHours2;
-      drawImageFromFile( mef, true, 0, 0 );
-    }
-    else
-    {
-      Serial.print( "currentHour: " );
-      Serial.println( currentHour );
-    }
+    oldHour = currentHour;
 
-    // Draw minutes image
-    if ( currentMinute < 21 )
-    {
-      mef = wfMainMinutes;
-      mef += currentMinute;
-      mef += wfMainMinutes2;
-      drawImageFromFile( mef, true, 0, 0 );
-    }
-    else
-    {
-      Serial.print( "currentMinute: " );
-      Serial.println( currentMinute );
-    }
+    mef = wfMainHours;
+    mef += currentHour;
+    mef += wfMainHours2;
+    drawImageFromFile( mef, true, 0, 0 );
+  } 
 
+  Serial.print( " c: " );
+  Serial.print( millis() - mytime );
+  mytime = millis();
 
+  int minute = map( currentMinute, 1, 60, 1, 20) + 1;
+  if ( minute > 20 ) minute == 20;
+
+  // Draw minutes image
+  if ( ( currentMinute != oldMinute ) || drawitall )
+  {
+    oldMinute = currentMinute;
+
+    mef = wfMainMinutes;
+    mef += minute ;
+    mef += wfMainMinutes2;
+    drawImageFromFile( mef, true, 0, 0 );
   }
+
+  Serial.print( " d: " );
+  Serial.print( millis() - mytime );
+  mytime = millis();
 
   // Battery indicator
 
-  mef = wfMainBattery;
-  mef += batcount + 1;
-  mef += wfMainBattery2;
-  drawImageFromFile( mef, true, 0, 0 );
+    if ( ( batcount != oldBattery ) || drawitall )
+    {
+      oldBattery = batcount;
+
+      mef = wfMainBattery;
+      mef += batcount + 1;
+      mef += wfMainBattery2;
+      drawImageFromFile( mef, true, 0, 0 );
+    }
+
+    Serial.print( " e: " );
+    Serial.print( millis() - mytime );
+    mytime = millis();
+
 
   // Cat face in the middle, and he blinks randomly
 
-  mef = wfMainFace;
-  mef += catFaceIndex;
-  mef += wfMainFace2;
-  drawImageFromFile( mef, true, 0, 0 );
+    if ( ( catFaceIndex != oldBlink ) || drawitall )
+    {
+      oldBlink = catFaceIndex;
 
-  show();
+      mef = wfMainFace;
+      mef += catFaceIndex;
+      mef += wfMainFace2;
+      drawImageFromFile( mef, true, 0, 0 );
+    }
+
+    Serial.print( " f: " );
+    Serial.print( millis() - mytime );
+    mytime = millis();
+
+    show();
+
+    Serial.print( " g: " );
+    Serial.print( millis() - mytime );
+    mytime = millis();
+
+    Serial.print( " x: " );
+    Serial.println( millis() - mytime2 );
+
+    drawitall = false;
+
 }
 
 void WatchFaceMain::loop()
-{  
-  if ( ( millis() - facetime ) > 20000 )
+{ 
+
+  if ( panel == MAIN )
   {
-    facetime = millis();
+    if ( millis() - maintimer > 50  )
+    {
+      maintimer = millis();
+
+      updateBlink();            // Blink eyes
+      updateBattery();          // Battery level indicator
+      updateHoursAndMinutes();  // Update hour and minute hands
+    }
+
+    updateDisplay();
   }
 
-  unsigned long mytime = millis();
-
-  if ( ! startupComplete )
-  {
-    startupComplete = startupAnimation();
-  }
-  else
-  {
-    blinks();     // Blink eyes
-    batteryMove();    // Battery level indicator
-    timelyHoursAndMinutes();
-  }
-
-  mytime = millis();
-
-  updateDisplay();
 }

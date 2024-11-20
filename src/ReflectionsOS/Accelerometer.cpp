@@ -39,6 +39,11 @@
   c) Enable the High-Pass Filter: This filters out low-frequency signals 
      (such as gravity) and focuses on higher-frequency signals (such as sudden movements).
 
+
+  References:
+  Tilt Sensing Using a Three-Axis Accelerometer
+  https://www.nxp.com/docs/en/application-note/AN3461.pdf
+
 */
 
 #include "Accelerometer.h"
@@ -53,16 +58,17 @@ void Accelerometer::begin()
   oldyPos = 120;
 
   myIMU.settings.accelSampleRate = 50;  //Hz.  Can be: 0,1,10,25,50,100,200,400,1600,5000 Hz
-  myIMU.settings.accelRange = 16;        //Max G force readable.  Can be: 2, 4, 8, 16
+  myIMU.settings.accelRange = 4;        //Max G force readable.  Can be: 2, 4, 8, 16
 
-  myIMU.settings.adcEnabled = 1;
-  myIMU.settings.tempEnabled = 1;
+  myIMU.settings.adcEnabled = 0;
+  myIMU.settings.tempEnabled = 0;
   myIMU.settings.xAccelEnabled = 1;
   myIMU.settings.yAccelEnabled = 1;
   myIMU.settings.zAccelEnabled = 1;
 
   myIMU.applySettings();
 
+/*
   // Deep sleep awaken sensativity package
 
   uint8_t ctrlReg2;
@@ -183,7 +189,7 @@ void Accelerometer::begin()
 
   // Enable ESP32 to wake up on INT2 (GPIO13) high level
   esp_sleep_enable_ext1_wakeup(BIT(GPIO_NUM_14), ESP_EXT1_WAKEUP_ANY_HIGH);
-
+*/
   if (myIMU.begin() != 0) 
   {
     Serial.println("Could not start LIS3DH");
@@ -626,39 +632,58 @@ void Accelerometer::loop()
 
 // Experimenting with accel, plotting white ball around perimeter of screen
 
-  if ( millis() - angleTimer > 500 )
+  if ( millis() - angleTimer > 200 )
   {
     angleTimer = millis();
- 
+
     xAccel = myIMU.readFloatAccelX();
-    yAccel = myIMU.readFloatAccelY();
 
-    Serial.print( "Accel x = " );
+    // Apply the Kalman filter to the X value
+    float dt = 0.2; // Time step in seconds
+    float rate = 0.0; // Assume no rate of change for simplicity
+    float filteredX = kalmanX.getAngle(xAccel, rate, dt);
+
+    /* 
+    // Moves in proportion to the tilt
+    // Map the filtered value to display coordinates
+    int x = map(filteredX * 10, -10, 10, 0, 240); // Adjust the range as needed
+    int y = 120; // Fixed Y position in the middle of the screen
+    */
+
+
+
+
+
+        // Integrate the filtered acceleration value to calculate velocity and then displacement
+        static float velocityX = 0;
+        static float positionX = 120; // Start at the center of the screen
+        
+        // Update velocity based on acceleration
+        velocityX += filteredX * dt;
+        
+        // Update position based on velocity
+        positionX += velocityX * dt * 100; // Scale for better visibility
+        
+        // Constrain the position to the display boundaries
+        positionX = constrain(positionX, 10, 230); // Keep the circle within the screen bounds
+
+
+
+
     Serial.print( xAccel, 4 );
-    Serial.print( " Accel y = " );
-    Serial.println( yAccel, 4 );
+    Serial.print( ", " );
+    Serial.print( positionX );
+    Serial.print( ", " );
+    Serial.println( filteredX, 4 );
 
+    // Clear the previous circle
+    gfx->fillCircle(oldxPos, oldyPos, 20, BLACK);
     
-    float rad = atan2( yAccel, xAccel );  
-    float degree = rad * 180.0 / PI;  // Convert radians to degrees
-    
-    // Make sure the angle is between 0 and 360 degrees
-    if (degree < 0) degree += 360;
-    
-    angle = degree;
-    
-    int radius = 120;  // Radius of the circle (half of the 240x240 display size)
-    int xPos = 120 + radius * cos(radians(angle));  // Convert angle to radians for math
-    int yPos = 120 + radius * sin(radians(angle));
-    
-    oldxPos = xPos;
-    oldyPos = yPos;
+    // Draw the circle at the new position
+    gfx->fillCircle(positionX, 120, 10, RED);
 
-    // Draw a 20-pixel circle at the calculated position
-
-    gfx->fillCircle(oldxPos, oldyPos, 15, BLACK);  // Use 10 to make it a 20px diameter
-
-    gfx->fillCircle(xPos, yPos, 10, BLUE);  // Use 10 to make it a 20px diameter
+    oldxPos = positionX;
+    oldyPos = 120;
 
   }
 

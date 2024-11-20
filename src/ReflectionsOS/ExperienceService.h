@@ -9,8 +9,8 @@
  Read the license in the license.txt file that comes with this code.
 */
 
-#ifndef ANIMATIONSERVICE_H
-#define ANIMATIONSERVICE_H
+#ifndef EXPERIENCESERVICE_H
+#define EXPERIENCESERVICE_H
 
 #include <Arduino.h>
 #include <stdlib.h>  // For random number generation
@@ -23,12 +23,17 @@
 #include "Accelerometer.h"
 #include "Battery.h"
 #include "BLE.h"
+#include "TextMessageService.h"
 
 extern Battery battery;  // External Battery class
 extern LOGGER logger;
-//extern Hardware hardware;
 extern Accelerometer accel;
 extern TOF tof;
+
+extern Video video;
+extern TextMessageService textmessageservice;
+extern BLEServerClass bleServer;
+extern BLEClientClass bleClient;
 
 /*
 ChatGPT says RSSI values:
@@ -41,11 +46,11 @@ ChatGPT says RSSI values:
 #define catsplayClose -30
 #define catsplayCloser -50
 
-class AnimationService 
+class ExperienceService 
 {
 
   public:
-    AnimationService();  // Constructor
+    ExperienceService();  // Constructor
 
     enum State { SETUP, RUN, TEARDOWN, STOPPED };
     void begin();  // Initialization method
@@ -91,4 +96,4 @@ class AnimationService
 
 };
 
-#endif   // ANIMATIONSERVICE_H
+#endif   // EXPERIENCESERVICE_H
