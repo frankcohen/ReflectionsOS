@@ -86,7 +86,7 @@ void Video::begin()
     //Serial.println( F( "bufferCanvas->begin() suceeded" ) );
   }
   bufferCanvas->invertDisplay(true);
-  bufferCanvas->fillScreen( BLACK );
+  bufferCanvas->fillScreen( BLUE );
 
   videoStatus = 0;   // idle
   firsttime = true;
@@ -112,11 +112,10 @@ void Video::addReadTime( unsigned long rtime )
 
 void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, String msg5 )
 {
-  //bufferCanvas->begin();
-  //gfx->invertDisplay(true);
-  gfx->fillScreen( COLOR_BACKGROUND );
-  //bufferCanvas->invertDisplay(true);
-  //bufferCanvas->fillScreen( COLOR_BACKGROUND );
+  bufferCanvas->begin();
+  bufferCanvas->fillScreen( COLOR_BACKGROUND );
+
+  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
   String errmsg = "Video stopOnError ";
   errmsg += msg1;

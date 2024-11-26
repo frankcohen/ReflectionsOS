@@ -16,17 +16,16 @@
 #include "secrets.h"
 
 #include "WatchFaceMain.h"
+
 #include <Arduino_GFX_Library.h>
 
-enum WatchFaceState {
+extern WatchFaceMain watchfacemain;
+
+enum WatchFaces {
     MAIN,
-    DISPLAYING_DIGITAL_TIME,
-    SETTING_DIGITAL_TIME,
-    DISPLAYING_HEALTH_STATISTICS,
-    SETTING_HEALTH_STATISTICS,
-    DISPLAYING_TIMER,
-    SETTING_TIMER,
-    DISPLAY_OFF
+    MINIMAL,
+    MOON,
+    BLAIR
 };
 
 class WatchFaceExperiences 
@@ -35,10 +34,9 @@ class WatchFaceExperiences
     WatchFaceExperiences();
     void begin();
     void loop();
-    void setState(WatchFaceState newState);
+
   private:
-    WatchFaceState currentState;
-    WatchFaceMain watchFaceMain;
+    int currentface;
 };
 
 #endif // WATCHFACEEXPERIENCES_H

@@ -5,7 +5,7 @@ Started: June 15, 2024
 Updated: October 29, 2024
 
 VladPlus is the 11th revision of the Reflections main board. 
-It is the successor to Vlad, Yertle, Cat In Hat, BlueFish, RedFish, CindyLou, Horton, ThingTwo, Hoober, Knox and Sox. replaces U4 with a higher efficiency power converter. The old one heated up when recharging a battery.
+It is the successor to Vlad, Yertle, Cat In Hat, BlueFish, RedFish, CindyLou, Horton, ThingTwo, Hoober, Knox and Sox. Replaces U4 with a higher efficiency power converter. The old one heated up when recharging the battery.
 
 - Sox - 1st generation board design
 - Hoober - rev 2, fixes problems

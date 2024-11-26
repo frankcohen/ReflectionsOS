@@ -35,8 +35,6 @@ Read the license in the license.txt file that comes with this code.
 #define CatsPlay7_video "7d75dbfe1ac31dd914f6ead0706d38c1"
 #define CatsPlay8_video "3f5f5e3f087b6db73a39fad9a7ec4217"
 
-#define WatchFaceOpener_video "069ffb4a070f6f86cd281f949a7f29b5"
-
 #define EyesFollowFinger_video "f99c9b5031e6102ef45fbdf71cb09134"
 
 #define MysticCat_video "bc481c1a678e0f62e2838e7fc8cd922f"
@@ -67,10 +65,16 @@ Read the license in the license.txt file that comes with this code.
 #define wfMainMinutes2 ".png"
 #define wfMainFace "Blink_"
 #define wfMainFace2 ".png"
+#define wfMainFaceBlue "Blink_Blue2Blue_"
+#define wfMainFaceBlue2 ".png"
 #define blinkspeed 100
-#define wfMainFlip "Flip_"
+#define wfMainFlip "Main_Flip"
 #define wfMainFlip2 ".png"
-#define flipspeed 100
+#define wfMainMaxFlips 14
+#define flipspeed 50
+#define wfMainHourglass "Main_HourGlass"
+#define wfMainHourglass2 ".png"
+#define WatchFaceOpener_video "bed14c0dcb3db01f79d4f920301d0d6d"
 
 #define TRANSPARENT_COLOR 0xFFE0
 #define TRANSPARENT_COLOR_PNG 0x00000000
@@ -155,9 +159,10 @@ Read the license in the license.txt file that comes with this code.
 #define tof_majorityThreshold 1
 #define tof_expiration 2000
 
-// Accellerometer Interrupt pins
+// Accellerometer
 #define INT1_PIN GPIO_NUM_14
 #define INT2_PIN GPIO_NUM_13
+#define accelAddress 0x18     // change this to 0x19 for alternative i2c address
 
 // Battery
 

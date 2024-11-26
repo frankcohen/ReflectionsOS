@@ -19,7 +19,7 @@
 #include "Logger.h"
 #include "Battery.h"
 #include "GPS.h"
-#include "Accelerometer.h"
+#include "AccelSensor.h"
 #include "Video.h"
 
 #include <WiFi.h>
@@ -71,7 +71,6 @@ class TextMessageService
   private:
     void runShowTellTime();
     void runDigitalTime();
-    void updateSetTime();
 
     void drawClockFace();
     void showDigitalTime();

@@ -22,6 +22,8 @@ DONE Display main face with speed (mjpeg's at 8 FPS, so should you)
   DONE The strategy: skip the start, clear the buffer when the blink is done, draw the elements when they changed
 DONE Remove horizontal lines from top and bottom of cat face pngs
 Single tap to move from MainPanel, TimePanel, HealthPanel, TimerPanel, movement animation, haptic for single and double tap
+Animate rotation using mjpeg for speed/smoothness
+Animate each rotation
 Double tap in TimePanel to see SetTimePanel
 SetTimePanel left-right tilt for minutes, top-bottom tilt for hours, wait 3 seconds to accept and see MainPanel, larger font, hours/minute animation
 HealthPanel double tap to clear steps, see MainPanel
@@ -42,7 +44,6 @@ void WatchFaceMain::begin()
 
   // video.startVideo( WatchFaceOpener_video );
 
-  panel = MAIN;
   maintimer = millis();
 
   drawitall = true;
@@ -63,11 +64,10 @@ void WatchFaceMain::begin()
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
-}
+  panel = STARTUP;
+  video.startVideo( WatchFaceOpener_video );
 
-bool WatchFaceMain::startBlinkAnimation()
-{
-
+  myTeeTime = millis();
 }
 
 // Battery indicator grows/loses leaves
@@ -156,8 +156,8 @@ void WatchFaceMain::updateBlink()
         catFaceWait = rand() % 30000;
         drawitall = true;
 
-        Serial.print( "catFaceWait ");
-        Serial.println( catFaceWait );
+        //Serial.print( "catFaceWait ");
+        //Serial.println( catFaceWait );
       }
     }
   }
@@ -165,32 +165,33 @@ void WatchFaceMain::updateBlink()
 
 // Draw the elements to the buffer
 
-void WatchFaceMain::updateDisplay()
+void WatchFaceMain::updateDisplayMain()
 {
   if ( ! displayUpdateable ) return;
   displayUpdateable = false;
 
+  /*
   unsigned long mytime = millis();
   unsigned long mytime2 = millis();
+  */
 
   if ( drawitall ) start();    // Clear frame buffer
 
-  if ( drawitall )
-  {
-    Serial.print( "dia ");
-  }
-
+  /*
   Serial.print( "a: " );
   Serial.print( millis() - mytime );
   mytime = millis();
+  */
 
   // Background
 
   if ( drawitall ) drawImageFromFile( wfMainBackground, true, 0, 0 );
 
+  /*
   Serial.print( " b: " );
   Serial.print( millis() - mytime );
   mytime = millis();
+  */
 
   String mef;
 
@@ -205,9 +206,11 @@ void WatchFaceMain::updateDisplay()
     drawImageFromFile( mef, true, 0, 0 );
   } 
 
+  /*
   Serial.print( " c: " );
   Serial.print( millis() - mytime );
   mytime = millis();
+  */
 
   int minute = map( currentMinute, 1, 60, 1, 20) + 1;
   if ( minute > 20 ) minute == 20;
@@ -223,9 +226,11 @@ void WatchFaceMain::updateDisplay()
     drawImageFromFile( mef, true, 0, 0 );
   }
 
+  /*
   Serial.print( " d: " );
   Serial.print( millis() - mytime );
   mytime = millis();
+  */
 
   // Battery indicator
 
@@ -239,10 +244,11 @@ void WatchFaceMain::updateDisplay()
       drawImageFromFile( mef, true, 0, 0 );
     }
 
+    /*
     Serial.print( " e: " );
     Serial.print( millis() - mytime );
     mytime = millis();
-
+    */
 
   // Cat face in the middle, and he blinks randomly
 
@@ -256,38 +262,284 @@ void WatchFaceMain::updateDisplay()
       drawImageFromFile( mef, true, 0, 0 );
     }
 
+    /*
     Serial.print( " f: " );
     Serial.print( millis() - mytime );
     mytime = millis();
+    */
 
     show();
 
+    /*
     Serial.print( " g: " );
     Serial.print( millis() - mytime );
     mytime = millis();
 
     Serial.print( " x: " );
     Serial.println( millis() - mytime2 );
+    */
 
     drawitall = false;
 
 }
 
-void WatchFaceMain::loop()
-{ 
+// Draws hour glass time left display, 3, 2, 1
+// Returns true when time is up
 
-  if ( panel == MAIN )
+bool WatchFaceMain::updateTimeLeft()
+{
+  int index = 1;
+
+  if ( noMovementTime > 3000 )
   {
-    if ( millis() - maintimer > 50  )
+    index = 2;
+  }
+  if ( noMovementTime > 6000 )
+  {
+    index = 3;
+  }
+  if ( noMovementTime > 9000 )
+  {
+    index = 4;
+  }
+  if ( noMovementTime > 12000 )
+  {
+    return true;
+  }
+
+  mef = wfMainHourglass;
+  mef += index;
+  mef += wfMainHourglass2;
+
+  drawImageFromFile( mef, true, 0, 0 );
+
+  return false;
+}
+
+void WatchFaceMain::loop()
+{
+  /*
+  Serial.print( "* " );
+  Serial.println( millis() - myTeeTime );
+  myTeeTime = millis();
+*/
+
+  if ( rotating > 0 )
+  {
+    if ( millis() - maintimer > flipspeed )
     {
       maintimer = millis();
 
-      updateBlink();            // Blink eyes
-      updateBattery();          // Battery level indicator
-      updateHoursAndMinutes();  // Update hour and minute hands
+      rotating++;
+
+      if ( rotating >= wfMainMaxFlips ) 
+      {
+        rotating = 0;
+        return;
+      }
+
+      if ( panel = MAIN )
+      {
+        mef = wfMainFlip;
+      }
+      else
+      {
+        mef = wfMainFaceBlue;
+      }
+
+      mef += rotating;
+      mef += wfMainFlip2;
+      drawImageFromFile( mef, true, 0, 0 );
+      show();
     }
 
-    updateDisplay();
+    return;
+  }
+ 
+  switch ( panel ) 
+  {
+    case STARTUP:
+
+      if ( ! video.getStatus() )
+      {
+        panel = MAIN;
+        maintimer = millis();
+        break;
+      }
+
+      break;
+
+    case MAIN:
+
+      if ( millis() - maintimer > 50 )
+      {
+        maintimer = millis();
+
+        updateBlink();            // Blink eyes
+        updateBattery();          // Battery level indicator
+        updateHoursAndMinutes();  // Update hour and minute hands
+      }
+
+      updateDisplayMain();
+
+      if ( accel.tapped() )
+      {
+        panel = DISPLAYING_DIGITAL_TIME;
+        needssetup = true;
+        rotating = 1;
+      }
+
+      break;
+
+    case DISPLAYING_DIGITAL_TIME:
+
+      if ( needssetup )
+      {
+        Serial.println( "DISPLAYING_DIGITAL_TIME" );
+        needssetup = false;
+      }
+
+      if ( accel.tapped() )
+      {
+        panel = DISPLAYING_HEALTH_STATISTICS;
+        rotating = 1;
+        needssetup = true;
+      }
+
+      if ( accel.doubletapped() )
+      {
+        panel = SETTING_DIGITAL_TIME;
+        rotating = 1;
+        needssetup = true;
+        noMovementTime = millis();
+      }
+      
+      break;
+
+    case SETTING_DIGITAL_TIME:
+
+      if ( needssetup )
+      {
+        Serial.println( "SETTING_DIGITAL_TIME" );
+        needssetup = false;
+      }
+
+      if ( updateTimeLeft() )
+      {
+        panel = MAIN;
+        rotating = 1;
+      }
+
+      break;
+
+    case DISPLAYING_HEALTH_STATISTICS:
+
+      if ( needssetup )
+      {
+        Serial.println( "DISPLAYING_HEALTH_STATISTICS" );
+        needssetup = false;
+      }
+
+      if ( accel.tapped() )
+      {
+        panel = DISPLAYING_TIMER;
+        rotating = 1;
+        needssetup = true;
+      }
+
+      if ( accel.doubletapped() )
+      {
+        panel = SETTING_HEALTH_STATISTICS;
+        rotating = 1;
+        needssetup = true;
+        noMovementTime = millis();
+      }
+
+      break;
+
+    case SETTING_HEALTH_STATISTICS:
+
+      if ( needssetup )
+      {
+        Serial.println( "SETTING_HEALTH_STATISTICS" );
+        needssetup = false;
+      }
+
+      if ( accel.doubletapped() )
+      {
+        // Reset health stats here
+
+
+        // then back to MAIN
+
+        panel = MAIN;
+        rotating = 1;
+        needssetup = true;
+      }
+
+      if ( updateTimeLeft() )
+      {
+        panel = MAIN;
+        rotating = 1;
+      }
+
+      break;
+
+    case DISPLAYING_TIMER:
+
+      if ( needssetup )
+      {
+        Serial.println( "DISPLAYING_TIMER" );
+        needssetup = false;
+      }
+
+      if ( accel.tapped() )
+      {
+
+        // Reset timer here
+
+
+        panel = MAIN;
+        rotating = 1;
+      }
+
+      if ( accel.doubletapped() )
+      {
+        panel = SETTING_TIMER;
+        rotating = 1;
+        noMovementTime = millis();
+      }
+
+      if ( updateTimeLeft() )
+      {
+        panel = MAIN;
+        rotating = 1;
+      }
+
+      break;
+
+    case SETTING_TIMER:
+
+      if ( needssetup )
+      {
+        Serial.println( "SETTING_TIMER" );
+        needssetup = false;
+      }
+
+      if ( updateTimeLeft() )
+      {
+        // Start timer
+
+
+
+        // and return to  Main
+
+        panel = MAIN;
+        rotating = 1;
+      }
+
+      break;
+
   }
 
 }

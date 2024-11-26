@@ -20,14 +20,14 @@
 
 #include "Logger.h"
 #include "TOF.h"
-#include "Accelerometer.h"
+#include "AccelSensor.h"
 #include "Battery.h"
 #include "BLE.h"
 #include "TextMessageService.h"
 
 extern Battery battery;  // External Battery class
 extern LOGGER logger;
-extern Accelerometer accel;
+extern AccelSensor accel;
 extern TOF tof;
 
 extern Video video;

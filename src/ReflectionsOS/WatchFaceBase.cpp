@@ -150,41 +150,41 @@ void WatchFaceBase::drawImageFromFile( String filename, bool embellishfilename, 
     filename = mef.c_str();
   }  
 
-    File file = SD.open( filename );
-    if (!file) 
+  File file = SD.open( filename );
+  if (!file) 
+  {
+    Serial.printf("Failed to open %s\n", filename);
+    return;
+  }
+
+  if ( filename.endsWith( ".jpg"))
+  {
+    jpg.open(filename.c_str(), myOpen, myClose, myReadJpeg, mySeekJpeg, WatchFaceJPEGDraw);
+
+    jpg.setPixelType( RGB565_BIG_ENDIAN );
+
+    // Decode and draw the JPEG
+    jpg.decode( 0, 0, 0 );   // x, y, scale  
+    file.close();
+  }
+
+  if ( filename.endsWith( ".png"))
+  {
+    int rc;
+    rc = png.open( filename.c_str(), myOpen, myClose, myReadPng, mySeekPng, WatchFacePNGDraw);
+    if (rc == PNG_SUCCESS)
     {
-      Serial.printf("Failed to open %s\n", filename);
-      return;
+      PRIVATE priv;
+      priv.xoff = 0;
+      priv.yoff = 0;
+      rc = png.decode( (void *) &priv, 0);
+      png.close();
     }
-
-    if ( filename.endsWith( ".jpg"))
+    else
     {
-      jpg.open(filename.c_str(), myOpen, myClose, myReadJpeg, mySeekJpeg, WatchFaceJPEGDraw);
-
-      jpg.setPixelType( RGB565_BIG_ENDIAN );
-
-      // Decode and draw the JPEG
-      jpg.decode( 0, 0, 0 );   // x, y, scale  
-      file.close();
+      Serial.println("png.open() failed");
     }
-
-    if ( filename.endsWith( ".png"))
-    {
-      int rc;
-      rc = png.open( filename.c_str(), myOpen, myClose, myReadPng, mySeekPng, WatchFacePNGDraw);
-      if (rc == PNG_SUCCESS)
-      {
-        PRIVATE priv;
-        priv.xoff = 0;
-        priv.yoff = 0;
-        rc = png.decode( (void *) &priv, 0);
-        png.close();
-      }
-      else
-      {
-        Serial.println("png.open() failed");
-      }
-    }
+  }
 }
 
 void WatchFaceBase::begin() 

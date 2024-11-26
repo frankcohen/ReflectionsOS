@@ -16,7 +16,7 @@ extern Arduino_GFX *gfx;
 extern const char* root_ca;   // Defined in secrets.h
 extern Battery battery;
 extern GPS gps;
-extern Accelerometer accel;
+extern AccelSensor accel;
 extern Video video;
 
 TextMessageService::TextMessageService(){}
@@ -579,53 +579,6 @@ void TextMessageService::getTimeFromAngle(float angle, int &hour, int &minute)
   minute = ((int)angle % 30) * 2;
 }
 
-void TextMessageService::updateSetTime()
-{
-  if ( ! dialActivated ) return;
-
-  float x = accel.getXaccelReading();
-
-  // Calculate carrot speed and direction
-  if ( abs(x) > 0.01 ) 
-  {
-    carrotAngle += ( x * 500 ); // Adjust the multiplier to change sensitivity
-    lastMoveTime = millis();
-  }
-  else
-  {
-    // Check for timeout
-    if ( millis() - lastMoveTime > SETTIME_TIMEOUT )
-    {
-      int hour, minute;
-
-      float finangle = carrotAngle - 90;
-      if ( finangle < 0 ) finangle += 360;
-
-      getTimeFromAngle( finangle, hour, minute );
-
-      Serial.print("SetTime finished with ");
-      Serial.print( hour );
-      Serial.print( ":" );
-      Serial.println( minute );
-
-      setDialActivated( false );
-      return;
-    }
-  }
-  
-  // Keep carrotAngle within 0-360 degrees
-  if (carrotAngle < 0) carrotAngle += 360;
-  if (carrotAngle >= 360) carrotAngle -= 360;
-  
-  // Snap to 0, 15, 30, 45 minute positions
-  int markerAngle = round( carrotAngle / 7.5) * 7.5;
-  carrotAngle = markerAngle;
-
-  drawCarrot( carrotAngle );
-  showDigitalTime();
-  //video.drawIcons();
-}
-
 // TextMessageService loop
 
 void TextMessageService::loop()
@@ -647,15 +600,4 @@ void TextMessageService::loop()
     }
   }
 
-  // Run the Set Time animation
-
-  if ( dialActivated )
-  {
-    if ( ( millis() - stTime ) > 350 )
-    {
-      stTime = millis();
-
-      updateSetTime();
-    }
-  }
 }

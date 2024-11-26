@@ -24,8 +24,7 @@ directory. Copy the contents to your Arduino IDE installation under documents/li
 ESP32 board, https://github.com/espressif/arduino-esp32
 esp32FOTA, OTA updates, https://github.com/chrisjoyce911/esp32FOTA
 Adafruit DRV2605 Library, haptic controller, https://github.com/adafruit/Adafruit_DRV2605_Library
-Sparkfun LIS3DH, https://github.com/sparkfun/SparkFun_LIS3DH_Arduino_Library
-
+Adafruit LIS3DH library, https://github.com/adafruit/Adafruit_LIS3DH
 Adafruit MMC56x3, compass, magnetometer, https://github.com/adafruit/Adafruit_MMC56x3
 The Adafruit I2C libraries, like MMC56x3, depend on these
 Adafruit Unified Sensor, https://github.com/adafruit/Adafruit_Sensor
@@ -88,7 +87,7 @@ Arduino IDE 2.x automatically uses partitions.csv in the source code directory
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include "secrets.h"
-#include "Accelerometer.h"
+#include "AccelSensor.h"
 #include "Audio.h"
 #include "Compass.h"
 #include "GPS.h"
@@ -108,6 +107,7 @@ Arduino IDE 2.x automatically uses partitions.csv in the source code directory
 #include "ExperienceService.h"
 #include <Arduino_GFX_Library.h>
 #include "WatchFaceExperiences.h"
+#include "WatchFaceMain.h"
 #include "nvs_flash.h"
 #include "RealTimeClock.h"
 
@@ -129,10 +129,11 @@ Compass compass;
 LOGGER logger;
 Battery battery;
 Hardware hardware;
-Accelerometer accel;
+AccelSensor accel;
 //BLEServerClass bleServer;
 //BLEClientClass bleClient;
-WatchFaceExperiences watchFaceExperiences;
+WatchFaceExperiences watchfaceexperiences;
+WatchFaceMain watchfacemain;
 RealTimeClock realtimeclock;
 
 const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
@@ -183,7 +184,7 @@ static void smartdelay( unsigned long ms )
     
     video.loop();
     battery.loop();
-    //accel.loop();
+    accel.loop();
     storage.loop();
     wifi.loop();  
     utils.loop();
@@ -195,7 +196,7 @@ static void smartdelay( unsigned long ms )
 
     // Watch experience operations
 
-    watchFaceExperiences.loop();
+    //watchfaceexperiences.loop();
     
     //experienceservice.loop();
     //TextMessageService.loop();
@@ -215,7 +216,9 @@ void setup() {
   while (!Serial && (millis() < time + 2000)) ;  // wait up to 2 seconds for Arduino Serial Monitor
   Serial.setDebugOutput(true);
 
+  Serial.println(" ");
   Serial.println("Starting");
+  Serial.println(F("ReflectionsOS"));
 
   //wifi.reset();  // Optionally reset any previous connection settings
   //wifi.begin();  // Non-blocking, until guest uses it to connect
@@ -232,12 +235,8 @@ void setup() {
   //Serial.println( "Files on board:" );
   //storage.listDir(SD, "/", 100, true);
 
-  Serial.println("- - -");
-  Serial.println(F("ReflectionsOS"));
-  Serial.println(" ");
-
   video.begin();
-
+  
   //utils.WireScan();
 /*
   Serial.println( "nvs_flash_init()" );
@@ -288,7 +287,7 @@ void setup() {
 
   // Watch experience initialization
 
-  watchFaceExperiences.begin();
+  watchfaceexperiences.begin();
 
   //bleServer.begin();  // Initializes the BLE server
   //bleClient.begin();  // Initializes the BLE client
@@ -344,6 +343,4 @@ void TOFTask(void *pvParameters)
 
 void loop() {
   smartdelay(5000);
-  const char* fmtMemCk = "Free: %d\tMaxAlloc: %d\t PSFree: %d\n";
-  #define MEMCK Serial.printf(fmtMemCk,ESP.getFreeHeap(),ESP.getMaxAllocHeap(),ESP.getFreePsram())
 }

@@ -17,8 +17,9 @@
 
 #include "Arduino.h"
 #include "Logger.h"
+#include "Video.h"
 
-#include "Accelerometer.h"
+#include "AccelSensor.h"
 
 #include <Arduino_GFX_Library.h>
 #include <JPEGDEC.h>
@@ -28,7 +29,7 @@
 
 // Defined in ReflectionsOfFrank.ino
 extern LOGGER logger;
-extern Accelerometer accel;
+extern AccelSensor accel;
 extern Video video;
 extern Arduino_GFX *gfx;
 

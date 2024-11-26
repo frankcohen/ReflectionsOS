@@ -29,7 +29,8 @@
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Battery battery;
 extern RealTimeClock realtimeclock;
-
+extern AccelSensor accel;
+extern Video video;
 extern Arduino_GFX *gfx;
 extern Arduino_Canvas *bufferCanvas;
 
@@ -41,15 +42,19 @@ class WatchFaceMain : public WatchFaceBase
     void begin() override;
     void loop() override;    
 
-    enum Panel { MAIN, TIME, TIMER, HEALTH };
+    enum Panel { 
+      STARTUP, MAIN, 
+      DISPLAYING_DIGITAL_TIME, SETTING_DIGITAL_TIME, 
+      DISPLAYING_TIMER, SETTING_TIMER, 
+      DISPLAYING_HEALTH_STATISTICS, SETTING_HEALTH_STATISTICS };
     
   private:
-    void updateDisplay();
+    void updateDisplayMain();
 
     void updateBlink();
     void updateHoursAndMinutes();
     void updateBattery();
-    bool startBlinkAnimation();
+    bool updateTimeLeft();
 
     int panel;
 
@@ -70,7 +75,13 @@ class WatchFaceMain : public WatchFaceBase
     int catFaceIndex;
     bool catFaceDirection;
 
+    int rotating;
+
     bool drawitall;
+    bool needssetup;
+
+    unsigned long noMovementTime;
+    unsigned long myTeeTime;
 };
 
 #endif // WATCHFACE_H

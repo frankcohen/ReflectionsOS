@@ -14,84 +14,28 @@
 
 #include "WatchFaceExperiences.h"
 
-WatchFaceExperiences::WatchFaceExperiences() : currentState(MAIN) {}
+WatchFaceExperiences::WatchFaceExperiences() {}
 
 void WatchFaceExperiences::begin() 
 {
-  watchFaceMain.begin();
+  watchfacemain.begin();
+  currentface = MAIN;
 }
 
 void WatchFaceExperiences::loop() 
 {
-
-
-
-  // Gesture sensing
-
-  // Move to next mode
-  // Set time
-  // Clear health stats
-  // Set alarm
-
-  // Time-out of a mode
-
-  /*
-
-  if ( currentState == MAIN ) return;
-
-  if ( currentState == DISPLAYING_DIGITAL_TIME || 
-    currentState == SETTING_DIGITAL_TIME || 
-    currentState == DISPLAYING_HEALTH_STATISTICS || 
-    currentState == SETTING_HEALTH_STATISTICS || 
-    currentState == DISPLAYING_TIMER || 
-    currentState == SETTING_TIMER ) )
-  {
-    currentState == MAIN;
-  }
-    
-
-  */
-
-
-
-
-
-  switch (currentState) 
+  switch ( currentface ) 
   {
     case MAIN:
-      watchFaceMain.loop();
-
-      // Sense gestures
-
-      // Change mode Gesture
-
+      watchfacemain.loop();
       break;
-    case DISPLAYING_DIGITAL_TIME:
-      // Placeholder for displaying digital time state
-      //watchFaceMain.loop();
+    case MINIMAL:
       break;
-    case SETTING_DIGITAL_TIME:
-      // Placeholder for setting digital time state
+    case MOON:
       break;
-    case DISPLAYING_HEALTH_STATISTICS:
-      // Placeholder for displaying health statistics state
+    case BLAIR:
       break;
-    case SETTING_HEALTH_STATISTICS:
-      // Placeholder for setting health statistics state
-      break;
-    case DISPLAYING_TIMER:
-      // Placeholder for displaying timer state
-      break;
-    case SETTING_TIMER:
-      // Placeholder for setting timer state
-      break;
-
-    case DISPLAY_OFF:
-      // Placeholder for setting timer state
-      break;
+  
   }
-}
 
-void WatchFaceExperiences::setState(WatchFaceState newState) {
-    currentState = newState;
 }
