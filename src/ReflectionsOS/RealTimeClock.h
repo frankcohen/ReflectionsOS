@@ -28,8 +28,8 @@ class RealTimeClock
     void begin();
     void loop();
 
-    int getCurrentHourFromRTC();
-    int getCurrentMinuteFromRTC();
+    int getHour();
+    int getMinute();
 
   private:
     Preferences preferences;

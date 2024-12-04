@@ -71,6 +71,15 @@ void Video::begin()
 
   gfx->fillScreen( BLACK );
 
+  // Enable for start-up message on display
+  /*
+  gfx->setFont(&FreeSansBold10pt7b);
+  gfx->setTextColor( COLOR_LEADING );
+  gfx->setCursor( 40, 100 );
+  gfx->println("REFLECTIONS");
+  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
+  */
+
   // Init Display
 
   //Serial.print( "Heap size " );

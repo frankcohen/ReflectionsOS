@@ -21,10 +21,12 @@ Download new blink graphics
 DONE Display main face with speed (mjpeg's at 8 FPS, so should you)
   DONE The strategy: skip the start, clear the buffer when the blink is done, draw the elements when they changed
 DONE Remove horizontal lines from top and bottom of cat face pngs
-Single tap to move from MainPanel, TimePanel, HealthPanel, TimerPanel, movement animation, haptic for single and double tap
-Animate rotation using mjpeg for speed/smoothness
-Animate each rotation
-Double tap in TimePanel to see SetTimePanel
+DONE Single tap to move from MainPanel, TimePanel, HealthPanel, TimerPanel, movement animation, haptic for single and double tap
+DONE Animate each rotation
+DONE Animate rotation using mjpeg for speed/smoothness
+DONE Double tap in TimePanel to see SetTimePanel
+DONE TextMessageService uses double buffer
+Timeout to main panel
 SetTimePanel left-right tilt for minutes, top-bottom tilt for hours, wait 3 seconds to accept and see MainPanel, larger font, hours/minute animation
 HealthPanel double tap to clear steps, see MainPanel
 TimerPanel shows countdown, double tap to clear, single tap for MainPanel,
@@ -41,8 +43,6 @@ WatchFaceMain::WatchFaceMain()
 void WatchFaceMain::begin() 
 {
   WatchFaceBase::begin();  // This ensures the base method is executed
-
-  // video.startVideo( WatchFaceOpener_video );
 
   maintimer = millis();
 
@@ -66,8 +66,6 @@ void WatchFaceMain::begin()
 
   panel = STARTUP;
   video.startVideo( WatchFaceOpener_video );
-
-  myTeeTime = millis();
 }
 
 // Battery indicator grows/loses leaves
@@ -91,7 +89,7 @@ void WatchFaceMain::updateBattery()
 
 void WatchFaceMain::updateHoursAndMinutes()
 {
-  int currentHour2 = realtimeclock.getCurrentHourFromRTC();
+  int currentHour2 = realtimeclock.getHour();
 
   if ( currentHour2 == -1 ) currentHour2 = 2;
   
@@ -102,7 +100,7 @@ void WatchFaceMain::updateHoursAndMinutes()
     drawitall = true;
   }
 
-  int currentMinute2 = realtimeclock.getCurrentMinuteFromRTC();
+  int currentMinute2 = realtimeclock.getMinute();
 
   if ( currentMinute2 == -1 ) currentMinute2 = 15;
 
@@ -199,6 +197,8 @@ void WatchFaceMain::updateDisplayMain()
   if ( ( currentHour != oldHour ) || drawitall )
   {
     oldHour = currentHour;
+
+    if ( currentHour > 20 ) currentHour = 20;
 
     mef = wfMainHours;
     mef += currentHour;
@@ -313,63 +313,46 @@ bool WatchFaceMain::updateTimeLeft()
 
   drawImageFromFile( mef, true, 0, 0 );
 
+  show();
+
   return false;
 }
 
 void WatchFaceMain::loop()
 {
-  /*
-  Serial.print( "* " );
-  Serial.println( millis() - myTeeTime );
-  myTeeTime = millis();
-*/
-
-  if ( rotating > 0 )
+  
+  if ( video.getStatus() )
   {
-    if ( millis() - maintimer > flipspeed )
-    {
-      maintimer = millis();
-
-      rotating++;
-
-      if ( rotating >= wfMainMaxFlips ) 
-      {
-        rotating = 0;
-        return;
-      }
-
-      if ( panel = MAIN )
-      {
-        mef = wfMainFlip;
-      }
-      else
-      {
-        mef = wfMainFaceBlue;
-      }
-
-      mef += rotating;
-      mef += wfMainFlip2;
-      drawImageFromFile( mef, true, 0, 0 );
-      show();
-    }
-
     return;
   }
- 
+
+  if ( textmessageservice.active() )
+  {
+    return;
+  } 
+
+  if ( experienceservice.active() )
+  {
+    return;
+  } 
+
   switch ( panel ) 
   {
     case STARTUP:
 
-      if ( ! video.getStatus() )
-      {
-        panel = MAIN;
-        maintimer = millis();
-        break;
-      }
-
+      panel = MAIN;
+      needssetup = true;
+      maintimer = millis();
+      haptic.playEffect(14);  // 14 Strong Buzz
       break;
 
     case MAIN:
+
+      if ( needssetup )
+      {
+        Serial.println( "MAIN" );
+        needssetup = false;
+      }
 
       if ( millis() - maintimer > 50 )
       {
@@ -385,8 +368,10 @@ void WatchFaceMain::loop()
       if ( accel.tapped() )
       {
         panel = DISPLAYING_DIGITAL_TIME;
+        Serial.println( "tapped from MAIN to DISPLAYING_DIGITAL_TIME");
         needssetup = true;
-        rotating = 1;
+        haptic.playEffect(14);  // 14 Strong Buzz
+        video.startVideo( WatchFaceFlip1_video );
       }
 
       break;
@@ -397,23 +382,39 @@ void WatchFaceMain::loop()
       {
         Serial.println( "DISPLAYING_DIGITAL_TIME" );
         needssetup = false;
+        drawImageFromFile( wfMain_Time_Background, true, 0, 0 );
+        textmessageservice.startShow( DigitalTimeFadeIn );                     // Show saying plus hour and minute
       }
 
       if ( accel.tapped() )
       {
         panel = DISPLAYING_HEALTH_STATISTICS;
-        rotating = 1;
+        haptic.playEffect(14);  // 14 Strong Buzz
+        video.startVideo( WatchFaceFlip2_video );
         needssetup = true;
+        return;
       }
 
       if ( accel.doubletapped() )
       {
         panel = SETTING_DIGITAL_TIME;
-        rotating = 1;
+        video.startVideo( WatchFaceFlip3_video );
+        haptic.playEffect(14);  // 14 Strong Buzz
         needssetup = true;
         noMovementTime = millis();
       }
       
+      // Update and display time
+
+      if ( updateTimeLeft() )
+      {
+        panel = MAIN;
+        needssetup = true;
+        haptic.playEffect(14);  // 14 Strong Buzz
+        video.startVideo( WatchFaceFlip3_video );
+        return;
+      }
+
       break;
 
     case SETTING_DIGITAL_TIME:
@@ -422,13 +423,21 @@ void WatchFaceMain::loop()
       {
         Serial.println( "SETTING_DIGITAL_TIME" );
         needssetup = false;
+        drawImageFromFile( wfMain_SetTime_Background, true, 0, 0 );
+        textmessageservice.startShow( DigitalTimeFadeIn );
+        return;
       }
 
       if ( updateTimeLeft() )
       {
         panel = MAIN;
-        rotating = 1;
+        needssetup = true;
+        haptic.playEffect(14);  // 14 Strong Buzz
+        video.startVideo( WatchFaceFlip3_video );
+        return;
       }
+
+      textmessageservice.startShow( DigitalTimeShow );   // Displays digital timee
 
       break;
 
@@ -438,19 +447,22 @@ void WatchFaceMain::loop()
       {
         Serial.println( "DISPLAYING_HEALTH_STATISTICS" );
         needssetup = false;
+        drawImageFromFile( wfMain_Health_Background, true, 0, 0 );
       }
 
       if ( accel.tapped() )
       {
         panel = DISPLAYING_TIMER;
-        rotating = 1;
+        video.startVideo( WatchFaceFlip2_video );
+        haptic.playEffect(14);  // 14 Strong Buzz
         needssetup = true;
       }
 
       if ( accel.doubletapped() )
       {
         panel = SETTING_HEALTH_STATISTICS;
-        rotating = 1;
+        video.startVideo( WatchFaceFlip3_video );
+        haptic.playEffect(14);  // 14 Strong Buzz
         needssetup = true;
         noMovementTime = millis();
       }
@@ -463,6 +475,7 @@ void WatchFaceMain::loop()
       {
         Serial.println( "SETTING_HEALTH_STATISTICS" );
         needssetup = false;
+        drawImageFromFile( wfMain_Health_Background, true, 0, 0 );
       }
 
       if ( accel.doubletapped() )
@@ -473,14 +486,18 @@ void WatchFaceMain::loop()
         // then back to MAIN
 
         panel = MAIN;
-        rotating = 1;
+        needssetup = true;
+        video.startVideo( WatchFaceFlip3_video );
+        haptic.playEffect(14);  // 14 Strong Buzz
         needssetup = true;
       }
 
       if ( updateTimeLeft() )
       {
         panel = MAIN;
-        rotating = 1;
+        needssetup = true;
+        video.startVideo( WatchFaceFlip3_video );
+        haptic.playEffect(14);  // 14 Strong Buzz
       }
 
       break;
@@ -491,6 +508,7 @@ void WatchFaceMain::loop()
       {
         Serial.println( "DISPLAYING_TIMER" );
         needssetup = false;
+        drawImageFromFile( wfMain_Timer_Background, true, 0, 0 );
       }
 
       if ( accel.tapped() )
@@ -500,20 +518,25 @@ void WatchFaceMain::loop()
 
 
         panel = MAIN;
-        rotating = 1;
+        needssetup = true;
+        video.startVideo( WatchFaceFlip3_video );
+        haptic.playEffect(14);  // 14 Strong Buzz
       }
 
       if ( accel.doubletapped() )
       {
         panel = SETTING_TIMER;
-        rotating = 1;
+        video.startVideo( WatchFaceFlip2_video );
+        haptic.playEffect(14);  // 14 Strong Buzz
         noMovementTime = millis();
       }
 
       if ( updateTimeLeft() )
       {
         panel = MAIN;
-        rotating = 1;
+        needssetup = true;
+        video.startVideo( WatchFaceFlip3_video );
+        haptic.playEffect(14);  // 14 Strong Buzz
       }
 
       break;
@@ -524,6 +547,7 @@ void WatchFaceMain::loop()
       {
         Serial.println( "SETTING_TIMER" );
         needssetup = false;
+        drawImageFromFile( wfMain_SetTimer_Background, true, 0, 0 );
       }
 
       if ( updateTimeLeft() )
@@ -535,7 +559,9 @@ void WatchFaceMain::loop()
         // and return to  Main
 
         panel = MAIN;
-        rotating = 1;
+        needssetup = true;
+        video.startVideo( WatchFaceFlip3_video );
+        haptic.playEffect(14);  // 14 Strong Buzz
       }
 
       break;

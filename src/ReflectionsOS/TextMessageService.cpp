@@ -11,42 +11,7 @@
 
 #include "TextMessageService.h"
 
-extern LOGGER logger;
-extern Arduino_GFX *gfx;
-extern const char* root_ca;   // Defined in secrets.h
-extern Battery battery;
-extern GPS gps;
-extern AccelSensor accel;
-extern Video video;
-
 TextMessageService::TextMessageService(){}
-
-String TextMessageService::getRTCtime()
-{
-  struct tm timeinfo;
-  if ( ! getLocalTime( &timeinfo ) ) 
-  {
-    return "0 o'clock";
-  }
-
-  int hour = timeinfo.tm_hour;
-  int minute = timeinfo.tm_min;
-  String period = "AM";
-
-  if (hour >= 12) {
-    period = "PM";
-    if (hour > 12) {
-      hour -= 12;
-    }
-  } else if (hour == 0) {
-    hour = 12; // Midnight case
-  }
-
-  String minuteStr = (minute < 10) ? "0" + String(minute) : String(minute);
-  String timeStr = String(hour) + ":" + minuteStr + " " + period;
-
-  return timeStr;
-}
 
 // Clock fun messages
 
@@ -108,84 +73,11 @@ void TextMessageService::begin()
   String pastTimeStr = " ";
 }
 
-bool TextMessageService::test()
-{
-  return true;
-}
-
-boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font)
-{
-  if ( fadeset )
-  {
-    fadeset = 0;
-    gfx->setFont( font );
-    gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
-
-    fadestep = 1;
-    steps = 128; // One step per color intensity value
-    stepDelay = ( duration / steps ) / 4; // Delay between steps in milliseconds
-    return false;
-  }
-  else
-  {
-    fadestep++;
-
-    if ( fadestep >= steps ) return true;
-
-    uint16_t r = map( fadestep, 0, steps, (backcolor >> 11) & 0x1F, (color >> 11) & 0x1F);
-    uint16_t g = map( fadestep, 0, steps, (backcolor >> 5) & 0x3F, (color >> 5) & 0x3F);
-    uint16_t b = map( fadestep, 0, steps, backcolor & 0x1F, color & 0x1F);
-
-    uint16_t textColor = (r << 11) | (g << 5) | b;
-
-    gfx->setCursor( (gfx->width() - w) / 2, y );
-    gfx->setTextColor( textColor );
-    gfx->println( text );
-  }
-
-  return false;
-}
-
-boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font)
-{
-  if ( fadeset )
-  {
-    fadeset = 0;
-
-    gfx->setFont( font );
-    gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
-
-    fadestep = 128;
-    steps = 128;
-    stepDelay = ( duration / steps ) / 4;
-    
-    return false;
-  }
-  else
-  {
-    fadestep--;
-
-    if ( fadestep == 0 ) return true;
-
-    uint16_t r = map( fadestep, 0, steps, (backcolor >> 11) & 0x1F, (color >> 11) & 0x1F);
-    uint16_t g = map( fadestep, 0, steps, (backcolor >> 5) & 0x3F, (color >> 5) & 0x3F);
-    uint16_t b = map( fadestep, 0, steps, backcolor & 0x1F, color & 0x1F);
-
-    uint16_t textColor = (r << 11) | (g << 5) | b;
-
-    gfx->setFont( font );
-    gfx->setCursor( (gfx->width() - w) / 2, y );
-    gfx->setTextColor( textColor );
-    gfx->println( text );
-  }
-  return false;
-}
-
 void TextMessageService::startShow( int shownum )
 {
   showNum = shownum;
   showStep = 0;
-
+  activated = true;
   ShowTimeWaitTime = millis();
   stepDelay = 100;
 }
@@ -196,12 +88,12 @@ bool TextMessageService::isTimeSet()
   return true;
 }
 
+/* Show the current time with a funny message above and below */
+
 void TextMessageService::runShowTellTime()
 {
   if ( showStep == 0 )
   {    
-    gfx->invertDisplay( true );
-    //gfx->fillScreen( COLOR_BACKGROUND );
     showStep = 1;
     fadeset = 1;
     //theTime = getRTCtime();       // This introduces a 3-5 second delay
@@ -298,9 +190,75 @@ void TextMessageService::runShowTellTime()
 
 }
 
-// For WatchFace shows digital time
+// Fade-in digital time for Main Watch Face
 
-void TextMessageService::runDigitalTime()
+void TextMessageService::runDigitalTimeFadeIn()
+{
+  if ( showStep == 0 )
+  {    
+    showStep = 1;
+    fadeset = 1;
+
+    theTime = getRTCtime();       // This introduces a 3-5 second delay
+
+    //if ( theTime == "0 o'clock" ) theTime = " ";
+    
+    theDate = "Nov 1, 2024";
+
+    return;
+  }
+
+  if ( showStep == 1 )
+  {
+    if ( fadeInCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
+    {
+      activated = false;
+      showStep = 2;
+      fadeset = 1;
+      ShowTimeWaitTime = millis();
+    }
+    else
+    {
+      return;
+    }
+  }
+}
+
+void TextMessageService::runDigitalTimeFadeOut()
+{
+  if ( showStep == 0 )
+  {    
+    showStep = 1;
+    fadeset = 1;
+
+    theTime = getRTCtime();       // This introduces a 3-5 second delay
+
+    //if ( theTime == "0 o'clock" ) theTime = " ";
+    
+    theDate = "Nov 1, 2024";
+
+    return;
+  }
+
+  if ( showStep == 1 )
+  {
+    if ( fadeOutCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
+    {
+      activated = false;
+      showStep = 0;
+      fadeset = 1;
+      ShowTimeWaitTime = millis();
+    }
+    else
+    {
+      return;
+    }
+  }
+}
+
+// Shows digital time and a funny message
+
+void TextMessageService::runTimeAndMessage()
 {
   if ( showStep == 0 )
   {    
@@ -406,177 +364,206 @@ void TextMessageService::runDigitalTime()
   */
 }
 
-bool TextMessageService::getTimeAnimationActivated()
+// Shows digital time for set time service
+
+void TextMessageService::runDigitalTime()
+{
+  if ( showStep == 0 )
+  {    
+    showStep = 1;
+    fadeset = 1;
+    //theTime = getRTCtime();       // This introduces a 3-5 second delay
+
+    theTime = "2:43 pm";
+    //if ( theTime == "0 o'clock" ) theTime = " ";
+    
+    theDate = "Nov 1, 2024";
+
+    return;
+  }
+
+  if ( showStep == 1 )
+  {
+    if ( fadeInCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
+    {
+      activated = false;
+      showStep = 2;
+      fadeset = 1;
+      ShowTimeWaitTime = millis();
+    }
+    else
+    {
+      return;
+    }
+  }
+
+  if ( showStep == 2 )
+  {
+    if ( fadeOutCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
+    {
+      activated = false;
+      showStep = 0;
+      fadeset = 1;
+      ShowTimeWaitTime = millis();
+    }
+    else
+    {
+      return;
+    }
+  }
+  
+}
+
+// Shows digital time for set time service
+
+void TextMessageService::runDigitalSetTime()
+{
+  if ( showStep == 0 )
+  {    
+    showStep = 1;
+    fadeset = 1;
+    //theTime = getRTCtime();       // This introduces a 3-5 second delay
+
+    theTime = "2:43 pm";
+    //if ( theTime == "0 o'clock" ) theTime = " ";
+    
+    theDate = "Nov 1, 2024";
+
+    return;
+  }
+
+  if ( showStep == 1 )
+  {
+    if ( fadeInCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
+    {
+      activated = false;
+      showStep = 2;
+      fadeset = 1;
+      ShowTimeWaitTime = millis();
+    }
+    else
+    {
+      return;
+    }
+  }
+
+  if ( showStep == 2 )
+  {
+    if ( fadeOutCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
+    {
+      activated = false;
+      showStep = 0;
+      fadeset = 1;
+      ShowTimeWaitTime = millis();
+    }
+    else
+    {
+      return;
+    }
+  }
+
+}
+
+bool TextMessageService::active()
 {
   return activated;
 }
 
-void TextMessageService::setTimeAnimationActivated( bool act )
+String TextMessageService::getRTCtime()
 {
-  activated = act;
-}
-
-bool TextMessageService::getDialActivated()
-{
-  return dialActivated;
-}
-
-void TextMessageService::setDialActivated( bool set )
-{
-  dialActivated = set;
-
-  if ( set )
-  {
-    drawClockFace();
-    setCarrotAngleFromRTC();
-  } 
-}
-
-String TextMessageService::getTimeStringFromAngle( float angle )
-{
-  angle -= 90;
-  if (angle < 0) angle += 360;
-
-  int hour, minute;
-  getTimeFromAngle(angle, hour, minute);
-  
-  if ( hour == 0 ) hour = 12;
-  if ( minute == 44 ) minute = 45;
-  if ( minute == 14 ) minute = 15;
-
-  // Format the time as a string
-  char timeString[6]; // Buffer to hold the formatted time string (HH:MM\0)
-  sprintf( timeString, "%2d:%02d", hour, minute );
-  return String( timeString );
-}
-
-void TextMessageService::setCarrotAngleFromRTC() 
-{
-  // Assuming RTC is already initialized and set
   struct tm timeinfo;
-
-  if ( !getLocalTime( &timeinfo ) ) 
+  if ( ! getLocalTime( &timeinfo ) ) 
   {
-    // Serial.println( "TextMessageService RTC not set" );
-    carrotAngle = 0;
-    drawCarrot( carrotAngle );
-    return;
+    return "0 o'clock";
   }
-  
-  int hour = timeinfo.tm_hour % 12; // Convert to 12-hour format
+
+  int hour = timeinfo.tm_hour;
   int minute = timeinfo.tm_min;
-  
-  // Calculate angle: Each hour is 30 degrees and each minute is 0.5 degrees
-  carrotAngle = (hour * 30) + (minute * 0.5);
-  
-  // Adjust for the display rotation
-  carrotAngle -= 90;
-  if (carrotAngle < 0) carrotAngle += 360;
+  String period = "AM";
 
-  // Draw the carrot at the calculated angle
-  drawCarrot(carrotAngle);
-  
-  // Debug output
-  Serial.print("TextMessageService RTC reports: ");
-  Serial.print(hour);
-  Serial.print(":");
-  Serial.println(minute);
-  Serial.print("Carrot angle set to: ");
-  Serial.println(carrotAngle);
-}
-
-void TextMessageService::showDigitalTime()
-{ 
-
-  if ( ! ( pastTimeStr == getTimeStringFromAngle( carrotAngle ) ) )
-  {
-    gfx->setFont( &Some_Time_Later20pt7b );
-    gfx->getTextBounds( pastTimeStr.c_str(), 0, 0, &x, &y, &w, &h);    
-    gfx->setCursor( (gfx->width() - w) / 2, 120 );
-    gfx->setTextColor( COLOR_BLACK );
-    gfx->println( pastTimeStr );
-  }
-
-  pastTimeStr = getTimeStringFromAngle( carrotAngle );
-
-  gfx->setFont( &Some_Time_Later20pt7b );
-  gfx->getTextBounds( pastTimeStr.c_str(), 0, 0, &x, &y, &w, &h);    
-  gfx->setCursor( (gfx->width() - w) / 2, 120 );
-  gfx->setTextColor( COLOR_TEXT_YELLOW );
-  gfx->println( pastTimeStr );
-
-  String phrase = "Play time?";
-  gfx->setFont( &ScienceFair14pt7b );
-  gfx->getTextBounds( phrase.c_str(), 0, 0, &x, &y, &w, &h);    
-  gfx->setCursor( (gfx->width() - w) / 2, 160 );
-  gfx->setTextColor( COLOR_STRIPE_MEDIUM_GRAY );
-  gfx->println( phrase );
-}
-
-void TextMessageService::drawClockFace() 
-{
-  // Draw hour tick marks
-
-  for (int i = 0; i < 12; i++) 
-  {
-    float angle2 = i * 30.0;  // 360 degrees / 12 hours = 30 degrees per hour mark
-    for (int j = 0; j <= 2; j++) 
-    { // 4 pixels wide line
-      float rad_angle = (angle2 + j) * PI / 180;
-      int x1 = CENTER_X + RADIUS * cos(rad_angle);
-      int y1 = CENTER_Y + RADIUS * sin(rad_angle);
-      int x2 = CENTER_X + (RADIUS - 20) * cos(rad_angle);  // Shorter tick marks for hours
-      int y2 = CENTER_Y + (RADIUS - 20) * sin(rad_angle);
-      gfx->drawLine(x1, y1, x2, y2, COLOR_STRIPE_MEDIUM_GRAY);
+  if (hour >= 12) {
+    period = "PM";
+    if (hour > 12) {
+      hour -= 12;
     }
+  } else if (hour == 0) {
+    hour = 12; // Midnight case
   }
-  
-  // Draw quarter hour tick marks
-  for (int i = 1; i < ( 12 * 4 ); i++)
-  {
-    float rad_angle = ( i * 7.5 ) * PI / 180;
-    int x1 = CENTER_X + RADIUS * cos(rad_angle);
-    int y1 = CENTER_Y + RADIUS * sin(rad_angle);
-    int x2 = CENTER_X + (RADIUS - 10) * cos(rad_angle);  // Shorter tick marks for hours
-    int y2 = CENTER_Y + (RADIUS - 10) * sin(rad_angle);
-    gfx->drawLine(x1, y1, x2, y2, COLOR_STRIPE_PINK);
-  }
+
+  String minuteStr = (minute < 10) ? "0" + String(minute) : String(minute);
+  String timeStr = String(hour) + ":" + minuteStr + " " + period;
+
+  return timeStr;
 }
 
-void TextMessageService::drawCarrot( float angle ) 
+boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font)
 {
-  static float lastAngle = 0;
-  
-  // Adjust for the display rotation
-  angle -= 90;
-  if (angle < 0) angle += 360;
-
-  if ( prior )
+  if ( fadeset )
   {
-    // Erase the previous carrot
-    float lastX = SCREEN_WIDTH / 2 + cos(lastAngle * DEG_TO_RAD) * CARROT_MOVEMENT_RADIUS;
-    float lastY = SCREEN_HEIGHT / 2 + sin(lastAngle * DEG_TO_RAD) * CARROT_MOVEMENT_RADIUS;
-    gfx->fillCircle(lastX, lastY, CARROT_RADIUS, COLOR_BLACK);
+    fadeset = 0;
+    bufferCanvas->setFont( font );
+    bufferCanvas->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
+
+    fadestep = 1;
+    steps = 128; // One step per color intensity value
+    stepDelay = ( duration / steps ) / 4; // Delay between steps in milliseconds
+    return false;
+  }
+  else
+  {
+    fadestep++;
+
+    if ( fadestep >= steps ) return true;
+
+    uint16_t r = map( fadestep, 0, steps, (backcolor >> 11) & 0x1F, (color >> 11) & 0x1F);
+    uint16_t g = map( fadestep, 0, steps, (backcolor >> 5) & 0x3F, (color >> 5) & 0x3F);
+    uint16_t b = map( fadestep, 0, steps, backcolor & 0x1F, color & 0x1F);
+
+    uint16_t textColor = (r << 11) | (g << 5) | b;
+
+    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, y );
+    bufferCanvas->setTextColor( textColor );
+    bufferCanvas->println( text );
+    bufferCanvas->flush();
   }
 
-  float x = SCREEN_WIDTH / 2 + cos(angle * DEG_TO_RAD) * CARROT_MOVEMENT_RADIUS;
-  float y = SCREEN_HEIGHT / 2 + sin(angle * DEG_TO_RAD) * CARROT_MOVEMENT_RADIUS;
-  gfx->fillCircle(x, y, CARROT_RADIUS, COLOR_STRIPE_PINK);
-
-  prior = true;  
-  lastAngle = angle;  
+  return false;
 }
 
-void TextMessageService::getTimeFromAngle(float angle, int &hour, int &minute) 
+boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font)
 {
-  // Adjust for the display rotation
-  angle += 90;
-  if (angle >= 360) angle -= 360;
-  
-  hour = ((int)angle / 30) % 12;
-  if ( hour == 0 ) hour = 12;
+  if ( fadeset )
+  {
+    fadeset = 0;
 
-  minute = ((int)angle % 30) * 2;
+    bufferCanvas->setFont( font );
+    bufferCanvas->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
+
+    fadestep = 128;
+    steps = 128;
+    stepDelay = ( duration / steps ) / 4;
+    
+    return false;
+  }
+  else
+  {
+    fadestep--;
+
+    if ( fadestep == 0 ) return true;
+
+    uint16_t r = map( fadestep, 0, steps, (backcolor >> 11) & 0x1F, (color >> 11) & 0x1F);
+    uint16_t g = map( fadestep, 0, steps, (backcolor >> 5) & 0x3F, (color >> 5) & 0x3F);
+    uint16_t b = map( fadestep, 0, steps, backcolor & 0x1F, color & 0x1F);
+
+    uint16_t textColor = (r << 11) | (g << 5) | b;
+
+    bufferCanvas->setFont( font );
+    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, y );
+    bufferCanvas->setTextColor( textColor );
+    bufferCanvas->println( text );
+    bufferCanvas->flush();
+  }
+  return false;
 }
 
 // TextMessageService loop
@@ -591,13 +578,22 @@ void TextMessageService::loop()
     {
       ShowTimeWaitTime = millis();
 
-      // Show the time
-
-      if ( showNum == 0 ) runShowTellTime();
-
-      if ( showNum == 1 ) runDigitalTime();
-
+      switch ( showNum ) 
+      {
+        case ShowTellTime:
+          runShowTellTime();
+          break;
+        case DigitalSetTime:
+          runDigitalSetTime();
+          break;
+        case DigitalTimeFadeIn:
+          runDigitalTimeFadeIn();
+          break;
+        case DigitalTimeFadeOut:
+          runDigitalTimeFadeOut();
+          break;
+      }
     }
-  }
+  }    
 
 }

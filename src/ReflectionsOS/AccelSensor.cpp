@@ -36,7 +36,8 @@ void AccelSensor::begin()
 
   stattap = false;
   statdoubletap = false;
-
+  
+  clickDebounce = millis();
   lastSampleTime = millis();  // Set it to the current time
 
   if ( ! lis.begin( accelAddress ) ) 
@@ -124,23 +125,32 @@ void AccelSensor::loop()
   {
     lastSampleTime = millis();
 
+    // Debounce tap repeats by 2 seconds
+    
+    if ( millis() - clickDebounce < ( 1000 * 2 ) ) return;
+
     uint8_t click = lis.getClick();
     if (click == 0) return;
 
     if (! (click & 0x30)) return;
+
     Serial.print("Click detected (0x"); Serial.print(click, HEX); Serial.print("): ");
+
     if (click & 0x10)
     {
       Serial.println(" single click");
       stattap = true;
       statdoubletap = false;
+      clickDebounce = millis();
     } 
+
     if (click & 0x20)
     {
       Serial.println(" double click");
       stattap = false;
       statdoubletap = true;
-    } 
+      clickDebounce = millis();
+    }
   }
 }
 

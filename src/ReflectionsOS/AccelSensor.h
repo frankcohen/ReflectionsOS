@@ -69,7 +69,8 @@ class AccelSensor
     bool stattap;
     bool statdoubletap;
     unsigned long lastSampleTime;
-    
+    unsigned long clickDebounce;
+
 };
 
 #endif // ACCEL_SENSOR_H

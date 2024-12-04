@@ -27,8 +27,8 @@ void Experience_Eyes::init()
 void Experience_Eyes::setup() 
 {
   Serial.println( "Eyes SETUP" );
-  textmessageservice.setDialActivated( false );
-  textmessageservice.setTimeAnimationActivated( false );
+  // textmessageservice.setDialActivated( false );
+  // textmessageservice.setTimeAnimationActivated( false );
   video.startVideo( EyesFollowFinger_video );
   setSetupComplete(true);  // Signal that setup is complete
 }

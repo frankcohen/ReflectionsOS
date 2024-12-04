@@ -254,11 +254,20 @@ void ExperienceService::operateExperience()
   }
 }
 
+bool ExperienceService::active()
+{
+  if (  getCurrentState() != STOPPED ) return true;
+  return false;
+}
+
 void ExperienceService::loop()
 {
   operateExperience();      // Run the current experience, if any
 
   if ( getCurrentState() != STOPPED ) return;
+
+
+  return; // Temporary until you're ready to enable experiences, WatchMainFace comes first
 
   /*
   // ShowTime from accel next gesture
@@ -272,7 +281,7 @@ void ExperienceService::loop()
 
   // Run CatsPlay Experience when RSSI says they are close
 
-  int mrs = bleClient.getDistance();
+  int mrs; // = bleClient.getDistance();
 
   if ( ( mrs > catsplayCloser ) && ( mrs != 0 ) ) 
   {

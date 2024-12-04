@@ -20,6 +20,8 @@
 #include "Video.h"
 #include "TextMessageService.h"
 #include "RealTimeClock.h"
+#include "AccelSensor.h"
+#include "ExperienceService.h"
 
 #include <PNGdec.h>
 #include <Arduino_GFX_Library.h>
@@ -31,8 +33,10 @@ extern Battery battery;
 extern RealTimeClock realtimeclock;
 extern AccelSensor accel;
 extern Video video;
-extern Arduino_GFX *gfx;
 extern Arduino_Canvas *bufferCanvas;
+extern Haptic haptic;
+extern TextMessageService textmessageservice;
+extern ExperienceService experienceservice;
 
 class WatchFaceMain : public WatchFaceBase 
 {
@@ -75,13 +79,11 @@ class WatchFaceMain : public WatchFaceBase
     int catFaceIndex;
     bool catFaceDirection;
 
-    int rotating;
-
     bool drawitall;
     bool needssetup;
 
     unsigned long noMovementTime;
-    unsigned long myTeeTime;
+    
 };
 
 #endif // WATCHFACE_H

@@ -32,8 +32,8 @@ extern TOF tof;
 
 extern Video video;
 extern TextMessageService textmessageservice;
-extern BLEServerClass bleServer;
-extern BLEClientClass bleClient;
+//extern BLEServerClass bleServer;
+//extern BLEClientClass bleClient;
 
 /*
 ChatGPT says RSSI values:
@@ -58,6 +58,7 @@ class ExperienceService
     void startExperience( int exper );
     int getCurrentState();
     void setCurrentState( State state );
+    bool active();
 
     enum ExperienceName
     {

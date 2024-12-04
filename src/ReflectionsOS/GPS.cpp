@@ -18,8 +18,11 @@ GPS::GPS(){}
 
 void GPS::begin()
 { 
+  digitalWrite(GPSPower, HIGH);
+
   Serial2.begin(GPSBaud, SERIAL_8N1, RXPin, TXPin);
-  active = false;
+
+  active = true;
   long gpstime = millis();  
 }
 
@@ -166,7 +169,7 @@ void GPS::printStr(const char *str, int len)
 
 void GPS::loop()
 {
-  while ( Serial2.available() > 0 ) 
+  while ( Serial2.available() ) 
   {
     gps.encode( Serial2.read() );
   }

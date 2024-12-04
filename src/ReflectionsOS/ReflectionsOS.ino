@@ -142,12 +142,6 @@ const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certi
 std::string devname;
 String devicename;
 
-// Timers
-
-unsigned long startvidtime;
-bool startvidflag;
-int startcnt;
-
 bool tofstarted;
 
 /* Test for a device number on the I2C bus, display error when not found */
@@ -193,13 +187,13 @@ static void smartdelay( unsigned long ms )
     //led.loop();
     //bleClient.loop();
     realtimeclock.loop();
+    gps.loop();
 
     // Watch experience operations
 
-    //watchfaceexperiences.loop();
-    
-    //experienceservice.loop();
-    //TextMessageService.loop();
+    watchfaceexperiences.loop();
+    experienceservice.loop();
+    textmessageservice.loop();
     
     /*
     logger.loop();
@@ -220,9 +214,6 @@ void setup() {
   Serial.println("Starting");
   Serial.println(F("ReflectionsOS"));
 
-  //wifi.reset();  // Optionally reset any previous connection settings
-  //wifi.begin();  // Non-blocking, until guest uses it to connect
-
   realtimeclock.begin();
   
   hardware.begin();   // Sets all the hardware pins
@@ -230,6 +221,8 @@ void setup() {
   storage.begin();
   storage.setMounted( hardware.getMounted() );
 
+  //wifi.reset();  // Optionally reset any previous connection settings
+  //wifi.begin();  // Non-blocking, until guest uses it to connect
   //storage.replicateServerFiles();
   
   //Serial.println( "Files on board:" );
@@ -279,28 +272,11 @@ void setup() {
   gps.begin();
   accel.begin();
   compass.begin();
-  //parallax.begin();
-  textmessageservice.begin();
-  experienceservice.begin();
   utils.begin();
-  //led.begin();
 
-  // Watch experience initialization
+  // Unused services
 
-  watchfaceexperiences.begin();
-
-  //bleServer.begin();  // Initializes the BLE server
-  //bleClient.begin();  // Initializes the BLE client
-
-  //accel.setTraining( true );    // Put accelermoeter into training mode
-  //accel.loadGestures();         // Load the prerecorded accelermeter gestures
-
-  //ota.begin();
-  //ota.update();     // Just in case previous use of the host replicated an OTA update file
-
-  //startMSC();     // Calliope mounts as a flash drive, showing NAND contents over USB on your computer
-
-/*
+  /*
   tofstarted = true;
 
   // Create a new task for TOF processing, pin it to core 0
@@ -313,12 +289,31 @@ void setup() {
     NULL,      // Task handle
     0          // Core where the task should run (core 0)
   );
-*/
+  */
+
+  //bleServer.begin();  // Initializes the BLE server
+  //bleClient.begin();  // Initializes the BLE client
+
+  //accel.setTraining( true );    // Put accelermoeter into training mode
+  //accel.loadGestures();         // Load the prerecorded accelermeter gestures
+
+  //ota.begin();
+  //ota.update();     // Just in case previous use of the host replicated an OTA update file
+
+  //startMSC();     // Calliope mounts as a flash drive, showing NAND contents over USB on your computer
+
+  // Experience initialization
+
+  textmessageservice.begin();
+  experienceservice.begin();
+  watchfaceexperiences.begin();
+
+  // Unused experiences
+
+  //parallax.begin();
+  //led.begin();
 
   haptic.playEffect(14);  // 14 Strong Buzz
-
-  startvidtime = millis();
-  startvidflag = true;
   
   logger.info(F("Setup complete"));
 }

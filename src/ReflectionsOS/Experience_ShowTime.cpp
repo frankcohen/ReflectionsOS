@@ -16,7 +16,7 @@
 
 void Experience_ShowTime::init()
 {
-  vidflag = true;  
+  vidflag = true;
   setupComplete = false;
   runComplete = false;
   teardownComplete = false;
@@ -48,20 +48,18 @@ void Experience_ShowTime::run()
 {
   if ( timeflag )
   {
-    textmessageservice.startShow( 0 );                     // Show saying plus hour and minute
-    textmessageservice.setTimeAnimationActivated( true );
+    textmessageservice.startShow( 0 );       // Show saying plus hour and minute
     timeflag = false;
   }
   else
   {
-    if ( ! textmessageservice.getTimeAnimationActivated() )
+    if ( ! textmessageservice.active() )
     {
       video.setPaused( false );
       tearflag = true;
       setRunComplete(true);  // Signal run complete
     }
   }
-
 }
 
 void Experience_ShowTime::teardown() {

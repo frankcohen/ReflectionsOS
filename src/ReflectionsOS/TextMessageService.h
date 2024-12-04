@@ -17,13 +17,8 @@
 
 #include "Arduino.h"
 #include "Logger.h"
-#include "Battery.h"
-#include "GPS.h"
-#include "AccelSensor.h"
 #include "Video.h"
-
-#include <WiFi.h>
-#include <WiFiClientSecure.h>
+#include "RealTimeClock.h"
 
 // Additional fonts at https://github.com/moononournation/ArduinoFreeFontFile/tree/master/Fonts
 
@@ -31,6 +26,11 @@
 #include "SomeTimeLater20pt7b.h"
 #include "Minya16pt7b.h"
 #include "ScienceFair14pt7b.h"
+#include "Minya_Nouvelle_Rg30pt7b.h"
+
+extern LOGGER logger;
+extern Arduino_Canvas *bufferCanvas;
+extern RealTimeClock realtimeclock;
 
 extern const char* pairs[][2];
 
@@ -45,23 +45,29 @@ extern const char* pairs[][2];
 #define SETTIME_TIMEOUT 7000
 #define SNAP_ANGLE_INCREMENT 7.5 // Increment for angle movement, smaller value for fine adjustment
 
+enum TextMessageExperiences {
+    ShowTellTime,
+    DigitalSetTime,
+    DigitalTimeShow,
+    DigitalTimeFadeIn,
+    DigitalTimeFadeOut
+};
+
 class TextMessageService
 {
   public:
     TextMessageService();
     void begin();
     void loop();
-    bool test();
 
     boolean fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font);
     boolean fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font);
     void startShow( int shownum );
 
-    void setDialActivated( bool set );
-    bool getDialActivated();
+    bool active();
 
-    bool getTimeAnimationActivated();
-    void setTimeAnimationActivated( bool act );
+    //bool isActivate();
+    //void activate();
 
     String getTimeStringFromAngle( float angle );
 
@@ -70,13 +76,21 @@ class TextMessageService
 
   private:
     void runShowTellTime();
+    void runDigitalSetTime();
     void runDigitalTime();
+    void runTimeAndMessage();
 
+    void runDigitalTimeFadeIn();
+    void runDigitalTimeFadeOut();
+    void runDigitalTimeShow();
+
+    /* Unused at the moment 
     void drawClockFace();
     void showDigitalTime();
     void drawCarrot( float angle );
     void getTimeFromAngle(float angle, int &hour, int &minute);
     void setCarrotAngleFromRTC();
+    */
 
     int16_t x, y;
     uint16_t w, h;

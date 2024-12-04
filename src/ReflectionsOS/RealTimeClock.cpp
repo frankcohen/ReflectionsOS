@@ -44,12 +44,15 @@ void RealTimeClock::begin()
 
 // Function to get the current hour from the RTC
 
-int RealTimeClock::getCurrentHourFromRTC() 
+int RealTimeClock::getHour() 
 {
   struct tm timeinfo;
-  if (getLocalTime(&timeinfo)) {
+  if (getLocalTime(&timeinfo)) 
+  {
     return timeinfo.tm_hour;  // Return the current hour from RTC
-  } else {
+  } 
+  else 
+  {
     Serial.println("Failed to get local time from RTC.");
     return -1;  // Return -1 if time cannot be obtained
   }
@@ -57,11 +60,15 @@ int RealTimeClock::getCurrentHourFromRTC()
 
 // Function to get the current minute from the RTC
 
-int RealTimeClock::getCurrentMinuteFromRTC() {
+int RealTimeClock::getMinute() 
+{
   struct tm timeinfo;
-  if (getLocalTime(&timeinfo)) {
+  if (getLocalTime(&timeinfo)) 
+  {
     return timeinfo.tm_min;  // Return the current minute from RTC
-  } else {
+  } 
+  else 
+  {
     Serial.println("Failed to get local time from RTC.");
     return -1;  // Return -1 if time cannot be obtained
   }

@@ -74,8 +74,15 @@ Read the license in the license.txt file that comes with this code.
 #define flipspeed 50
 #define wfMainHourglass "Main_HourGlass"
 #define wfMainHourglass2 ".png"
-#define WatchFaceOpener_video "bed14c0dcb3db01f79d4f920301d0d6d"
-
+#define WatchFaceOpener_video "809090d2b1c7b3829a3a72f583d58a7b"
+#define WatchFaceFlip1_video "a8574fa44e9df2536f28c2d56b2cd63d"
+#define WatchFaceFlip2_video "cf6816ec109fb02fe85e1bc71801567f"
+#define WatchFaceFlip3_video "989f8d3affa1b0e35a62b30425e1f388"
+#define wfMain_Timer_Background "Face_Main_Timer_Background.jpg"
+#define wfMain_SetTimer_Background "Face_Main_SetTimer_Background.jpg"
+#define wfMain_Health_Background "Face_Main_Health_Background.jpg"
+#define wfMain_SetTime_Background "Face_Main_SetTime_Background.jpg"
+#define wfMain_Time_Background "Face_Main_Time_Background.jpg"
 #define TRANSPARENT_COLOR 0xFFE0
 #define TRANSPARENT_COLOR_PNG 0x00000000
 
