@@ -225,7 +225,7 @@ void setup() {
   //wifi.begin();  // Non-blocking, until guest uses it to connect
   //storage.replicateServerFiles();
   
-  //Serial.println( "Files on board:" );
+  //Serial.println( "Files:" );
   //storage.listDir(SD, "/", 100, true);
 
   video.begin();

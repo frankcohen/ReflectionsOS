@@ -35,10 +35,13 @@ extern LOGGER logger;
 // Adjust this number for the sensitivity of the 'click' force
 // this strongly depend on the range! for 16G, try 5-10
 // for 8G, try 10-20. for 4G try 20-40. for 2G try 40-80
-#define CLICKTHRESHHOLD 20
+#define CLICKTHRESHOLD 22
+        
+#define DOUBLE_CLICK_WINDOW 500  // Double-click time window in milliseconds
 
 #define BUFFER_SIZE 100         // Number of samples to store (10 seconds if sampling every 100ms)
-#define SAMPLE_INTERVAL 100     // Time between samples in milliseconds
+#define SAMPLE_INTERVAL 200     // Time between samples in milliseconds
+#define SINGLE_TAP_TIMEOUT 1000   // Timeout for single tap detection (in milliseconds)
 
 class AccelSensor
 {
@@ -68,9 +71,12 @@ class AccelSensor
 
     bool stattap;
     bool statdoubletap;
-    unsigned long lastSampleTime;
-    unsigned long clickDebounce;
+    unsigned long clicktime;
+    bool gotaclick;
+    bool testfordouble;
+    unsigned long taptime;
 
+    unsigned long lastSampleTime;
 };
 
 #endif // ACCEL_SENSOR_H

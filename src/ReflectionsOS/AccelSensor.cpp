@@ -33,21 +33,27 @@ AccelSensor::AccelSensor(){}
 void AccelSensor::begin()
 { 
   bufferIndex = 0;
-
-  stattap = false;
-  statdoubletap = false;
   
-  clickDebounce = millis();
-  lastSampleTime = millis();  // Set it to the current time
-
   if ( ! lis.begin( accelAddress ) ) 
   {
     Serial.println( F( "Could not start accelerometer, stopping" ) );
     while (1) yield();
   }
 
+  // Setup tap detection
   lis.setRange(LIS3DH_RANGE_8_G);   // 2, 4, 8 or 16 G!
-  lis.setClick(2, CLICKTHRESHHOLD);
+
+  // 0 = turn off click detection & interrupt
+  // 1 = single click only interrupt output
+  // 2 = double click only interrupt output, detect single click
+  // Adjust threshhold, higher numbers are less sensitive
+
+  // Adjust CLICKTHRESHOLD for the sensitivity of the 'click' force
+  // this strongly depend on the range! for 16G, try 5-10
+  // for 8G, try 10-20. for 4G try 20-40. for 2G try 40-80
+  lis.setClick( 1, CLICKTHRESHOLD );
+
+  delay(100);
 
   for (int i = 1; i < BUFFER_SIZE; i++) 
   {
@@ -58,13 +64,17 @@ void AccelSensor::begin()
 
   stattap = false;
   statdoubletap = false;
+  gotaclick = false;
+  testfordouble = false;
+  clicktime = millis();
+  taptime = millis();
 
   // lis.setPerformanceMode(LIS3DH_MODE_LOW_POWER);
   Serial.print("Accelerometer performance mode set to: ");
   switch (lis.getPerformanceMode()) {
-    case LIS3DH_MODE_NORMAL: Serial.println("Normal 10bit"); break;
-    case LIS3DH_MODE_LOW_POWER: Serial.println("Low Power 8bit"); break;
-    case LIS3DH_MODE_HIGH_RESOLUTION: Serial.println("High Resolution 12bit"); break;
+    case LIS3DH_MODE_NORMAL: Serial.println("Normal 10 bit"); break;
+    case LIS3DH_MODE_LOW_POWER: Serial.println("Low Power 8 bit"); break;
+    case LIS3DH_MODE_HIGH_RESOLUTION: Serial.println("High Resolution 12 bit"); break;
   }
 
 }
@@ -121,36 +131,38 @@ void AccelSensor::loop()
 {
   //sampleData();
 
-  if ( millis() - lastSampleTime > SAMPLE_INTERVAL) 
+  if ( millis() - taptime < 100 ) return;
+  taptime = millis();
+
+  // if we're within 150 - 600 ms from the single then it's a double and cancel the single, otherwise its a single
+
+  uint8_t click = lis.getClick();
+  if (click == 0) return;
+  if (! (click & 0x30)) return;
+  if (click & 0x10)
   {
-    lastSampleTime = millis();
+    unsigned long mtime = millis() - clicktime;
 
-    // Debounce tap repeats by 2 seconds
-    
-    if ( millis() - clickDebounce < ( 1000 * 2 ) ) return;
+    //Serial.print("Click detected (0x"); Serial.print(click, HEX); Serial.print("): ");
+    //Serial.println( mtime );
 
-    uint8_t click = lis.getClick();
-    if (click == 0) return;
-
-    if (! (click & 0x30)) return;
-
-    Serial.print("Click detected (0x"); Serial.print(click, HEX); Serial.print("): ");
-
-    if (click & 0x10)
+    if ( ( mtime > 150 ) && ( mtime < 600 ) )
     {
-      Serial.println(" single click");
-      stattap = true;
-      statdoubletap = false;
-      clickDebounce = millis();
-    } 
-
-    if (click & 0x20)
-    {
-      Serial.println(" double click");
+      //Serial.print( "Double click, cancels previous single ");
+      //Serial.println( mtime );
+      clicktime = millis();
       stattap = false;
       statdoubletap = true;
-      clickDebounce = millis();
+    }
+    else
+    {
+      //Serial.print( "New single ");
+      //Serial.println( mtime );
+      clicktime = millis();
+      stattap = true;
+      statdoubletap = false;
     }
   }
+
 }
 

@@ -59,6 +59,7 @@ class WatchFaceMain : public WatchFaceBase
     void updateHoursAndMinutes();
     void updateBattery();
     bool updateTimeLeft();
+    bool updateTimeLeftNoShow();
 
     int panel;
 

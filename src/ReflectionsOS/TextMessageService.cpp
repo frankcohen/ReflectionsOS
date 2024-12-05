@@ -199,18 +199,14 @@ void TextMessageService::runDigitalTimeFadeIn()
     showStep = 1;
     fadeset = 1;
 
-    theTime = getRTCtime();       // This introduces a 3-5 second delay
-
-    //if ( theTime == "0 o'clock" ) theTime = " ";
-    
-    theDate = "Nov 1, 2024";
+    theTime = getRTCtime();       // This introduces a 3-5 second delay    
 
     return;
   }
 
   if ( showStep == 1 )
   {
-    if ( fadeInCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
+    if ( fadeInCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya_Nouvelle_Rg30pt7b ) )
     {
       activated = false;
       showStep = 2;
@@ -242,7 +238,7 @@ void TextMessageService::runDigitalTimeFadeOut()
 
   if ( showStep == 1 )
   {
-    if ( fadeOutCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
+    if ( fadeOutCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya_Nouvelle_Rg30pt7b ) )
     {
       activated = false;
       showStep = 0;
@@ -364,6 +360,26 @@ void TextMessageService::runTimeAndMessage()
   */
 }
 
+// Redraws current time for wfMain
+
+void TextMessageService::updateTime()
+{
+    theTime = getRTCtime();
+    bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
+    bufferCanvas->getTextBounds( theTime.c_str(), 0, 0, &x, &y, &w, &h);    
+    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, y );
+    bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
+    bufferCanvas->println( theTime );
+    bufferCanvas->flush();
+}
+
+// Draws current time for wfMain set time panel
+
+void TextMessageService::updateTempTime( String tempTime )
+{
+
+}
+
 // Shows digital time for set time service
 
 void TextMessageService::runDigitalTime()
@@ -464,6 +480,11 @@ void TextMessageService::runDigitalSetTime()
 
 }
 
+void TextMessageService::stop()
+{
+  activated = false;
+}
+
 bool TextMessageService::active()
 {
   return activated;
@@ -491,7 +512,7 @@ String TextMessageService::getRTCtime()
   }
 
   String minuteStr = (minute < 10) ? "0" + String(minute) : String(minute);
-  String timeStr = String(hour) + ":" + minuteStr + " " + period;
+  String timeStr = String(hour) + ":" + minuteStr;
 
   return timeStr;
 }
