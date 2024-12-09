@@ -9,37 +9,33 @@
  Read the license in the license.txt file that comes with this code.
 */
 
-#ifndef _BATTERY_
-#define _BATTERY_
+#ifndef _STEPS_
+#define _STEPS_
 
 #include "config.h"
 #include "secrets.h"
 
 #include "Arduino.h"
 #include "Logger.h"
-#include "Video.h"
 
-#define batterylow 3900
-#define battermedium 4000
-#define batteryhigh 4000
+#include "AccelSensor.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
+extern AccelSensor accel;
 
-class Battery
+#define accelThreshold 30
+
+class Steps
 {
   public:
-    Battery();
+    Steps();
     void begin();
     void loop();
-    bool test();
-    String batLevel( float analogVolts );
-    bool isBatteryLow();
-    int getBatteryLevel();
+    int howManySteps();
+    void resetStepCount();
 
   private:
-    long batteryWaitTime;
-    float analogVolts;
-    
+    int stepCount;    
+    unsigned long lastStepTime;
 };
 
-#endif // _BATTERY_
+#endif // _STEPS_

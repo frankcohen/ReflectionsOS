@@ -11,8 +11,6 @@
 
 #include "Battery.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-
 Battery::Battery(){}
 
 void Battery::begin()

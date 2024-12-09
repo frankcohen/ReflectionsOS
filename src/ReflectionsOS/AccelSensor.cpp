@@ -81,7 +81,20 @@ void AccelSensor::begin()
 
 float AccelSensor::getXreading() 
 {
-  return 0;
+  lis.read();
+  return lis.x; // Raw X value
+}
+
+float AccelSensor::getYreading() 
+{
+  lis.read();
+  return lis.y; // Raw Y value
+}
+
+float AccelSensor::getZreading() 
+{
+  lis.read();
+  return lis.z; // Raw Y value
 }
 
 // Sample accelerometer data every 100ms and store it in the buffer

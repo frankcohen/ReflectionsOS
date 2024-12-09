@@ -53,6 +53,10 @@ void WatchFaceMain::begin()
   catFaceDirection = true;
   catFaceWait = rand() % 30000;
 
+  tilttimer = millis();
+  oldtilthour = 0;
+  oldtiltminute = 0;
+
   battimer = millis();
   batcount = 0;
   batlev = 0;
@@ -61,6 +65,10 @@ void WatchFaceMain::begin()
   oldMinute = 0;
   oldBattery = 5;
   oldBlink = 0;
+
+  referenceY = accel.getYreading() + 15000; // Current Y-axis tilt value
+  waitForNextReference = false; // Delay reference update after hour change
+  lastChangeTime = 0; // Timestamp of the last hour change
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
@@ -378,6 +386,8 @@ void WatchFaceMain::loop()
         updateHoursAndMinutes();  // Update hour and minute hands
       }
 
+      updateDisplayMain();
+
       if ( accel.tapped() || accel.doubletapped() )
       {
         panel = DISPLAYING_DIGITAL_TIME;
@@ -389,7 +399,6 @@ void WatchFaceMain::loop()
         return;
       }
 
-      updateDisplayMain();
       break;
 
     case DISPLAYING_DIGITAL_TIME:
@@ -403,7 +412,7 @@ void WatchFaceMain::loop()
         noMovementTime = millis();
         return;
       }
-
+/*
       if ( accel.tapped() )
       {
         panel = DISPLAYING_HEALTH_STATISTICS;
@@ -414,8 +423,8 @@ void WatchFaceMain::loop()
         textmessageservice.stop();
         return;
       }
-
-      if ( accel.doubletapped() )
+*/
+      if ( accel.tapped() )
       {
         panel = SETTING_DIGITAL_TIME;
         haptic.playEffect(14);  // 14 Strong Buzz
@@ -423,10 +432,12 @@ void WatchFaceMain::loop()
         needssetup = true;
         noMovementTime = millis();
         textmessageservice.stop();
+        referenceY = accel.getYreading() + 15000; // Current Y-axis tilt value
       }
       
       // Update and display time
 
+/*
       if ( updateTimeLeftNoShow() )
       {
         panel = MAIN;
@@ -436,6 +447,7 @@ void WatchFaceMain::loop()
         needssetup = true;
         return;
       }
+*/
 
       textmessageservice.updateTime();
 
@@ -448,26 +460,104 @@ void WatchFaceMain::loop()
         Serial.println( "SETTING_DIGITAL_TIME" );
         needssetup = false;
         drawImageFromFile( wfMain_SetTime_Background, true, 0, 0 );
-        textmessageservice.startShow( DigitalTimeFadeIn );
         noMovementTime = millis();
-        return;
-      }
-
-      if ( updateTimeLeft() )
-      {
-        panel = MAIN;
-        needssetup = true;
-        haptic.playEffect(14);  // 14 Strong Buzz
-        video.startVideo( WatchFaceFlip3_video );
         textmessageservice.stop();
+        currentHour = realtimeclock.getHour();
         return;
       }
-
-      textmessageservice.updateTempTime( "Frankolo" );
 
       // Change time by tilting left-right and up-down
 
+      if ( millis() - tilttimer > 500 )
+      {
+        tilttimer = millis();
 
+        float rawY = accel.getYreading() + 15000; // Current Y-axis tilt value
+        float threshold = referenceY * 0.1;
+        const unsigned long repeatDelay = 500; // Auto-repeat delay in milliseconds
+
+        if ( waitForNextReference ) 
+        {
+          if (millis() - lastChangeTime >= 1000) 
+          { // Wait 1 second before updating reference
+            referenceY = rawY; // Update reference to new baseline
+            waitForNextReference = false;
+            Serial.print("Reference Y updated to: ");
+            Serial.println(referenceY);
+          }
+        }
+
+        if (rawY > referenceY + threshold) 
+        {
+          currentHour++;
+          if (currentHour > 12) 
+          {
+            currentHour = 1; // Wrap around to 1 after 12
+          }
+          Serial.print("Hour increased to: ");
+          Serial.println(currentHour);
+          lastChangeTime = millis();
+          lastRepeatTime = millis();
+          waitForNextReference = true; // Start delay before updating reference
+        }
+  
+        else if (rawY < referenceY - threshold) 
+        {
+          currentHour--;
+          if (currentHour < 1) 
+          {
+            currentHour = 12; // Wrap around to 12 after 1
+          }
+
+          Serial.print("Hour decreased to: ");
+          Serial.println(currentHour);
+          lastChangeTime = millis();
+          lastRepeatTime = millis();
+          waitForNextReference = true; // Start delay before updating reference
+        }
+  
+        // Auto-repeat check after 1 second
+        else if ( millis() - lastRepeatTime >= 500 ) 
+        {
+          if (rawY >= referenceY + threshold) 
+          {
+            currentHour++;
+            if (currentHour > 12) 
+            {
+              currentHour = 1; // Wrap around to 1 after 12
+            }
+            Serial.print("Auto-repeat: Hour increased to: ");
+            Serial.println(currentHour);
+            lastRepeatTime = millis(); // Update repeat timestamp
+          } 
+  
+          else if (rawY <= referenceY - threshold) 
+          {
+            currentHour--;
+            if (currentHour < 1) 
+            {
+              currentHour = 12; // Wrap around to 12 after 1
+            }
+
+            Serial.print("Auto-repeat: Hour decreased to: ");
+            Serial.println(currentHour);
+            lastRepeatTime = millis(); // Update repeat timestamp
+          }
+        }
+        
+        String mef = String( currentHour );
+        mef += ":";
+        if ( currentMinute < 10 )
+        {
+          mef += "0";
+        }
+        mef += String( currentMinute );
+
+        // wfMain_SetTime_Background_Shortie
+
+        drawImageFromFile( wfMain_SetTime_Background, true, 0, 0 );
+        textmessageservice.updateTempTime( mef );
+      }
 
       break;
 

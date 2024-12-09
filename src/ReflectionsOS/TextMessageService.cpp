@@ -377,7 +377,13 @@ void TextMessageService::updateTime()
 
 void TextMessageService::updateTempTime( String tempTime )
 {
-
+    bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
+    y = 135;
+    bufferCanvas->getTextBounds( tempTime.c_str(), 0, 0, &x, &y, &w, &h);
+    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
+    bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
+    bufferCanvas->println( tempTime );
+    bufferCanvas->flush();
 }
 
 // Shows digital time for set time service
@@ -478,6 +484,11 @@ void TextMessageService::runDigitalSetTime()
     }
   }
 
+}
+
+void TextMessageService::start()
+{
+  activated = true;
 }
 
 void TextMessageService::stop()

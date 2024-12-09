@@ -55,6 +55,8 @@ class AccelSensor
 
     // Support methods for other classes
     float getXreading();
+    float getYreading();
+    float getZreading();
 
   private:
     void sampleData();

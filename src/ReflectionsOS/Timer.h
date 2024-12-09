@@ -9,37 +9,32 @@
  Read the license in the license.txt file that comes with this code.
 */
 
-#ifndef _BATTERY_
-#define _BATTERY_
+#ifndef _TIMER_  
+#define _TIMER_
 
 #include "config.h"
 #include "secrets.h"
 
 #include "Arduino.h"
 #include "Logger.h"
-#include "Video.h"
 
-#define batterylow 3900
-#define battermedium 4000
-#define batteryhigh 4000
-
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-
-class Battery
+class Timer
 {
   public:
-    Battery();
+    Timer();
     void begin();
     void loop();
-    bool test();
-    String batLevel( float analogVolts );
-    bool isBatteryLow();
-    int getBatteryLevel();
+
+    void setTime( int minutes ); 
+    int getTime();
+    void start();
+    void stop();
+    bool status();
 
   private:
-    long batteryWaitTime;
-    float analogVolts;
-    
+    unsigned long timertimer;
+    int timeleft;
+    bool running;
 };
 
-#endif // _BATTERY_
+#endif // _TIMER_

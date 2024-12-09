@@ -110,6 +110,8 @@ Arduino IDE 2.x automatically uses partitions.csv in the source code directory
 #include "WatchFaceMain.h"
 #include "nvs_flash.h"
 #include "RealTimeClock.h"
+#include "Steps.h"
+#include "Timer.h"
 
 Video video;
 Utils utils;
@@ -117,24 +119,27 @@ Storage storage;
 Haptic haptic;
 Audio audio;
 TOF tof;
-//Parallax parallax;
 TextMessageService textmessageservice;
 ExperienceService experienceservice;
 GPS gps;
 Wifi wifi;
 Compass compass;
-//LED led;
-//USBFlashDrive flash;
-//OTA ota;
 LOGGER logger;
 Battery battery;
 Hardware hardware;
 AccelSensor accel;
-//BLEServerClass bleServer;
-//BLEClientClass bleClient;
 WatchFaceExperiences watchfaceexperiences;
 WatchFaceMain watchfacemain;
 RealTimeClock realtimeclock;
+Steps steps;
+Timer timer;
+
+//Parallax parallax;
+//LED led;
+//USBFlashDrive flash;
+//OTA ota;
+//BLEServerClass bleServer;
+//BLEClientClass bleClient;
 
 const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
 
@@ -188,6 +193,8 @@ static void smartdelay( unsigned long ms )
     //bleClient.loop();
     realtimeclock.loop();
     gps.loop();
+    steps.loop();
+    timer.loop();
 
     // Watch experience operations
 
@@ -273,6 +280,11 @@ void setup() {
   accel.begin();
   compass.begin();
   utils.begin();
+
+  // Support service initialization
+
+  steps.begin();
+  timer.begin();
 
   // Unused services
 

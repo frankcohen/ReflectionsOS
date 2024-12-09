@@ -22,6 +22,9 @@
 #include "RealTimeClock.h"
 #include "AccelSensor.h"
 #include "ExperienceService.h"
+#include "Steps.h"
+#include "Timer.h"
+#include <Kalman.h>
 
 #include <PNGdec.h>
 #include <Arduino_GFX_Library.h>
@@ -37,6 +40,13 @@ extern Arduino_Canvas *bufferCanvas;
 extern Haptic haptic;
 extern TextMessageService textmessageservice;
 extern ExperienceService experienceservice;
+extern Steps steps;
+extern Timer timer;
+
+#define xmin -700
+#define xmax 1500
+#define ymin -2500
+#define ymax 2500
 
 class WatchFaceMain : public WatchFaceBase 
 {
@@ -84,7 +94,14 @@ class WatchFaceMain : public WatchFaceBase
     bool needssetup;
 
     unsigned long noMovementTime;
-    
+
+    unsigned long tilttimer;
+    int oldtilthour;
+    int oldtiltminute;
+    float referenceY;
+    bool waitForNextReference; // Delay reference update after hour change
+    unsigned long lastChangeTime; // Timestamp of the last hour change
+    unsigned long lastRepeatTime; // Timestamp of the last auto-repeat
 };
 
 #endif // WATCHFACE_H

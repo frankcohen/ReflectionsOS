@@ -66,6 +66,7 @@ class TextMessageService
 
     bool active();
     void stop();
+    void start();
 
     String getTimeStringFromAngle( float angle );
 
@@ -73,7 +74,7 @@ class TextMessageService
     String getRTCtime();
 
     void updateTime();   // Redraws current time for wfMain
-    void updateTempTime( String tempTime); // Draws current time for wfMain set time panel
+    void updateTempTime( String tempTime ); // Draws current time for wfMain set time panel
 
   private:
     void runShowTellTime();

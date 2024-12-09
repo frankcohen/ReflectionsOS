@@ -81,6 +81,35 @@ int RealTimeClock::getMinute()
   }
 }
 
+void RealTimeClock::setTime( int hour, int minute, int ampm )
+{
+      // Set default date and time (in UTC)
+
+    struct tm timeinfo = {0};
+    if ( getLocalTime(&timeinfo) )
+    {
+      timeinfo.tm_year = 2024 - 1900;  // tm_year is years since 1900
+      timeinfo.tm_mon = 4 - 1;     // tm_mon is 0-based (0 = January)
+      timeinfo.tm_mday = 23;          // Day of the month
+      timeinfo.tm_hour = hour;         // Hour
+      timeinfo.tm_min = minute;        // Minute
+      timeinfo.tm_sec = 0;        // Second
+    }
+    else
+    {
+      timeinfo.tm_year = 2024 - 1900;  // tm_year is years since 1900
+      timeinfo.tm_mon = 4 - 1;     // tm_mon is 0-based (0 = January)
+      timeinfo.tm_mday = 23;          // Day of the month
+      timeinfo.tm_hour = 10;         // Hour
+      timeinfo.tm_min = 10;        // Minute
+      timeinfo.tm_sec = 0;        // Second
+    }
+
+    time_t t = mktime(&timeinfo);       // Convert struct tm to time_t (seconds since the Unix epoch)
+    struct timeval tv = {t, 0};  // time_t and microseconds
+    settimeofday(&tv, nullptr);  // Set the time on the ESP32
+}
+
 void RealTimeClock::loop()
 {
 }
