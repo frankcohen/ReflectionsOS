@@ -69,6 +69,7 @@ void AccelSensor::begin()
   clicktime = millis();
   taptime = millis();
 
+  /*
   // lis.setPerformanceMode(LIS3DH_MODE_LOW_POWER);
   Serial.print("Accelerometer performance mode set to: ");
   switch (lis.getPerformanceMode()) {
@@ -76,7 +77,7 @@ void AccelSensor::begin()
     case LIS3DH_MODE_LOW_POWER: Serial.println("Low Power 8 bit"); break;
     case LIS3DH_MODE_HIGH_RESOLUTION: Serial.println("High Resolution 12 bit"); break;
   }
-
+  */
 }
 
 float AccelSensor::getXreading() 
@@ -137,7 +138,7 @@ bool AccelSensor::doubletapped()
 {
   bool result = statdoubletap;
   statdoubletap = false;
-  return statdoubletap;
+  return result;
 }
 
 void AccelSensor::loop()
@@ -156,22 +157,25 @@ void AccelSensor::loop()
   {
     unsigned long mtime = millis() - clicktime;
 
-    //Serial.print("Click detected (0x"); Serial.print(click, HEX); Serial.print("): ");
-    //Serial.println( mtime );
+    Serial.print("Click detected (0x"); Serial.print(click, HEX); Serial.print("): ");
+    Serial.println( mtime );
 
     if ( ( mtime > 150 ) && ( mtime < 600 ) )
     {
-      //Serial.print( "Double click, cancels previous single ");
-      //Serial.println( mtime );
+      Serial.print( "Double click, cancels previous single ");
+      Serial.println( mtime );
+      
       clicktime = millis();
       stattap = false;
       statdoubletap = true;
     }
     else
     {
-      //Serial.print( "New single ");
-      //Serial.println( mtime );
+      Serial.print( "New single ");
+      Serial.println( mtime );
+      
       clicktime = millis();
+      waitforit = millis();
       stattap = true;
       statdoubletap = false;
     }

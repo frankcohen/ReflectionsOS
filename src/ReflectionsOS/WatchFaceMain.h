@@ -71,6 +71,8 @@ class WatchFaceMain : public WatchFaceBase
     bool updateTimeLeft();
     bool updateTimeLeftNoShow();
 
+    bool changing( bool hourflag );
+
     int panel;
 
     unsigned long maintimer;
@@ -99,9 +101,20 @@ class WatchFaceMain : public WatchFaceBase
     int oldtilthour;
     int oldtiltminute;
     float referenceY;
+    float referenceX;
     bool waitForNextReference; // Delay reference update after hour change
+    bool waitForNextReferenceX; // Delay reference update after hour change
     unsigned long lastChangeTime; // Timestamp of the last hour change
+    unsigned long lastChangeTimeX; // Timestamp of the last hour change
     unsigned long lastRepeatTime; // Timestamp of the last auto-repeat
+    unsigned long lastRepeatTimeX; // Timestamp of the last auto-repeat
+    bool hourschanging;
+    unsigned long switchtime;
+    float rawY;
+    float threshold;
+    float rawX;
+    float thresholdX;
+    
 };
 
 #endif // WATCHFACE_H

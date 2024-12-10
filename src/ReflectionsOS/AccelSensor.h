@@ -79,6 +79,8 @@ class AccelSensor
     unsigned long taptime;
 
     unsigned long lastSampleTime;
+
+    unsigned long waitforit;
 };
 
 #endif // ACCEL_SENSOR_H

@@ -57,7 +57,7 @@ void Hardware::begin()
 
   // Turn GPS module on
   pinMode(GPSPower, OUTPUT);
-  digitalWrite(GPSPower, LOW);      // HIGH is on
+  digitalWrite(GPSPower, HIGH);      // HIGH is on
 
   uint32_t seed = esp_random();
   randomSeed( seed );

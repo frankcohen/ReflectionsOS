@@ -220,8 +220,6 @@ void setup() {
   Serial.println(" ");
   Serial.println("Starting");
   Serial.println(F("ReflectionsOS"));
-
-  realtimeclock.begin();
   
   hardware.begin();   // Sets all the hardware pins
 
@@ -285,6 +283,7 @@ void setup() {
 
   steps.begin();
   timer.begin();
+  realtimeclock.begin();
 
   // Unused services
 

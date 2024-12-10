@@ -27,10 +27,15 @@ DONE Animate rotation using mjpeg for speed/smoothness
 DONE Double tap in TimePanel to see SetTimePanel
 DONE TextMessageService uses double buffer
 DONE Timeout to main panel
-SetTimePanel left-right tilt for minutes, top-bottom tilt for hours, wait 3 seconds to accept and see MainPanel, larger font, hours/minute animation
+DONE SetTimePanel left-right tilt for minutes, top-bottom tilt for hours, wait 3 seconds to accept and see MainPanel, larger font, hours/minute animation
+Change hours or minutes, but not both at once. tap to switch, hourglasss timeout to switch
+Shortie for hourglass
+Double tap sets time graphic
 HealthPanel double tap to clear steps, see MainPanel
 TimerPanel shows countdown, double tap to clear, single tap for MainPanel,
    left-right tilt to choose timer length (5, 10, 20, 30, 60, 90), wait 3 seconds to start and see MainPanel
+GPS gets time, then turns GPS off
+NTP gets time, then turns Wifi off
 
 */
 
@@ -69,6 +74,10 @@ void WatchFaceMain::begin()
   referenceY = accel.getYreading() + 15000; // Current Y-axis tilt value
   waitForNextReference = false; // Delay reference update after hour change
   lastChangeTime = 0; // Timestamp of the last hour change
+
+  referenceX = accel.getXreading() + 15000; // Current Y-axis tilt value
+  waitForNextReferenceX = false; // Delay reference update after hour change
+  lastChangeTimeX = 0; // Timestamp of the last hour change
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
@@ -366,6 +375,7 @@ void WatchFaceMain::loop()
       needssetup = true;
       maintimer = millis();
       haptic.playEffect(14);  // 14 Strong Buzz
+      blinking = false;
       break;
 
     case MAIN:
@@ -374,6 +384,7 @@ void WatchFaceMain::loop()
       {
         Serial.println( "MAIN" );
         needssetup = false;
+        blinking = false;
         return;
       }
 
@@ -412,7 +423,7 @@ void WatchFaceMain::loop()
         noMovementTime = millis();
         return;
       }
-/*
+
       if ( accel.tapped() )
       {
         panel = DISPLAYING_HEALTH_STATISTICS;
@@ -423,8 +434,8 @@ void WatchFaceMain::loop()
         textmessageservice.stop();
         return;
       }
-*/
-      if ( accel.tapped() )
+
+      if ( accel.doubletapped() )
       {
         panel = SETTING_DIGITAL_TIME;
         haptic.playEffect(14);  // 14 Strong Buzz
@@ -433,11 +444,11 @@ void WatchFaceMain::loop()
         noMovementTime = millis();
         textmessageservice.stop();
         referenceY = accel.getYreading() + 15000; // Current Y-axis tilt value
+        referenceX = accel.getXreading() + 15000; // Current Y-axis tilt value
       }
       
       // Update and display time
 
-/*
       if ( updateTimeLeftNoShow() )
       {
         panel = MAIN;
@@ -447,8 +458,8 @@ void WatchFaceMain::loop()
         needssetup = true;
         return;
       }
-*/
 
+      drawImageFromFile( wfMain_Health_Background, true, 0, 0 );
       textmessageservice.updateTime();
 
       break;
@@ -459,10 +470,17 @@ void WatchFaceMain::loop()
       {
         Serial.println( "SETTING_DIGITAL_TIME" );
         needssetup = false;
-        drawImageFromFile( wfMain_SetTime_Background, true, 0, 0 );
         noMovementTime = millis();
         textmessageservice.stop();
         currentHour = realtimeclock.getHour();
+        if ( currentHour > 12 ) currentHour = currentHour - 12;
+        currentMinute = realtimeclock.getMinute();
+        oldtilthour = currentHour;
+        oldtiltminute = currentMinute;
+
+        hourschanging = true;
+        drawImageFromFile( wfMain_SetTime_Background_Hour, true, 0, 0 );
+
         return;
       }
 
@@ -472,8 +490,12 @@ void WatchFaceMain::loop()
       {
         tilttimer = millis();
 
-        float rawY = accel.getYreading() + 15000; // Current Y-axis tilt value
-        float threshold = referenceY * 0.1;
+        rawY = accel.getYreading() + 15000; // Current Y-axis tilt value
+        threshold = referenceY * 0.1;
+
+        rawX = accel.getXreading() + 15000; // Current Y-axis tilt value
+        thresholdX = referenceX * 0.1;
+
         const unsigned long repeatDelay = 500; // Auto-repeat delay in milliseconds
 
         if ( waitForNextReference ) 
@@ -487,6 +509,17 @@ void WatchFaceMain::loop()
           }
         }
 
+        if ( waitForNextReferenceX ) 
+        {
+          if (millis() - lastChangeTimeX >= 1000) 
+          { // Wait 1 second before updating reference
+            referenceX = rawX; // Update reference to new baseline
+            waitForNextReferenceX = false;
+            Serial.print("Reference X updated to: ");
+            Serial.println(referenceX);
+          }
+        }
+
         if (rawY > referenceY + threshold) 
         {
           currentHour++;
@@ -496,9 +529,12 @@ void WatchFaceMain::loop()
           }
           Serial.print("Hour increased to: ");
           Serial.println(currentHour);
+
           lastChangeTime = millis();
           lastRepeatTime = millis();
           waitForNextReference = true; // Start delay before updating reference
+          hourschanging = true;
+          noMovementTime = millis();
         }
   
         else if (rawY < referenceY - threshold) 
@@ -511,9 +547,12 @@ void WatchFaceMain::loop()
 
           Serial.print("Hour decreased to: ");
           Serial.println(currentHour);
+
           lastChangeTime = millis();
           lastRepeatTime = millis();
           waitForNextReference = true; // Start delay before updating reference
+          hourschanging = true;
+          noMovementTime = millis();
         }
   
         // Auto-repeat check after 1 second
@@ -529,6 +568,8 @@ void WatchFaceMain::loop()
             Serial.print("Auto-repeat: Hour increased to: ");
             Serial.println(currentHour);
             lastRepeatTime = millis(); // Update repeat timestamp
+            hourschanging = true;
+            noMovementTime = millis();
           } 
   
           else if (rawY <= referenceY - threshold) 
@@ -541,10 +582,81 @@ void WatchFaceMain::loop()
 
             Serial.print("Auto-repeat: Hour decreased to: ");
             Serial.println(currentHour);
+            hourschanging = true;
             lastRepeatTime = millis(); // Update repeat timestamp
+            noMovementTime = millis();
           }
         }
-        
+
+        if (rawX > referenceX + thresholdX) 
+        {
+          currentMinute++;
+          if (currentMinute > 59) 
+          {
+            currentMinute = 1; // Wrap around to 1 after 59
+          }
+          Serial.print("Minute increased to: ");
+          Serial.println(currentMinute);
+
+          lastChangeTimeX = millis();
+          lastRepeatTimeX = millis();
+          waitForNextReferenceX = true; // Start delay before updating reference
+          hourschanging = false;
+          noMovementTime = millis();
+        }
+  
+        else if (rawX < referenceX - thresholdX) 
+        {
+          hourschanging = false;
+          currentMinute--;
+          if (currentMinute < 1) 
+          {
+            currentMinute = 59; // Wrap around to 59 after 1
+          }
+
+          Serial.print("Minute decreased to: ");
+          Serial.println(currentMinute);
+
+          lastChangeTimeX = millis();
+          lastRepeatTimeX = millis();
+          waitForNextReferenceX = true; // Start delay before updating reference
+          hourschanging = false;
+          noMovementTime = millis();
+        }
+  
+        // Auto-repeat check after 1 second
+        else if ( millis() - lastRepeatTimeX >= 500 ) 
+        {
+          if (rawX >= referenceX + thresholdX) 
+          {
+            currentMinute++;
+            if (currentMinute > 59) 
+            {
+              currentMinute = 1; // Wrap around to 1 after 59
+            }
+            Serial.print("Auto-repeat: Minute increased to: ");
+            Serial.println(currentMinute);
+            lastRepeatTimeX = millis(); // Update repeat timestamp
+            hourschanging = false;
+            noMovementTime = millis();
+          } 
+  
+          else if (rawX <= referenceX - thresholdX) 
+          {
+            currentMinute--;
+            if (currentMinute < 1) 
+            {
+              currentMinute = 24; // Wrap around to 24 after 1
+            }
+
+            Serial.print("Auto-repeat: Minute decreased to: ");
+            Serial.println(currentMinute);
+            lastRepeatTimeX = millis(); // Update repeat timestamp
+            noMovementTime = millis();
+            hourschanging = false;
+          }
+        }
+
         String mef = String( currentHour );
         mef += ":";
         if ( currentMinute < 10 )
@@ -553,10 +665,27 @@ void WatchFaceMain::loop()
         }
         mef += String( currentMinute );
 
-        // wfMain_SetTime_Background_Shortie
-
-        drawImageFromFile( wfMain_SetTime_Background, true, 0, 0 );
+        if ( hourschanging )
+        {
+          drawImageFromFile( wfMain_SetTime_Background_Hour_Shortie, true, 0, 0 );
+        }
+        else
+        {
+          drawImageFromFile( wfMain_SetTime_Background_Minute_Shortie, true, 0, 0 );
+        }
         textmessageservice.updateTempTime( mef );
+
+        if ( updateTimeLeft() )
+        {
+          panel = MAIN;
+          haptic.playEffect(14);  // 14 Strong Buzz
+          video.startVideo( WatchFaceFlip3_video );
+          textmessageservice.stop();
+          needssetup = true;
+          realtimeclock.setTime( currentHour, currentMinute, 0 );
+          return;
+        }
+
       }
 
       break;
@@ -567,8 +696,7 @@ void WatchFaceMain::loop()
       {
         Serial.println( "DISPLAYING_HEALTH_STATISTICS" );
         needssetup = false;
-        drawImageFromFile( wfMain_Time_Background, true, 0, 0 );
-        //drawImageFromFile( wfMain_Health_Background, true, 0, 0 );
+        drawImageFromFile( wfMain_Health_Background, true, 0, 0 );
         noMovementTime = millis();
         return;
       }
@@ -595,9 +723,8 @@ void WatchFaceMain::loop()
         return;
       }
 
-
-
-
+      drawImageFromFile( wfMain_Health_Background, true, 0, 0 );
+      textmessageservice.updateHealth( steps.howManySteps() );
 
       break;
 
@@ -614,8 +741,9 @@ void WatchFaceMain::loop()
 
       if ( accel.doubletapped() )
       {
-        // Reset health stats here
+        // Reset health stats 
 
+        steps.resetStepCount();
 
         // then back to MAIN
 

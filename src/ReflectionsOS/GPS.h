@@ -36,7 +36,22 @@ class GPS
     void printDateTime(TinyGPSDate &d, TinyGPSTime &t);
     void printStr(const char *str, int len);
 
+    unsigned int getProcessed();
+    
     bool isActive();
+
+    bool isTimeValid();
+    bool isDateValid();
+
+    unsigned int getMonth();
+    unsigned int getDay();
+    unsigned int getYear();
+    unsigned int getHour();
+    unsigned int getMinute();
+    unsigned int getSecond();
+
+    void on();
+    void off();
 
   private:
     TinyGPSPlus gps;

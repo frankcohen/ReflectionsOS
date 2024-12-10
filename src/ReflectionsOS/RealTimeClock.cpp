@@ -23,10 +23,6 @@ void RealTimeClock::begin()
 
   if ( ! getLocalTime( &timeinfo ) ) 
   {
-    Serial.println( "RTC using default values 2, 50" );
-
-    // Set default date and time (in UTC)
-
     struct tm timeinfo = {0};
 
     timeinfo.tm_year = 2024 - 1900;  // tm_year is years since 1900
@@ -35,6 +31,76 @@ void RealTimeClock::begin()
     timeinfo.tm_hour = 2;         // Hour
     timeinfo.tm_min = 50;        // Minute
     timeinfo.tm_sec = 0;        // Second
+
+    bool setsup = true;
+    gps.on();
+    unsigned long gpsstartup = millis();
+
+    while ( ( gps.getProcessed() < 1000 ) && ( millis() - gpsstartup < 5000 ) )
+    {
+      gps.loop();
+    }
+
+    /*
+    Serial.print( "GPS " );
+    Serial.print( millis() - gpsstartup );
+    Serial.print( " " );
+    Serial.print( gps.getHour() );
+    Serial.print( ":" );
+    Serial.print( gps.getMinute() );
+    Serial.print( " " );
+    Serial.print( gps.getMonth() );
+    Serial.print( "/" );
+    Serial.println( gps.getDay() );
+    */
+
+    if ( ! ( ( gps.getHour() == 0 ) && ( gps.getMinute() == 0 ) ) )
+    {
+      setsup = false;
+
+      unsigned int hour = gps.getHour() + ( timeRegionOffset ) ;    // Set in config.h TODO this must be fixed
+      unsigned int minute = gps.getMinute();
+
+      Serial.print( "RTC using GPS values " );
+      Serial.print( hour );
+      Serial.print( ":" );
+      String mymin = "";
+      if ( minute < 10 ) mymin += "0"; 
+      mymin += String( minute );
+      Serial.print( mymin );
+
+      if ( hour > 12 ) hour = hour - 12;
+
+      timeinfo.tm_hour = hour;         // Hour
+      timeinfo.tm_min = minute;        // Minute
+      timeinfo.tm_sec = 0;        // Second
+
+      unsigned int month = gps.getMonth();
+      unsigned int day = gps.getDay();
+      unsigned int year = gps.getYear();
+
+      Serial.print( ", (mm/dd/yyyy) " );
+      Serial.print( month );
+      Serial.print( "/" );
+      Serial.print( day );
+      Serial.print( "/" );
+      Serial.println( year );
+
+      timeinfo.tm_year = year - 1900;  // tm_year is years since 1900
+      timeinfo.tm_mon = month - 1;     // tm_mon is 0-based (0 = January)
+      timeinfo.tm_mday = day;          // Day of the month
+    }
+
+    gps.off();
+
+    if ( setsup )
+    {
+      Serial.println( "RTC using default values 2 hours, 50 minutes" );
+
+      timeinfo.tm_hour = 2;         // Hour
+      timeinfo.tm_min = 50;        // Minute
+      timeinfo.tm_sec = 0;        // Second
+    }
 
     time_t t = mktime(&timeinfo);       // Convert struct tm to time_t (seconds since the Unix epoch)
     struct timeval tv = {t, 0};  // time_t and microseconds

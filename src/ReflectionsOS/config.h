@@ -81,8 +81,10 @@ Read the license in the license.txt file that comes with this code.
 #define wfMain_Timer_Background "Face_Main_Timer_Background.jpg"
 #define wfMain_SetTimer_Background "Face_Main_SetTimer_Background.jpg"
 #define wfMain_Health_Background "Face_Main_Health_Background2.jpg"
-#define wfMain_SetTime_Background "Face_Main_SetTime_Background2.jpg"
-#define wfMain_SetTime_Background_Shortie "Face_Main_SetTime_Background2_Shortie.jpg"
+#define wfMain_SetTime_Background_Hour "Face_Main_SetTime_Hour_Background3.jpg"
+#define wfMain_SetTime_Background_Minute "Face_Main_SetTime_Minute_Background3.jpg"
+#define wfMain_SetTime_Background_Hour_Shortie "Face_Main_SetTime_Hour_Background3_Shortie.jpg"
+#define wfMain_SetTime_Background_Minute_Shortie "Face_Main_SetTime_Minute_Background3_Shortie.jpg"
 #define wfMain_Time_Background "Face_Main_Time_Background.jpg"
 #define TRANSPARENT_COLOR 0xFFE0
 #define TRANSPARENT_COLOR_PNG 0x00000000
@@ -127,6 +129,9 @@ Read the license in the license.txt file that comes with this code.
 #define RXPin         18
 #define TXPin         17
 #define GPSPower      21
+
+// Real Time Clock (RTC)
+#define timeRegionOffset -8
 
 // Gesture Time Of Flight (TOF)
 #define TOFPower  26

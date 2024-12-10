@@ -18,8 +18,11 @@
 #include "Arduino.h"
 #include "Logger.h"
 #include "time.h"
+#include "gps.h"
 
 #include <Preferences.h>
+
+extern GPS gps;
 
 class RealTimeClock
 {
@@ -30,7 +33,7 @@ class RealTimeClock
 
     int getHour();
     int getMinute();
-
+    
     void setTime( int hour, int minute, int ampm );
 
   private:

@@ -18,12 +18,60 @@ GPS::GPS(){}
 
 void GPS::begin()
 { 
-  digitalWrite(GPSPower, HIGH);
-
   Serial2.begin(GPSBaud, SERIAL_8N1, RXPin, TXPin);
 
   active = true;
-  long gpstime = millis();  
+  gpstime = millis();  
+}
+
+void GPS::on()
+{
+  digitalWrite(GPSPower, HIGH);   // HIGH is On
+}
+
+void GPS::off()
+{
+  digitalWrite(GPSPower, LOW);   // HIGH is On
+}
+
+unsigned int GPS::getMonth()
+{
+  return gps.date.month();
+}
+
+unsigned int GPS::getDay()
+{
+  return gps.date.day();
+}
+
+unsigned int GPS::getYear()
+{
+  return gps.date.year();
+}
+
+unsigned int GPS::getHour()
+{
+  return gps.time.hour();
+}
+
+unsigned int GPS::getMinute()
+{
+  return gps.time.minute();
+}
+
+unsigned int GPS::getSecond()
+{
+  return gps.time.second();
+}
+
+bool GPS::isTimeValid()
+{
+  return gps.time.isValid();
+}
+
+bool GPS::isDateValid()
+{
+  return gps.date.isValid();
 }
 
 bool GPS::isActive()
@@ -120,6 +168,11 @@ void GPS::printFloat(float val, bool valid, int len, int prec)
   }
 }
 
+unsigned int GPS::getProcessed()
+{
+  return gps.charsProcessed();  
+}
+
 void GPS::printInt(unsigned long val, bool valid, int len)
 {
   char sz[32] = "*****************";
@@ -174,48 +227,11 @@ void GPS::loop()
     gps.encode( Serial2.read() );
   }
 
-  if ( ( millis() - gpstime ) > 1000 * 60 * 60 * 3 )
+  if ( ( millis() - gpstime ) > 1000 * 10 )
   {
     gpstime = millis();
 
-    if ( gps.charsProcessed() > 0 ) 
-    {
-      // Check if a valid location has been obtained
-      if ( gps.location.isValid() && gps.date.isValid() && gps.time.isValid() )
-      {
-        active = true;
-
-        // Get the time from the GPS
-        int hour = gps.time.hour();
-        int minute = gps.time.minute();
-        int second = gps.time.second();
-        int day = gps.date.day();
-        int month = gps.date.month();
-        int year = gps.date.year();
-
-        // Print the GPS time for debugging
-        Serial.printf("GPS Time: %02d:%02d:%02d %02d/%02d/%04d\n", hour, minute, second, day, month, year);
-
-        // Set the ESP32 internal RTC
-        struct tm timeinfo;
-        timeinfo.tm_year = year - 1900;
-        timeinfo.tm_mon = month - 1;
-        timeinfo.tm_mday = day;
-        timeinfo.tm_hour = hour;
-        timeinfo.tm_min = minute;
-        timeinfo.tm_sec = second;
-        time_t t = mktime(&timeinfo);
-        struct timeval now = { .tv_sec = t };
-        settimeofday(&now, NULL);
-
-        // Print the RTC time for debugging
-        time_t now_time = time(NULL);
-        struct tm * timeinfo_now = localtime(&now_time);
-        Serial.printf("RTC Time: %02d:%02d:%02d %02d/%02d/%04d\n", timeinfo_now->tm_hour, timeinfo_now->tm_min, timeinfo_now->tm_sec, timeinfo_now->tm_mday, timeinfo_now->tm_mon + 1, timeinfo_now->tm_year + 1900);
-
-        // Print number of satellites
-        Serial.printf("Satellites: %d\n", gps.satellites.value());
-      }
-    }
+    // Serial.printf("Satellites: %d\n", gps.satellites.value());
   }
+
 }

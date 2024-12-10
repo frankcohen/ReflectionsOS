@@ -386,6 +386,66 @@ void TextMessageService::updateTempTime( String tempTime )
     bufferCanvas->flush();
 }
 
+String TextMessageService::formatWithCommas(int value)
+{
+    String formatted = "";
+    String valStr = String(value);
+    int length = valStr.length();
+
+    int commaCount = (length - 1) / 3; // Calculate number of commas
+    int pos = length;
+
+    // Add commas at appropriate places
+    while (commaCount > 0) {
+        pos -= 3;
+        formatted = "," + valStr.substring(pos, pos + 3) + formatted;
+        commaCount--;
+    }
+
+    // Append the first part (without comma)
+    formatted = valStr.substring(0, pos) + formatted;
+
+    return formatted;
+}
+
+// Draws current time for wfMain Health panel
+
+void TextMessageService::updateHealth( int smallsteps )
+{
+    bufferCanvas->setFont( &Some_Time_Later20pt7b );
+    y = 90;
+    String mef = "Steps";
+    bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
+    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 90 );
+    bufferCanvas->setTextColor( COLOR_STRIPE_PINK );
+    bufferCanvas->println( mef );
+
+    bufferCanvas->setFont( &Minya16pt7b );
+    y = 135;
+    mef = formatWithCommas( smallsteps );
+    bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
+    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
+    bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
+    bufferCanvas->println( mef );
+
+    bufferCanvas->flush();
+}
+
+// Draws current time for wfMain Timer
+
+void TextMessageService::updateTimer( int minutesleft )
+{
+    bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
+    y = 135;
+    String mef = (String) minutesleft;
+    bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
+    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
+    bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
+    bufferCanvas->println( minutesleft );
+
+    bufferCanvas->flush();
+}
+
 // Shows digital time for set time service
 
 void TextMessageService::runDigitalTime()

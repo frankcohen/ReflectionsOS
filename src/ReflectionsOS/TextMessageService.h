@@ -75,6 +75,8 @@ class TextMessageService
 
     void updateTime();   // Redraws current time for wfMain
     void updateTempTime( String tempTime ); // Draws current time for wfMain set time panel
+    void updateHealth( int smallsteps );
+    void updateTimer( int minutesleft );
 
   private:
     void runShowTellTime();
@@ -85,6 +87,8 @@ class TextMessageService
     void runDigitalTimeFadeIn();
     void runDigitalTimeFadeOut();
     void runDigitalTimeShow();
+
+    String formatWithCommas(int value);
 
     /* Unused at the moment 
     void drawClockFace();
