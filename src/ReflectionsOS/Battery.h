@@ -17,7 +17,6 @@
 
 #include "Arduino.h"
 #include "Logger.h"
-#include "Video.h"
 
 #define batterylow 3900
 #define battermedium 4000

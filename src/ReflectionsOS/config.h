@@ -75,17 +75,22 @@ Read the license in the license.txt file that comes with this code.
 #define wfMainHourglass "Main_HourGlass"
 #define wfMainHourglass2 ".png"
 #define WatchFaceOpener_video "809090d2b1c7b3829a3a72f583d58a7b"
-#define WatchFaceFlip1_video "03f23dc162e9134fc3e4d967ba94ed70"
-#define WatchFaceFlip2_video "cf6816ec109fb02fe85e1bc71801567f"
-#define WatchFaceFlip3_video "989f8d3affa1b0e35a62b30425e1f388"
+#define WatchFaceFlip1_video "fb4bb116c31cd13777604f0c9c15f649"
+#define WatchFaceFlip2_video "993d7b88b5b61b5488ad00bfd8d0c990"
+#define WatchFaceFlip3_video "a4a5922d89d70c079514a5a21648804a"
 #define wfMain_Timer_Background "Face_Main_Timer_Background.jpg"
 #define wfMain_SetTimer_Background "Face_Main_SetTimer_Background.jpg"
+#define wfMain_SetTimer_Background_Shortie "Face_Main_SetTimer_Background_Shortie.jpg"
 #define wfMain_Health_Background "Face_Main_Health_Background2.jpg"
 #define wfMain_SetTime_Background_Hour "Face_Main_SetTime_Hour_Background3.jpg"
 #define wfMain_SetTime_Background_Minute "Face_Main_SetTime_Minute_Background3.jpg"
 #define wfMain_SetTime_Background_Hour_Shortie "Face_Main_SetTime_Hour_Background3_Shortie.jpg"
 #define wfMain_SetTime_Background_Minute_Shortie "Face_Main_SetTime_Minute_Background3_Shortie.jpg"
 #define wfMain_Time_Background "Face_Main_Time_Background.jpg"
+#define wfMain_Time_Background_Shortie "Face_Main_Time_Background_Shortie.jpg"
+#define wfMain_Face_Main_TimerNotice "Face_Main_TimerNotice.png"
+#define wfMain_Face_BlueDot_Background "Face_Main_Blue_Dot_Background.jpg"
+
 #define TRANSPARENT_COLOR 0xFFE0
 #define TRANSPARENT_COLOR_PNG 0x00000000
 

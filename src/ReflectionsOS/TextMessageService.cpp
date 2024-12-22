@@ -206,7 +206,7 @@ void TextMessageService::runDigitalTimeFadeIn()
 
   if ( showStep == 1 )
   {
-    if ( fadeInCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya_Nouvelle_Rg30pt7b ) )
+    if ( fadeInCenteredText( theTime, 130, 15, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya_Nouvelle_Rg30pt7b ) )
     {
       activated = false;
       showStep = 2;
@@ -360,90 +360,105 @@ void TextMessageService::runTimeAndMessage()
   */
 }
 
+// Draws centered text message
+
+void TextMessageService::drawCenteredMesssage( String msg )
+{
+  // &Minya16pt7b
+  bufferCanvas->setFont( &ScienceFair14pt7b );
+  y = 135;
+  bufferCanvas->getTextBounds( msg.c_str(), 0, 0, &x, &y, &w, &h);
+  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
+  bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
+  bufferCanvas->println( msg );
+  bufferCanvas->flush();
+}
+
 // Redraws current time for wfMain
 
 void TextMessageService::updateTime()
 {
-    theTime = getRTCtime();
-    bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
-    bufferCanvas->getTextBounds( theTime.c_str(), 0, 0, &x, &y, &w, &h);    
-    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, y );
-    bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
-    bufferCanvas->println( theTime );
-    bufferCanvas->flush();
+  theTime = getRTCtime();
+  bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
+  y = 135;
+  bufferCanvas->getTextBounds( theTime.c_str(), 0, 0, &x, &y, &w, &h);
+  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
+  bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
+  bufferCanvas->println( theTime );
+  bufferCanvas->flush();
 }
 
 // Draws current time for wfMain set time panel
 
 void TextMessageService::updateTempTime( String tempTime )
 {
-    bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
-    y = 135;
-    bufferCanvas->getTextBounds( tempTime.c_str(), 0, 0, &x, &y, &w, &h);
-    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
-    bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
-    bufferCanvas->println( tempTime );
-    bufferCanvas->flush();
+  bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
+  y = 135;
+  bufferCanvas->getTextBounds( tempTime.c_str(), 0, 0, &x, &y, &w, &h);
+  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
+  bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
+  bufferCanvas->println( tempTime );
+  bufferCanvas->flush();
 }
 
 String TextMessageService::formatWithCommas(int value)
 {
-    String formatted = "";
-    String valStr = String(value);
-    int length = valStr.length();
+  String formatted = "";
+  String valStr = String(value);
+  int length = valStr.length();
 
-    int commaCount = (length - 1) / 3; // Calculate number of commas
-    int pos = length;
+  int commaCount = (length - 1) / 3; // Calculate number of commas
+  int pos = length;
 
-    // Add commas at appropriate places
-    while (commaCount > 0) {
-        pos -= 3;
-        formatted = "," + valStr.substring(pos, pos + 3) + formatted;
-        commaCount--;
-    }
+  // Add commas at appropriate places
+  while (commaCount > 0) {
+      pos -= 3;
+      formatted = "," + valStr.substring(pos, pos + 3) + formatted;
+      commaCount--;
+  }
 
-    // Append the first part (without comma)
-    formatted = valStr.substring(0, pos) + formatted;
+  // Append the first part (without comma)
+  formatted = valStr.substring(0, pos) + formatted;
 
-    return formatted;
+  return formatted;
 }
 
 // Draws current time for wfMain Health panel
 
 void TextMessageService::updateHealth( int smallsteps )
 {
-    bufferCanvas->setFont( &Some_Time_Later20pt7b );
-    y = 90;
-    String mef = "Steps";
-    bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
-    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 90 );
-    bufferCanvas->setTextColor( COLOR_STRIPE_PINK );
-    bufferCanvas->println( mef );
+  bufferCanvas->setFont( &Some_Time_Later20pt7b );
+  y = 100;
+  String mef = "Steps";
+  bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
+  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 100 );
+  bufferCanvas->setTextColor( COLOR_STRIPE_PINK );
+  bufferCanvas->println( mef );
 
-    bufferCanvas->setFont( &Minya16pt7b );
-    y = 135;
-    mef = formatWithCommas( smallsteps );
-    bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
-    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
-    bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
-    bufferCanvas->println( mef );
+  bufferCanvas->setFont( &Minya16pt7b );
+  y = 135;
+  mef = formatWithCommas( smallsteps );
+  bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
+  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
+  bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
+  bufferCanvas->println( mef );
 
-    bufferCanvas->flush();
+  bufferCanvas->flush();
 }
 
 // Draws current time for wfMain Timer
 
 void TextMessageService::updateTimer( int minutesleft )
 {
-    bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
-    y = 135;
-    String mef = (String) minutesleft;
-    bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
-    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
-    bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
-    bufferCanvas->println( minutesleft );
+  bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
+  y = 135;
+  String mef = (String) minutesleft;
+  bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
+  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
+  bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
+  bufferCanvas->println( minutesleft );
 
-    bufferCanvas->flush();
+  bufferCanvas->flush();
 }
 
 // Shows digital time for set time service

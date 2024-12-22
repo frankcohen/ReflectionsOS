@@ -36,21 +36,18 @@ void AccelSensor::begin()
   
   if ( ! lis.begin( accelAddress ) ) 
   {
-    Serial.println( F( "Could not start accelerometer, stopping" ) );
+    Serial.println( F( "Accelerometer did not start, stopping" ) );
     while (1) yield();
   }
 
   // Setup tap detection
-  lis.setRange(LIS3DH_RANGE_8_G);   // 2, 4, 8 or 16 G!
+  lis.setRange( CLICKRANGE );
 
   // 0 = turn off click detection & interrupt
   // 1 = single click only interrupt output
   // 2 = double click only interrupt output, detect single click
   // Adjust threshhold, higher numbers are less sensitive
 
-  // Adjust CLICKTHRESHOLD for the sensitivity of the 'click' force
-  // this strongly depend on the range! for 16G, try 5-10
-  // for 8G, try 10-20. for 4G try 20-40. for 2G try 40-80
   lis.setClick( 1, CLICKTHRESHOLD );
 
   delay(100);
@@ -62,12 +59,10 @@ void AccelSensor::begin()
     buffer[i].z = 0;
   }
 
+  cctime = millis();
+
   stattap = false;
   statdoubletap = false;
-  gotaclick = false;
-  testfordouble = false;
-  clicktime = millis();
-  taptime = millis();
 
   /*
   // lis.setPerformanceMode(LIS3DH_MODE_LOW_POWER);
@@ -141,45 +136,57 @@ bool AccelSensor::doubletapped()
   return result;
 }
 
-void AccelSensor::loop()
+void AccelSensor::recognizeClick()
 {
-  //sampleData();
-
-  if ( millis() - taptime < 100 ) return;
-  taptime = millis();
-
-  // if we're within 150 - 600 ms from the single then it's a double and cancel the single, otherwise its a single
+  if ( millis() - cctime < 100 ) return;
+  cctime = millis();
 
   uint8_t click = lis.getClick();
   if (click == 0) return;
   if (! (click & 0x30)) return;
-  if (click & 0x10)
+
+  // See AccelSensor.h for description of bits
+
+  Serial.print("Click detected (0x");
+  Serial.print( click, HEX ); 
+  Serial.print( " " );
+  for (int b = 7; b >= 0; b--)
   {
-    unsigned long mtime = millis() - clicktime;
+    Serial.print(bitRead(click, b));
+  }  
+  Serial.print("): ");
 
-    Serial.print("Click detected (0x"); Serial.print(click, HEX); Serial.print("): ");
-    Serial.println( mtime );
-
-    if ( ( mtime > 150 ) && ( mtime < 600 ) )
-    {
-      Serial.print( "Double click, cancels previous single ");
-      Serial.println( mtime );
-      
-      clicktime = millis();
-      stattap = false;
-      statdoubletap = true;
-    }
-    else
-    {
-      Serial.print( "New single ");
-      Serial.println( mtime );
-      
-      clicktime = millis();
-      waitforit = millis();
-      stattap = true;
-      statdoubletap = false;
-    }
+  if (click & 0x01) {
+    Serial.print("X, ");
   }
+  if (click & 0x02) {
+    Serial.print("Y, ");
+  }
+  if (click & 0x04) {
+    Serial.print("Z, ");
+  }
+  if (click & 0x08) {
+    Serial.print("Sign, ");
+  }
+  if (click & 0x10) {
+    Serial.print("Single click, ");
+  }
+  if (click & 0x20) {
+    Serial.print("Double click ");
+  }
+  Serial.println(" ");
 
+  if (click & 0x10) 
+  {
+    stattap = true;
+    statdoubletap = false;
+  }
+}
+
+void AccelSensor::loop()
+{
+  recognizeClick();
+
+  //sampleData();
 }
 

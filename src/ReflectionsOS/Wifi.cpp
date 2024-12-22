@@ -22,9 +22,9 @@ void Wifi::begin()
 
   WiFi.begin( SECRET_SSID, SECRET_PASS);
 
-  std::string devname = host_name_me;
-  std::string mac = WiFi.macAddress().c_str();
-  devname.append( mac.substr( 15, 2 ) );
+  String devname = host_name_me;
+  String mac = WiFi.macAddress().c_str();
+  devname.concat( mac.substring( 15, 17 ) );
   devicename = devname.c_str();
 
   bool again = true;

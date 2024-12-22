@@ -32,12 +32,29 @@ extern Haptic haptic;
 extern Utils utils;
 extern LOGGER logger;
 
+
+// Range defines sensitivity of the sensor
+// 2, 4, 8 or 16 G
+
+#define CLICKRANGE LIS3DH_RANGE_8_G
+
 // Adjust this number for the sensitivity of the 'click' force
 // this strongly depend on the range! for 16G, try 5-10
 // for 8G, try 10-20. for 4G try 20-40. for 2G try 40-80
-#define CLICKTHRESHOLD 22
-        
-#define DOUBLE_CLICK_WINDOW 500  // Double-click time window in milliseconds
+
+#define CLICKTHRESHOLD 25     // Got to 25 by trial and error, no big science behind it
+ 
+/*
+getClick() bit definitions:
+Bit	Name	   Description
+6	  IA	     Interrupt Active: Set to 1 when a click event is detected.
+5	  DCLICK	 Double Click: Set to 1 if a double click event is detected.
+4	  SCLICK	 Single Click: Set to 1 if a single click event is detected.
+3	  Sign	   Sign of Acceleration: Indicates the direction of the click event.
+2	  Z	Z-Axis Contribution: Set to 1 if the Z-axis contributed to the click.
+1	  Y	Y-Axis Contribution: Set to 1 if the Y-axis contributed to the click.
+0	  X	X-Axis Contribution: Set to 1 if the X-axis contributed to the click.
+*/
 
 #define BUFFER_SIZE 100         // Number of samples to store (10 seconds if sampling every 100ms)
 #define SAMPLE_INTERVAL 200     // Time between samples in milliseconds
@@ -60,6 +77,7 @@ class AccelSensor
 
   private:
     void sampleData();
+    void recognizeClick();
 
     // Cyclic buffer to store accelerometer readings
     struct AccelReading {
@@ -68,19 +86,13 @@ class AccelSensor
       float z;
     };
   
+    unsigned long lastSampleTime;
     AccelReading buffer[BUFFER_SIZE];
     int bufferIndex;  // Index to track the current position in the buffer
 
+    unsigned long cctime;
     bool stattap;
     bool statdoubletap;
-    unsigned long clicktime;
-    bool gotaclick;
-    bool testfordouble;
-    unsigned long taptime;
-
-    unsigned long lastSampleTime;
-
-    unsigned long waitforit;
 };
 
 #endif // ACCEL_SENSOR_H

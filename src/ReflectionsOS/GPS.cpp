@@ -231,7 +231,10 @@ void GPS::loop()
   {
     gpstime = millis();
 
-    // Serial.printf("Satellites: %d\n", gps.satellites.value());
+    if ( gps.satellites.value() > 0 )
+    {
+      Serial.printf("Satellites: %d\n", gps.satellites.value());
+    }
   }
 
 }

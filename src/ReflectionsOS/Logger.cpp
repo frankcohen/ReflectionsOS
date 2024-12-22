@@ -377,8 +377,8 @@ void LOGGER::begin()
   deleting = 0;
 
   devname = host_name_me;
-  std::string mac = WiFi.macAddress().c_str();
-  devname.append( mac.substr( 15, 2 ) );
+  String mac = WiFi.macAddress().c_str();
+  devname.concat( mac.substring(15, 17) );
   devicename = devname.c_str();
 
   // Open a new log file

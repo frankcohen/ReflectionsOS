@@ -19,6 +19,7 @@ Steps::Steps(){}
 void Steps::begin()
 { 
   lastStepTime = millis();
+  stepCount = 0;
 }
 
 void Steps::loop()
@@ -27,6 +28,8 @@ void Steps::loop()
 
   if ( currentTime - lastStepTime > 500 ) 
   {
+    lastStepTime = currentTime;
+
     float x = accel.getXreading();
     float y = accel.getYreading();
     float z = accel.getZreading();
@@ -34,11 +37,13 @@ void Steps::loop()
     // Calculate magnitude of acceleration
     float magnitude = sqrt(x * x + y * y + z * z);
 
+
+    //Serial.print( "Steps " );
+    //Serial.println( stepCount );
+
     // Detect steps based on threshold and timing
     if (magnitude > accelThreshold) 
     {
-      lastStepTime = currentTime;
-
       stepCount++;
     }
   }

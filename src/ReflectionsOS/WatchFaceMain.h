@@ -23,7 +23,7 @@
 #include "AccelSensor.h"
 #include "ExperienceService.h"
 #include "Steps.h"
-#include "Timer.h"
+#include "TimerService.h"
 #include <Kalman.h>
 
 #include <PNGdec.h>
@@ -41,7 +41,7 @@ extern Haptic haptic;
 extern TextMessageService textmessageservice;
 extern ExperienceService experienceservice;
 extern Steps steps;
-extern Timer timer;
+extern TimerService timerservice;
 
 #define xmin -700
 #define xmax 1500
@@ -59,17 +59,30 @@ class WatchFaceMain : public WatchFaceBase
     enum Panel { 
       STARTUP, MAIN, 
       DISPLAYING_DIGITAL_TIME, SETTING_DIGITAL_TIME, 
-      DISPLAYING_TIMER, SETTING_TIMER, 
-      DISPLAYING_HEALTH_STATISTICS, SETTING_HEALTH_STATISTICS };
+      DISPLAYING_TIMER, SETTING_TIMER,
+      DISPLAYING_HEALTH_STATISTICS,
+      CONFIRM_TIME, CONFIRM_CLEAR_STEPS, CONFIRM_START_TIMER      
+    };
     
   private:
-    void updateDisplayMain();
+    void startup();
+    void main();
+    void displayingdigitaltime();
+    void settingdigitaltime();
+    void displayingtimer();
+    void settingtimer();
+    void displayinghealthstatistics();
+    void changetime();
+    void clearsteps();
+    void starttimer();
+
+    void showDisplayMain();
 
     void updateBlink();
     void updateHoursAndMinutes();
     void updateBattery();
     bool updateTimeLeft();
-    bool updateTimeLeftNoShow();
+    void updateTimerNotice();
 
     bool changing( bool hourflag );
 
@@ -98,8 +111,6 @@ class WatchFaceMain : public WatchFaceBase
     unsigned long noMovementTime;
 
     unsigned long tilttimer;
-    int oldtilthour;
-    int oldtiltminute;
     float referenceY;
     float referenceX;
     bool waitForNextReference; // Delay reference update after hour change
@@ -114,7 +125,9 @@ class WatchFaceMain : public WatchFaceBase
     float threshold;
     float rawX;
     float thresholdX;
-    
+
+    unsigned long timertimer;
+    bool notificationflag;    
 };
 
 #endif // WATCHFACE_H

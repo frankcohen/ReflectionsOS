@@ -12,11 +12,11 @@
  Thank you!
 */
 
-//#define SECRET_SSID "frankcohen"
-//#define SECRET_PASS "thanksfrank"
+#define SECRET_SSID "frankcohen"
+#define SECRET_PASS "thanksfrank"
 
-#define SECRET_SSID "FranksFree-passwordFrank123"
-#define SECRET_PASS "Frank123"
+//#define SECRET_SSID "FranksFree-passwordFrank123"
+//#define SECRET_PASS "Frank123"
 
 // Must be 8 characters or longer
 #define CALLIOPE_WIFI_PASS "mystinker"

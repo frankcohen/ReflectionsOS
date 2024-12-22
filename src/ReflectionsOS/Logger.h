@@ -71,7 +71,7 @@ class LOGGER
     bool mylogopen;
     String mylogname;
 
-    std::string devname;
+    String devname;
     String devicename;
 
     File myupload;

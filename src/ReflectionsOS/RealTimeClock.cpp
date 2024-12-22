@@ -111,7 +111,10 @@ void RealTimeClock::begin()
     Serial.print( "Real time clock: " );
     Serial.print( getHour() );
     Serial.print( ":" );
-    Serial.println( getMinute() );
+    String mef = "";
+    if ( getMinute() < 10 ) mef += "0";
+    mef += getMinute();
+    Serial.println( mef );
   }
 }
 

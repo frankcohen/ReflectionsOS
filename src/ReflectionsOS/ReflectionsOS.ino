@@ -62,7 +62,7 @@ Flash Size: 8 MB (64MB)
 JTAG Adapter: Integrated USB JTAG
 Arduino Runs On: Core 1
 USB Firmware MSC On Boot: Disabled
-Partition Scheme: Reflections App (8MB OTA No SPIFFS)    See below
+Partition Scheme: Custom, Reflections App (8MB OTA No SPIFFS)    See below
 PSRAM: Disabled
 Upload Mode: UART0/Hardware CDC
 Upload Speed 921600
@@ -111,7 +111,8 @@ Arduino IDE 2.x automatically uses partitions.csv in the source code directory
 #include "nvs_flash.h"
 #include "RealTimeClock.h"
 #include "Steps.h"
-#include "Timer.h"
+#include "TimerService.h"
+#include "SystemLoad.h"
 
 Video video;
 Utils utils;
@@ -132,7 +133,8 @@ WatchFaceExperiences watchfaceexperiences;
 WatchFaceMain watchfacemain;
 RealTimeClock realtimeclock;
 Steps steps;
-Timer timer;
+TimerService timerservice;
+SystemLoad systemload;
 
 //Parallax parallax;
 //LED led;
@@ -147,24 +149,23 @@ const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certi
 std::string devname;
 String devicename;
 
-bool tofstarted;
+bool tofstarted = false;
+bool accelstarted = false;
 
 /* Test for a device number on the I2C bus, display error when not found */
 
 void assertI2Cdevice(byte deviceNum, String devName) {
 
-  for ( int i = 0; i < 10; i++ )
-  {
+  for (int i = 0; i < 10; i++) {
     Wire.beginTransmission(deviceNum);
-    if (Wire.endTransmission() == 0)
-    {
+    if (Wire.endTransmission() == 0) {
       return;
     }
-    delay( 2000 );
+    delay(2000);
   }
 
-  Serial.print( devName );
-  Serial.println( F( " not found." ) );
+  Serial.print(devName);
+  Serial.println(F(" not found."));
 
   video.stopOnError(devName, "not found", "", "", "");
 }
@@ -173,19 +174,19 @@ void assertI2Cdevice(byte deviceNum, String devName) {
   Cooperative multi-tasking functions
 */
 
-static void smartdelay( unsigned long ms )
-{
+static void smartdelay(unsigned long ms) {
   unsigned long start = millis();
+  unsigned long tasktime;
 
-  do 
-  {
+  do {
+    tasktime = millis();
+
     // Device operations
-    
+
     video.loop();
     battery.loop();
-    accel.loop();
     storage.loop();
-    wifi.loop();  
+    wifi.loop();
     utils.loop();
     compass.loop();
     haptic.loop();
@@ -194,49 +195,63 @@ static void smartdelay( unsigned long ms )
     realtimeclock.loop();
     gps.loop();
     steps.loop();
-    timer.loop();
+    timerservice.loop();
 
     // Watch experience operations
 
+    unsigned long fellow = millis();
     watchfaceexperiences.loop();
+    systemload.logtasktime(millis() - fellow, 1, "we");
+    fellow = millis();
     experienceservice.loop();
+    systemload.logtasktime(millis() - fellow, 2, "ex");
+    fellow = millis();
     textmessageservice.loop();
-    
+    systemload.logtasktime(millis() - fellow, 3, "tm");
+
+    systemload.loop();
+
     /*
     logger.loop();
     parallax.loop();
     audio.loop();
     */
 
+    systemload.logtasktime(millis() - tasktime, 0, "");
   } while (millis() - start < ms);
 }
 
 void setup() {
   Serial.begin(115200);
   long time = millis();
-  while (!Serial && (millis() < time + 2000)) ;  // wait up to 2 seconds for Arduino Serial Monitor
+  while (!Serial && (millis() < time + 2000))
+    ;  // wait up to 2 seconds for Arduino Serial Monitor
   Serial.setDebugOutput(true);
 
   Serial.println(" ");
   Serial.println("Starting");
   Serial.println(F("ReflectionsOS"));
-  
-  hardware.begin();   // Sets all the hardware pins
+
+  // Core 1 services
+
+  systemload.begin();  // System load monitor
+
+  hardware.begin();  // Sets all the hardware pins
 
   storage.begin();
-  storage.setMounted( hardware.getMounted() );
+  storage.setMounted(hardware.getMounted());
 
   //wifi.reset();  // Optionally reset any previous connection settings
   //wifi.begin();  // Non-blocking, until guest uses it to connect
   //storage.replicateServerFiles();
-  
+
   //Serial.println( "Files:" );
   //storage.listDir(SD, "/", 100, true);
 
   video.begin();
-  
+
   //utils.WireScan();
-/*
+  /*
   Serial.println( "nvs_flash_init()" );
   nvs_flash_erase();
   esp_err_t ret = nvs_flash_init();
@@ -251,8 +266,8 @@ void setup() {
 */
 
   logger.begin();
-  logger.setEchoToSerial( true );
-  logger.setEchoToServer( false );
+  logger.setEchoToSerial(true);
+  logger.setEchoToServer(false);
 
   devname = host_name_me;
   std::string mac = WiFi.macAddress().c_str();
@@ -260,7 +275,7 @@ void setup() {
   devicename = devname.c_str();
   String hostinfo = "Host: ";
   hostinfo += devicename;
-  logger.info(hostinfo);  
+  logger.info(hostinfo);
 
   // Self-test: NAND, I2C, SPI
 
@@ -282,25 +297,26 @@ void setup() {
   // Support service initialization
 
   steps.begin();
-  timer.begin();
+  timerservice.begin();
   realtimeclock.begin();
 
-  // Unused services
+  // Core 0 services
 
-  /*
-  tofstarted = true;
+  tofstarted = false;
+  accelstarted = false;
 
   // Create a new task for TOF processing, pin it to core 0
   xTaskCreatePinnedToCore(
-    TOFTask,   // Task function
-    "TOFTask", // Name of the task
-    10000,     // Stack size (in words, not bytes)
-    NULL,      // Task input parameter
-    1,         // Priority of the task
-    NULL,      // Task handle
-    0          // Core where the task should run (core 0)
+    Core0Tasks,    // Task function
+    "Core0Tasks",  // Name of the task
+    10000,         // Stack size (in words, not bytes)
+    NULL,          // Task input parameter
+    1,             // Priority of the task
+    NULL,          // Task handle
+    0              // Core where the task should run (core 0)
   );
-  */
+
+  // Unused services
 
   //bleServer.begin();  // Initializes the BLE server
   //bleClient.begin();  // Initializes the BLE client
@@ -325,28 +341,33 @@ void setup() {
   //led.begin();
 
   haptic.playEffect(14);  // 14 Strong Buzz
-  
+
   logger.info(F("Setup complete"));
 }
 
 /* Runs TOF gesture sensor in core 0 */
 
-void TOFTask(void *pvParameters) 
-{
-  while (true) 
-  {
-    if ( tofstarted ) 
-    {
-      tof.begin();
-      tofstarted = false;
+void Core0Tasks(void *pvParameters) {
+  while (true) {
+    if (!tofstarted) {
+      //tof.begin();
+      tofstarted = true;
+    } else {
+      //tof.loop(); // Process and update gesture data
     }
 
-    tof.loop(); // Process and update gesture data
+    if (!accelstarted) {
+      accel.begin();
+      accelstarted = true;
+    } else {
+      accel.loop();
+    }
+
     // Delay to prevent task from monopolizing the CPU
-    vTaskDelay( pdMS_TO_TICKS(10) ); // Delay for 10 milliseconds
+    vTaskDelay(pdMS_TO_TICKS(10));  // Delay for 10 milliseconds
   }
 }
 
 void loop() {
-  smartdelay(5000);
+  smartdelay(500);
 }

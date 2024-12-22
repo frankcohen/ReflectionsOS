@@ -9,8 +9,8 @@
  Read the license in the license.txt file that comes with this code.
 */
 
-#ifndef _TIMER_  
-#define _TIMER_
+#ifndef _TIMERSERVICE_  
+#define _TIMERSERVICE_
 
 #include "config.h"
 #include "secrets.h"
@@ -18,10 +18,10 @@
 #include "Arduino.h"
 #include "Logger.h"
 
-class Timer
+class TimerService
 {
   public:
-    Timer();
+    TimerService();
     void begin();
     void loop();
 
@@ -33,8 +33,10 @@ class Timer
 
   private:
     unsigned long timertimer;
+    unsigned long alarmduration;
     int timeleft;
     bool running;
+    bool alarmnotice;
 };
 
-#endif // _TIMER_
+#endif // TimerService
