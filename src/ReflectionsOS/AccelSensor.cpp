@@ -138,7 +138,7 @@ bool AccelSensor::doubletapped()
 
 void AccelSensor::recognizeClick()
 {
-  if ( millis() - cctime < 100 ) return;
+  if ( millis() - cctime < 150 ) return;
   cctime = millis();
 
   uint8_t click = lis.getClick();
@@ -181,6 +181,72 @@ void AccelSensor::recognizeClick()
     stattap = true;
     statdoubletap = false;
   }
+}
+
+/* Uses accelerometer to adjust hours, minutes, and timer values up or down
+
+Follows this algorithm:
+
+Time Adjustment algorithm implemented in C and C++ as an Arduino 2.3 sketch 
+to help me with an accelerometer. You helped me with in the past. This is a new approach. 
+So do not use the previous approach. The input to this algorithms is a measurement from 
+the accelerometer. The input will always be within the range of 1 to 30,000, always positive. 
+The first input is always 15,000. Measurements are taken every 300 milliseconds. The first 
+input establishes a Neutral Zone. This zone begins 10% below and ends 10% above the 
+measurement. Subsequent measurements that fall inside the Neutral Zone make no change 
+to the time. Immediately below the Neutral Zone is an Increase Zone. Subsequent measurements 
+in the Increase Zone increase by 1 the current Time value. When the Time value reaches 13 is 
+loops back to 1. When the Time value changes the code waits 500 milliseconds before the next 
+subsequent measurement. Immediately above the Neutral Zone is a Decrease Zone. Subsequent 
+measurements in the Decrease Zone decrease by 1 the current Time value. When the Time value 
+reaches 0 is loops back to 12. When the Time value changes the code waits 500 milliseconds 
+before the next subsequent measurement. If the Subsequent measurement is in the Decrease Zone 
+after previously being in the Increase Zone, the no decrease of time is made and the location 
+of the Neutral Zone recalculates to the new measurement. If the Subsequent measurement is in 
+the Increase Zone after previously being in the Decrease Zone, the no increase of time is made 
+and the location of the Neutral Zone recalculates to the new measurement. 
+
+*/
+
+void AccelSensor::adjustTime(int measurement, int minTime, int maxTime) 
+{
+  // Calculate Neutral Zone boundaries based on the currentNeutralMeasurement
+  int lowerBound = currentNeutralMeasurement - (currentNeutralMeasurement / 10);
+  int upperBound = currentNeutralMeasurement + (currentNeutralMeasurement / 10);
+  
+  // Neutral Zone: No change in Time value
+  if ( ( measurement >= lowerBound ) && ( measurement <= upperBound ) ) 
+  {
+    return;
+  }
+
+  // Increase Zone: Below the Neutral Zone
+  if ( measurement < lowerBound ) 
+  {
+    currentTime = (currentTime == maxTime) ? minTime : currentTime + 1;
+    currentNeutralMeasurement = currentNeutralMeasurement - 100;
+    return;
+  }
+  
+  // Decrease Zone: Above the Neutral Zone
+  if ( measurement > upperBound ) 
+  {
+    currentTime = (currentTime == minTime) ? maxTime : currentTime - 1; 
+    currentNeutralMeasurement = currentNeutralMeasurement + 100;
+    return;
+  }
+  
+  return;
+}
+
+int AccelSensor::getTime()
+{
+  return currentTime;
+}
+
+void AccelSensor::setTime( int mytime )
+{
+  currentTime = mytime;
 }
 
 void AccelSensor::loop()

@@ -70,7 +70,7 @@ void TimerService::loop()
       }
       else
       {
-        Serial.print( "Timer done" );
+        Serial.println( "Timer done" );
         alarmnotice = true;
         alarmduration = millis();
         running = false;
@@ -85,7 +85,7 @@ void TimerService::loop()
     if ( millis() - alarmduration > ( 60 * 1000 ) )
     {
       alarmnotice = false;
-      Serial.print( "Timer alarm duration done ");
+      Serial.println( "Timer alarm duration done" );
     }
   }
   

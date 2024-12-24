@@ -362,15 +362,20 @@ void TextMessageService::runTimeAndMessage()
 
 // Draws centered text message
 
-void TextMessageService::drawCenteredMesssage( String msg )
+void TextMessageService::drawCenteredMesssage( String msg, String msg2 )
 {
-  // &Minya16pt7b
   bufferCanvas->setFont( &ScienceFair14pt7b );
-  y = 135;
+  y = 115;
   bufferCanvas->getTextBounds( msg.c_str(), 0, 0, &x, &y, &w, &h);
-  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
+  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 115 );
   bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
   bufferCanvas->println( msg );
+
+  y = 140;
+  bufferCanvas->getTextBounds( msg2.c_str(), 0, 0, &x, &y, &w, &h);
+  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 140 );
+  bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
+  bufferCanvas->println( msg2 );
   bufferCanvas->flush();
 }
 

@@ -209,7 +209,7 @@ static void smartdelay(unsigned long ms) {
     textmessageservice.loop();
     systemload.logtasktime(millis() - fellow, 3, "tm");
 
-    systemload.loop();
+    //systemload.loop();
 
     /*
     logger.loop();

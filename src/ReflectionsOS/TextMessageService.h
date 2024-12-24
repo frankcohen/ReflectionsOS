@@ -78,7 +78,7 @@ class TextMessageService
     void updateHealth( int smallsteps );
     void updateTimer( int minutesleft );
 
-    void drawCenteredMesssage( String msg );
+    void drawCenteredMesssage( String msg, String msg2 );
 
   private:
     void runShowTellTime();

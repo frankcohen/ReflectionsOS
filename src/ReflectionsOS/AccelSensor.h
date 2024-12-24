@@ -75,6 +75,10 @@ class AccelSensor
     float getYreading();
     float getZreading();
 
+    void adjustTime(int measurement, int minTime, int maxTime);
+    int getTime();
+    void setTime( int mytime );
+
   private:
     void sampleData();
     void recognizeClick();
@@ -93,6 +97,11 @@ class AccelSensor
     unsigned long cctime;
     bool stattap;
     bool statdoubletap;
+
+    unsigned long adjusttime;
+    int currentTime;
+    int currentNeutralMeasurement;
+    
 };
 
 #endif // ACCEL_SENSOR_H
