@@ -3,9 +3,9 @@ ESP32 and Arduino-based Internet-enabled watch project and reference architectur
 
 ![Reflections Mobile Experiences](Reflections_logo.jpg)
 
-Many times I imagine making a mobile application connected to the Internet. For example, a watch that shows videos of my children growing-up on my wrist. And the same project is re-used for creative makers to make their own entertaining experiences. Reflections is the architecture and the wrist watch is the first application.
+Many times I imagine making a mobile application connected to the Internet. For example, a watch that shows videos of my children growing-up on my wrist. And the same project is re-used for creative makers to build their own entertaining experiences. Reflections is the architecture and the wrist watch is the first application.
 
-Reflections integrates video displays, Bluetooth, Wifi, SD storage, sound, and a bunch of sensors (compass/magnetometer, gestures, accelerometer). It is battery powered, powered managed from software, and charges from USB. It is small in size (34 mm round) and powerful from an ESP32-S3 dual core processor. Reflections software, hardware, and cloud components are open-source (GPL v3) so anyone can use it and they must contribute improvements back to the project.
+Reflections integrates video displays, Bluetooth, Wifi, SD flash storage, sound, and a bunch of sensors (compass/magnetometer, gestures, accelerometer, time of flight TOF sensor). It is battery powered, powered managed from software, and charges from USB. It is small in size (34 mm round) and powerful from an ESP32-S3 dual core processor. Reflections software, hardware, and cloud components are open-source (GPL v3) so anyone can use it and they must contribute improvements back to the project.
 
 ![Reflections Mobile Experiences](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/ReflectionsIntro.jpg)
 
@@ -13,7 +13,7 @@ Reflections goes beyond the wearable device to deliver server side architecture.
 
 ![Reflections Server Side Architecture](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/ReflectionsServerSide.jpg)
 
-I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry pocket watches with Disney Imagineer and Mupeteer Terri Hardin. We are working on a new experience powered by Reflections. Announcement coming in Spring 2025.
+I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry pocket watches with Disney Imagineer and Mupeteer [Terri Hardin](https://terrihardin.com/). We are working on a new experience powered by Reflections. Announcement coming in Spring 2025.
 
 I love working with a group of creative makers and the Arduino community. Please feel free to let me know your feedback and ideas.
 
@@ -29,6 +29,8 @@ Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/fr
 ## Articles
 
 I publish articles on the technology needed to make Reflections.
+
+[AccelerometerLab open-source project for LIS3DH 3 Axis accelerometer sensor](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AccelerometerLab)
 
 [ESP32-S3 partition tables and optimizing memory for Arduino IDE 2.x](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Partition%20tables%20and%20optimizing%20memory%20in%20Arduino%20IDE.md)
 
@@ -54,10 +56,15 @@ I publish articles on the technology needed to make Reflections.
 
 I used the [EleksTube IPS clock](https://elekstube.com/) for experimentation. It is an ESP32 device featuring 6 TFT displays. See [https://github.com/frankcohen/EleksTubeIPSHack](https://github.com/frankcohen/EleksTubeIPSHack)
 
-I made an air-guitar project to learn about streaming music over Bluetooth Clasic, and why it won't work yet on BLE: [https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar]([https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar]
-)
+I made an air-guitar project to learn about streaming music over Bluetooth Clasic, and why it won't work yet on BLE: [https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar)
 
 -Frank
+
+## Update as of January 18, 2025
+
+I published AccelerometerLab as an open-source project to make working with the LIS3DH 3 Axis accelerometer sensor easier. [The code and article are here.](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AccelerometerLab)
+
+Next up is code to detect gestures with the Time Of Flight (TOF) sensor. This should be fun as it includes machine learning.
 
 ## Update as October 29, 2024
 
