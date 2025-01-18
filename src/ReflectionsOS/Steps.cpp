@@ -37,10 +37,13 @@ void Steps::loop()
     // Calculate magnitude of acceleration
     float magnitude = sqrt(x * x + y * y + z * z);
 
-
-    //Serial.print( "Steps " );
-    //Serial.println( stepCount );
-
+    /*
+    Serial.print( "Steps " );
+    Serial.print( stepCount );
+    Serial.print( ", mag " );
+    Serial.println( magnitude );
+    */
+    
     // Detect steps based on threshold and timing
     if (magnitude > accelThreshold) 
     {

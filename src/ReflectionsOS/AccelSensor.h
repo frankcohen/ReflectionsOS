@@ -22,43 +22,64 @@
 #include <Adafruit_LIS3DH.h>
 #include <Adafruit_Sensor.h>
 
+#include <PeakDetection.h>
+
 #include <Wire.h>
 #include "SD.h"
 #include "SPI.h"
 
 #include <Kalman.h>
 
+#include "Print.h"
+
 extern Haptic haptic;
 extern Utils utils;
 extern LOGGER logger;
 
+// Default settings
 
-// Range defines sensitivity of the sensor
-// 2, 4, 8 or 16 G
+// R - Range default, 2, 4, 8, 16
+#define range1 LIS3DH_RANGE_8_G
 
-#define CLICKRANGE LIS3DH_RANGE_8_G
+// Data rate
+// Low-speed movements (walking): 10–50 Hz.
+// Medium-speed movements (hand gestures): 50–100 Hz.
+// High-speed movements (vibrations, impacts): 200–400 Hz.
+#define datarate LIS3DH_DATARATE_100_HZ
 
-// Adjust this number for the sensitivity of the 'click' force
-// this strongly depend on the range! for 16G, try 5-10
-// for 8G, try 10-20. for 4G try 20-40. for 2G try 40-80
+// G - Lag, the number of most recent added values considered.
+//     Short taps the value is small should be low. Longer movements should use larger values
+#define peaklag1 5
 
-#define CLICKTHRESHOLD 25     // Got to 25 by trial and error, no big science behind it
- 
-/*
-getClick() bit definitions:
-Bit	Name	   Description
-6	  IA	     Interrupt Active: Set to 1 when a click event is detected.
-5	  DCLICK	 Double Click: Set to 1 if a double click event is detected.
-4	  SCLICK	 Single Click: Set to 1 if a single click event is detected.
-3	  Sign	   Sign of Acceleration: Indicates the direction of the click event.
-2	  Z	Z-Axis Contribution: Set to 1 if the Z-axis contributed to the click.
-1	  Y	Y-Axis Contribution: Set to 1 if the Y-axis contributed to the click.
-0	  X	X-Axis Contribution: Set to 1 if the X-axis contributed to the click.
-*/
+// H - Threshhold is how much of a clip upwards or  down to be a peak
+// For example, 2 means peaks are 2 times the standard deviation
+#define peakthres1 2
 
-#define BUFFER_SIZE 100         // Number of samples to store (10 seconds if sampling every 100ms)
-#define SAMPLE_INTERVAL 200     // Time between samples in milliseconds
-#define SINGLE_TAP_TIMEOUT 1000   // Timeout for single tap detection (in milliseconds)
+// I - Influence boosts the data upwards, it's like a giant sensitivity dail
+// Set this between 0.20 and 1.0. Little changes like 0.72 and 0.74 can make
+// a big difference
+#define peakinfluence1 0.50
+
+// C - Sets the hardware click/tap sensitivity within the R range
+#define threshold1 30
+
+// S - Shake threashold
+#define shakeThreshold1 9.0
+
+// J - Jerk threashold using range filtering
+#define accelThreshold1 600
+
+// L - Jerk low threadshold using range filtering
+#define accelThresholdLow1 400
+
+// T - restingThreshold  for ignoring small accelerations (e.g., sensor resting)
+#define restingThreshold1 0.2
+
+// Sets the power mode, LIS3DH_MODE_NORMAL, LIS3DH_MODE_LOW_POWER, LIS3DH_MODE_HIGH_RESOLUTION
+#define powermode1 LIS3DH_MODE_NORMAL
+
+// Sets tap/click to 1 for single click or 2 for double click
+#define clickPin1 1
 
 class AccelSensor
 {
@@ -67,10 +88,18 @@ class AccelSensor
     void begin();
     void loop();
 
+    void printSettings();
+    void printHeader();
+
+    void resetLIS3DH();
+    void handleCommands();   // Serial Monitor commands
+
+
+
     bool tapped();
+    bool shaken();
     bool doubletapped();
 
-    // Support methods for other classes
     float getXreading();
     float getYreading();
     float getZreading();
@@ -79,29 +108,65 @@ class AccelSensor
     int getTime();
     void setTime( int mytime );
 
+    String printHeader();
+    String printValues();
+
+    void recognizeHardwareClicks();
+    void readSensor();
+
   private:
-    void sampleData();
-    void recognizeClick();
+    void resetLIS3DH();
 
-    // Cyclic buffer to store accelerometer readings
-    struct AccelReading {
-      float x;
-      float y;
-      float z;
-    };
-  
-    unsigned long lastSampleTime;
-    AccelReading buffer[BUFFER_SIZE];
-    int bufferIndex;  // Index to track the current position in the buffer
+    lis3dh_range_t range;
+    lis3dh_mode_t powermode;
 
+    // Acceleration readings
+    float accelerationX;
+    float accelerationY;
+    float accelerationZ;
+
+    float initialAccelX, initialAccelY, initialAccelZ;
+    float thresholdX, thresholdY, thresholdZ;
+
+    // Position readings
+    float rawX, accelX_g, accelX_ms2;
+    float rawY, accelY_g, accelY_ms2;
+    float rawZ, accelZ_g, accelZ_ms2;
+
+    bool tapdet;
+    bool shake;
+    bool peakTap;
+
+    unsigned long lastTapTime;
+    unsigned long debounceTapTime;
+    unsigned long debouncePeakTap;
+    unsigned long alabtimer;
+    unsigned long magtimer;
     unsigned long cctime;
-    bool stattap;
-    bool statdoubletap;
+    unsigned long lastTime;
+    unsigned long peakTimer;
 
-    unsigned long adjusttime;
-    int currentTime;
-    int currentNeutralMeasurement;
-    
+    float accelMagnitude;
+    float prevAccel;
+    int clickThreshold;
+    int clickPin;
+    float accelThreshold;    // high value for tap detection
+    float accelThresholdLow; // low value for tap detection
+    float shakeThreshold;    // for shake detection
+    float restingThreshold;  // Threshold for ignoring small accelerations (e.g., sensor resting)
+    bool restFlag;
+    float alpha;
+    int peak;
+    double filtered;
+
+    int rowCount;
+    long peakcnt;
+
+    PeakDetection peakDetection;
+    int peaklag;
+    int peakthres;
+    double peakinfluence;
+    double jerkthreshold;
 };
 
 #endif // ACCEL_SENSOR_H

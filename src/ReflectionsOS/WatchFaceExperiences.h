@@ -34,6 +34,7 @@ class WatchFaceExperiences
     WatchFaceExperiences();
     void begin();
     void loop();
+    bool okToSleep();
 
   private:
     int currentface;

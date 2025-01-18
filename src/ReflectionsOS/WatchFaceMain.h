@@ -24,7 +24,8 @@
 #include "ExperienceService.h"
 #include "Steps.h"
 #include "TimerService.h"
-#include <Kalman.h>
+#include "esp_sleep.h"
+#include "GPS.h"
 
 #include <PNGdec.h>
 #include <Arduino_GFX_Library.h>
@@ -42,6 +43,7 @@ extern TextMessageService textmessageservice;
 extern ExperienceService experienceservice;
 extern Steps steps;
 extern TimerService timerservice;
+extern GPS gps;
 
 #define xmin -700
 #define xmax 1500
@@ -55,6 +57,7 @@ class WatchFaceMain : public WatchFaceBase
     
     void begin() override;
     void loop() override;    
+    bool okToSleep();
 
     enum Panel { 
       STARTUP, MAIN, 
@@ -83,12 +86,18 @@ class WatchFaceMain : public WatchFaceBase
     void updateBattery();
     bool updateTimeLeft();
     void updateTimerNotice();
+    void updateGPSmarker();
 
     bool changing( bool hourflag );
+
+    void drawHourMinute( int currentHour, int currentMinute, bool hourschanging );
 
     int panel;
 
     unsigned long maintimer;
+
+    unsigned long slowman;
+    int rowCount;
     
     bool displayUpdateable;
 
@@ -128,6 +137,10 @@ class WatchFaceMain : public WatchFaceBase
 
     unsigned long timertimer;
     bool notificationflag;    
+
+    bool gpsflag;
+    int gpsx;
+    int gpsy;
 
 };
 

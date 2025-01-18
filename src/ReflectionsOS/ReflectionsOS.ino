@@ -217,6 +217,16 @@ static void smartdelay(unsigned long ms) {
     audio.loop();
     */
 
+/*
+    if ( watchfaceexperiences.okToSleep() )
+    {
+      Serial.println( "Light sleep" );
+
+      esp_sleep_enable_timer_wakeup( 100000 * 3 );  // Time in microseconds, 3 = 300 milliseconds ms
+      esp_light_sleep_start();                      // Enter light sleep mode
+    }
+*/
+
     systemload.logtasktime(millis() - tasktime, 0, "");
   } while (millis() - start < ms);
 }
@@ -368,6 +378,7 @@ void Core0Tasks(void *pvParameters) {
   }
 }
 
-void loop() {
+void loop() 
+{
   smartdelay(500);
 }

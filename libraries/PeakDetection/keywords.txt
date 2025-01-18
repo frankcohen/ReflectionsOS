@@ -1,0 +1,13 @@
+#######################################
+# Data types (KEYWORD1)
+#######################################
+PeakDetection	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin	KEYWORD2
+add	KEYWORD2
+getFilt	KEYWORD2
+getPeak	KEYWORD2
+

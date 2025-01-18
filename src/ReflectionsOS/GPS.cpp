@@ -74,6 +74,11 @@ bool GPS::isDateValid()
   return gps.date.isValid();
 }
 
+float GPS::getCourse()
+{
+  return gps.course.deg();
+}
+
 bool GPS::isActive()
 {
   return active;

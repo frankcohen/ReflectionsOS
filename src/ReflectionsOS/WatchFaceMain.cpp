@@ -44,6 +44,10 @@ void WatchFaceMain::begin()
   oldBattery = 5;
   oldBlink = 0;
 
+  gpsflag = false;
+  gpsx = 0;
+  gpsy = 0;
+
   referenceY = accel.getYreading() + 15000;   // Current Y-axis tilt value
   waitForNextReference = false;               // Delay reference update after hour change
   lastChangeTime = 0;                         // Timestamp of the last hour change
@@ -55,10 +59,46 @@ void WatchFaceMain::begin()
   timertimer = millis();
   notificationflag = false;
 
+  slowman = millis();
+
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
   panel = STARTUP;
   video.startVideo( WatchFaceOpener_video );
+}
+
+/* Returns true when watch face is ok with the processor being put to sleep, to save battery life */
+
+bool WatchFaceMain::okToSleep()
+{  
+  if ( panel != MAIN ) return false;
+  if ( video.getStatus() ) return false;
+  if ( textmessageservice.active() ) return false;
+
+  return true;
+}
+
+// GPS marker
+
+void WatchFaceMain::updateGPSmarker()
+{
+  gpsflag = gps.isActive();
+
+  if ( gpsflag )
+  {
+    float gpsCourse = gps.getCourse(); // Course angle in degrees
+
+    int imageSize = 24; // Image size (24x24)
+    int centerX = 120; // Center of the 240x240 screen
+    int centerY = 120;
+    int radius = 100;
+
+    float angleRad = radians( gpsCourse );
+
+    // Calculate the position to place the top-left corner of the image
+    gpsx = centerX + radius * cos(angleRad) - (imageSize / 2);
+    gpsy = centerY + radius * sin(angleRad) - (imageSize / 2);
+  }
 }
 
 // Timer notice indicator
@@ -232,6 +272,12 @@ void WatchFaceMain::showDisplayMain()
     drawImageFromFile( mef, true, 0, 0 );
   }
 
+  if ( gpsflag )
+  {
+    mef = wfMain_GPSmarker;
+    drawImageFromFile( mef, true, gpsx, gpsy );
+  }
+
   show();
 
   drawitall = false;
@@ -288,13 +334,6 @@ void WatchFaceMain::loop()
   {
     return;
   } 
-
-  /*
-  if ( experienceservice.active() )
-  {
-    return;
-  } 
-  */
   
   switch ( panel ) 
   {
@@ -341,6 +380,22 @@ void WatchFaceMain::loop()
     noMovementTime = millis();
     return;
   }
+
+  if ( millis() - slowman > 500 )
+  {
+    slowman = millis();
+
+     rowCount++;
+    // Every 10 rows, reprint the header
+    if (rowCount >= 10) 
+    {
+      rowCount = 0;  // Reset the counter
+      Serial.println( accel.printHeader() );  // Reprint the header
+    }
+    Serial.println( accel.printValues() );
+  }
+
+
 }
 
 void WatchFaceMain::startup()
@@ -384,7 +439,6 @@ void WatchFaceMain::main()
 
     showDisplayMain();
   }
-
 }
 
 void WatchFaceMain::displayingdigitaltime()
@@ -423,10 +477,9 @@ void WatchFaceMain::settingdigitaltime()
     currentHour = realtimeclock.getHour();
     if ( currentHour > 12 ) currentHour = currentHour - 12;
     currentMinute = realtimeclock.getMinute();
-
+    accel.tapped();
     hourschanging = true;
     drawImageFromFile( wfMain_SetTime_Background_Hour, true, 0, 0 );
-
     return;
   }
 
@@ -453,15 +506,15 @@ void WatchFaceMain::settingdigitaltime()
 
   // Change time by tilting left-right for minutes and up-down for hours
 
-  if ( millis() - tilttimer > 500 )
+  if ( millis() - tilttimer > 350 )
   {
     tilttimer = millis();
 
     int measurementY = accel.getYreading() + 15000;
 
     // Calculate Neutral Zone boundaries based on the currentNeutralMeasurement
-    int lowerBoundY = currentNeutralMeasurementY - ( currentNeutralMeasurementY / 10 );
-    int upperBoundY = currentNeutralMeasurementY + ( currentNeutralMeasurementY / 10 );
+    int lowerBoundY = currentNeutralMeasurementY - ( currentNeutralMeasurementY * .25 );
+    int upperBoundY = currentNeutralMeasurementY + ( currentNeutralMeasurementY * .25 );
     
     // Neutral Zone: No change in Time value
     if ( ! ( ( measurementY >= lowerBoundY ) && ( measurementY <= upperBoundY ) ) )
@@ -470,26 +523,30 @@ void WatchFaceMain::settingdigitaltime()
       if ( measurementY < lowerBoundY ) 
       {
         currentHour = (currentHour == 12) ? 1 : currentHour + 1;
-        currentNeutralMeasurementY = currentNeutralMeasurementY - 100;
+        //currentNeutralMeasurementY = currentNeutralMeasurementY - 100;
         hourschanging = true;
         noMovementTime = millis();
+        drawHourMinute( currentHour, currentMinute, hourschanging );
+        return;
       }
       
       // Decrease Zone: Above the Neutral Zone
       if ( measurementY > upperBoundY ) 
       {
         currentHour = (currentHour == 1) ? 12 : currentHour - 1; 
-        currentNeutralMeasurementY = currentNeutralMeasurementY + 100;
+        //currentNeutralMeasurementY = currentNeutralMeasurementY + 100;
         hourschanging = true;
         noMovementTime = millis();
+        drawHourMinute( currentHour, currentMinute, hourschanging );
+        return;
       }
     }
 
     int measurementX = accel.getXreading() + 15000;
 
     // Calculate Neutral Zone boundaries based on the currentNeutralMeasurement
-    int lowerBoundX = currentNeutralMeasurementX - (currentNeutralMeasurementX / 10);
-    int upperBoundX = currentNeutralMeasurementX + (currentNeutralMeasurementX / 10);
+    int lowerBoundX = currentNeutralMeasurementX - (currentNeutralMeasurementX * .25);
+    int upperBoundX = currentNeutralMeasurementX + (currentNeutralMeasurementX * .25);
     
     // Neutral Zone: No change in Time value
     if ( ! ( ( measurementX >= lowerBoundX ) && ( measurementX <= upperBoundX ) ) )
@@ -500,9 +557,11 @@ void WatchFaceMain::settingdigitaltime()
         currentMinute++;
         if ( currentMinute > 59 ) currentMinute = 1;
 
-        currentNeutralMeasurementX = currentNeutralMeasurementX - 50;
+        //currentNeutralMeasurementX = currentNeutralMeasurementX - 50;
         hourschanging = false;
         noMovementTime = millis();
+        drawHourMinute( currentHour, currentMinute, hourschanging );
+        return;
       }
       
       // Decrease Zone: Above the Neutral Zone
@@ -511,30 +570,35 @@ void WatchFaceMain::settingdigitaltime()
         currentMinute--;
         if ( currentMinute == 0 ) currentMinute = 59;
 
-        currentNeutralMeasurementX = currentNeutralMeasurementX + 50;
+        //currentNeutralMeasurementX = currentNeutralMeasurementX + 50;
         hourschanging = false;
         noMovementTime = millis();
+        drawHourMinute( currentHour, currentMinute, hourschanging );
+        return;
       }
     }
-
-    String mef = String( currentHour );
-    mef += ":";
-    if ( currentMinute < 10 )
-    {
-      mef += "0";
-    }
-    mef += String( currentMinute );
-
-    if ( hourschanging )
-    {
-      drawImageFromFile( wfMain_SetTime_Background_Hour_Shortie, true, 0, 0 );
-    }
-    else
-    {
-      drawImageFromFile( wfMain_SetTime_Background_Minute_Shortie, true, 0, 0 );
-    }
-    textmessageservice.updateTempTime( mef );
   }
+}
+
+void WatchFaceMain::drawHourMinute( int currentHour, int currentMinute, bool hourschanging )
+{
+  String mef = String( currentHour );
+  mef += ":";
+  if ( currentMinute < 10 )
+  {
+    mef += "0";
+  }
+  mef += String( currentMinute );
+
+  if ( hourschanging )
+  {
+    drawImageFromFile( wfMain_SetTime_Background_Hour_Shortie, true, 0, 0 );
+  }
+  else
+  {
+    drawImageFromFile( wfMain_SetTime_Background_Minute_Shortie, true, 0, 0 );
+  }
+  textmessageservice.updateTempTime( mef );
 }
 
 void WatchFaceMain::changetime()
@@ -573,7 +637,6 @@ void WatchFaceMain::changetime()
 
   drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
   textmessageservice.drawCenteredMesssage( "Tap To Set", "New Time" );
-
 }
 
 void WatchFaceMain::clearsteps()
@@ -636,7 +699,7 @@ void WatchFaceMain::starttimer()
     return;
   }
 
-  if ( accel.tapped() )
+  if ( accel.tapped() && ( noMovementTime > 5000 ) )
   {
     panel = MAIN;
     //haptic.playEffect(14);  // 14 Strong Buzz
@@ -688,7 +751,7 @@ void WatchFaceMain::displayingtimer()
     return;
   }
 
-  if ( accel.tapped() )
+  if ( accel.tapped() && ( noMovementTime > 5000 ) )
   {
     needssetup = true;
     panel = SETTING_TIMER;
@@ -730,7 +793,7 @@ void WatchFaceMain::settingtimer()
     return;
   }
 
-  if ( accel.tapped() )
+  if ( accel.tapped() && ( noMovementTime > 5000 ) )
   {
     panel = MAIN;
     needssetup = true;
