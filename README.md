@@ -1,6 +1,8 @@
 # ReflectionsOS
 ESP32 and Arduino-based Internet-enabled watch project and reference architecture to make your own entertaining experiences
 
+## Hi Chloe, Hello World, A Virgin No Longer
+
 ![Reflections Mobile Experiences](Reflections_logo.jpg)
 
 Many times I imagine making a mobile application connected to the Internet. For example, a watch that shows videos of my children growing-up on my wrist. And the same project is re-used for creative makers to build their own entertaining experiences. Reflections is the architecture and the wrist watch is the first application.
