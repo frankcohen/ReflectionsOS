@@ -813,14 +813,14 @@ void loop()
     restFlag = true;
 
     // Calculate the difference between initial and final accelerations
-    thresholdX = abs(accelerationX - initialAccelX);
-    thresholdY = abs(accelerationY - initialAccelY);
-    thresholdZ = abs(accelerationZ - initialAccelZ);
+    thresholdX = fabs(accelerationX - initialAccelX);
+    thresholdY = fabs(accelerationY - initialAccelY);
+    thresholdZ = fabs(accelerationZ - initialAccelZ);
 
     // Check if the accelerometer is at rest (small values close to zero)
-    if ( ( abs(accelerationX) < restingThreshold ) 
-      && ( abs(accelerationY) < restingThreshold )
-      && ( abs(accelerationZ) < restingThreshold ) ) 
+    if ( ( fabs(accelerationX) < restingThreshold ) 
+      && ( fabs(accelerationY) < restingThreshold )
+      && ( fabs(accelerationZ) < restingThreshold ) ) 
     {
       // If the sensor is resting, ignore the shake detection
       Serial.println("Resting, no shake detected.");
