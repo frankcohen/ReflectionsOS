@@ -43,9 +43,9 @@ void Steps::loop()
     Serial.print( ", mag " );
     Serial.println( magnitude );
     */
-    
+        
     // Detect steps based on threshold and timing
-    if (magnitude > accelThreshold) 
+    if ( magnitude > accelThreshold ) 
     {
       stepCount++;
     }
@@ -59,4 +59,3 @@ int Steps::howManySteps() {
 void Steps::resetStepCount() {
     stepCount = 0;
 }
-
