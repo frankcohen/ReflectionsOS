@@ -387,7 +387,7 @@ void TextMessageService::updateTime()
   bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
   y = 135;
   bufferCanvas->getTextBounds( theTime.c_str(), 0, 0, &x, &y, &w, &h);
-  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
+  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 127 );
   bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
   bufferCanvas->println( theTime );
   bufferCanvas->flush();

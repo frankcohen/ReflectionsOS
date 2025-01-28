@@ -380,22 +380,6 @@ void WatchFaceMain::loop()
     noMovementTime = millis();
     return;
   }
-
-  if ( millis() - slowman > 500 )
-  {
-    slowman = millis();
-
-     rowCount++;
-    // Every 10 rows, reprint the header
-    if (rowCount >= 10) 
-    {
-      rowCount = 0;  // Reset the counter
-      Serial.println( accel.printHeader() );  // Reprint the header
-    }
-    Serial.println( accel.printValues() );
-  }
-
-
 }
 
 void WatchFaceMain::startup()
@@ -403,7 +387,7 @@ void WatchFaceMain::startup()
   panel = MAIN;
   needssetup = true;
   maintimer = millis();
-  haptic.playEffect(14);  // 14 Strong Buzz
+  //haptic.playEffect(14);  // 14 Strong Buzz
   blinking = false;
 }
 
@@ -413,6 +397,9 @@ void WatchFaceMain::main()
   {
     Serial.println( "MAIN" );
     needssetup = false;
+    accel.tapped();       // Clears any taps
+    accel.doubletapped();
+    drawitall = true;
     blinking = false;
     return;
   }
@@ -420,7 +407,7 @@ void WatchFaceMain::main()
   if ( accel.tapped() )
   {
     panel = DISPLAYING_DIGITAL_TIME;   // DISPLAYING_DIGITAL_TIME;
-    haptic.playEffect(14);  // 14 Strong Buzz
+    //haptic.playEffect(14);  // 14 Strong Buzz
     video.startVideo( WatchFaceFlip1_video );
     needssetup = true;
     noMovementTime = millis();
@@ -451,18 +438,24 @@ void WatchFaceMain::displayingdigitaltime()
     return;
   }
 
-  if ( accel.tapped() )
+  if ( accel.doubletapped() )
   {
     panel = SETTING_DIGITAL_TIME;
-    //haptic.playEffect(14);  // 14 Strong Buzz
-    //video.startVideo( WatchFaceFlip2_video );
     needssetup = true;
     noMovementTime = millis();
-    referenceY = accel.getYreading() + 15000; // Current Y-axis tilt value
-    referenceX = accel.getXreading() + 15000; // Current Y-axis tilt value
     return;
   }
-  
+
+  if ( accel.tapped() )
+  {
+    panel = DISPLAYING_HEALTH_STATISTICS;
+    //haptic.playEffect(14);  // 14 Strong Buzz
+    video.startVideo( WatchFaceFlip2_video );
+    needssetup = true;
+    noMovementTime = millis();
+    return;
+  }
+
   drawImageFromFile( wfMain_Time_Background, true, 0, 0 );
   textmessageservice.updateTime();
 }
@@ -474,48 +467,44 @@ void WatchFaceMain::settingdigitaltime()
     Serial.println( "SETTING_DIGITAL_TIME" );
     needssetup = false;
     noMovementTime = millis();
+    tilttimer = millis();
     currentHour = realtimeclock.getHour();
     if ( currentHour > 12 ) currentHour = currentHour - 12;
     currentMinute = realtimeclock.getMinute();
-    accel.tapped();
     hourschanging = true;
-    drawImageFromFile( wfMain_SetTime_Background_Hour, true, 0, 0 );
-    return;
-  }
 
-  if ( accel.tapped() )
-  {
-    panel = DISPLAYING_HEALTH_STATISTICS;
-    //haptic.playEffect(14);  // 14 Strong Buzz
-    //video.startVideo( WatchFaceFlip2_video );
-    needssetup = true;
-    noMovementTime = millis();
-    textmessageservice.stop();
+    currentNeutralMeasurementY = accel.getYreading() + 15000; // Current Y-axis tilt value
+    currentNeutralMeasurementX = accel.getXreading() + 15000; // Current Y-axis tilt value
+
+    drawImageFromFile( wfMain_SetTime_Background_Hour, true, 0, 0 );
+    drawHourMinute( currentHour, currentMinute, hourschanging );
     return;
   }
 
   if ( updateTimeLeft() )
   {
-    panel = CONFIRM_TIME;
-    //haptic.playEffect(14);  // 14 Strong Buzz
-    //video.startVideo( WatchFaceFlip2_video );
-    textmessageservice.stop();
+    realtimeclock.setTime( currentHour, currentMinute, 0 );    // Set new time
+    panel = MAIN;
+    video.startVideo( WatchFaceFlip3_video );
     needssetup = true;
+    noMovementTime = millis();
+    textmessageservice.stop();
+    drawitall = true;
     return;
   }
 
   // Change time by tilting left-right for minutes and up-down for hours
 
-  if ( millis() - tilttimer > 350 )
+  if ( millis() - tilttimer > 500 )
   {
     tilttimer = millis();
 
     int measurementY = accel.getYreading() + 15000;
 
     // Calculate Neutral Zone boundaries based on the currentNeutralMeasurement
-    int lowerBoundY = currentNeutralMeasurementY - ( currentNeutralMeasurementY * .25 );
-    int upperBoundY = currentNeutralMeasurementY + ( currentNeutralMeasurementY * .25 );
-    
+    int lowerBoundY = currentNeutralMeasurementY - ( currentNeutralMeasurementY * .10 );
+    int upperBoundY = currentNeutralMeasurementY + ( currentNeutralMeasurementY * .10 );
+
     // Neutral Zone: No change in Time value
     if ( ! ( ( measurementY >= lowerBoundY ) && ( measurementY <= upperBoundY ) ) )
     {
@@ -545,8 +534,8 @@ void WatchFaceMain::settingdigitaltime()
     int measurementX = accel.getXreading() + 15000;
 
     // Calculate Neutral Zone boundaries based on the currentNeutralMeasurement
-    int lowerBoundX = currentNeutralMeasurementX - (currentNeutralMeasurementX * .25);
-    int upperBoundX = currentNeutralMeasurementX + (currentNeutralMeasurementX * .25);
+    int lowerBoundX = currentNeutralMeasurementX - (currentNeutralMeasurementX * .10);
+    int upperBoundX = currentNeutralMeasurementX + (currentNeutralMeasurementX * .10);
     
     // Neutral Zone: No change in Time value
     if ( ! ( ( measurementX >= lowerBoundX ) && ( measurementX <= upperBoundX ) ) )
@@ -557,7 +546,6 @@ void WatchFaceMain::settingdigitaltime()
         currentMinute++;
         if ( currentMinute > 59 ) currentMinute = 1;
 
-        //currentNeutralMeasurementX = currentNeutralMeasurementX - 50;
         hourschanging = false;
         noMovementTime = millis();
         drawHourMinute( currentHour, currentMinute, hourschanging );
@@ -615,7 +603,7 @@ void WatchFaceMain::changetime()
   if ( accel.tapped() )
   {
     panel = MAIN;
-    haptic.playEffect(14);  // 14 Strong Buzz
+    //haptic.playEffect(14);  // 14 Strong Buzz
     video.startVideo( WatchFaceFlip3_video );
     needssetup = true;
     noMovementTime = millis();
@@ -691,7 +679,7 @@ void WatchFaceMain::starttimer()
   if ( updateTimeLeft() )
   {
     panel = MAIN;
-    haptic.playEffect(14);  // 14 Strong Buzz
+    //haptic.playEffect(14);  // 14 Strong Buzz
     video.startVideo( WatchFaceFlip3_video );
     needssetup = true;
     noMovementTime = millis();
@@ -725,10 +713,18 @@ void WatchFaceMain::displayinghealthstatistics()
     return;
   }
 
-  if ( accel.tapped() )
+  if ( accel.doubletapped() )
   {
     panel = CONFIRM_CLEAR_STEPS;
-    //video.startVideo( WatchFaceFlip2_video );
+    needssetup = true;
+    noMovementTime = millis();
+    return;
+  }
+
+  if ( accel.tapped() )
+  {
+    panel = DISPLAYING_TIMER;
+    video.startVideo( WatchFaceFlip2_video );
     //haptic.playEffect(14);  // 14 Strong Buzz
     needssetup = true;
     noMovementTime = millis();
@@ -751,15 +747,24 @@ void WatchFaceMain::displayingtimer()
     return;
   }
 
-  if ( accel.tapped() && ( noMovementTime > 5000 ) )
+  if ( accel.doubletapped() )
   {
-    needssetup = true;
     panel = SETTING_TIMER;
-    //video.startVideo( WatchFaceFlip2_video );
-    //haptic.playEffect(14);  // 14 Strong Buzz
+    needssetup = true;
     noMovementTime = millis();
     textmessageservice.stop();
     referenceY = accel.getYreading() + 15000; // Current Y-axis tilt value
+    return;
+  }
+
+  if ( accel.tapped() )
+  {
+    needssetup = true;
+    panel = MAIN;
+    drawitall = true;
+    video.startVideo( WatchFaceFlip3_video );
+    //haptic.playEffect(14);  // 14 Strong Buzz
+    noMovementTime = millis();
     return;
   }
 
@@ -793,6 +798,7 @@ void WatchFaceMain::settingtimer()
     return;
   }
 
+  /*
   if ( accel.tapped() && ( noMovementTime > 5000 ) )
   {
     panel = MAIN;
@@ -802,7 +808,8 @@ void WatchFaceMain::settingtimer()
     textmessageservice.stop();
     return;
   }
-
+  */
+  
   if ( millis() - tilttimer > 500 )
   {
     tilttimer = millis();
@@ -810,8 +817,8 @@ void WatchFaceMain::settingtimer()
     int measurementY = accel.getYreading() + 15000;
 
     // Calculate Neutral Zone boundaries based on the currentNeutralMeasurement
-    int lowerBoundY = currentNeutralMeasurementY - ( currentNeutralMeasurementY / 10 );
-    int upperBoundY = currentNeutralMeasurementY + ( currentNeutralMeasurementY / 10 );
+    int lowerBoundY = currentNeutralMeasurementY - ( currentNeutralMeasurementY * .10 );
+    int upperBoundY = currentNeutralMeasurementY + ( currentNeutralMeasurementY * .10 );
     
     // Neutral Zone: No change in Time value
     if ( ! ( ( measurementY >= lowerBoundY ) && ( measurementY <= upperBoundY ) ) )

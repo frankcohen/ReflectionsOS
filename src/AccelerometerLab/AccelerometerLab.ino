@@ -225,8 +225,12 @@ float rawY, accelY_g, accelY_ms2;
 float rawZ, accelZ_g, accelZ_ms2;
 
 bool tapdet;
+bool doubletapdet;
 bool shake;
 bool peakTap;
+
+unsigned long mostrecentdoubletaptime;
+float jerk;
 
 unsigned long lastTapTime;
 unsigned long debounceTapTime;
@@ -332,6 +336,13 @@ void setup()
   peakthres = peakthres1;
   peakinfluence = peakinfluence1;
   jerkthreshold = jerkthreshold1;
+
+  peaklag = peaklag1;
+  peakthres = peakthres1;
+  peakinfluence = peakinfluence1;
+
+  peakDetection.begin(peaklag, peakthres, peakinfluence);
+
 
 /*
   peakDetection.begin(peaklag, peakthres, peakinfluence);
@@ -705,166 +716,18 @@ void handleCommands()
   }
 }
 
-void loop3()
-{
-
-}
-
-void loop2()
-{
-  lis3dh.read();
-  rawX = lis3dh.x;
-  rawY = lis3dh.y;
-  rawZ = lis3dh.z;
-  accelMagnitude = sqrt( ( rawX * rawX ) + ( rawY * rawY ) + ( rawZ * rawZ ) );
-
-  float jerk = accelMagnitude - prevAccel;
-  prevAccel = accelMagnitude;
-
-  double djerk = jerk;
-
-  peakDetection.add( djerk );
-  peakcnt++;
-
-  // Show the results periodically
-
-  peak = peakDetection.getPeak();
-  filtered = peakDetection.getFilt();
-
-  Serial.print( peakcnt );
-  Serial.print( ", " );
-  Serial.print( djerk );
-  Serial.print( ", " );
-  Serial.print( filtered );
-  Serial.print( ", " );
-  Serial.println( peak );
-    
-  delay(500);
-}
-
-
 void loop() 
 {
-  handleCommands();   // Process commands through the Serial Monitor
+  //handleCommands();   // Process commands through the Serial Monitor
 
   // Check for tap/click detection
 
-  if ( millis() - cctime > 2000 )
-  {
-    cctime = millis();
-
-    uint8_t click = lis3dh.getClick();
-    if ( click == 0 ) return;
-    if ( ! ( click & 0x30 ) ) return;
-
-    Serial.print( "Click detected (0x" );
-    Serial.print( click, HEX ); 
-    Serial.print( " " );
-
-    for (int b = 7; b >= 0; b--)
-    {
-      Serial.print(bitRead(click, b));
-    }  
-    Serial.print("): ");
-
-    if (click & 0x01) {
-      Serial.print("X, ");
-    }
-    if (click & 0x02) {
-      Serial.print("Y, ");
-    }
-    if (click & 0x04) {
-      Serial.print("Z, ");
-    }
-    if (click & 0x08) {
-      Serial.print("Sign, ");
-    }
-    if (click & 0x10) {
-      Serial.print("Single click, ");
-    }
-    if (click & 0x20) {
-      Serial.print("Double click ");
-    }
-    Serial.println(" ");
-  }
-
-  /* The getEvent() function gets the raw sensor data then convert
-     into acceleration values in m/s². These are the values that represent
-     how the sensor is moving in 3D space. */
-
-  sensors_event_t event;
-  lis3dh.getEvent(&event);
-
-  accelerationX = event.acceleration.x;
-  accelerationY = event.acceleration.y;
-  accelerationZ = event.acceleration.z;
-  
-  if ( restFlag )
-  {
-    initialAccelX = accelerationX;
-    initialAccelY = accelerationY;
-    initialAccelZ = accelerationZ;
-    restFlag = false;
-  }
-
-  if ( millis() - lastTime >= 2000 ) 
-  {
-    lastTime = millis();
-    restFlag = true;
-
-    // Calculate the difference between initial and final accelerations
-    thresholdX = fabs(accelerationX - initialAccelX);
-    thresholdY = fabs(accelerationY - initialAccelY);
-    thresholdZ = fabs(accelerationZ - initialAccelZ);
-
-    // Check if the accelerometer is at rest (small values close to zero)
-    if ( ( fabs(accelerationX) < restingThreshold ) 
-      && ( fabs(accelerationY) < restingThreshold )
-      && ( fabs(accelerationZ) < restingThreshold ) ) 
-    {
-      // If the sensor is resting, ignore the shake detection
-      Serial.println("Resting, no shake detected.");
-    } 
-    else 
-    {
-      // Check if the difference exceeds the shake threshold
-      if ( ( thresholdX > shakeThreshold )
-         || ( thresholdY > shakeThreshold )
-         || ( thresholdZ > shakeThreshold ) )
-      {
-        shake = true;
-      } 
-      else 
-      {
-        shake = false;
-      }
-    }
-  }
-
   lis3dh.read();
   rawX = lis3dh.x;
   rawY = lis3dh.y;
   rawZ = lis3dh.z;
 
-  /* The read() method gives the raw acceleration values in ADC units or 
-    counts (not in m/s²). These are unprocessed values from the sensor's internal
-    registers. To convert them to physical units (like m/s² or g), the following
-    applies a scaling factor based on the accelerometer's configuration (i.e., the set 
-    range, such as ±2g, ±4g, etc.) */
-
-  float scaleFactor = 16384.0; // For ±2g range
-  if (range == LIS3DH_RANGE_2_G) scaleFactor = 16384.0;
-  if (range == LIS3DH_RANGE_4_G) scaleFactor = 8192.0;
-  if (range == LIS3DH_RANGE_8_G) scaleFactor = 4096.0;
-  if (range == LIS3DH_RANGE_16_G) scaleFactor = 2048.0;
-
-  accelX_g = rawX / scaleFactor;
-  accelY_g = rawY / scaleFactor;
-  accelZ_g = rawZ / scaleFactor;
-
-  accelX_ms2 = accelX_g * 9.80665;
-  accelY_ms2 = accelY_g * 9.80665;
-  accelZ_ms2 = accelZ_g * 9.80665;
+  // SimpleRangeFiltering
 
   // Calculate the magnitude of the acceleration in all directions
   accelMagnitude = sqrt( ( rawX * rawX ) + ( rawY * rawY ) + ( rawZ * rawZ ) );
@@ -873,82 +736,57 @@ void loop()
   magtimer = millis();
 
   // Calculate the jerk (rate of change of acceleration)
-  float jerk = accelMagnitude - prevAccel;
+  jerk = accelMagnitude - prevAccel;
   prevAccel = accelMagnitude;
 
   // Check for tap (sharp increase followed by quick return)
 
-  if ( millis() - debounceTapTime > 1500 )
+  if ( millis() - debounceTapTime > 1000 )
   {
+
+    // Every 10 rows, reprint the header
+    rowCount++;
+    if (rowCount >= 20) {
+      rowCount = 0;  // Reset the counter
+      printHeader();  // Reprint the header
+    }
+
+    tapdet = false;
+    doubletapdet = false;
+
     if ( millis() - lastTapTime > 50 )
     {
       lastTapTime = millis();
 
       if ( ( fabs( jerk ) <= accelThreshold ) && ( fabs( jerk ) > accelThresholdLow ) )
-      {        
+      {
         tapdet = true;
         debounceTapTime = millis();
+        String mef = "1>";
+        mef += fabs( jerk );
+        Serial.println( mef );
       }
     }
   }
-
-  double djerk = jerk;
-
-  if ( fabs( djerk ) > jerkthreshold )
+  else
   {
-    peakDetection.add( djerk );
-    peakcnt++;
+    if ( ( millis() - debounceTapTime > 220 ) && ( millis() - debounceTapTime < 350 ) && tapdet )
+    {
+      Serial.println( fabs(jerk) );
+      
+      if ( ( fabs( jerk ) <= accelThreshold ) && ( fabs( jerk ) > accelThresholdLow ) )
+      {
+        mostrecentdoubletaptime = millis() - debounceTapTime ;        
+        doubletapdet = true;
+        tapdet = false;
+        String mef = "2>";
+        mef += mostrecentdoubletaptime;
+        mef += ".";
+        Serial.println( mef );
+        debounceTapTime = millis();
+      }
+    }
+
   }
 
-  // Show the results periodically
-
-//  if ( millis() - alabtimer < 1000 ) return;
-//  alabtimer = millis();
-
-  peak = peakDetection.getPeak();
-  filtered = peakDetection.getFilt();
-
-    Serial.print( "value " );
-    Serial.print( djerk );
-    Serial.print( ", " );
-    Serial.print( filtered );
-    Serial.print( ", " );
-    Serial.println( peak );
-
-
-  // Every 10 rows, reprint the header
-  rowCount++;
-  if (rowCount >= 20) {
-    rowCount = 0;  // Reset the counter
-    //printHeader();  // Reprint the header
-  }
-
-  char output[200];  // Buffer to hold the formatted string
-
-  /*
-  sprintf(output, "%7.2f %7.2f %7.2f | %6.0f %6.0f %6.0f | %8.0f %6.0f %4.2f | %3d %3d | %4.0f  % d",
-        accelerationX, accelerationY, accelerationZ,
-        rawX, rawY, rawZ,
-        accelMagnitude, jerk, restingThreshold,
-        shake, tapdet,
-        filtered, peakTap
-        );
-  */
-
-  // Suitable for cvs import to a spreadsheet
-  sprintf(output, "%7.2f,%7.2f,%7.2f,%6.0f,%6.0f,%6.0f,%8.0f,%6.0f,%4.2f,%3d,%3d,%4.0f,%d, %lu",
-        accelerationX, accelerationY, accelerationZ,
-        rawX, rawY, rawZ,
-        accelMagnitude, jerk, restingThreshold,
-        shake, tapdet,
-        filtered, peak,
-        peakcnt 
-        );
-
-  Serial.println(output);
-
-  peakTap = false;
-  tapdet = false;
-
-  delay(500);
 }

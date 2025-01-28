@@ -331,9 +331,6 @@ void setup() {
   //bleServer.begin();  // Initializes the BLE server
   //bleClient.begin();  // Initializes the BLE client
 
-  //accel.setTraining( true );    // Put accelermoeter into training mode
-  //accel.loadGestures();         // Load the prerecorded accelermeter gestures
-
   //ota.begin();
   //ota.update();     // Just in case previous use of the host replicated an OTA update file
 
@@ -350,7 +347,7 @@ void setup() {
   //parallax.begin();
   //led.begin();
 
-  haptic.playEffect(14);  // 14 Strong Buzz
+  //haptic.playEffect(14);  // 14 Strong Buzz
 
   logger.info(F("Setup complete"));
 }
@@ -378,7 +375,33 @@ void Core0Tasks(void *pvParameters) {
   }
 }
 
+unsigned long slowman = millis();
+int rowCount = 0;
+
 void loop() 
 {
+
+
+  // Printing accelerometer statistics here because this code runs in Core 1
+  // otherwise the stats compete for the Serial monitor
+
+  if ( millis() - slowman > 500 )
+  {
+    slowman = millis();
+
+     rowCount++;
+    // Every 10 rows, reprint the header
+    if (rowCount >= 10) 
+    {
+      rowCount = 0;  // Reset the counter
+//      Serial.println( accel.printHeader() );  // Reprint the header
+    }
+
+    //Serial.print( "dtime " );
+    //Serial.println( accel.getmostrecentdoubletaptime() );
+
+    //Serial.println( accel.printValues() );
+  }
+
   smartdelay(500);
 }

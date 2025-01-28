@@ -67,10 +67,10 @@ extern LOGGER logger;
 #define shakeThreshold1 9.0
 
 // J - Jerk threashold using range filtering
-#define accelThreshold1 600
+#define accelThreshold1 2000
 
 // L - Jerk low threadshold using range filtering
-#define accelThresholdLow1 400
+#define accelThresholdLow1 1000
 
 // T - restingThreshold  for ignoring small accelerations (e.g., sensor resting)
 #define restingThreshold1 0.2
@@ -88,35 +88,21 @@ class AccelSensor
     void begin();
     void loop();
 
-    void printSettings();
-    void printHeader();
-
     void resetLIS3DH();
-    void handleCommands();   // Serial Monitor commands
-
-
 
     bool tapped();
-    bool shaken();
     bool doubletapped();
 
     float getXreading();
     float getYreading();
     float getZreading();
 
-    void adjustTime(int measurement, int minTime, int maxTime);
-    int getTime();
-    void setTime( int mytime );
-
-    String printHeader();
-    String printValues();
-
-    void recognizeHardwareClicks();
-    void readSensor();
-
+    void SimpleRangeFiltering();
+    void recognizeHardwareClicks();  // Tap/click detection using LIS3DH hardware detection
+    void readSensor();               // Reads the sensor
+    void detectPeaks();
+  
   private:
-    void resetLIS3DH();
-
     lis3dh_range_t range;
     lis3dh_mode_t powermode;
 
@@ -125,26 +111,17 @@ class AccelSensor
     float accelerationY;
     float accelerationZ;
 
-    float initialAccelX, initialAccelY, initialAccelZ;
-    float thresholdX, thresholdY, thresholdZ;
-
     // Position readings
-    float rawX, accelX_g, accelX_ms2;
-    float rawY, accelY_g, accelY_ms2;
-    float rawZ, accelZ_g, accelZ_ms2;
+    float rawX, rawY, rawZ;
 
     bool tapdet;
-    bool shake;
-    bool peakTap;
+    bool doubletapdet;
 
-    unsigned long lastTapTime;
     unsigned long debounceTapTime;
-    unsigned long debouncePeakTap;
-    unsigned long alabtimer;
+    unsigned long debounceDoubleTap;
     unsigned long magtimer;
-    unsigned long cctime;
-    unsigned long lastTime;
-    unsigned long peakTimer;
+
+    float jerk;
 
     float accelMagnitude;
     float prevAccel;
@@ -152,21 +129,13 @@ class AccelSensor
     int clickPin;
     float accelThreshold;    // high value for tap detection
     float accelThresholdLow; // low value for tap detection
-    float shakeThreshold;    // for shake detection
-    float restingThreshold;  // Threshold for ignoring small accelerations (e.g., sensor resting)
-    bool restFlag;
-    float alpha;
-    int peak;
-    double filtered;
-
-    int rowCount;
-    long peakcnt;
 
     PeakDetection peakDetection;
     int peaklag;
     int peakthres;
     double peakinfluence;
-    double jerkthreshold;
+    
+    double currentNeutralMeasurement;
 };
 
 #endif // ACCEL_SENSOR_H

@@ -9,6 +9,29 @@
  Read the license in the license.txt file that comes with this code.
 */
 
+/*
+
+[–]from throwawayht14 sent 11 months ago
+Hi Frank,
+
+I saw your posts on the Espressif forums and here about firmware updating via Flash Drive and wanted to let you know about an official Espressif ESP-IDF component for doing that:
+
+https://docs.espressif.com/projects/esp-iot-solution/en/latest/usb/usb_host/esp_msc_ota.html
+
+https://components.espressif.com/components/espressif/esp_msc_ota
+
+It comes with example code:
+
+https://components.espressif.com/components/espressif/esp_msc_ota#usb_msc_ota
+
+which, if you change the method name in the example code from 'app_main()' to something like 'Start_USB_Firmware_Upgrade()', you can kick off a firmware upgrade from USB with a single line of code.
+
+BTW, I live in Santa Clara and have a robotics startup, so if you ever want to grab a coffee and talk shop, let me know.
+
+Dan
+
+*/
+
 #include "MSC.h"
 
 MSC::MSC(){}
