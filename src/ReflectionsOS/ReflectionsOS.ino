@@ -183,7 +183,7 @@ static void smartdelay(unsigned long ms) {
 
     // Device operations
 
-    video.loop();
+    //video.loop();
     battery.loop();
     storage.loop();
     wifi.loop();
@@ -199,6 +199,7 @@ static void smartdelay(unsigned long ms) {
 
     // Watch experience operations
 
+/* testing TOF
     unsigned long fellow = millis();
     watchfaceexperiences.loop();
     systemload.logtasktime(millis() - fellow, 1, "we");
@@ -208,6 +209,7 @@ static void smartdelay(unsigned long ms) {
     fellow = millis();
     textmessageservice.loop();
     systemload.logtasktime(millis() - fellow, 3, "tm");
+*/
 
     //systemload.loop();
 
@@ -357,17 +359,17 @@ void setup() {
 void Core0Tasks(void *pvParameters) {
   while (true) {
     if (!tofstarted) {
-      //tof.begin();
+      tof.begin();
       tofstarted = true;
     } else {
-      //tof.loop(); // Process and update gesture data
+      tof.loop(); // Process and update gesture data
     }
 
     if (!accelstarted) {
       accel.begin();
       accelstarted = true;
     } else {
-      accel.loop();
+      //accel.loop();
     }
 
     // Delay to prevent task from monopolizing the CPU
@@ -377,10 +379,22 @@ void Core0Tasks(void *pvParameters) {
 
 unsigned long slowman = millis();
 int rowCount = 0;
+unsigned long statstime = millis();
 
 void loop() 
 {
 
+  if ( millis() - statstime > 1500 )
+  {
+    statstime = millis();
+    Serial.println( tof.getMef() );
+    Serial.println( " "); 
+
+    Serial.print( "Mef2 = "); 
+    Serial.println( tof.getMef2() );
+
+    Serial.println( " "); 
+  }
 
   // Printing accelerometer statistics here because this code runs in Core 1
   // otherwise the stats compete for the Serial monitor

@@ -481,6 +481,18 @@ void WatchFaceMain::settingdigitaltime()
     return;
   }
 
+  if ( accel.tapped() )
+  {
+    panel = MAIN;
+    video.startVideo( WatchFaceFlip3_video );
+    //haptic.playEffect(14);  // 14 Strong Buzz
+    needssetup = true;
+    noMovementTime = millis();
+    textmessageservice.stop();
+    drawitall = true;
+    return;
+  }
+
   if ( updateTimeLeft() )
   {
     realtimeclock.setTime( currentHour, currentMinute, 0 );    // Set new time
@@ -809,7 +821,7 @@ void WatchFaceMain::settingtimer()
     return;
   }
   */
-  
+
   if ( millis() - tilttimer > 500 )
   {
     tilttimer = millis();

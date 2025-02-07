@@ -10,17 +10,15 @@
 
  Depends on https://github.com/sparkfun/SparkFun_VL53L5CX_Arduino_Library
 
- Reflections board usees an (LIS3DHTR 3-Axis Accelerometer) to
- identify user gestures with their wrists and to wake the
- processor from sleep.
-
+ Reflections board usees a Time Of Flight (TOF) VL53L5CX sensor to
+ identify user gestures with their fingers and hand. Gestures control
+ the cat watch going to sleep to operating the Experiences.
+ 
 */
 
 #include "TOF.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
-
-//extern Arduino_GFX *gfx;
 
 TOF::TOF(){}
 
@@ -74,14 +72,12 @@ void TOF::begin()
   
   recentGesture = TOFGesture::None;
 
-  sleepTimer = millis();
   sleepCount = 0;
-  maxCount = 0;
-  ssmin = 3000;
-  ssmax = 0;
-  ssavg = 0;
-  ssttl = 0;
-  sscnt = 0;
+
+  previousMillis = millis();
+
+  myMef = "";
+  myMef2 = "";
 
   started = true;
 }
@@ -105,52 +101,21 @@ TOF::TOFGesture TOF::getGesture()
 
 void TOF::detectGestures()
 {
-  //if ( recentGesture != TOFGesture::None ) return;
+//  if ( recentGesture != TOFGesture::None ) return;
 
-  if ( millis() - gestureTime > gestureSensingDuration )
-  {
-    gestureTime = millis();
+  fingerTipInRange = detectFingerTip( currentSetIndex );
 
-    //displayStatus();
-
-    // Clear everything to try again
-
-    for ( int mei = 0; mei < 4; mei++ )
-    {
-      accumulator[ mei ] = false;
-      horizaccumulator[ mei ] = false;
-      vertaccumulator[ mei ] = false;
-      bombaccumulator[ mei ] = false;
-      flyaccumulator[ mei ] = false;
-    }
-  }
-
-  if ( ! sensor.isDataReady() ) return; 
-
-  if ( ! sensor.getRangingData( &measurementData ) )
-  {
-    SF_VL53L5CX_ERROR_TYPE errorCode = sensor.lastError.lastErrorCode;
-
-    Serial.println( "TOF sensor error" );
-    Serial.println( (int) errorCode );
-  }
-  
-  // Get the pointer to the current set's storage in the buffer
-  int16_t* dest = buffer + ( currentSetIndex * SET_SIZE );
-
-  // Copy the measurement data to the buffer
-  memcpy( dest, measurementData.distance_mm, SET_SIZE * sizeof( int16_t ) );
-
-  // Move to the next set, wrapping around
-  currentSetIndex = ( currentSetIndex + 1 ) % NUM_SETS;
-
-  // Finger tip coordinates used by Pounce, Eyes, Parallax, Horiz, Vert
-
-  detectFingerTip();
+return;
 
   if ( detectSleepGesture() )
   {
-    recentGesture = TOFGesture::Sleep;
+    // recentGesture = TOFGesture::Sleep;
+  }
+
+  if ( detectLeftToRight() )
+  {
+    //recentGesture = TOFGesture::Horizontal;
+    Serial.println("TOF left-to-right");
   }
 
   if ( ! fingerTipInRange ) return;
@@ -183,56 +148,82 @@ void TOF::detectGestures()
 }
 
 /*
-  Hold your palm or finger over the sensor to indicate a Sleep gesture
+  Move finger from left to right in 2.5 seconds
+*/
+
+#define leftToRightFrames 10          // How many frames back to analyze
+#define leftToRightPercentage 0.50    // Percentage of hits to be considered a gesture
+
+
+bool TOF::detectLeftToRight()
+{
+  float count = 0;
+  int lrpos = GRID_ROWS;
+
+  //myMef2 = "detectLeftToRight: ";
+
+  for ( int i = 0; i < leftToRightFrames; i++ )
+  {
+    if ( detectFingerTip( currentSetIndex - i ) )
+    {
+/*      myMef2 += "^";
+      myMef2 += currentSetIndex;
+      myMef2 += " ";
+      myMef2 += i;
+      myMef2 += " ";
+      myMef2 += count;
+      myMef2 += " ";
+      myMef2 += fingerPosRow;
+      myMef2 += " ";
+      myMef2 += lrpos;
+      myMef2 += "@ ";
+      */
+
+      //if ( fingerPosRow < lrpos )
+      //{
+        count++;
+        lrpos = fingerPosRow;
+      //}      
+    }
+  }
+
+  bool rlf = false;
+
+  if ( ( count / leftToRightFrames ) > leftToRightPercentage ) rlf = true;
+
+/*
+  myMef2 += String( count / leftToRightFrames );
+  myMef2 += ", ";
+  myMef2 += rlf;
+*/
+
+  return rlf;
+}
+
+/*
+  Hold palm or finger over the sensor for a Sleep gesture
 */
 
 bool TOF::detectSleepGesture() 
 {
-  if ( millis() - sleepTimer > 5000 )
-  {
-    sleepTimer = millis();
-    sleepCount = 0;
-    ssavg = 0;
-    ssttl = 0;
-    sscnt = 0;
-  }
-
-  // Calculate the index of the most recent set
-  int recentSetIndex = (currentSetIndex - 1 + NUM_SETS) % NUM_SETS;
-
   // Get the pointer to the most recent set's storage in the buffer
+  int recentSetIndex = ( currentSetIndex - 1 + NUM_SETS ) % NUM_SETS;
   int16_t* recentSet = buffer + ( recentSetIndex * SET_SIZE );
 
-  ssavg = 0;
-  ssttl = 0;
-  sscnt = 0;
+  // Count how many values are below the filter
 
-  // Process each value in the most recent set
-  for ( int mia = 0; mia < SET_SIZE - 9; mia++ )
+  float count = 0;
+  float mval = 0;
+
+  for ( int mia = 0; mia < SET_SIZE; mia++ )
   {
-    int dist = recentSet[ mia ];
-    ssttl = ssttl + dist;
-    sscnt ++;
+    mval = recentSet[ mia ];
+    if ( ( mval > sleepLowFilter ) && ( mval < sleepHighFilter ) ) count++;
   }
 
-  ssavg = ssttl / sscnt;
-/*
-  Serial.print( "Sleep " );
-  Serial.print( sleepCount );
-  Serial.print( ", ");
-  Serial.print( ssavg );
-  Serial.print( ", ");
-  Serial.print( sscnt );
-  Serial.print( ", ");
-  Serial.print( ssttl );
-  Serial.print( ", ");
-  Serial.println( maxCount );
-*/
-
-  if ( ( ssavg > minorityThreshold ) && ( ssavg < majorityThreshold ) )
+  if ( ( count / SET_SIZE ) > sleepPercentage )
   {
-    sleepCount++;
-    if ( sleepCount > sleepRepeat ) return true;
+    return true;
   }
 
   return false;
@@ -356,76 +347,60 @@ bool TOF::detectFlyAwayGesture()
   return yahtzee;
 }
 
-bool TOF::detectFingerTip() 
+// Finger tip coordinates used by Pounce, Eyes, Parallax, Horiz, Vert
+
+bool TOF::detectFingerTip( int setnum ) 
 {
-  closeReadingsCount = 0;
-  maxCount = 0;
   fingerTipInRange = false;
 
-  // Calculate the index of the most recent set
-  int recentSetIndex = (currentSetIndex - 1 + NUM_SETS) % NUM_SETS;
-
   // Get the pointer to the most recent set's storage in the buffer
+  int recentSetIndex = ( setnum - 1 + NUM_SETS) % NUM_SETS;
   int16_t* recentSet = buffer + ( recentSetIndex * SET_SIZE );
 
-  // Process each value in the most recent set
-  for ( int mia = 0; mia < SET_SIZE - 9; mia++ )
+  // Find the center of the boundary within the sensor values
+
+  int minX = GRID_ROWS, maxX = -1, minY = GRID_COLS, maxY = -1;
+
+  float dist = 0;
+
+  for (int row = 0; row < GRID_ROWS; row++) 
   {
-    int dist = recentSet[ mia ];
-    int dist2 = recentSet[ mia + 1 ];
-    int dist3 = recentSet[ mia + 8 ];
-    int dist4 = recentSet[ mia + 9 ];
+    for (int col = 0; col < GRID_COLS; col++) 
+    {
+      dist = recentSet[ ( col * GRID_COLS ) + row ];
 
-    if ( ( dist > fingerDetectionThresholdLow ) && ( dist < fingerDetectionThresholdHigh ) )
-    {       
-      if ( (dist <= dist2 + fingerWiggleRoom ) && (dist >= dist2 - fingerWiggleRoom ) )
-      {                                
-        if ( (dist <= dist3 + fingerWiggleRoom ) && (dist >= dist3 - fingerWiggleRoom ) )
-        {
-          if ( (dist <= dist4 + fingerWiggleRoom ) && (dist >= dist4 - fingerWiggleRoom ) )
-          {
-            // Sensor doesn't have a complete field of vision, columns and rows 6 and 7 are too far to the right
-            // If the original value (from index % 8) is between 0 and 5, it is scaled to a value 
-            // between 0 and 7 using the formula (originalColumn * 7) / 5.
-            // If the original value is 6 or 7, it maps directly to 7.
-
-            fingerPosRow = mia >> 3;
-/*
-            if (fingerPosRow < 6) 
-            {
-              fingerPosRow = (fingerPosRow * 7) / 5;
-            }
-            else
-            {
-              // If original is 6 or 7, it maps directly to 7
-              fingerPosRow = 7;
-            }
-*/
-            // Same scaling for columns
-
-            fingerPosCol = mia % 8;
-/*
-            if (fingerPosCol < 6) 
-            {
-              fingerPosCol = (fingerPosCol * 7) / 5;
-            }
-            else
-            {
-              // If originalColumn is 6 or 7, it maps directly to 7
-              fingerPosCol = 7;
-            }
-*/
-
-            fingerDist = dist;
-            fingerTipInRange = true;
-            return true;
-          }
-        }
+      if ( ( dist > fingerDetectionThresholdLow ) && ( dist < fingerDetectionThresholdHigh ) )
+      {
+        // Update the bounds
+        minX = min(minX, col);
+        maxX = max(maxX, col);
+        minY = min(minY, row);
+        maxY = max(maxY, row);
       }
     }
   }
 
-  return false;
+  // If there are non-zero cells, calculate the center of the bounding box
+  if ( ( minX <= maxX ) && ( minY <= maxY ) ) 
+  {
+    fingerPosRow = (minX + maxX) / 2;
+    fingerPosCol = (minY + maxY) / 2;
+
+    fingerDist = recentSet[ ( fingerPosCol * GRID_COLS ) + fingerPosRow ];
+    fingerTipInRange = true;
+
+    // Color the center point
+
+    int spotdiam = round( ( ( fingerDist - fingerDetectionThresholdLow ) / ( fingerDetectionThresholdHigh - fingerDetectionThresholdLow ) ) * tofdiam );
+
+    gfx -> fillCircle( yspace + ( fingerPosRow * ydistance ), xspace + ( fingerPosCol * xdistance ), spotdiam, COLOR_BLUE);
+
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 /* Pretty print sensor measurements */
@@ -438,8 +413,6 @@ void TOF::printTOF()
   {
     if ( sensor.getRangingData( &measurementData ) ) //Read distance data into array
     {
-      closeReadingsCount = 0;
-
       for (int y = 0; y < GRID_ROWS; y++)
       {
         for ( int x = 0; x < GRID_COLS; x++)
@@ -464,37 +437,14 @@ void TOF::printTOF()
   }
 }
 
-void TOF::showBubbles()
-{
-  if ( ! sensor.isDataReady() ) return; 
-
-  sensor.getRangingData( &measurementData );
-
-  for (int y = 0; y < GRID_ROWS; y++)
-  {
-    for ( int x = 0; x < GRID_COLS; x++)
-    {
-      //gfx -> fillCircle( xspace + ( y * ydistance ), xspace + ( x * xdistance ), tofdiam, COLOR_BACKGROUND);
-
-      float dist = measurementData.distance_mm[ x + ( y * GRID_COLS ) ];
-
-      if ( dist > tofmaxdist )
-      {
-        dist = tofmaxdist;
-      }
-      
-      int diam2 = (int) ( ( (float) tofdiam ) * ( 1- ( dist / tofmaxdist ) ) );
-      if ( diam2 > 0 )
-      {
-        //gfx -> drawCircle( yspace + ( y * ydistance ), xspace + ( x * xdistance ), diam2, COLOR_RING);
-      }
-    }
-  }
-}
-
 void TOF::displayStatus()
 {
-  if (!started) return;
+  Serial.println( getStats() );
+}
+
+String TOF::getStats()
+{
+  if (!started) return " ";
 
   String mef = " ";
 
@@ -548,12 +498,81 @@ void TOF::displayStatus()
   mef += ", index ";
   mef += String( currentSetIndex );
 
-  Serial.println( mef );
+  return mef;
+}
+
+String TOF::getMef()
+{
+  return myMef;
+}
+
+String TOF::getMef2()
+{
+  return myMef2;
+}
+
+void TOF::acquireDataToBuffer()
+{
+  if ( ! sensor.getRangingData( &measurementData ) )
+  {
+    SF_VL53L5CX_ERROR_TYPE errorCode = sensor.lastError.lastErrorCode;
+    Serial.println( "TOF sensor error" );
+    Serial.println( (int) errorCode );
+    return;
+  }
+  
+  // Get the pointer to the current set's storage in the buffer
+  int16_t* dest = buffer + ( currentSetIndex * SET_SIZE );
+
+  // Copy the measurement data to the buffer
+  memcpy( dest, measurementData.distance_mm, SET_SIZE * sizeof( int16_t ) );
+
+  // Move to the next set, wrapping around
+  currentSetIndex = ( currentSetIndex + 1 ) % NUM_SETS;
+
+  // Filter out the invalid readings
+
+  // Get the pointer to the most recent set's storage in the buffer
+  int recentSetIndex = (currentSetIndex - 1 + NUM_SETS) % NUM_SETS;
+  int16_t* recentSet = buffer + ( recentSetIndex * SET_SIZE );
+
+  for ( int mia = 0; mia < SET_SIZE; mia++ )
+  {
+    int row = mia / 8;
+    int col = mia % 8;
+    float spot = recentSet[ mia ];
+
+    gfx -> fillCircle( xspace + ( row * xdistance ), yspace + ( col * ydistance ), tofdiam, COLOR_BACKGROUND);
+
+    if ( ( spot < closefilter ) || ( spot > farfilter ) ) 
+    {
+      recentSet[ mia ] = 0.0;
+    }
+    else
+    {
+      // Show bubbles
+
+      int spotdiam = round( ( ( spot - closefilter ) / ( farfilter - closefilter ) ) * tofdiam );
+
+      if ( spotdiam > 0 )
+      {
+        gfx -> drawCircle( xspace + ( row * xdistance ), yspace + ( col * ydistance ), spotdiam, COLOR_RING);
+      }
+    }
+
+  }
 }
 
 void TOF::loop()
 {
   if ( ! started ) return;
 
-  detectGestures();
+  if ( millis() - previousMillis > 250 ) 
+  {
+    previousMillis = millis();
+
+    acquireDataToBuffer();    // And show bubbles
+
+    detectGestures();
+  }
 }

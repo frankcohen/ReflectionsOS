@@ -23,11 +23,14 @@
 #include <Arduino_GFX_Library.h>
 #include <cmath> // for abs function
 
+extern Arduino_GFX *gfx;
+
 const int SET_SIZE = 64;      // Each block has these many readings
 const int NUM_SETS = 100;     // Saves the most recent 100 blocks
+#define gestureSensingDuration 1500   // Use most recent readings to sense a gesture
 
-// Gesture timing
-#define gestureSensingDuration 1500   // Take 1.5 seconds to sense a gesture, then try again
+#define closefilter 15
+#define farfilter 60
 
 // Definitions for Bubles
 #define tofdiam 18
@@ -38,17 +41,13 @@ const int NUM_SETS = 100;     // Saves the most recent 100 blocks
 #define tofmaxdist 100
 
 // Definitions for Sleep gesture
-#define sleepHighRejection 26
-#define sleepRejectCount 5
-#define minorityThreshold 12
-#define majorityThreshold 18
-#define sleepDuration 4000
-#define sleepRepeat 6
+#define sleepLowFilter 10
+#define sleepHighFilter 18
+#define sleepPercentage 0.50
 
 // Definitions for fingerTip dected gesture
-#define fingerDetectionThresholdLow 28
-#define fingerDetectionThresholdHigh 50
-#define fingerWiggleRoom 7
+#define fingerDetectionThresholdLow 15
+#define fingerDetectionThresholdHigh 60
 
 // Definitions for Circular gesture
 #define circularDetectionDuration 2000
@@ -56,8 +55,6 @@ const int NUM_SETS = 100;     // Saves the most recent 100 blocks
 // Definitions for BombDrop and FlyAway gesture
 #define bombFlyDistLow 25    // Cannot be smaller than fingerDetectionThresholdLow
 #define bombFlyDistHigh 50   // Cannot be larger than fingerDetectionThresholdHigh
-
-#define gestureframes 5
 
 #define GRID_ROWS 8
 #define GRID_COLS 8
@@ -88,19 +85,25 @@ class TOF
 
     void displayStatus();
     void printTOF();
-    void showBubbles();
+    String getStats();
+
+    String getMef();
+    String getMef2();
 
   private:
     void detectGestures();
 
     // Helper methods for gesture detection
+    bool detectFingerTip( int setnum );
     bool detectSleepGesture();
+    bool detectLeftToRight();
+
     bool detectCircularGesture();
-    bool detectFingerTip();
     bool detectHorizontalGesture();
     bool detectVerticalGesture();
     bool detectBombDropGesture();
     bool detectFlyAwayGesture();
+
 
     bool started;
     TOFGesture recentGesture;
@@ -110,25 +113,16 @@ class TOF
     VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
 
     int16_t* buffer;          // Wrap around buffer stores most recent measurements
-    int currentSetIndex = 0;
+    int currentSetIndex;
 
     unsigned long gestureTime;
-
-    int closeReadingsCount;
-    int maxCount;
+    
+    int sleepCount;
 
     bool fingerTipInRange;
     int fingerPosRow;
     int fingerPosCol;
     float fingerDist;
-
-    int sleepCount;
-    unsigned long sleepTimer;
-    float ssmin;
-    float ssmax;
-    float ssavg;
-    float ssttl;
-    float sscnt;
 
     bool accumulator[ 4 ];
     bool horizaccumulator[ 4 ];
@@ -137,6 +131,14 @@ class TOF
     bool flyaccumulator[ 4 ];
 
     unsigned long lastPollTime;    
+
+    unsigned long previousMillis;
+    
+    void acquireDataToBuffer();
+
+    String myMef;
+    String myMef2;
+
 };
 
 #endif // _TOF_
