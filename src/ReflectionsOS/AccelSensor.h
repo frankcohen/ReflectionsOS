@@ -127,7 +127,7 @@ class AccelSensor
     float prevAccel;
     int clickThreshold;
     int clickPin;
-    float accelThreshold;    // high value for tap detection
+    float accelThreshold;    // high value for tap detection 
     float accelThresholdLow; // low value for tap detection
 
     PeakDetection peakDetection;

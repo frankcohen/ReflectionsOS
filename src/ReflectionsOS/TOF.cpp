@@ -42,10 +42,8 @@ void TOF::begin()
 
   sensor.startRanging();
 
-  currentSetIndex = 0;
-
   // Allocate memory for all sets in one go
-  buffer = (int16_t*) malloc( NUM_SETS * SET_SIZE * sizeof(int16_t) );
+  buffer = (int16_t*) malloc( ( NUM_SETS + 4 ) * SET_SIZE * sizeof(int16_t) );
   
   if (buffer == NULL) {
     Serial.println( F( "TOF failed to allocate memory for TOF gesture buffer" ) );
@@ -55,18 +53,19 @@ void TOF::begin()
   // Initialize the buffer (optional, e.g., set all values to 0)
   memset( buffer, 0, NUM_SETS * SET_SIZE * sizeof(int16_t) );
 
+  currentSetIndex = 0;
+
   fingerTipInRange = false;
   fingerPosRow = 0;
   fingerPosCol = 0;
 
   for ( int mia = 0; mia < 4; mia++ )
   {
-    accumulator[ mia ] = false;
-    vertaccumulator[ mia ] = false;
-    horizaccumulator[ mia ] = false;
     flyaccumulator[ mia ] = false;
     bombaccumulator[ mia ] = false;
   }
+
+  debouncetime = millis();
 
   gestureTime= millis();
   
@@ -78,6 +77,11 @@ void TOF::begin()
 
   myMef = "";
   myMef2 = "";
+
+  for (int i = 0; i<8; i++ )
+  {
+    previousHorizPositions[i] = -1;
+  }
 
   started = true;
 }
@@ -101,103 +105,61 @@ TOF::TOFGesture TOF::getGesture()
 
 void TOF::detectGestures()
 {
-//  if ( recentGesture != TOFGesture::None ) return;
+  if ( recentGesture != TOFGesture::None ) return;
 
   fingerTipInRange = detectFingerTip( currentSetIndex );
 
-return;
-
   if ( detectSleepGesture() )
   {
-    // recentGesture = TOFGesture::Sleep;
+    sleepCount++;
+    recentGesture = TOFGesture::Sleep;
+    return;
   }
 
-  if ( detectLeftToRight() )
+  // Need the finger tip for the rest of these to work
+
+  if ( ! fingerTipInRange )
   {
-    //recentGesture = TOFGesture::Horizontal;
-    Serial.println("TOF left-to-right");
-  }
+    return;
+  };
 
-  if ( ! fingerTipInRange ) return;
-
-  if ( detectCircularGesture() )
+/*
+  if ( detectVerticalGesture() )
   {
-    recentGesture = TOFGesture::Circular;
+    recentGesture = TOFGesture::Vertical;
+    myMef2 += " (TOF vert)";
+    return;
   }
+*/
 
   if ( detectHorizontalGesture() )
   {
     recentGesture = TOFGesture::Horizontal;
+    myMef += " (TOF horiz)";
+    return;
   }
 
-  if ( detectVerticalGesture() )
+  if ( detectCircularGesture() )
   {
-    recentGesture = TOFGesture::Vertical;
+    recentGesture = TOFGesture::Circular;
+    myMef2 = " (TOF circular)";
+    return;
   }
 
   if ( detectBombDropGesture() )
   {
     recentGesture = TOFGesture::BombDrop;
+    myMef2 = " (TOF bomb drop)";
+    return;
   }
 
   if ( detectFlyAwayGesture() )
   {
     recentGesture = TOFGesture::FlyAway;
+    myMef2 = " (TOF fly away)";
+    return;
   }
 
-}
-
-/*
-  Move finger from left to right in 2.5 seconds
-*/
-
-#define leftToRightFrames 10          // How many frames back to analyze
-#define leftToRightPercentage 0.50    // Percentage of hits to be considered a gesture
-
-
-bool TOF::detectLeftToRight()
-{
-  float count = 0;
-  int lrpos = GRID_ROWS;
-
-  //myMef2 = "detectLeftToRight: ";
-
-  for ( int i = 0; i < leftToRightFrames; i++ )
-  {
-    if ( detectFingerTip( currentSetIndex - i ) )
-    {
-/*      myMef2 += "^";
-      myMef2 += currentSetIndex;
-      myMef2 += " ";
-      myMef2 += i;
-      myMef2 += " ";
-      myMef2 += count;
-      myMef2 += " ";
-      myMef2 += fingerPosRow;
-      myMef2 += " ";
-      myMef2 += lrpos;
-      myMef2 += "@ ";
-      */
-
-      //if ( fingerPosRow < lrpos )
-      //{
-        count++;
-        lrpos = fingerPosRow;
-      //}      
-    }
-  }
-
-  bool rlf = false;
-
-  if ( ( count / leftToRightFrames ) > leftToRightPercentage ) rlf = true;
-
-/*
-  myMef2 += String( count / leftToRightFrames );
-  myMef2 += ", ";
-  myMef2 += rlf;
-*/
-
-  return rlf;
 }
 
 /*
@@ -212,16 +174,31 @@ bool TOF::detectSleepGesture()
 
   // Count how many values are below the filter
 
-  float count = 0;
-  float mval = 0;
+  float scount = 0;
+  int16_t mval = 0;
 
   for ( int mia = 0; mia < SET_SIZE; mia++ )
   {
     mval = recentSet[ mia ];
-    if ( ( mval > sleepLowFilter ) && ( mval < sleepHighFilter ) ) count++;
+    if ( ( mval > sleepLowFilter ) && ( mval < sleepHighFilter ) ) scount++;
   }
+  
+  /*
+  myMef = "sleep: ";
+  myMef += scount;
+  myMef += ", ";
+  myMef += ( scount / SET_SIZE );
+  myMef += ", ";
 
-  if ( ( count / SET_SIZE ) > sleepPercentage )
+  for ( int j = 0; j < 64; j++ )
+  {
+    myMef += recentSet[ j ];
+    myMef += " ";
+  }
+  myMef += "@";
+  */
+
+  if ( ( scount / SET_SIZE ) > sleepPercentage )
   {
     return true;
   }
@@ -231,127 +208,664 @@ bool TOF::detectSleepGesture()
 
 bool TOF::detectCircularGesture() 
 {
-  if ( ( fingerPosRow >= 0 ) && ( fingerPosRow < 3 ) )
+  bool rowDetected[GRID_ROWS] = {false};
+  bool columnDetected[ GRID_COLS ] = {false};
+
+  // Iterate through the last 5 calls to detectFingerTip and update the column and row tracking
+  for ( int i = 0; i < 5; i++ ) 
   {
-    // upper quadrant
-    if ( ( fingerPosCol >= 0 ) && ( fingerPosCol < 4 ) )
+    // Call detectFingerTip() and store the result in fingerPosCol and fingerPosRow if a finger is detected
+    if ( detectFingerTip( currentSetIndex - i ) ) 
     {
-      // upper left
-      accumulator[ 0 ] = true;
-    }
-    else
-    {
-      // upper right
-      accumulator[ 1 ] = true;
-    }
-  }
-  else
-  {
-    // lower quadrant
-    if ( ( fingerPosCol >= 0 ) && ( fingerPosCol < 3 ) )
-    {
-      // lower right
-      accumulator[ 3 ] = true;        // this isn't working!
-    }
-    else
-    {
-      // lower left
-      accumulator[ 2 ] = true;
+      if ( ( fingerPosRow >= 0 ) && ( fingerPosRow < GRID_ROWS ) ) 
+      {
+        rowDetected[ fingerPosRow ] = true;
+      }
+
+      if ( ( fingerPosCol >= 0 ) && ( fingerPosCol < GRID_COLS ) ) 
+      {
+        columnDetected[ fingerPosCol ] = true;
+      }
     }
   }
 
-  bool yahtzee = true;
-  for ( int accx = 0; accx < 4; accx++ )
+/*
+  myMef = "Circular: rowDetected ";
+  for ( int i = 0; i<64; i++)
   {
-    if ( ! accumulator[ accx ] ) yahtzee = false;
+    myMef += rowDetected[i];
+    myMef += " ";
+  }
+  myMef += "columnDetected ";
+  for ( int i = 0; i<64; i++)
+  {
+    myMef += columnDetected[i];
+    myMef += " ";
   }
 
-  if ( yahtzee ) 
+
+*/
+
+  // Check for contiguous rows and columns forming a 3x3 block
+  for ( int row = 0; row < GRID_ROWS - 2; row++ ) 
   {
-    for ( int accx = 0; accx < 4; accx++ )
+    for ( int col = 0; col < GRID_COLS - 2; col++ ) 
     {
-      accumulator[ accx ] = false;
-    }    
-    return true;
+      // Check if a 3x3 block is formed by contiguous rows and columns
+      if ( rowDetected[row] && rowDetected[row + 1] && rowDetected[row + 2] && 
+          columnDetected[col] && columnDetected[col + 1] && columnDetected[col + 2] ) 
+      {
+        // If a 3x3 block is detected, return true
+        return true;
+      }
+    }
   }
 
   return false;
 }
 
-bool TOF::detectHorizontalGesture()
+bool TOF::detectHorizontalGesture() 
 {
-  if ( fingerTipInRange )
+  int leftMovement = 0;
+  int rightMovement = 0;
+
+  int upMovement = 0;
+  int downMovement = 0;
+
+  for (int i = 0; i < ( movementFrames - 1); i++) 
   {
-    if ( fingerPosRow == 0 ) horizaccumulator[ 0 ] = true;
-    if ( fingerPosRow == 1 ) horizaccumulator[ 0 ] = true;
-    if ( fingerPosRow == 2 ) horizaccumulator[ 1 ] = true;
-    if ( fingerPosRow == 3 ) horizaccumulator[ 1 ] = true;
-    if ( fingerPosRow == 4 ) horizaccumulator[ 2 ] = true;
-    if ( fingerPosRow == 5 ) horizaccumulator[ 2 ] = true;
-    if ( fingerPosRow == 5 ) horizaccumulator[ 3 ] = true;
-    if ( fingerPosRow == 5 ) horizaccumulator[ 3 ] = true;
+    // Calculate indices for the newer and older frames in the pair.
+    int indexNew = (currentSetIndex - 1 - i + NUM_SETS) % NUM_SETS;
+    int indexOld = (currentSetIndex - 2 - i + NUM_SETS) % NUM_SETS;
+
+    int16_t* newFrame = buffer + (indexNew * SET_SIZE);
+    int16_t* oldFrame = buffer + (indexOld * SET_SIZE);
+
+    myMef2 = "";
+
+    // Loop through each row
+    for (int row = 0; row < 7; row++) 
+    {
+      for (int col = 0; col < 8; col++) 
+      {
+        int16_t new1 = newFrame[ (row * 8 ) + col ];
+        int16_t old1 = oldFrame[ (row * 8 ) + col + 1];
+
+        int16_t new2 = newFrame[ (row * 8 ) + col + 1 ];
+        int16_t old2 = oldFrame[ (row * 8 ) + col ];
+
+        if ( ( ( new1 > movementLow ) && ( new1 < movementHigh ) )
+          && ( ( old1 > movementLow ) && ( old1 < movementHigh ) ) )
+        {
+          leftMovement++;
+        }
+
+        if ( ( ( new2 > movementLow ) && ( new2 < movementHigh ) )
+          && ( ( old2 > movementLow ) && ( old2 < movementHigh ) ) )
+        {
+          rightMovement++;
+        }
+
+        if ( row > 0 )
+        {
+          new1 = newFrame[ ( row * 8 ) + col ];
+          old1 = oldFrame[ ( ( row + 1 ) * 8 ) + col ];
+
+          new2 = newFrame[ ( ( row + 1 ) * 8 ) + col ];
+          old2 = oldFrame[ ( row * 8 ) + col ];
+
+          if ( ( ( new1 > movementLow ) && ( new1 < movementHigh ) )
+            && ( ( old1 > movementLow ) && ( old1 < movementHigh ) ) )
+          {
+            upMovement++;
+          }
+
+          if ( ( ( new2 > movementLow ) && ( new2 < movementHigh ) )
+            && ( ( old2 > movementLow ) && ( old2 < movementHigh ) ) )
+          {
+            downMovement++;
+          }        
+        }
+      }
+    }
   }
 
-  bool yahtzee = true;
-  for ( int accx = 0; accx < 4; accx++ )
+  // Return direction based on counts
+  
+  if ( ( leftMovement > 50 ) || ( rightMovement > 50 ) )
   {
-    if ( ! horizaccumulator[ accx ] ) yahtzee = false;
+    myMef = "Circular ";
+    myMef += leftMovement;    
+    myMef += " ";
+    myMef += rightMovement;
+    return true;
+  } 
+
+  if ( ( leftMovement > 2 ) || ( rightMovement > 2 ) )
+  {
+    if ( leftMovement > rightMovement ) 
+    {
+      myMef = "Left ";
+      myMef += leftMovement;    
+      myMef += " ";
+      myMef += rightMovement;
+      return true;
+    } 
+    
+    else if ( rightMovement > leftMovement) 
+    {
+      myMef = "Right ";
+      myMef += leftMovement;    
+      myMef += " ";
+      myMef += rightMovement;
+      return true;
+    }
   }
 
-  return yahtzee;
+  if ( ( upMovement > 2 ) || ( downMovement > 2 ) )
+  {
+    if ( upMovement > downMovement ) 
+    {
+      myMef = "Up ";
+      myMef += upMovement;    
+      myMef += " ";
+      myMef += downMovement;
+      return true;
+    } 
+    
+    else if ( downMovement > upMovement ) 
+    {
+      myMef = "Down ";
+      myMef += upMovement;    
+      myMef += " ";
+      myMef += downMovement;
+      return true;
+    } 
+  }
+
+  myMef = "Nope ";
+  myMef += leftMovement;    
+  myMef += " ";
+  myMef += rightMovement;
+  myMef += " ";
+  myMef += upMovement;
+  myMef += " ";
+  myMef += downMovement;
+
+  return false;
+}
+
+
+bool TOF::detectHorizontalGesture4() 
+{
+  myMef = "h: ";
+  myMef2 = ">";
+
+  int hcntleft = 0;
+  int hcntright = 0;
+
+  for (int i = 0; i < ( movementFrames - 1); i++) 
+  {
+    // Calculate indices for the newer and older frames in the pair.
+    int indexNew = (currentSetIndex - 1 - i + NUM_SETS) % NUM_SETS;
+    int indexOld = (currentSetIndex - 2 - i + NUM_SETS) % NUM_SETS;
+
+    int16_t* newFrame = buffer + (indexNew * SET_SIZE);
+    int16_t* oldFrame = buffer + (indexOld * SET_SIZE);
+
+  myMef2 += "frame ";
+  myMef2 += i;
+
+  myMef2 += " new: ";
+  for ( int k = 0; k<64; k++ )
+  {
+    myMef2 += newFrame[ k ];
+    myMef2 += " ";
+  }
+  myMef2 += ", old: ";
+  for ( int k = 0; k<64; k++ )
+  {
+    myMef2 += oldFrame[ k ];
+    myMef2 += " ";
+  }
+
+    for (int j = 0; j < 7; j++ )
+    {
+      int16_t new1 = newFrame[ j + 1 + ( 8 * 4 ) ];
+      int16_t old1 = oldFrame[ j + 0 + ( 8 * 4 ) ];
+
+      if ( 
+         ( ( new1 > movementLow ) && ( new1 < movementHigh ) ) &&
+         ( ( old1 > movementLow ) && ( old1 < movementHigh ) ) &&
+         ( abs( new1 - old1 ) <= 4 ) 
+        )
+      { 
+        hcntleft++;
+      }
+
+      int16_t new2 = newFrame[ j + 0 + ( 8 * 4 ) ];
+      int16_t old2 = oldFrame[ j + 1 + ( 8 * 4 ) ];
+
+      if (
+         ( ( new2 > movementLow ) && ( new2 < movementHigh ) ) &&
+         ( ( old2 > movementLow ) && ( old2 < movementHigh ) ) &&
+         ( abs( new2 - old2 ) <= 4 ) 
+        )
+      { 
+        hcntright++;
+      }      
+
+      myMef += new1;
+      myMef += ".";
+      myMef += old1;
+      myMef += ".";
+      myMef += new2;
+      myMef += ".";
+      myMef += old2;
+      myMef += ", ";
+     
+
+
+
+    }
+  }
+
+  myMef += hcntleft;
+  myMef += ", ";
+  myMef += hcntright;
+  myMef += ", ";
+  myMef += currentSetIndex;
+  myMef += ", ";
+
+  return false;
+}
+
+
+bool TOF::detectHorizontalGesture3() 
+{
+  int total_dx = 0;
+  int total_dy = 0;
+  int count = 0;
+
+  for (int i = 0; i < FRAMES_TO_ANALYZE - 1; i++) 
+  {
+    // Calculate indices for the newer and older frames in the pair.
+    int indexNew = (currentSetIndex - 1 - i + NUM_SETS) % NUM_SETS;
+    int indexOld = (currentSetIndex - 2 - i + NUM_SETS) % NUM_SETS;
+
+    int16_t* newerFrame = buffer + (indexNew * SET_SIZE);
+    int16_t* olderFrame = buffer + (indexOld * SET_SIZE);
+    
+    int dx = 0, dy = 0;
+
+    determineMovementBetweenFrames(olderFrame, newerFrame, dx, dy);
+
+    total_dx += dx;
+    total_dy += dy;
+    count++;
+  }
+
+  int avg_dx = 0;
+  int avg_dy = 0;
+  
+  if ( count > 0 )
+  {
+    avg_dx = total_dx / count;
+    avg_dy = total_dy / count;
+
+    if ( ( avg_dx != 0 ) && ( avg_dy != 0 ) )
+    {
+      myMef = "Horiz: ";
+      myMef += avg_dx;
+      myMef += " ";
+      myMef += avg_dy;
+    }
+  }
+
+  return false;
+}
+
+// Compute cross-correlation between two 8x8 frames for a given shift (dx, dy).
+// We treat the 1D array as a 2D array using index = row*8 + col.
+float TOF::computeCorrelation( int16_t *frame1, int16_t *frame2, int dx, int dy) 
+{
+  float sum = 0;
+  int count = 0;
+  const int SIZE = 8;
+  for (int i = 0; i < SIZE; i++) {
+    for (int j = 0; j < SIZE; j++) {
+      int shifted_i = i + dy;
+      int shifted_j = j + dx;
+      // Only compute for overlapping parts.
+      if (shifted_i >= 0 && shifted_i < SIZE && shifted_j >= 0 && shifted_j < SIZE) {
+        sum += frame1[i * SIZE + j] * frame2[shifted_i * SIZE + shifted_j];
+        count++;
+      }
+    }
+  }
+  return (count > 0) ? sum / count : 0;
+}
+
+// Determines the movement (dx, dy) between an older frame and a newer frame
+// by testing small shifts and choosing the one with maximum correlation.
+void TOF::determineMovementBetweenFrames(int16_t * olderFrame, int16_t * newerFrame, int &best_dx, int &best_dy) 
+{
+  // Check if buffers are valid pointers
+  if ( olderFrame == NULL )
+  {
+    Serial.println("TOF determineMovementBetweenFrames: olderFrame is null");
+    return;
+  }
+
+  if ( newerFrame == NULL ) 
+  {
+    Serial.println("TOF determineMovementBetweenFrames: newerFrame is null");
+    return;
+  }
+
+  float maxCorr = -1e6;
+  best_dx = 0;
+  best_dy = 0;
+  
+  // Try shifts in the range [-3, 3]. Adjust based on expected movement speed.
+  for (int dx = -3; dx <= 3; dx++) {
+    for (int dy = -3; dy <= 3; dy++) {
+      float corr = computeCorrelation(olderFrame, newerFrame, dx, dy);
+      if (corr > maxCorr) {
+        maxCorr = corr;
+        best_dx = dx;
+        best_dy = dy;
+      }
+    }
+  }
+}
+
+
+bool TOF::detectHorizontalGesture2() 
+{  
+  // Array to store the positions of detected objects for each row in the 10 most recent frames
+  int currentPositions[8] = {-1};   // Stores column positions (or -1 if no object detected)
+  bool movementDetected = false;    // To keep track if movement was detected in one direction
+  bool lastDirectionRight = false;  // Track last movement direction (true right, false = left)
+  int movementDirectionCounter = 0;  // Counter to track consecutive frames with the same direction
+  bool newMovementDetected = false;
+
+    myMef = "Horiz: ";
+    for (int j = 0; j< 8; j++ )
+    {
+      myMef += previousHorizPositions[ j ];
+      myMef += " ";
+    }
+
+  for (int frame = 0; frame < 10; frame++) 
+  {
+    int recentSetIndex = ( currentSetIndex - 1 - frame + NUM_SETS ) % NUM_SETS;
+    int16_t* recentSet = buffer + ( recentSetIndex * SET_SIZE );
+
+    // Check each row for object positions in the current frame
+    for (int row = 0; row < 8; row++) 
+    {
+      for (int col = 0; col < 8; col++) 
+      {
+        int16_t distance = recentSet[ ( row * 8 ) + col ];
+            
+        if ( ( distance >= fingerDetectionThresholdLow ) && ( distance <= fingerDetectionThresholdHigh ) ) 
+        {
+          currentPositions[row] = col;  // Object detected at this column
+          break;  // Stop after finding the first object in the row
+        }
+      }
+    }
+
+    myMef += ", c: ";
+    for (int j = 0; j < 8; j++ )
+    {
+      myMef += currentPositions[ j ];
+      myMef += " ";
+    }
+
+
+    if (frame > 0) 
+    {
+      for (int row = 0; row < 8; row++) 
+      {
+        if ( ( currentPositions[row] != -1 ) && ( previousHorizPositions[row] != -1 ) ) 
+        {
+          if (currentPositions[row] > ( previousHorizPositions[row] ) ) 
+          {
+            // Moving to the right
+            if (!movementDetected || ! lastDirectionRight) 
+            {
+              movementDetected = true;
+              lastDirectionRight = true;
+              movementDirectionCounter++;
+            }
+          }
+          else if (currentPositions[row] < ( previousHorizPositions[row] ) ) 
+          {
+            // Moving to the left
+            if (!movementDetected || lastDirectionRight) 
+            {
+              movementDetected = true;
+              lastDirectionRight = false;
+              movementDirectionCounter++;
+            }
+          }
+        }
+      }
+
+      // Store the current positions for comparison in the next frame
+      memcpy(previousHorizPositions, currentPositions, sizeof(previousHorizPositions));
+
+      if (movementDirectionCounter >= 4) 
+      {
+        newMovementDetected = true;
+      }
+
+      // Reset the counter if the direction has changed
+      if ( ( lastDirectionRight && ( movementDirectionCounter > 0 ) ) || ( !lastDirectionRight && ( movementDirectionCounter > 0 ) ) ) 
+      {
+        movementDirectionCounter = 0;
+        newMovementDetected = false;
+      }
+
+      myMef += " : ";
+      myMef += movementDetected;
+      myMef += " ";
+      myMef += newMovementDetected;
+      myMef += " ";
+      myMef += lastDirectionRight;
+      myMef += " ";
+      myMef += movementDirectionCounter;
+      myMef += ", ";
+
+    }
+  }
+
+  if ( lastDirectionRight )
+  {
+    myMef += " right,";
+  }
+  else
+  {
+    myMef += " left,";
+  }
+  
+  return newMovementDetected;
 }
 
 bool TOF::detectVerticalGesture()
-{
-  if ( fingerPosCol == 0 ) vertaccumulator[ 0 ] = true;
-  if ( fingerPosCol == 1 ) vertaccumulator[ 0 ] = true;
-  if ( fingerPosCol == 2 ) vertaccumulator[ 1 ] = true;
-  if ( fingerPosCol == 3 ) vertaccumulator[ 1 ] = true;
-  if ( fingerPosCol == 4 ) vertaccumulator[ 2 ] = true;
-  if ( fingerPosCol == 5 ) vertaccumulator[ 2 ] = true;
-  if ( fingerPosCol == 6 ) vertaccumulator[ 3 ] = true;
-  if ( fingerPosCol == 7 ) vertaccumulator[ 3 ] = true;
+{  
+  // Array to store the positions of detected objects for each column in the 10 most recent frames
+  int currentPositions[8] = {-1};   // Stores row positions (or -1 if no object detected)
+  bool movementDetected = false;    // To keep track if movement was detected in one direction
+  bool lastDirectionUp = false;  // Track last movement direction (true right, false = left)
+  int movementDirectionCounter = 0;  // Counter to track consecutive frames with the same direction
+  bool newVertMovementDetected = false;
 
-  bool yahtzee = true;
-  for ( int accx = 0; accx < 4; accx++ )
+  myMef2 = "Vertical: ";
+
+  for (int j = 0; j< 8; j++ )
   {
-    if ( ! vertaccumulator[ accx ] ) yahtzee = false;
+    myMef2 += previousVertPositions[ j ];
+    myMef2 += " ";
   }
 
-  return yahtzee;
+  for (int frame = 0; frame < 10; frame++) 
+  {
+    int recentSetIndex = ( currentSetIndex - 1 - frame + NUM_SETS ) % NUM_SETS;
+    int16_t* recentSet = buffer + ( recentSetIndex * SET_SIZE );
+    
+    // Check each row for object positions in the current frame
+    for (int col = 0; col < 8; col++) 
+    {
+      for (int row = 0; row < 8; row++) 
+      {
+        int16_t distance = recentSet[ ( row * 8 ) + col];  // Get distance value for this row, column
+            
+        if ( ( distance >= fingerDetectionThresholdLow ) && ( distance <= fingerDetectionThresholdHigh ) ) 
+        {
+          currentPositions[col] = row;  // Object detected at this column
+          break;  // Stop after finding the first object in the row
+        }
+      }
+    }
+
+    if (frame > 0) 
+    {
+      for (int col = 0; col < 8; col++) 
+      {
+        if ( ( currentPositions[ col ] != -1 ) && previousVertPositions[ col ] != -1) 
+        {
+          if (currentPositions[col] > previousVertPositions[col] ) 
+          {
+            // Moving down
+            if ( ! movementDetected || ! lastDirectionUp) 
+            {
+              movementDetected = true;
+              lastDirectionUp = false;
+              movementDirectionCounter++;
+            }
+          }
+          else if (currentPositions[ col ] < previousVertPositions[ col ] ) 
+          {
+            // Moving to the left
+            if (!movementDetected || lastDirectionUp) 
+            {
+              movementDetected = true;
+              lastDirectionUp = true;
+              movementDirectionCounter++;
+            }
+          }
+        }
+      }
+
+      if (movementDirectionCounter >= 4) 
+      {
+        newVertMovementDetected = true;
+      }
+        
+      // Store the current positions for comparison in the next frame
+      memcpy(previousVertPositions, currentPositions, sizeof(previousVertPositions));
+
+      // Reset the counter if the direction has changed
+      if ((lastDirectionUp && movementDirectionCounter > 0) || (!lastDirectionUp && movementDirectionCounter > 0)) 
+      {
+        movementDirectionCounter = 0;
+      }
+
+    }
+  }
+
+  if ( lastDirectionUp )
+  {
+    myMef2 += " up,";
+  }
+  else
+  {
+    myMef2 += " down,";
+  }
+  
+  return newVertMovementDetected;
 }
 
 bool TOF::detectBombDropGesture()
 {
-  bombaccumulator[ map( fingerDist, bombFlyDistLow, bombFlyDistHigh, 0, 3 ) ] = true;
+  int lastDistances[5] = {0, 0, 0, 0, 0};  // Initialize with default values
 
-  bool yahtzee = true;
-  for ( int accx = 0; accx < 4; accx++ )
+  // Get the pointer to the most recent set's storage in the buffer
+  int recentSetIndex = ( currentSetIndex - 1 + NUM_SETS ) % NUM_SETS;
+  int16_t* recentSet = buffer + ( recentSetIndex * SET_SIZE );
+
+  // Iterate through the last 5 calls to detectFingerTip and update the column tracking
+  for ( int i = 0; i < 5; i++ ) 
   {
-    if ( ! bombaccumulator[ accx ] ) yahtzee = false;
+    // Call detectFingerTip() and store the result in fingerPosCol if a finger is detected
+    if ( detectFingerTip( currentSetIndex - i ) ) 
+    {
+      float dist = recentSet[ ( fingerPosCol * GRID_COLS ) + fingerPosRow ];
+      if ( dist > 0 )
+      {
+        lastDistances[ i ] = dist;
+      }
+    }
   }
 
-  return yahtzee;
+  for (int i = 0; i < 4; i++) 
+  {
+    if ( lastDistances[i] <= lastDistances[i + 1] ) 
+    {
+      return false;  // If any value is greater or equal to the next, return false
+    }
+
+  }
+
+  return true;  // All values are descending
 }
 
 bool TOF::detectFlyAwayGesture()
 {
-  flyaccumulator[ map( fingerDist, bombFlyDistLow, bombFlyDistHigh, 0, 3 ) ] = true;
+  int lastDistances[5] = {0, 0, 0, 0, 0};  // Initialize with default values
 
-  bool yahtzee = true;
-  for ( int accx = 0; accx < 4; accx++ )
+  // Get the pointer to the most recent set's storage in the buffer
+  int recentSetIndex = ( currentSetIndex - 1 + NUM_SETS ) % NUM_SETS;
+  int16_t* recentSet = buffer + ( recentSetIndex * SET_SIZE );
+
+  // Iterate through the last 5 calls to detectFingerTip and update the column tracking
+  for ( int i = 0; i < 5; i++ ) 
   {
-    if ( ! flyaccumulator[ accx ] ) yahtzee = false;
+    // Call detectFingerTip() and store the result in fingerPosCol if a finger is detected
+    if ( detectFingerTip( currentSetIndex - i ) ) 
+    {
+      float dist = recentSet[ ( fingerPosCol * GRID_COLS ) + fingerPosRow ];
+      if ( dist > 0 )
+      {
+        lastDistances[ i ] = dist;
+      }
+    }
   }
 
-  return yahtzee;
+  for (int i = 0; i < 4; i++) 
+  {
+    if ( lastDistances[i] >= lastDistances[i + 1] ) 
+    {
+      return false;  // If any value is greater or equal to the next, return false
+    }
+
+  }
+  
+  return true;  // All values are descending
 }
 
 // Finger tip coordinates used by Pounce, Eyes, Parallax, Horiz, Vert
 
 bool TOF::detectFingerTip( int setnum ) 
 {
+  if ( setnum > NUM_SETS ) return false;
+
   fingerTipInRange = false;
+  fingerPosRow = 0;
+  fingerPosCol = 0;
 
   // Get the pointer to the most recent set's storage in the buffer
   int recentSetIndex = ( setnum - 1 + NUM_SETS) % NUM_SETS;
@@ -363,22 +877,29 @@ bool TOF::detectFingerTip( int setnum )
 
   float dist = 0;
 
-  for (int row = 0; row < GRID_ROWS; row++) 
+  int foundcount = 0;
+  
+  for ( int y = 0; y < 8; y++ )
   {
-    for (int col = 0; col < GRID_COLS; col++) 
+    for ( int x = 0; x < 8; x++ )
     {
-      dist = recentSet[ ( col * GRID_COLS ) + row ];
+      int16_t offset = (y * 8) + x;
+      int16_t dist = recentSet[ offset ];
 
       if ( ( dist > fingerDetectionThresholdLow ) && ( dist < fingerDetectionThresholdHigh ) )
       {
+        foundcount ++;
+        
         // Update the bounds
-        minX = min(minX, col);
-        maxX = max(maxX, col);
-        minY = min(minY, row);
-        maxY = max(maxY, row);
+        minX = min(minX, y);
+        maxX = max(maxX, y);
+        minY = min(minY, x);
+        maxY = max(maxY, x);
       }
     }
   }
+
+  if ( foundcount < 4 ) return false;
 
   // If there are non-zero cells, calculate the center of the bounding box
   if ( ( minX <= maxX ) && ( minY <= maxY ) ) 
@@ -386,14 +907,42 @@ bool TOF::detectFingerTip( int setnum )
     fingerPosRow = (minX + maxX) / 2;
     fingerPosCol = (minY + maxY) / 2;
 
-    fingerDist = recentSet[ ( fingerPosCol * GRID_COLS ) + fingerPosRow ];
+    fingerDist = recentSet[ ( fingerPosCol * GRID_COLS ) + fingerPosRow ] ;
     fingerTipInRange = true;
 
-    // Color the center point
+    /*
+    myMef = "dist = ";
+    myMef += fingerDist;
+    myMef += ", ";
+    myMef += fingerPosRow;
+    myMef += ", ";
+    myMef += fingerPosCol;
+    myMef += ", ";
+    myMef += ( fingerPosCol * GRID_COLS ) + fingerPosRow;
+    myMef += ", ";
+    myMef += minX;
+    myMef += ", ";
+    myMef += maxX;
+    myMef += ", ";
+    myMef += minY;
+    myMef += ", ";
+    myMef += maxY;
+    myMef += ", ";
 
-    int spotdiam = round( ( ( fingerDist - fingerDetectionThresholdLow ) / ( fingerDetectionThresholdHigh - fingerDetectionThresholdLow ) ) * tofdiam );
+    for ( int j = 0; j < 64; j++ )
+    {
+      myMef += recentSet[ j ];
+      myMef += ", ";
+    }
+    */
 
-    gfx -> fillCircle( yspace + ( fingerPosRow * ydistance ), xspace + ( fingerPosCol * xdistance ), spotdiam, COLOR_BLUE);
+    // Color the finger center point
+
+    //int spotdiam = ( ( fingerDist - fingerDetectionThresholdLow ) / ( fingerDetectionThresholdHigh - fingerDetectionThresholdLow ) ) * tofdiam;
+
+    int16_t xloc = xspace + ( fingerPosCol * xdistance );
+    int16_t yloc = yspace + ( fingerPosRow * ydistance );
+    gfx -> fillCircle( xloc, yloc, tofdiam, COLOR_BLUE);
 
     return true;
   }
@@ -454,26 +1003,18 @@ String TOF::getStats()
   mef += fingerPosCol;
   mef += ") | ";
 
-  // Circular gesture accumulators
-  mef += "Circ: [";
+  // BombDrop gesture accumulators
+  mef += "Bomb: [";
   for (int i = 0; i < 4; i++) {
-      mef += accumulator[i] ? "1" : "0";
+      mef += bombaccumulator[i] ? "1" : "0";
       if (i < 3) mef += ", ";
   }
   mef += "] | ";
 
-  // Horizontal gesture accumulators
-  mef += "Horiz: [";
+  // BombDrop gesture accumulators
+  mef += "Bomb: [";
   for (int i = 0; i < 4; i++) {
-      mef += horizaccumulator[i] ? "1" : "0";
-      if (i < 3) mef += ", ";
-  }
-  mef += "] | ";
-
-  // Vertical gesture accumulators
-  mef += "Vert: [";
-  for (int i = 0; i < 4; i++) {
-      mef += vertaccumulator[i] ? "1" : "0";
+      mef += bombaccumulator[i] ? "1" : "0";
       if (i < 3) mef += ", ";
   }
   mef += "] | ";
@@ -503,12 +1044,66 @@ String TOF::getStats()
 
 String TOF::getMef()
 {
-  return myMef;
+  String myMefa = myMef;
+  String myMef = "";
+  return myMefa;
 }
 
 String TOF::getMef2()
 {
-  return myMef2;
+  String myMefa = myMef2;
+  String myMef2 = "";
+  return myMefa;
+}
+
+void TOF::flipAndRotateArray(int16_t* dest, int width, int height) 
+{
+/*
+  // fcohen@starlingwatch.com I have no idea why the sensor data needs
+  // to be flipped horizontally and then rotated 90 degreeS BUT does
+  // not also need to be flipped vertically. I decided to move on.
+
+  // Flip vertically (reverse the order of rows)
+  for (int row = 0; row < height; ++row) {
+      for (int col = 0; col < width / 2; ++col) {
+          int leftIdx  = row * width + col;
+          int rightIdx = row * width + (width - 1 - col);
+          float temp = dest[leftIdx];
+          dest[leftIdx] = dest[rightIdx];
+          dest[rightIdx] = temp;
+      }
+  }
+*/
+
+  // Flip horizontally (reverse each row)
+  for (int row = 0; row < height / 2; ++row) {
+      for (int col = 0; col < width; ++col) {
+          int topIdx    = row * width + col;
+          int bottomIdx = (height - 1 - row) * width + col;
+          float temp = dest[topIdx];
+          dest[topIdx] = dest[bottomIdx];
+          dest[bottomIdx] = temp;
+      }
+  }
+
+  // Rotate 90° clockwise in place.
+  // For a square matrix, rotate in layers.
+  int n = width; // (width == height == 8)
+  for (int i = 0; i < n / 2; ++i) 
+  {
+    for (int j = i; j < n - i - 1; ++j) 
+    {
+      float temp = dest[i * n + j];
+      // Move element from left -> top
+      dest[i * n + j] = dest[(n - j - 1) * n + i];
+      // Move element from bottom -> left
+      dest[(n - j - 1) * n + i] = dest[(n - i - 1) * n + (n - j - 1)];
+      // Move element from right -> bottom
+      dest[(n - i - 1) * n + (n - j - 1)] = dest[j * n + (n - i - 1)];
+      // Move temp (top) -> right
+      dest[j * n + (n - i - 1)] = temp;
+    }
+  }
 }
 
 void TOF::acquireDataToBuffer()
@@ -521,46 +1116,109 @@ void TOF::acquireDataToBuffer()
     return;
   }
   
+  // Check if buffer and measurementData are valid
+  if ( buffer == NULL ) 
+  {
+    Serial.println("TOF Error: buffer is null");
+    return;
+  }
+
+  if ( measurementData.distance_mm == NULL ) 
+  {
+    Serial.println("TOF Error: measurementData.distance_mm is null");
+    return;
+  }
+
+  // Ensure currentSetIndex is within bounds for the buffer
+  if ( currentSetIndex >= 100 ) 
+  {
+    Serial.println("Error: currentSetIndex is out of bounds");
+    return;
+  }
+
   // Get the pointer to the current set's storage in the buffer
   int16_t* dest = buffer + ( currentSetIndex * SET_SIZE );
 
   // Copy the measurement data to the buffer
   memcpy( dest, measurementData.distance_mm, SET_SIZE * sizeof( int16_t ) );
 
+  flipAndRotateArray( dest, 8, 8 );
+
   // Move to the next set, wrapping around
   currentSetIndex = ( currentSetIndex + 1 ) % NUM_SETS;
-
-  // Filter out the invalid readings
 
   // Get the pointer to the most recent set's storage in the buffer
   int recentSetIndex = (currentSetIndex - 1 + NUM_SETS) % NUM_SETS;
   int16_t* recentSet = buffer + ( recentSetIndex * SET_SIZE );
 
+  // Filter out the invalid readings
+
   for ( int mia = 0; mia < SET_SIZE; mia++ )
   {
-    int row = mia / 8;
-    int col = mia % 8;
-    float spot = recentSet[ mia ];
-
-    gfx -> fillCircle( xspace + ( row * xdistance ), yspace + ( col * ydistance ), tofdiam, COLOR_BACKGROUND);
-
-    if ( ( spot < closefilter ) || ( spot > farfilter ) ) 
+    if ( ( recentSet[ mia ] < closefilter ) || ( recentSet[ mia ] > farfilter ) ) 
     {
-      recentSet[ mia ] = 0.0;
+      recentSet[ mia ] = 0;
     }
-    else
-    {
-      // Show bubbles
-
-      int spotdiam = round( ( ( spot - closefilter ) / ( farfilter - closefilter ) ) * tofdiam );
-
-      if ( spotdiam > 0 )
-      {
-        gfx -> drawCircle( xspace + ( row * xdistance ), yspace + ( col * ydistance ), spotdiam, COLOR_RING);
-      }
-    }
-
   }
+
+  // Show bubbles on display
+
+  /*
+    myMef2 = "Bubbles: ";
+    for ( int j = 0; j < 64; j++ )
+    {
+      myMef2 += recentSet[ j ];
+      myMef2 += ", ";
+    }
+    myMef2 += "\n#";
+  */
+
+  for ( int y = 0; y < 8; y++ )
+  {
+    for ( int x = 0; x < 8; x++ )
+    {
+      int16_t xloc = xspace + ( x * xdistance );
+      int16_t yloc = yspace + ( y * ydistance );
+      int16_t offset = (y * 8) + x;
+      int16_t spot = recentSet[ offset ];
+
+      /*
+      myMef += offset;
+      myMef += " ";
+      myMef += x;
+      myMef += " ";
+      myMef += y;
+      myMef += " ";
+      myMef += xloc;
+      myMef += " ";
+      myMef += yloc;
+      myMef += " ";
+      myMef += spot;
+      */
+
+      gfx -> fillCircle( xloc, yloc, tofdiam, COLOR_BACKGROUND);
+
+      if ( ( spot > bubbleLow ) && ( spot < bubbleHigh ) ) 
+      {
+        float spot1 = spot - bubbleLow;
+        float spot2 = bubbleHigh - bubbleLow ;
+        float spot3 = spot1 / spot2;
+        int16_t spotdiam = round( spot3 * tofdiam );
+
+        //myMef += "*";
+        //myMef += spotdiam;
+
+        if ( spotdiam > 0 )
+        {
+          gfx -> drawCircle( xloc, yloc, spotdiam, COLOR_RING);
+        }
+      }
+
+      //myMef += ", ";
+    }
+    //myMef += "\n\n";
+  }
+    //myMef += "\n\n\n";
 }
 
 void TOF::loop()
@@ -573,6 +1231,27 @@ void TOF::loop()
 
     acquireDataToBuffer();    // And show bubbles
 
-    detectGestures();
+    //detectGestures();
+
+
+    if ( detectHorizontalGesture() )
+    {
+      recentGesture = TOFGesture::Horizontal;
+      //myMef = " (TOF horiz)";
+    }
+
+
+
+
   }
+
+  if ( millis() - debouncetime > 1000 ) 
+  {
+    if ( recentGesture != TOFGesture::None )
+    {
+      recentGesture = TOFGesture::None;
+      debouncetime = millis();
+    }
+  }
+
 }

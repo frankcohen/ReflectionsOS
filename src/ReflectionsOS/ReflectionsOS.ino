@@ -387,13 +387,13 @@ void loop()
   if ( millis() - statstime > 1500 )
   {
     statstime = millis();
-    Serial.println( tof.getMef() );
-    Serial.println( " "); 
 
-    Serial.print( "Mef2 = "); 
-    Serial.println( tof.getMef2() );
+    //Serial.println( tof.getStats() );
+    String mf = tof.getMef();
+    String mf2 = tof.getMef2();
 
-    Serial.println( " "); 
+    if ( mf != "" ) Serial.println( mf );    
+    if ( mf2 != "" ) Serial.println( mf2 );
   }
 
   // Printing accelerometer statistics here because this code runs in Core 1
