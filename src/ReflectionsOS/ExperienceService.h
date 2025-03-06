@@ -59,13 +59,13 @@ class ExperienceService
     int getCurrentState();
     void setCurrentState( State state );
     bool active();
+    void resetAfterTimer();
 
     enum ExperienceName
     {
       Awake,
       ShowTime,
       Sleep,
-      SetTime,
       Chastise,
       EyesFollowFinger,
       ParallaxCat,
@@ -90,8 +90,8 @@ class ExperienceService
 
     unsigned long catsplayTimer;
     unsigned long catsplayTimer2;
-    unsigned long shakenTimer;
-
+    unsigned long gestureTimer;
+    unsigned long afterTimer;
     unsigned long noopTimer;
     bool noopFlag;
 

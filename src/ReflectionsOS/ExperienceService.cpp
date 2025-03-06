@@ -27,7 +27,6 @@ the #include list and class instantiation method below.
 #include "Experience_Awake.h"
 #include "Experience_ShowTime.h"
 #include "Experience_Sleep.h"
-#include "Experience_SetTime.h"
 #include "Experience_Chastise.h"
 #include "Experience_Eyes.h"
 #include "Experience_Parallax.h"
@@ -64,14 +63,6 @@ ExperienceService::ExperienceService() : currentExperience( nullptr ), currentSt
   if ( makeExp == nullptr )
   {
     Serial.println( F( "ExperienceService error making Experience_Sleep" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-
-  makeExp = new Experience_SetTime();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_SetTime" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -158,10 +149,11 @@ void ExperienceService::begin()
 {
   currentState = STOPPED;
 
-  shakenTimer = millis();
+  gestureTimer = millis();
 
   catsplayTimer = millis();
   catsplayTimer2 = millis();
+  afterTimer = millis();
 
   noopTimer = millis();
   noopFlag = false;
@@ -169,6 +161,11 @@ void ExperienceService::begin()
   experienceIndex = 0;
 
   //startExperience( ExperienceService::Awake );   // Sleep experience
+}
+
+void ExperienceService::resetAfterTimer()
+{
+  afterTimer = millis();
 }
 
 void ExperienceService::startExperience( int exper )
@@ -182,7 +179,7 @@ void ExperienceService::startExperience( int exper )
     return;
   }
 
-  Serial.print( "ExperienceService startExperience " );
+  Serial.print( "startExperience " );
   Serial.println( exper );
 
   currentExperience->init();
@@ -217,6 +214,9 @@ void ExperienceService::operateExperience()
       {
         currentState = RUN;
       }
+
+      tof.stopGestureSensing();
+
       break;
 
     case RUN:
@@ -246,10 +246,13 @@ void ExperienceService::operateExperience()
       if ( currentExperience->isTeardownComplete() ) 
       {
         currentState = STOPPED;
+
+        tof.startGestureSensing();
+        resetAfterTimer();        
       }
       break;
 
-    case STOPPED:
+    case STOPPED:    
       break;
   }
 }
@@ -266,125 +269,74 @@ void ExperienceService::loop()
 
   if ( getCurrentState() != STOPPED ) return;
 
+  if ( video.getStatus() != 0 ) return;
 
-  return; // Temporary until you're ready to enable experiences, WatchMainFace comes first
+  if ( millis() - afterTimer < 4000 ) return;
 
-  /*
-  // ShowTime from accel next gesture
-
-  if ( accel.getRecentGesture() != 0 )
+  if ( millis() - gestureTimer > 500 )
   {
-    startExperience( ExperienceService::ShowTime );
-    return;
-  }
-  */
+    gestureTimer = millis();
 
-  // Run CatsPlay Experience when RSSI says they are close
+    // Start a new experience from the TOF sensor
 
-  int mrs; // = bleClient.getDistance();
+    tof.startGestureSensing();
 
-  if ( ( mrs > catsplayCloser ) && ( mrs != 0 ) ) 
-  {
-    catsplayTimer = millis();
+    TOF::TOFGesture recentGesture = tof.getGesture();
 
-    Serial.print("Device is close. RSSI = " );
-    Serial.println( mrs );
-
-    startExperience( ExperienceService::CatsPlay );
-    return;
-  }
-
-  // Getting sleepy after 1 minute of not operations
-
-  if ( ( millis() - noopTimer ) > ( 1000 * 30 ) )
-  {
-    noopTimer = millis();
-
-    if ( 1 )   // ! noopFlag
+    switch ( recentGesture )
     {
-      if ( video.getStatus() == 0 )
-      {
-        switch ( random( 1, 7 ) )
-        {
-          case 1:
-            startExperience( ExperienceService::ShowTime );
-            Serial.println( "ShowTime" );
-            break;
-          case 2:
-            startExperience( ExperienceService::ShowTime );
-            Serial.println( "ShowTime" );
-            break;
-          case 3:
-            startExperience( ExperienceService::Chastise ); 
-            Serial.println( "Chastise" );
-            break;
-          case 4:
-            startExperience( ExperienceService::Shaken );
-            Serial.println( "Shaken" );
-            break;
-          case 5:
-            startExperience( ExperienceService::SwipeFinger );
-            Serial.println( "Shaken" );
-            break;
-          case 6:
-            startExperience( ExperienceService::ParallaxCat );
-            Serial.println( "Shaken" );
-            break;
-        }
-      }
+      case TOF::TOFGesture::None:
+        break;
+
+      case TOF::TOFGesture::Left:
+        startExperience( ExperienceService::Chastise );
+        return;
+
+      case TOF::TOFGesture::Circular:
+        startExperience( ExperienceService::MysticCat );
+        return;
+
+      case TOF::TOFGesture::Sleep:
+        return;
+
+      case TOF::TOFGesture::Right:
+        // ShowTime with fun messages
+        return;
+
+      case TOF::TOFGesture::Up:
+        // Parallax cat
+        return;
+
+      case TOF::TOFGesture::Down:
+        return;
+
+      default:
+        Serial.print( "Unknown TOF experience ");
+        Serial.println( recentGesture );
+        break;
     }
 
-    noopFlag = false;
-    return;
-  }
+    // Hover
 
-return;
+    // GettingSleepy
+    
+    // Sleep gesture
 
-/*
-  if ( mygs == TOF::Sleep ) 
-  {
-    Serial.println( "sleep");
-    startExperience( ExperienceService::Sleep );   // Sleep experience and puts hardware into deep sleep    
-    return;
-  }
-*/
+    // Shake experience
 
-  int mygs = tof.getGesture();
+    // Swipe
 
-  if ( video.getStatus() == 0 )
-  {
-    if ( millis() - shakenTimer > 20000 )
-    {
-      shakenTimer = millis();
+    // Pounce
 
-      Serial.print( "TOF gesture detected " );
-      if ( mygs == TOF::BombDrop ) Serial.println( "bombdrop" );
-      if ( mygs == TOF::Circular ) Serial.println( "circular" );
-      if ( mygs == TOF::FlyAway ) Serial.println( "flyaway" );
-      if ( mygs == TOF::Horizontal ) Serial.println( "horizontal" );
-      if ( mygs == TOF::Vertical ) Serial.println( "vertical" );
+    // Cats Play
 
-      switch ( random( 1, 5 ) )
-      {
-        case 1:
-          startExperience( ExperienceService::Shaken );
-          Serial.println( "Shaken" );
-          break;
-        case 2:
-          startExperience( ExperienceService::SwipeFinger );
-          Serial.println( "Swipe" );
-          break;
-        case 3:
-          startExperience( ExperienceService::Chastise );
-          Serial.println( "Chastise" );
-          break;
-        case 4:
-          startExperience( ExperienceService::Shaken );
-          Serial.println( "Shaken" );
-          break;
-      }
 
-    return;
-    }
+
+
+
+
+
+
+
   }
 }

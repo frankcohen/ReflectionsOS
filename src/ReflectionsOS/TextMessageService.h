@@ -26,10 +26,12 @@
 #include "SomeTimeLater20pt7b.h"
 #include "Minya16pt7b.h"
 #include "ScienceFair14pt7b.h"
+#include "SomeTimeLater12pt7b.h"
 #include "Minya_Nouvelle_Rg30pt7b.h"
 
 extern LOGGER logger;
 extern Arduino_Canvas *bufferCanvas;
+extern Arduino_GFX *gfx;
 extern RealTimeClock realtimeclock;
 
 extern const char* pairs[][2];
@@ -45,12 +47,11 @@ extern const char* pairs[][2];
 #define SETTIME_TIMEOUT 7000
 #define SNAP_ANGLE_INCREMENT 7.5 // Increment for angle movement, smaller value for fine adjustment
 
-enum TextMessageExperiences {
-    ShowTellTime,
-    DigitalSetTime,
-    DigitalTimeShow,
-    DigitalTimeFadeIn,
-    DigitalTimeFadeOut
+enum TextMessageExperiences 
+{
+    ShowDigitalTimeFunMessages,       // Shows time with funny message above and below
+    MysticalAnswer,
+    DigitalTime                       // Cat opens mouth to reveal the time
 };
 
 class TextMessageService
@@ -60,9 +61,9 @@ class TextMessageService
     void begin();
     void loop();
 
-    boolean fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font);
-    boolean fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font);
-    void startShow( int shownum );
+    boolean fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font, bool buffertag );
+    boolean fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font, bool buffertag);
+    void startShow( int shownum, String msg1, String msg2 );
 
     bool active();
     void stop();
@@ -81,24 +82,11 @@ class TextMessageService
     void drawCenteredMesssage( String msg, String msg2 );
 
   private:
-    void runShowTellTime();
-    void runDigitalSetTime();
+    void runShowDigitalTimeFunMessages();
+    void runMysticShow();
     void runDigitalTime();
-    void runTimeAndMessage();
-
-    void runDigitalTimeFadeIn();
-    void runDigitalTimeFadeOut();
-    void runDigitalTimeShow();
 
     String formatWithCommas(int value);
-
-    /* Unused at the moment 
-    void drawClockFace();
-    void showDigitalTime();
-    void drawCarrot( float angle );
-    void getTimeFromAngle(float angle, int &hour, int &minute);
-    void setCarrotAngleFromRTC();
-    */
 
     int16_t x, y;
     uint16_t w, h;
@@ -110,6 +98,7 @@ class TextMessageService
     long ShowTimeWaitTime;
     bool fadeset;
     int showStep;
+    
     String theMsg1;
     String theMsg2;
 

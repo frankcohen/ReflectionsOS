@@ -54,18 +54,15 @@ extern Arduino_GFX *gfx;
 #define fingerDetectionThresholdLow 18
 #define fingerDetectionThresholdHigh 40
 
-// Horizontal and vertical movement detection
+// Horizontal, vertical, circular movement detection
 #define movementLow 30
 #define movementHigh 70
 #define movementFrames 5
+#define circularCountLow 20
 
 // Bubble range
 #define bubbleLow 10
 #define bubbleHigh 70
-
-// Definitions for BombDrop and FlyAway gesture
-#define bombFlyDistLow 25    // Cannot be smaller than fingerDetectionThresholdLow
-#define bombFlyDistHigh 50   // Cannot be larger than fingerDetectionThresholdHigh
 
 class TOF
 {
@@ -77,11 +74,10 @@ class TOF
       None,
       Sleep,
       Circular,
-      Horizontal,
-      Vertical,
-      BombDrop,
-      FlyAway,
-      Hover
+      Right,
+      Left,
+      Up,
+      Down
     };
 
     void begin();
@@ -89,43 +85,38 @@ class TOF
     bool test();
 
     bool tofStatus();
+    void setStatus( TOFGesture status );
+    bool getPaused();
+    void startGestureSensing();
+    void stopGestureSensing();
+
+    String getRawMeasurements();
 
     TOFGesture getGesture();
+    String getGestureName();
 
-    void displayStatus();
-    void printTOF();
-    String getStats();
-
-    String getMef();
-    String getMef2();
+    String getRecentMessage();
+    String getRecentMessage2();
 
   private:
-    void detectGestures();
-
     // Helper methods for gesture detection
     bool detectFingerTip( int setnum );
     bool detectSleepGesture();
+    bool detectFab5Gestures();
 
-    bool detectHorizontalGesture();
-    bool detectHorizontalGesture2();
-    bool detectHorizontalGesture3();
-    bool detectHorizontalGesture4();
-    bool detectVerticalGesture();
+    bool checkBuffer();
 
-    bool detectCircularGesture();
-    bool detectBombDropGesture();
-    bool detectFlyAwayGesture();
+    void resetBuffer();
 
     void flipAndRotateArray( int16_t* dest, int width, int height );
 
     bool started;
+    bool paused;
     TOFGesture recentGesture;
 
     SparkFun_VL53L5CX sensor;
 
-    VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
-
-    int16_t* buffer;          // Wrap around buffer stores most recent measurements
+    int16_t* tofbuffer;          // Wrap around buffer stores most recent measurements
     int currentSetIndex;
 
     int previousHorizPositions[ 8 ];
@@ -156,7 +147,12 @@ class TOF
     void determineMovementBetweenFrames( int16_t * olderFrame, int16_t * newerFrame, int &best_dx, int &best_dy);
     float computeCorrelation( int16_t * frame1, int16_t * frame2, int dx, int dy);
 
+    String rawMeasurements;
 
+    VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
+    // I suspect that sometimes the sensor library is overwrighting the measurementData,
+    // so I put bufferbuffer here just in case. C/C++ must die.
+    int bufferbuffer[ 200 ];
 };
 
 #endif // _TOF_

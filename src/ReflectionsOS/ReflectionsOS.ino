@@ -183,7 +183,7 @@ static void smartdelay(unsigned long ms) {
 
     // Device operations
 
-    //video.loop();
+    video.loop();
     battery.loop();
     storage.loop();
     wifi.loop();
@@ -199,9 +199,8 @@ static void smartdelay(unsigned long ms) {
 
     // Watch experience operations
 
-/* testing TOF
     unsigned long fellow = millis();
-    watchfaceexperiences.loop();
+    //watchfaceexperiences.loop();
     systemload.logtasktime(millis() - fellow, 1, "we");
     fellow = millis();
     experienceservice.loop();
@@ -209,9 +208,8 @@ static void smartdelay(unsigned long ms) {
     fellow = millis();
     textmessageservice.loop();
     systemload.logtasktime(millis() - fellow, 3, "tm");
-*/
 
-    //systemload.loop();
+    systemload.loop();
 
     /*
     logger.loop();
@@ -351,6 +349,8 @@ void setup() {
 
   //haptic.playEffect(14);  // 14 Strong Buzz
 
+  //experienceservice.startExperience( ExperienceService::MysticCat );
+
   logger.info(F("Setup complete"));
 }
 
@@ -388,12 +388,16 @@ void loop()
   {
     statstime = millis();
 
-    //Serial.println( tof.getStats() );
-    String mf = tof.getMef();
-    String mf2 = tof.getMef2();
+    String mf = tof.getRecentMessage();
+    String mf2 = tof.getRecentMessage2();
 
-    if ( mf != "" ) Serial.println( mf );    
-    if ( mf2 != "" ) Serial.println( mf2 );
+    if ( mf != "" ) 
+    {
+      Serial.println( mf );
+      Serial.println( mf2 );
+    }
+
+    // Serial.println( tof.getGestureName() );     // Gets a String without clearing the gesture
   }
 
   // Printing accelerometer statistics here because this code runs in Core 1
@@ -408,7 +412,7 @@ void loop()
     if (rowCount >= 10) 
     {
       rowCount = 0;  // Reset the counter
-//      Serial.println( accel.printHeader() );  // Reprint the header
+      // Serial.println( accel.printHeader() );  // Reprint the header
     }
 
     //Serial.print( "dtime " );

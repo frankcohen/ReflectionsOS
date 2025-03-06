@@ -48,7 +48,7 @@ void Experience_ShowTime::run()
 {
   if ( timeflag )
   {
-    textmessageservice.startShow( 0 );       // Show saying plus hour and minute
+    textmessageservice.startShow( TextMessageExperiences::DigitalTime, "", "" );  
     timeflag = false;
   }
   else

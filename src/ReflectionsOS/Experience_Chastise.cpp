@@ -26,7 +26,9 @@ void Experience_Chastise::init()
 
 void Experience_Chastise::setup() 
 {
-  Serial.println( "Chastise SETUP" );
+  Serial.print( chastisename );
+  Serial.println( "SETUP" );
+
   video.startVideo( Chastise_video );
 
   setSetupComplete(true);  // Signal that setup is complete
@@ -42,6 +44,8 @@ void Experience_Chastise::run()
 
 void Experience_Chastise::teardown() 
 {
-  Serial.println( "Chastise TEARDOWN" );
+  Serial.print( chastisename );
+  Serial.println( "TEARDOWN" );
+
   setTeardownComplete( true );  // Signal teardown complete
 }

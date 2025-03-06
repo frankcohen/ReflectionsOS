@@ -22,6 +22,8 @@
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
 
+#define chastisename "Chastise "
+
 class Experience_Chastise : public Experience {
   public:
     void setup() override;

@@ -7,52 +7,14 @@
  Licensed under GPL v3 Open Source Software
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
+
+ Runs text shows as overlay on whatever is on the display at the moment
+
 */
 
 #include "TextMessageService.h"
 
 TextMessageService::TextMessageService(){}
-
-// Clock fun messages
-
-const char* timetext[51][2] = {
-  { "It's early",    "to be exact" },
-  { "It's late",     "to be exact"},
-  { "Wait, wait",    "you waited!"},
-  { "Peekaboo",      "i see you"},
-  { "Why?",          "why not?"},
-  { "When?",         "and where?"},
-  { "Little time",   "to be exact"},
-  { "Will it end?",  "and when?"},
-  { "Cats forever",  "meow"},
-  { "Hug please",    "forever"},
-  { "I'm late",      "important date"},
-  { "No panic",      "no worries"},
-  { "Grin",          "like a cat"},
-  { "Curiouser",     "and curiouser"},
-  { "A dream",       "within a dream"},
-  { "I've gone",     "entirely mad"},
-  { "All mad",       "all of us"},
-  { "Simply mad",    "as a hatter"},
-  { "Twiddledee",    "and Twiddledum"},
-  { "I vanish",      "like a ghost"},
-  { "Very, very",    "mysterious"},
-  { "Truly, very",   "wonderland"},
-  { "I appear",      "and disappear"},
-  { "Slithy toves",  "Brillig?"},
-  { "Did gyre?",     "Borogroves?"},
-  { "Play time?",    "Croquet"},
-  { "Follow",        "White rabbit"},
-  { "See me?",       "Or not"},
-  { "A rabbit?",     "White even?"},
-  { "I am mad",      "So are you"},
-  { "Find me",       "if you can"},
-  { "A place",       "like no other"},
-  { "Do you?",       "Believe?"},
-  { "Look closely",  "See nothing"},
-  { "Smiling",       "Ear to ear"},
-  { "Invisible!",    "Yet here"},
-};
 
 void TextMessageService::begin()
 { 
@@ -73,44 +35,26 @@ void TextMessageService::begin()
   String pastTimeStr = " ";
 }
 
-void TextMessageService::startShow( int shownum )
-{
-  showNum = shownum;
-  showStep = 0;
-  activated = true;
-  ShowTimeWaitTime = millis();
-  stepDelay = 100;
-}
+/*
+  Displays msytic cat messages
+*/
 
-bool TextMessageService::isTimeSet()
-{
-  if ( theTime == "0 o'clock" ) return false;
-  return true;
-}
-
-/* Show the current time with a funny message above and below */
-
-void TextMessageService::runShowTellTime()
+void TextMessageService::runMysticShow()
 {
   if ( showStep == 0 )
   {    
     showStep = 1;
     fadeset = 1;
-    //theTime = getRTCtime();       // This introduces a 3-5 second delay
 
-    theTime = "2:43 o'clock";
-    //if ( theTime == "0 o'clock" ) theTime = " ";
-
-    int index = random(0, 37);
-    theMsg1 = timetext[ index ][ 0 ];
-    theMsg2 = timetext[ index ][ 1 ];
-    
     return;
   }
 
   if ( showStep == 1 )
   {
-    if ( fadeInCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b ) )
+
+    //if ( fadeInCenteredText( theMsg1, 80, 10, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b, false ) )
+
+    if ( fadeInCenteredText( theMsg1, 80, 10, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later12pt7b, false ) )
     {
       showStep = 2;
       fadeset = 1;
@@ -123,7 +67,91 @@ void TextMessageService::runShowTellTime()
 
   if ( showStep == 2 )
   {
-    if ( fadeInCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b ) )
+   if ( fadeInCenteredText( theMsg2, 110, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b, false ) )
+    {
+      showStep = 4;
+      fadeset = 1;
+    }
+    else
+    {
+      return;
+    }
+  }
+
+  if ( showStep == 3 )
+  {
+   if ( fadeOutCenteredText( theMsg2, 110, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b, false ) )
+    {
+      showStep = 5;
+      fadeset = 1;
+    }
+    else
+    {
+      return;
+    }
+  }
+
+  if ( showStep == 4 )
+  {
+    if ( fadeOutCenteredText( theMsg1, 80, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later12pt7b, false ) )
+    {
+      activated = false;
+      showStep = 0;
+      fadeset = 1;
+      ShowTimeWaitTime = millis();
+    }
+    else
+    {
+      return;
+    }
+  }
+}
+
+void TextMessageService::startShow( int shownum, String msg1, String msg2 )
+{
+  showNum = shownum;
+  showStep = 0;
+  activated = true;
+  ShowTimeWaitTime = millis();
+  stepDelay = 100;
+  theMsg1 = msg1;
+  theMsg2 = msg2;
+}
+
+bool TextMessageService::isTimeSet()
+{
+  if ( theTime == "0 o'clock" ) return false;
+  return true;
+}
+
+/* Show the current time with a funny message above and below */
+
+void TextMessageService::runShowDigitalTimeFunMessages()
+{
+  if ( showStep == 0 )
+  {    
+    showStep = 1;
+    fadeset = 1;
+    theTime = getRTCtime();       // This introduces a 3-5 second delay    
+    return;
+  }
+
+  if ( showStep == 1 )
+  {
+    if ( fadeInCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b, true ) )
+    {
+      showStep = 2;
+      fadeset = 1;
+    }
+    else
+    {
+      return;
+    }
+  }
+
+  if ( showStep == 2 )
+  {
+    if ( fadeInCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b, true ) )
     {
       showStep = 3;
       fadeset = 1;
@@ -136,7 +164,7 @@ void TextMessageService::runShowTellTime()
 
   if ( showStep == 3 )
   {
-   if ( fadeInCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b ) )
+   if ( fadeInCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b, true ) )
     {
       showStep = 4;
       fadeset = 1;
@@ -149,7 +177,7 @@ void TextMessageService::runShowTellTime()
 
   if ( showStep == 4 )
   {
-   if ( fadeOutCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b ) )
+   if ( fadeOutCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b, true ) )
     {
       showStep = 5;
       fadeset = 1;
@@ -162,7 +190,7 @@ void TextMessageService::runShowTellTime()
 
   if ( showStep == 5 )
   {
-    if ( fadeOutCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b ) )
+    if ( fadeOutCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b, true ) )
     {
       showStep = 6;
       fadeset = 1;
@@ -175,7 +203,7 @@ void TextMessageService::runShowTellTime()
 
   if ( showStep == 6 )
   {
-    if ( fadeOutCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b ) )
+    if ( fadeOutCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b, true ) )
     {
       activated = false;
       showStep = 0;
@@ -190,122 +218,21 @@ void TextMessageService::runShowTellTime()
 
 }
 
-// Fade-in digital time for Main Watch Face
+/* Cat opens mouth to reveal the time */
 
-void TextMessageService::runDigitalTimeFadeIn()
+void TextMessageService::runDigitalTime()
 {
   if ( showStep == 0 )
   {    
     showStep = 1;
     fadeset = 1;
-
-    theTime = getRTCtime();       // This introduces a 3-5 second delay    
-
+    theTime = getRTCtime();
     return;
   }
 
   if ( showStep == 1 )
   {
-    if ( fadeInCenteredText( theTime, 130, 15, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya_Nouvelle_Rg30pt7b ) )
-    {
-      activated = false;
-      showStep = 2;
-      fadeset = 1;
-      ShowTimeWaitTime = millis();
-    }
-    else
-    {
-      return;
-    }
-  }
-}
-
-void TextMessageService::runDigitalTimeFadeOut()
-{
-  if ( showStep == 0 )
-  {    
-    showStep = 1;
-    fadeset = 1;
-
-    theTime = getRTCtime();       // This introduces a 3-5 second delay
-
-    //if ( theTime == "0 o'clock" ) theTime = " ";
-    
-    theDate = "Nov 1, 2024";
-
-    return;
-  }
-
-  if ( showStep == 1 )
-  {
-    if ( fadeOutCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya_Nouvelle_Rg30pt7b ) )
-    {
-      activated = false;
-      showStep = 0;
-      fadeset = 1;
-      ShowTimeWaitTime = millis();
-    }
-    else
-    {
-      return;
-    }
-  }
-}
-
-// Shows digital time and a funny message
-
-void TextMessageService::runTimeAndMessage()
-{
-  if ( showStep == 0 )
-  {    
-    showStep = 1;
-    fadeset = 1;
-    //theTime = getRTCtime();       // This introduces a 3-5 second delay
-
-    theTime = "2:43 pm";
-    //if ( theTime == "0 o'clock" ) theTime = " ";
-    
-    theDate = "Nov 1, 2024";
-
-    return;
-  }
-
-  if ( showStep == 1 )
-  {
-    if ( fadeInCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
-    {
-      activated = false;
-      showStep = 2;
-      fadeset = 1;
-      ShowTimeWaitTime = millis();
-    }
-    else
-    {
-      return;
-    }
-  }
-
-  if ( showStep == 2 )
-  {
-    if ( fadeOutCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
-    {
-      activated = false;
-      showStep = 0;
-      fadeset = 1;
-      ShowTimeWaitTime = millis();
-    }
-    else
-    {
-      return;
-    }
-  }
-
-
-
-/*
-  if ( showStep == 1 )
-  {
-    if ( fadeInCenteredText( theTime, 130, 100, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
+    if ( fadeInCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b, true ) )
     {
       showStep = 2;
       fadeset = 1;
@@ -318,7 +245,7 @@ void TextMessageService::runTimeAndMessage()
 
   if ( showStep == 2 )
   {
-    if ( fadeInCenteredText( theDate, 170, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_MAIN_BACK, &ScienceFair14pt7b ) )
+    if ( fadeOutCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b, true ) )
     {
       showStep = 3;
       fadeset = 1;
@@ -328,36 +255,6 @@ void TextMessageService::runTimeAndMessage()
       return;
     }
   }
-
-  if ( showStep == 3 )
-  {
-    if ( fadeOutCenteredText( theDate, 170, 20, COLOR_STRIPE_MEDIUM_GRAY, COLOR_MAIN_BACK, &ScienceFair14pt7b ) )
-    {
-      showStep = 4;
-      fadeset = 1;
-    }
-    else
-    {
-      return;
-    }
-  }
-
-  if ( showStep == 4 )
-  {
-    if ( fadeOutCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
-    {
-      activated = false;
-      showStep = 0;
-      fadeset = 1;
-      ShowTimeWaitTime = millis();
-    }
-    else
-    {
-      return;
-    }
-  }
-
-  */
 }
 
 // Draws centered text message
@@ -466,106 +363,6 @@ void TextMessageService::updateTimer( int minutesleft )
   bufferCanvas->flush();
 }
 
-// Shows digital time for set time service
-
-void TextMessageService::runDigitalTime()
-{
-  if ( showStep == 0 )
-  {    
-    showStep = 1;
-    fadeset = 1;
-    //theTime = getRTCtime();       // This introduces a 3-5 second delay
-
-    theTime = "2:43 pm";
-    //if ( theTime == "0 o'clock" ) theTime = " ";
-    
-    theDate = "Nov 1, 2024";
-
-    return;
-  }
-
-  if ( showStep == 1 )
-  {
-    if ( fadeInCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
-    {
-      activated = false;
-      showStep = 2;
-      fadeset = 1;
-      ShowTimeWaitTime = millis();
-    }
-    else
-    {
-      return;
-    }
-  }
-
-  if ( showStep == 2 )
-  {
-    if ( fadeOutCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
-    {
-      activated = false;
-      showStep = 0;
-      fadeset = 1;
-      ShowTimeWaitTime = millis();
-    }
-    else
-    {
-      return;
-    }
-  }
-  
-}
-
-// Shows digital time for set time service
-
-void TextMessageService::runDigitalSetTime()
-{
-  if ( showStep == 0 )
-  {    
-    showStep = 1;
-    fadeset = 1;
-    //theTime = getRTCtime();       // This introduces a 3-5 second delay
-
-    theTime = "2:43 pm";
-    //if ( theTime == "0 o'clock" ) theTime = " ";
-    
-    theDate = "Nov 1, 2024";
-
-    return;
-  }
-
-  if ( showStep == 1 )
-  {
-    if ( fadeInCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
-    {
-      activated = false;
-      showStep = 2;
-      fadeset = 1;
-      ShowTimeWaitTime = millis();
-    }
-    else
-    {
-      return;
-    }
-  }
-
-  if ( showStep == 2 )
-  {
-    if ( fadeOutCenteredText( theTime, 130, 30, COLOR_TEXT_YELLOW, COLOR_MAIN_BACK, &Minya16pt7b ) )
-    {
-      activated = false;
-      showStep = 0;
-      fadeset = 1;
-      ShowTimeWaitTime = millis();
-    }
-    else
-    {
-      return;
-    }
-  }
-
-}
-
 void TextMessageService::start()
 {
   activated = true;
@@ -608,13 +405,21 @@ String TextMessageService::getRTCtime()
   return timeStr;
 }
 
-boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font)
+boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font, bool buffertag)
 {
   if ( fadeset )
   {
     fadeset = 0;
-    bufferCanvas->setFont( font );
-    bufferCanvas->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
+    if ( buffertag )
+    {
+      bufferCanvas->setFont( font );
+      bufferCanvas->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
+    }
+    else
+    {
+      gfx->setFont( font );
+      gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
+    }
 
     fadestep = 1;
     steps = 128; // One step per color intensity value
@@ -633,23 +438,40 @@ boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t
 
     uint16_t textColor = (r << 11) | (g << 5) | b;
 
-    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, y );
-    bufferCanvas->setTextColor( textColor );
-    bufferCanvas->println( text );
-    bufferCanvas->flush();
+    if ( buffertag )
+    {
+      bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, y );
+      bufferCanvas->setTextColor( textColor );
+      bufferCanvas->println( text );
+      bufferCanvas->flush();
+    }
+    else
+    {
+      gfx->setCursor( ( gfx->width() - w) / 2, y );
+      gfx->setTextColor( textColor );
+      gfx->println( text );
+    }
   }
 
   return false;
 }
 
-boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font)
+boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font, bool buffertag )
 {
   if ( fadeset )
   {
     fadeset = 0;
 
-    bufferCanvas->setFont( font );
-    bufferCanvas->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
+    if ( buffertag )
+    {
+      bufferCanvas->setFont( font );
+      bufferCanvas->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);   
+    }
+    else
+    {
+      gfx->setFont( font );
+      gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h );   
+    } 
 
     fadestep = 128;
     steps = 128;
@@ -669,11 +491,21 @@ boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_
 
     uint16_t textColor = (r << 11) | (g << 5) | b;
 
-    bufferCanvas->setFont( font );
-    bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, y );
-    bufferCanvas->setTextColor( textColor );
-    bufferCanvas->println( text );
-    bufferCanvas->flush();
+    if ( buffertag )
+    {
+      bufferCanvas->setFont( font );
+      bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, y );
+      bufferCanvas->setTextColor( textColor );
+      bufferCanvas->println( text );
+      bufferCanvas->flush();
+    }
+    else
+    {
+      gfx->setFont( font );
+      gfx->setCursor( (gfx->width() - w) / 2, y );
+      gfx->setTextColor( textColor );
+      gfx->println( text );
+    }
   }
   return false;
 }
@@ -692,17 +524,14 @@ void TextMessageService::loop()
 
       switch ( showNum ) 
       {
-        case ShowTellTime:
-          runShowTellTime();
+        case ShowDigitalTimeFunMessages:  // Fun messages fade around digital time
+          runShowDigitalTimeFunMessages();
           break;
-        case DigitalSetTime:
-          runDigitalSetTime();
+        case MysticalAnswer:  // Answers questions
+          runMysticShow();
           break;
-        case DigitalTimeFadeIn:
-          runDigitalTimeFadeIn();
-          break;
-        case DigitalTimeFadeOut:
-          runDigitalTimeFadeOut();
+        case DigitalTime:     // Cat opens mouth to reveal the time
+          runDigitalTime();
           break;
       }
     }

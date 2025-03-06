@@ -64,7 +64,7 @@ void WatchFaceMain::begin()
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
   panel = STARTUP;
-  video.startVideo( WatchFaceOpener_video );
+  //video.startVideo( WatchFaceOpener_video );
 }
 
 /* Returns true when watch face is ok with the processor being put to sleep, to save battery life */
@@ -435,6 +435,9 @@ void WatchFaceMain::displayingdigitaltime()
     Serial.println( "DISPLAYING_DIGITAL_TIME" );
     needssetup = false;
     noMovementTime = millis();
+
+    int index = random(0, 37);
+    textmessageservice.startShow( TextMessageExperiences::ShowDigitalTimeFunMessages, timefunmessages[ index ][ 0 ], timefunmessages[ index ][ 1 ] );
     return;
   }
 
@@ -442,6 +445,7 @@ void WatchFaceMain::displayingdigitaltime()
   {
     panel = SETTING_DIGITAL_TIME;
     needssetup = true;
+    textmessageservice.stop();
     noMovementTime = millis();
     return;
   }
@@ -452,6 +456,7 @@ void WatchFaceMain::displayingdigitaltime()
     //haptic.playEffect(14);  // 14 Strong Buzz
     video.startVideo( WatchFaceFlip2_video );
     needssetup = true;
+    textmessageservice.stop();
     noMovementTime = millis();
     return;
   }

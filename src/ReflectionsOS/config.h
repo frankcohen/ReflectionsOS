@@ -37,7 +37,7 @@ Read the license in the license.txt file that comes with this code.
 
 #define EyesFollowFinger_video "f99c9b5031e6102ef45fbdf71cb09134"
 
-#define MysticCat_video "bc481c1a678e0f62e2838e7fc8cd922f"
+#define MysticCat_video "076b4692f07254d0457595ada2a89f37"   //"bc481c1a678e0f62e2838e7fc8cd922f"
 
 #define ParallaxCat_video "7f4f62c859d8a8638cb9126c23775372"
 
