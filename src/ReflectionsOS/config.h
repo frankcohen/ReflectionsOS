@@ -231,5 +231,8 @@ Read the license in the license.txt file that comes with this code.
 #define COLOR_BLACK RGB565(0, 0, 0)
 #define COLOR_MAIN_BACK RGB565( 55, 161, 224 )
 
+#define COLOR_EYES_LEFT RGB565( 192, 169, 28 )
+#define COLOR_EYES_RIGHT RGB565( 207, 193, 36 )
+#define COLOR_PUPILS RGB565( 0, 0, 0 )
 
 #endif // _config_

@@ -490,6 +490,21 @@ String TOF::getRecentMessage2()
   return myMefa;
 }
 
+int TOF::getFingerPosRow()
+{
+  return fingerPosRow;
+}
+
+int TOF::getFingerPosCol()
+{
+  return fingerPosCol;
+}
+
+float TOF::getFingerDist()
+{
+  return fingerDist;
+}
+
 /* Adjusts sensor data to make up for VL53L5CX sensor aiming lense. */
 
 void TOF::flipAndRotateArray(int16_t* dest, int width, int height) 
@@ -671,6 +686,8 @@ void TOF::loop()
 
     acquireDataToBuffer();    // And optionally show bubbles
 
+    detectFingerTip( currentSetIndex );
+
     if ( paused ) return;
 
     if ( recentGesture != TOFGesture::None ) return;    // One gesture at a time
@@ -684,8 +701,6 @@ void TOF::loop()
       return;
     }
     */
-
-    detectFingerTip( currentSetIndex );
 
     detectFab5Gestures();
   }

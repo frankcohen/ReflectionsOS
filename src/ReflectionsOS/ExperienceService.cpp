@@ -289,11 +289,12 @@ void ExperienceService::loop()
         break;
 
       case TOF::TOFGesture::Left:
-        startExperience( ExperienceService::Chastise );
+        //startExperience( ExperienceService::Chastise );
+        startExperience( ExperienceService::EyesFollowFinger );
         return;
 
       case TOF::TOFGesture::Circular:
-        startExperience( ExperienceService::MysticCat );
+        //startExperience( ExperienceService::MysticCat );
         return;
 
       case TOF::TOFGesture::Sleep:

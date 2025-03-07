@@ -19,10 +19,14 @@
 
 #include "Logger.h"
 #include "Video.h"
+#include "TOF.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
-extern TextMessageService textmessageservice;
+extern TOF tof;
+extern Arduino_GFX *gfx;
+
+#define eyesname "Eyes "
 
 class Experience_Eyes : public Experience {
   public:
@@ -36,6 +40,19 @@ class Experience_Eyes : public Experience {
     bool tearflag;
     bool timeflag;
     bool vidflag;
+    unsigned long eyestime;
+    unsigned long dur;
+
+    int prevFingerPosRow;
+    int prevFingerPosCol;
+    float prevFingerDist;
+
+    int prevLeftPupilX;
+    int prevRightPupilX;
+
+    int eyeposx;
+    int eyeposy;
+    int eyedist;
     
 };
 

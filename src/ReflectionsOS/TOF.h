@@ -98,6 +98,10 @@ class TOF
     String getRecentMessage();
     String getRecentMessage2();
 
+    int getFingerPosRow();
+    int getFingerPosCol();
+    float getFingerDist();
+
   private:
     // Helper methods for gesture detection
     bool detectFingerTip( int setnum );
