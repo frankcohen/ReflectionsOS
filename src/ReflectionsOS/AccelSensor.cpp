@@ -81,8 +81,11 @@ void AccelSensor::begin()
   }
 
   prevAccel = 15000;
+
   tapdet = false;
   doubletapdet = false;
+  trippledet = false;
+
   float jerk;
   magtimer = millis();
   debounceDoubleTap = millis();
@@ -91,6 +94,10 @@ void AccelSensor::begin()
   clickThreshold = threshold1;
   powermode = powermode1;
   clickPin = clickPin1;
+
+  shaketotal = 0;
+  shakecount = 0;
+  shaketimer = millis();
 
   debounceTapTime = millis();
 
@@ -157,6 +164,13 @@ bool AccelSensor::doubletapped()
   return result;
 }
 
+bool AccelSensor::shaken()
+{
+  bool shake = trippledet;
+  trippledet = false;
+  return shake;
+}
+
 // Resets the sensor
 
 void AccelSensor::resetLIS3DH() 
@@ -212,6 +226,26 @@ void AccelSensor::SimpleRangeFiltering()
     jerk = accelMagnitude - prevAccel;
     prevAccel = accelMagnitude;
 
+    // Detect shaking
+
+    shaketotal += jerk;
+    shakecount++;
+
+    if ( millis() - shaketimer > 200 )
+    {
+      shaketimer = millis();
+
+      if ( ( shaketotal / shakecount ) > 200 )
+      {
+        trippledet = true;
+      }
+
+      shaketotal = 0;
+      shakecount = 0;
+    }
+
+    // Detect single tap
+
     if ( millis() - debounceTapTime > 700 )
     {
       if ( ( fabs( jerk ) <= accelThreshold ) && ( fabs( jerk ) > accelThresholdLow ) )
@@ -225,8 +259,10 @@ void AccelSensor::SimpleRangeFiltering()
         */
 
         tapdet = true;
+        trippledet = false;
         debounceTapTime = millis();
         debounceDoubleTap = millis();
+        return;
       }
     }
     else
@@ -240,7 +276,9 @@ void AccelSensor::SimpleRangeFiltering()
         {
           doubletapdet = true;
           tapdet = false;
+          trippledet = false;
           debounceTapTime = millis();
+          return;
 
           /*
           String mef = " >>";
@@ -249,6 +287,21 @@ void AccelSensor::SimpleRangeFiltering()
           mef += ( millis() - mostrecentdoubletaptime );
           Serial.println( mef );
           */
+        }
+      }
+      else
+      {
+        if ( ( millis() - debounceTapTime > 500 ) && ( millis() - debounceTapTime < 700 ) && tapdet )
+
+        // Tripple tap is a shake gesture
+
+        if ( ( fabs( jerk ) <= accelThreshold ) && ( fabs( jerk ) > accelThresholdLow ) )
+        {
+          doubletapdet = false;
+          tapdet = false;
+          trippledet = true;
+          debounceTapTime = millis();
+          return;
         }
       }
     }

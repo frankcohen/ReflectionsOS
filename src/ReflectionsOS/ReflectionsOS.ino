@@ -354,7 +354,7 @@ void setup() {
   logger.info(F("Setup complete"));
 }
 
-/* Runs TOF gesture sensor in core 0 */
+/* Runs TOF and Accelerometer gesture sensors in core 0 */
 
 void Core0Tasks(void *pvParameters) {
   while (true) {
@@ -369,7 +369,7 @@ void Core0Tasks(void *pvParameters) {
       accel.begin();
       accelstarted = true;
     } else {
-      //accel.loop();
+      accel.loop();
     }
 
     // Delay to prevent task from monopolizing the CPU
@@ -415,10 +415,8 @@ void loop()
       // Serial.println( accel.printHeader() );  // Reprint the header
     }
 
-    //Serial.print( "dtime " );
-    //Serial.println( accel.getmostrecentdoubletaptime() );
-
-    //Serial.println( accel.printValues() );
+    //bool myx = accel.shaken();
+    //if ( myx ) Serial.println( "Shaken" );
   }
 
   smartdelay(500);

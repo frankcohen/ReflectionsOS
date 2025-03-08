@@ -290,7 +290,7 @@ void ExperienceService::loop()
 
       case TOF::TOFGesture::Left:
         //startExperience( ExperienceService::Chastise );
-        startExperience( ExperienceService::EyesFollowFinger );
+        //startExperience( ExperienceService::EyesFollowFinger );
         return;
 
       case TOF::TOFGesture::Circular:
@@ -317,13 +317,18 @@ void ExperienceService::loop()
         break;
     }
 
+    // Shake experience
+
+    if ( accel.shaken() )
+    {
+      startExperience( ExperienceService::Shaken );
+    }
+
     // Hover
 
     // GettingSleepy
     
     // Sleep gesture
-
-    // Shake experience
 
     // Swipe
 

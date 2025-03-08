@@ -19,6 +19,8 @@
 #include "Logger.h"
 #include "Video.h"
 
+#define shakenname "Shaken "
+
 class Experience_Shaken : public Experience {
   public:
     void setup() override;

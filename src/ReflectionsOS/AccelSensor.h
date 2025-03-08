@@ -92,6 +92,7 @@ class AccelSensor
 
     bool tapped();
     bool doubletapped();
+    bool shaken();
 
     float getXreading();
     float getYreading();
@@ -116,10 +117,15 @@ class AccelSensor
 
     bool tapdet;
     bool doubletapdet;
+    bool trippledet;
 
     unsigned long debounceTapTime;
     unsigned long debounceDoubleTap;
     unsigned long magtimer;
+
+    int shaketotal;
+    int shakecount;
+    unsigned long shaketimer;
 
     float jerk;
 

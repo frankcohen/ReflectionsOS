@@ -14,6 +14,8 @@
  identify user gestures with their fingers and hand. Gestures control
  operating the Experiences.
  
+ Datasheet comes with this source code, see: vl53l5cx-2886943_.pdf
+
 */
 
 #include "TOF.h"
