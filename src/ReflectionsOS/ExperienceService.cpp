@@ -302,6 +302,7 @@ void ExperienceService::loop()
 
       case TOF::TOFGesture::Right:
         // ShowTime with fun messages
+        startExperience( ExperienceService::ShowTime );
         return;
 
       case TOF::TOFGesture::Up:
@@ -321,7 +322,7 @@ void ExperienceService::loop()
 
     if ( accel.shaken() )
     {
-      startExperience( ExperienceService::Shaken );
+      //startExperience( ExperienceService::Shaken );
     }
 
     // Hover

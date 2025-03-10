@@ -26,18 +26,18 @@ void Experience_ShowTime::init()
 
 void Experience_ShowTime::setup() 
 {
-
-  //video.startVideo( ShowTime_video );
-  //setSetupComplete(true);  // Signal that setup is complete
-
   if ( vidflag )
   {
+    Serial.print( showtimename );
+    Serial.println( "SETUP" );
+
     video.startVideo( ShowTime_video );
     timeflag = true;
     vidflag = false;
+    tearflag = true;    
   }
 
-  if ( video.getVideoTime() > 3500 )
+  if ( video.getVideoTime() > 3600 )
   {
     video.setPaused( true );
     setSetupComplete(true);  // Signal that setup is complete
@@ -48,7 +48,8 @@ void Experience_ShowTime::run()
 {
   if ( timeflag )
   {
-    textmessageservice.startShow( TextMessageExperiences::DigitalTime, "", "" );  
+    int sIndex = random(0, 34);
+    textmessageservice.startShow( TextMessageExperiences::ShowDigitalTimeFunMessages, timefunmessages[ sIndex ][ 0 ], timefunmessages[ sIndex ][ 1 ] );  
     timeflag = false;
   }
   else
@@ -65,10 +66,17 @@ void Experience_ShowTime::run()
 void Experience_ShowTime::teardown() {
     // Teardown code for Experience_ShowTime
 
-    //video.setPaused( false );
+  if ( tearflag )
+  {
+    tearflag = false;
+    Serial.print( showtimename );
+    Serial.println( "TEARDOWN" );
+  }
 
-    if ( video.getStatus() == 0 )
-    {
-      setTeardownComplete( true );  // Signal teardown complete
-    }
+  if ( video.getStatus() == 0 )
+  {
+    timeflag = true;
+    setTeardownComplete( true );  // Signal teardown complete
+  }
+
 }

@@ -437,7 +437,7 @@ void WatchFaceMain::displayingdigitaltime()
     noMovementTime = millis();
 
     int index = random(0, 37);
-    textmessageservice.startShow( TextMessageExperiences::ShowDigitalTimeFunMessages, timefunmessages[ index ][ 0 ], timefunmessages[ index ][ 1 ] );
+    textmessageservice.startShow( TextMessageExperiences::DigitalTime, "", "" );
     return;
   }
 

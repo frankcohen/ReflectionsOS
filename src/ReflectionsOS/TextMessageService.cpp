@@ -138,7 +138,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
   if ( showStep == 1 )
   {
-    if ( fadeInCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b, true ) )
+    if ( fadeInCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b, false ) )
     {
       showStep = 2;
       fadeset = 1;
@@ -151,7 +151,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
   if ( showStep == 2 )
   {
-    if ( fadeInCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b, true ) )
+    if ( fadeInCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b, false ) )
     {
       showStep = 3;
       fadeset = 1;
@@ -164,7 +164,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
   if ( showStep == 3 )
   {
-   if ( fadeInCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b, true ) )
+   if ( fadeInCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b, false ) )
     {
       showStep = 4;
       fadeset = 1;
@@ -177,7 +177,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
   if ( showStep == 4 )
   {
-   if ( fadeOutCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b, true ) )
+   if ( fadeOutCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b, false ) )
     {
       showStep = 5;
       fadeset = 1;
@@ -190,7 +190,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
   if ( showStep == 5 )
   {
-    if ( fadeOutCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b, true ) )
+    if ( fadeOutCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b, false ) )
     {
       showStep = 6;
       fadeset = 1;
@@ -203,7 +203,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
   if ( showStep == 6 )
   {
-    if ( fadeOutCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b, true ) )
+    if ( fadeOutCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b, false ) )
     {
       activated = false;
       showStep = 0;
@@ -218,7 +218,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
 }
 
-/* Cat opens mouth to reveal the time */
+/* Watch face main digital time display */
 
 void TextMessageService::runDigitalTime()
 {
@@ -530,7 +530,7 @@ void TextMessageService::loop()
         case MysticalAnswer:  // Answers questions
           runMysticShow();
           break;
-        case DigitalTime:     // Cat opens mouth to reveal the time
+        case DigitalTime:     // Watch face main digital time
           runDigitalTime();
           break;
       }
