@@ -102,7 +102,6 @@ Arduino IDE 2.x automatically uses partitions.csv in the source code directory
 #include "driver/gpio.h"
 #include "Hardware.h"
 #include "Wire.h"
-#include "Parallax.h"
 #include "TextMessageService.h"
 #include "ExperienceService.h"
 #include <Arduino_GFX_Library.h>
@@ -136,7 +135,6 @@ Steps steps;
 TimerService timerservice;
 SystemLoad systemload;
 
-//Parallax parallax;
 //LED led;
 //USBFlashDrive flash;
 //OTA ota;
@@ -213,7 +211,6 @@ static void smartdelay(unsigned long ms) {
 
     /*
     logger.loop();
-    parallax.loop();
     audio.loop();
     */
 
@@ -344,7 +341,6 @@ void setup() {
 
   // Unused experiences
 
-  //parallax.begin();
   //led.begin();
 
   //haptic.playEffect(14);  // 14 Strong Buzz

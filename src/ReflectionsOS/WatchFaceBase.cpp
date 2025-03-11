@@ -14,6 +14,10 @@
  Uses framebuffer capability in Arduino_GFX. Tutorial is at
  https://github.com/moononournation/Arduino_GFX/wiki/Canvas-Class
 
+Images must be 240x240 and use JPEG baseline encoding. I use ffmpeg to convert a
+JPEG created in Pixelmator on Mac OS to baseline encoding using:
+ffmpeg -i cat1_parallax.jpg -q:v 2 -vf "format=yuvj420p" cat1_parallax_baseline.jpg
+
 */
 
 #include "WatchFaceBase.h"

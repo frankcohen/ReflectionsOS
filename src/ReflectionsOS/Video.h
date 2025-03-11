@@ -75,13 +75,9 @@ class Video
     void setPaused( bool p );
     unsigned long getVideoTime();
 
-    void setTofEyes( bool status );
-
     void addReadTime( unsigned long rtime );
 
   private:
-    void printCentered( int y2, String text, uint16_t color, const GFXfont * font );
-
     File mjpegFile;
     long ringtimer;
     bool firsttime;
@@ -99,16 +95,12 @@ class Video
     File showDir;
     File show;
 
-    void drawTofEyes();
-
     float totalFrames;
     float totalReadVideo;
     float totalDecodeVideo;
     float totalShowVideo;
     float startMs;
     float totalTime;
-
-    bool tofEyes;
 
     unsigned long checktime;
     
@@ -124,12 +116,6 @@ class Video
     String showingVideoFile;
 
     int playerStatus;
-
-    void fadeUpdate();
-    
-    bool fading;
-    unsigned long fadeTime;
-    uint16_t fadeStep;
 };
 
 #endif // _video_

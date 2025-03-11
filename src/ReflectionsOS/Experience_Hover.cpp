@@ -12,9 +12,9 @@
 
 */
 
-#include "Experience_Swipe.h"
+#include "Experience_Hover.h"
 
-void Experience_Swipe::init()
+void Experience_Hover::init()
 {
   vidflag = true;  
   setupComplete = false;
@@ -24,14 +24,16 @@ void Experience_Swipe::init()
   idle = false;
 } 
 
-void Experience_Swipe::setup() 
+void Experience_Hover::setup() 
 {
-  Serial.println( "Swipe SETUP" );
+  Serial.print( HoverName );
+  Serial.println( "SETUP" );
+  
   video.startVideo( Swipe_video );
   setSetupComplete(true);  // Signal that setup is complete
 }
 
-void Experience_Swipe::run() 
+void Experience_Hover::run() 
 {
   if ( video.getStatus() == 0 )
   {
@@ -39,7 +41,7 @@ void Experience_Swipe::run()
   }
 }
 
-void Experience_Swipe::teardown() 
+void Experience_Hover::teardown() 
 {
   Serial.println( "Swipe TEARDOWN" );
   setTeardownComplete( true );  // Signal teardown complete

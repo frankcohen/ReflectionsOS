@@ -18,9 +18,20 @@
 
 #include "Logger.h"
 #include "Video.h"
+#include "WatchFaceMain.h"
+#include "AccelSensor.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
+extern WatchFaceMain watchfacemain;   // Uses WatchFaceBase::drawImageFromFile to draw images to the display
+extern AccelSensor accel;
+
+#define parallaxname "Parallax "
+
+#define accxleft 0.62
+#define accxright 1.54
+#define accpositions 5
+#define stepvalue 0.184
 
 class Experience_Parallax : public Experience {
   public:
@@ -34,7 +45,13 @@ class Experience_Parallax : public Experience {
     bool tearflag;
     bool timeflag;
     bool vidflag;
-    
+
+    unsigned long eyestime;
+    unsigned long dur;
+
+    int pictureNum;
+    unsigned long parallaxWaitTime;
+    unsigned long paralaxDuration;
 };
 
 #endif // Experience_Parallax_H

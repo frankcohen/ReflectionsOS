@@ -17,6 +17,10 @@ ffmpeg -i cat1_parallax.jpg -q:v 2 -vf "format=yuvj420p" cat1_parallax_baseline.
 Some classes use the framebuffer capability in Arduino_GFX. Tutorial is at
 https://github.com/moononournation/Arduino_GFX/wiki/Canvas-Class
 
+Images must be 240x240 and use JPEG baseline encoding. I use ffmpeg to convert a
+JPEG created in Pixelmator on Mac OS to baseline encoding using:
+ffmpeg -i cat1_parallax.jpg -q:v 2 -vf "format=yuvj420p" cat1_parallax_baseline.jpg
+
 */
 
 #include "Video.h"
@@ -101,15 +105,12 @@ void Video::begin()
   firsttime = true;
   vidtimer = millis();
   paused = false;
-  fading = false;
 
   playerStatus = 0;
   checktime = millis();
   showIteratorFlag = false;
 
   videoStartTime = millis();
-
-  fadeTime = millis();
 }
 
 void Video::addReadTime( unsigned long rtime )
@@ -264,67 +265,6 @@ void Video::setPaused( bool p )
   paused = p;
 }
 
-void Video::setTofEyes( bool status )
-{
-  tofEyes = status;
-}
-
-#define smallcircle 20
-#define bigcircle 40
-#define maxy 40
-#define bridgex 45
-
-void Video::drawTofEyes()
-{ 
-  int basey = 40;
-
-  //int basex = tof.getXFingerPosition();
-
-  int basex = 10;
-  
-  //basex += pointx * ( ( 240 - 30 - 30 - smallcircle ) / 8 );
-
-  int topx = basex;
-  topx += bigcircle / 2;
-  int topy = basey;
-  topy += bigcircle / 2;
-
-  int middlex = topx;
-  int middley = topy + ( bigcircle / 2 );
-
-  int bottomx = middlex;
-  int bottomy = middley + ( bigcircle / 2 );
-
-  gfx -> fillRect( 0, maxy, 240, maxy * 2, COLOR_LEADING );
-
-  gfx -> fillCircle( topx, topy, smallcircle /2, COLOR_RING );
-  gfx -> fillCircle( middlex, middley, bigcircle / 2, COLOR_RING );
-  gfx -> fillCircle( bottomx, bottomy, smallcircle /2, COLOR_RING );
-
-  gfx -> fillCircle( topx + bridgex, topy, smallcircle /2, COLOR_RING );
-  gfx -> fillCircle( middlex + bridgex, middley, bigcircle / 2, COLOR_RING );
-  gfx -> fillCircle( bottomx + bridgex, bottomy, smallcircle /2, COLOR_RING );
-}
-
-void Video::printCentered( int y2, String text, uint16_t color, const GFXfont * font )
-{
-  gfx->setFont( font );
-
-  int16_t x1, y1;
-  uint16_t w, h;
-
-  gfx->getTextBounds( text, 0, 0, &x1, &y1, &w, &h);
-
-  int16_t x = (gfx->width() - w) / 2;
-  //int16_t y = (gfx->height() - h) / 2;
-  //y += y2;
-
-  gfx->setCursor(x, y2);
-  gfx->setTextColor( color );
-  //gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, YELLOW);
-  gfx->println( text );
-}
-
 void Video::loop()
 {
   if ( ( videoStatus == 0 ) || ( paused == 1 ) ) return;
@@ -349,14 +289,7 @@ void Video::loop()
       totalDecodeVideo += millis() - dtime;
       dtime = millis();
 
-      if ( tofEyes && tof.tofStatus() )
-      {
-        drawTofEyes();
-      }
-      else
-      {
-        mjpeg.drawJpg();
-      }
+      mjpeg.drawJpg();
 
       totalShowVideo += millis() - dtime;
     }

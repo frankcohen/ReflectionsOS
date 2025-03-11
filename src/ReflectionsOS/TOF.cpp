@@ -79,6 +79,12 @@ void TOF::begin()
   fingerPosRow = 0;
   fingerPosCol = 0;
 
+  lastSampleTime = 0;
+  hoverStartTime = 0;
+  baselineRow = 0;
+  baselineCol = 0;
+  baselineDist = 0.0;
+    
   for ( int mia = 0; mia < 4; mia++ )
   {
     flyaccumulator[ mia ] = false;
@@ -680,30 +686,81 @@ void TOF::loop()
 {
   if ( ! started ) return;
 
-  if ( millis() - previousMillis > 250 ) 
+  if ( millis() - previousMillis < 250 ) return;
+  previousMillis = millis();
+
+  if ( ! checkBuffer() ) return;
+
+  acquireDataToBuffer();    // And optionally show bubbles
+
+  detectFingerTip( currentSetIndex );
+
+  if ( paused ) return;
+
+  if ( recentGesture != TOFGesture::None ) return;    // One gesture at a time
+
+  /*
+  if ( detectSleepGesture() )
   {
-    previousMillis = millis();
+    sleepCount++;
+    recentGesture = TOFGesture::Sleep;
+    paused = true;
+    return;
+  }
+  */
 
-    if ( ! checkBuffer() ) return;
+  detectFab5Gestures();
 
-    acquireDataToBuffer();    // And optionally show bubbles
+  if ( recentGesture != TOFGesture::None ) return;    // One gesture at a time
 
-    detectFingerTip( currentSetIndex );
+  unsigned long currentTime = millis();
 
-    if ( paused ) return;
-
-    if ( recentGesture != TOFGesture::None ) return;    // One gesture at a time
-
-    /*
-    if ( detectSleepGesture() )
+  if ( currentTime - lastSampleTime >= HOVER_SAMPLE_INTERVAL_MS ) 
+  {
+    lastSampleTime = currentTime;
+          
+    // If the finger tip is detected:
+    if ( fingerTipInRange ) 
     {
-      sleepCount++;
-      recentGesture = TOFGesture::Sleep;
-      paused = true;
-      return;
-    }
-    */
+      // If this is the first sample of a possible hover, record the baseline.
+      if ( hoverStartTime == 0 ) 
+      {
+        hoverStartTime = currentTime;
+        baselineRow = fingerPosRow;
+        baselineCol = fingerPosCol;
+        baselineDist = fingerDist;
+      }
+      
+      // Check if the current reading is within ±15% of the baseline.
+      bool stable = true;
+      if (fabs(fingerPosRow - baselineRow) > 0.15 * fabs(baselineRow))
+        stable = false;
+      if (fabs(fingerPosCol - baselineCol) > 0.15 * fabs(baselineCol))
+        stable = false;
+      if (fabs(fingerDist - baselineDist) > 0.15 * fabs(baselineDist))
+        stable = false;
+      
+      // If the reading deviates too much, reset the baseline and timer.
+      if (!stable) {
+        hoverStartTime = currentTime;
+        baselineRow = fingerPosRow;
+        baselineCol = fingerPosCol;
+        baselineDist = fingerDist;
+      }
 
-    detectFab5Gestures();
+      // If the reading has been stable for at least 4 seconds, trigger the gesture.
+      else if (currentTime - hoverStartTime >= HOVER_DURATION_MS) 
+      {
+        Serial.println("Hover gesture detected for 4 seconds");
+        recentGesture = TOFGesture::Hover;
+
+        hoverStartTime = currentTime;  // or set to 0 if you want to start fresh next time
+      }
+    } 
+
+    // If no finger is detected, reset the hover timer.
+    else {
+      hoverStartTime = 0;
+    }
   }
 }

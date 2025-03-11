@@ -69,7 +69,7 @@ class ExperienceService
       Chastise,
       EyesFollowFinger,
       ParallaxCat,
-      SwipeFinger,
+      Hover,
       CatsPlay,
       MysticCat,
       Shaken,

@@ -9,8 +9,8 @@
  Read the license in the license.txt file that comes with this code.
 */
 
-#ifndef Experience_Swipe_H
-#define Experience_Swipe_H
+#ifndef Experience_Hover_H
+#define Experience_Hover_H
 
 #include <Arduino.h>
 
@@ -22,7 +22,9 @@
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
 
-class Experience_Swipe : public Experience {
+#define HoverName "Hover "
+
+class Experience_Hover : public Experience {
   public:
     void setup() override;
     void run() override;
@@ -37,4 +39,4 @@ class Experience_Swipe : public Experience {
     
 };
 
-#endif // Experience_Swipe_H
+#endif // Experience_Hover_H

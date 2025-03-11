@@ -54,6 +54,10 @@ extern Arduino_GFX *gfx;
 #define fingerDetectionThresholdLow 18
 #define fingerDetectionThresholdHigh 40
 
+// Hover gesture
+#define HOVER_SAMPLE_INTERVAL_MS 250  // Sample every 250 milliseconds (4 times per second)
+#define HOVER_DURATION_MS 4000  // 4 seconds
+
 // Horizontal, vertical, circular movement detection
 #define movementLow 30
 #define movementHigh 70
@@ -77,7 +81,8 @@ class TOF
       Right,
       Left,
       Up,
-      Down
+      Down,
+      Hover
     };
 
     void begin();
@@ -134,6 +139,12 @@ class TOF
     int fingerPosRow;
     int fingerPosCol;
     float fingerDist;
+
+    unsigned long lastSampleTime;
+    unsigned long hoverStartTime;
+    int baselineRow;
+    int baselineCol;
+    float baselineDist;
 
     bool bombaccumulator[ 8 ];
     bool flyaccumulator[ 8 ];

@@ -302,11 +302,17 @@ void ExperienceService::loop()
 
       case TOF::TOFGesture::Right:
         // ShowTime with fun messages
-        startExperience( ExperienceService::ShowTime );
+        //startExperience( ExperienceService::ShowTime );
         return;
 
       case TOF::TOFGesture::Up:
         // Parallax cat
+        //startExperience( ExperienceService::ParallaxCat );
+        return;
+
+      case TOF::TOFGesture::Hover:
+        // Finger hovers in one spot
+        startExperience( ExperienceService::Hover );
         return;
 
       case TOF::TOFGesture::Down:

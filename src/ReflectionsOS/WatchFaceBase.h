@@ -42,9 +42,10 @@ class WatchFaceBase
 
     virtual void start(); // Method to clear the buffer
     virtual void show();
-    
-  protected:
+
     void drawImageFromFile( String filename, bool embellishfilename, int16_t x, int16_t y);
+
+  protected:
     String mef;
 };
 
