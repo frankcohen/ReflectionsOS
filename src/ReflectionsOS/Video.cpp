@@ -75,32 +75,6 @@ void Video::begin()
 
   gfx->fillScreen( BLACK );
 
-  // Enable for start-up message on display
-  /*
-  gfx->setFont(&FreeSansBold10pt7b);
-  gfx->setTextColor( COLOR_LEADING );
-  gfx->setCursor( 40, 100 );
-  gfx->println("REFLECTIONS");
-  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
-  */
-
-  // Init Display
-
-  //Serial.print( "Heap size " );
-  //Serial.println( esp_get_free_heap_size() );
-
-  if ( ! bufferCanvas->begin() )
-  {
-    Serial.println( F( "bufferCanvas->begin() failed. Stopping." ) );
-    while(1);
-  }
-  else
-  {
-    //Serial.println( F( "bufferCanvas->begin() suceeded" ) );
-  }
-  bufferCanvas->invertDisplay(true);
-  bufferCanvas->fillScreen( BLUE );
-
   videoStatus = 0;   // idle
   firsttime = true;
   vidtimer = millis();
@@ -112,6 +86,24 @@ void Video::begin()
 
   videoStartTime = millis();
 }
+
+// Initializes video buffer
+
+void Video::beginBuffer()
+{
+  if ( ! bufferCanvas->begin() )
+  {
+    Serial.println( F( "bufferCanvas->begin() failed. Stopping." ) );
+    while(1);
+  }
+  else
+  {
+    //Serial.println( F( "bufferCanvas->begin() suceeded" ) );
+  }
+  bufferCanvas->invertDisplay(true);
+  bufferCanvas->fillScreen( BLUE );
+}
+
 
 void Video::addReadTime( unsigned long rtime )
 {
@@ -158,19 +150,18 @@ void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, Str
     bufferCanvas -> drawRect( 39, 39, 162, 162, COLOR_TEXT_BORDER );
     bufferCanvas -> drawRect( 40, 40, 160, 160, COLOR_TEXT_BORDER );
 
-    bufferCanvas->setFont(&FreeSansBold10pt7b);
+    bufferCanvas->setFont(&ScienceFair14pt7b);
     bufferCanvas->setTextColor( COLOR_LEADING );
     bufferCanvas->setCursor( leftmargin, topmargin - 5 );
     bufferCanvas->println("REFLECTIONS");
 
     bufferCanvas->setCursor( leftmargin, topmargin + ( 1 * linespacing ) );
-    bufferCanvas->setFont(&FreeSerif8pt7b);
+    bufferCanvas->setFont(&ScienceFair14pt7b);
     bufferCanvas->setTextColor( COLOR_TEXT );
     bufferCanvas->println( msg1 );
 
     bufferCanvas->setCursor( leftmargin, topmargin + ( 2 * linespacing ) );
     bufferCanvas->setTextColor( COLOR_TEXT );
-    //bufferCanvas->setFont(&FreeSerifBoldItalic12pt7b);
     bufferCanvas->println( msg2 );
 
     bufferCanvas->setCursor( leftmargin, topmargin + ( 3 * linespacing ) );

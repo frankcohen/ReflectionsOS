@@ -30,7 +30,7 @@ the #include list and class instantiation method below.
 #include "Experience_Chastise.h"
 #include "Experience_Eyes.h"
 #include "Experience_Parallax.h"
-#include "Experience_Swipe.h"
+#include "Experience_Hover.h"
 #include "Experience_MysticCat.h"
 #include "Experience_CatsPlay.h"
 #include "Experience_Shaken.h"
@@ -91,10 +91,10 @@ ExperienceService::ExperienceService() : currentExperience( nullptr ), currentSt
   }
   experiences.push_back( makeExp );
 
-  makeExp = new Experience_Swipe();
+  makeExp = new Experience_Hover();
   if ( makeExp == nullptr )
   {
-    Serial.println( F( "ExperienceService error making Experience_Swipe" ) );
+    Serial.println( F( "ExperienceService error making Experience_Hover" ) );
     while(1);
   }
   experiences.push_back( makeExp );
@@ -294,7 +294,7 @@ void ExperienceService::loop()
         return;
 
       case TOF::TOFGesture::Circular:
-        //startExperience( ExperienceService::MysticCat );
+        startExperience( ExperienceService::MysticCat );
         return;
 
       case TOF::TOFGesture::Sleep:

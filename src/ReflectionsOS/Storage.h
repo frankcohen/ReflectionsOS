@@ -35,6 +35,10 @@ get TAR over Wifi, Bluetooth, mostly SD utils like print to, eventually send mes
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
+#include "Minya_Nouvelle_Rg30pt7b.h"
+
+#include "esp_heap_caps.h"
+
 class Storage
 {
   public:
@@ -63,6 +67,7 @@ class Storage
     boolean renameFile(fs::FS &fs, const char * path1, const char * path2);
     boolean deleteFile(fs::FS &fs, const char * path);
     boolean removeFiles(fs::FS &fs, const char * dirname, uint8_t levels);
+    void rm( File dir, String tempPath );
     void availSpace();
     boolean testFileIO(fs::FS &fs, const char * path);
     boolean testNandStorage();

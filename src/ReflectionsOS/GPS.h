@@ -43,6 +43,9 @@ class GPS
     bool isTimeValid();
     bool isDateValid();
 
+    float getLat();
+    float getLng();
+
     unsigned int getMonth();
     unsigned int getDay();
     unsigned int getYear();

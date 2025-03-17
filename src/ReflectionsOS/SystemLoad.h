@@ -24,6 +24,7 @@ public:
   void begin();
   void loop();
   void printStats();
+  void printHeapSpace( String messsage );
 
   void logtasktime( unsigned long tsktime, int mes, String mname );
 

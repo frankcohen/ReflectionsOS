@@ -76,7 +76,7 @@ Arduino IDE 2.x automatically uses partitions.csv in the source code directory
 */
 
 #include "Arduino.h"
-//#include "BLE.h"
+#include "BLEsupport.h"
 #include "Utils.h"
 #include "config.h"
 #include "Storage.h"
@@ -112,6 +112,7 @@ Arduino IDE 2.x automatically uses partitions.csv in the source code directory
 #include "Steps.h"
 #include "TimerService.h"
 #include "SystemLoad.h"
+#include "ScienceFair14pt7b.h"
 
 Video video;
 Utils utils;
@@ -134,12 +135,11 @@ RealTimeClock realtimeclock;
 Steps steps;
 TimerService timerservice;
 SystemLoad systemload;
+BLEsupport blesupport;
 
 //LED led;
 //USBFlashDrive flash;
 //OTA ota;
-//BLEServerClass bleServer;
-//BLEClientClass bleClient;
 
 const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
 
@@ -168,6 +168,85 @@ void assertI2Cdevice(byte deviceNum, String devName) {
   video.stopOnError(devName, "not found", "", "", "");
 }
 
+int16_t in_x, in_y;
+uint16_t in_w, in_h;
+
+void printCentered( String text )
+{
+  gfx->fillScreen( COLOR_BLUE );
+  gfx->setFont( &ScienceFair14pt7b );
+  gfx->setTextColor( COLOR_TEXT_YELLOW );
+  gfx->getTextBounds( text.c_str(), 0, 0, &in_x, &in_y, &in_w, &in_h);
+
+  in_y = 120;
+  in_x = 40;
+
+  gfx->setCursor( ( gfx->width() - in_w ) / 2, in_y );
+  gfx->println( text );
+
+  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
+}
+
+/*
+Reflections board initialization utility
+*/
+
+void BoardInitializationUtility()
+{
+  // Check if otaversion.txt exists, if so skip initialization
+
+  String mfd = "/";
+  mfd += NAND_BASE_DIR;
+  mfd += OTA_VERSION_FILE_NAME;
+
+  if ( SD.exists( mfd ) ) return;
+  
+  Serial.println( F( "Board Initialization Utility started" ) );
+  
+  /*
+  // For debugging
+  File myfile1 = SD.open( "/" );
+  storage.rm(myfile1, "/");
+  Serial.println( "Files:" );
+  storage.listDir(SD, "/", 100, true);
+  while(1);
+  */
+
+  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
+
+  printCentered("Initialize");
+
+  // Start Wifi
+
+  wifi.reset();  // Optionally reset any previous connection settings
+  printCentered( F( "Wifi" ) );
+  delay( 1000 );
+
+  wifi.begin();  // Non-blocking, until guest uses it to connect
+
+  delay( 1000 );
+  printCentered( F( "Replicate" ) );
+  delay( 1000 );
+
+  // Download cat-file-package.tar and any other files, then expand the tars
+
+  storage.replicateServerFiles();
+
+  /*
+  Serial.println( "- - -" );
+  Serial.println( "Files:" );
+  storage.listDir(SD, "/", 100, true);
+  */
+
+  delay( 1000 );
+  printCentered( F( "Restart" ) );
+  delay( 1000 );
+
+  digitalWrite(Display_SPI_BK, HIGH);  // Turn display backlight off
+
+  ESP.restart();
+}
+
 /*
   Cooperative multi-tasking functions
 */
@@ -188,8 +267,7 @@ static void smartdelay(unsigned long ms) {
     utils.loop();
     compass.loop();
     haptic.loop();
-    //led.loop();
-    //bleClient.loop();
+    //blesupport.loop();
     realtimeclock.loop();
     gps.loop();
     steps.loop();
@@ -212,6 +290,7 @@ static void smartdelay(unsigned long ms) {
     /*
     logger.loop();
     audio.loop();
+    led.loop();
     */
 
 /*
@@ -243,19 +322,20 @@ void setup() {
 
   systemload.begin();  // System load monitor
 
+  systemload.printHeapSpace( "Start" );
+
   hardware.begin();  // Sets all the hardware pins
+
+  systemload.printHeapSpace( "Hardware begin" );
 
   storage.begin();
   storage.setMounted(hardware.getMounted());
 
-  //wifi.reset();  // Optionally reset any previous connection settings
-  //wifi.begin();  // Non-blocking, until guest uses it to connect
-  //storage.replicateServerFiles();
-
-  //Serial.println( "Files:" );
-  //storage.listDir(SD, "/", 100, true);
+  systemload.printHeapSpace( "Storage" );
 
   video.begin();
+
+  systemload.printHeapSpace( "Video" );
 
   //utils.WireScan();
   /*
@@ -275,6 +355,8 @@ void setup() {
   logger.begin();
   logger.setEchoToSerial(true);
   logger.setEchoToServer(false);
+
+  systemload.printHeapSpace( "Logger" );
 
   devname = host_name_me;
   std::string mac = WiFi.macAddress().c_str();
@@ -300,6 +382,13 @@ void setup() {
   accel.begin();
   compass.begin();
   utils.begin();
+  //blesupport.begin();
+
+  systemload.printHeapSpace( "Devices" );
+
+  BoardInitializationUtility();   // Installs needed video and other files
+
+  video.beginBuffer();      // Secondary begin to initiaize the secondary video buffer
 
   // Support service initialization
 
@@ -324,9 +413,6 @@ void setup() {
   );
 
   // Unused services
-
-  //bleServer.begin();  // Initializes the BLE server
-  //bleClient.begin();  // Initializes the BLE client
 
   //ota.begin();
   //ota.update();     // Just in case previous use of the host replicated an OTA update file

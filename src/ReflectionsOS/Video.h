@@ -47,9 +47,6 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 
 // Additional fonts at https://github.com/moononournation/ArduinoFreeFontFile/tree/master/Fonts
 
-#include "FreeSerif8pt7b.h"
-#include "FreeSansBold10pt7b.h"
-#include "MKXTitle20pt7b.h"
 #include "SomeTimeLater20pt7b.h"
 #include "Minya16pt7b.h"
 #include "ScienceFair14pt7b.h"
@@ -64,6 +61,8 @@ class Video
   public:
     Video();
     void begin();
+    void beginBuffer();
+
     void loop();
 
     void stopOnError( String msg1, String msg2, String msg3, String msg4, String msg5 );

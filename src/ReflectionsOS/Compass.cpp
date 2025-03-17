@@ -155,8 +155,8 @@ String Compass::decodeHeading(float measured_angle)
  * Returns the adjusted heading from the magnetic field reading
  */
  
-float Compass::getHeading(void) {
-
+float Compass::getHeading(void) 
+{
   float components[2];
 
   read_XYZ();  //read X, Y, Z components of the magnetic field

@@ -7,6 +7,10 @@
  Licensed under GPL v3 Open Source Software
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
+
+ Create a tar file that Storage will unpack:
+ tar -C ${FINAL_PATH} -cf ${finalPathArchive} files
+
 */
 
 #include "Storage.h"
@@ -26,8 +30,37 @@ const int httpsPort = 443;
 * Helper for TarUnpacker
 */
 
-void CustomTarStatusProgressCallback( const char* name, size_t size, size_t total_unpacked ){
+int globalFileCount = 0;    // Globals for Board Initialization Utility
+int globalFileCountOld = 0;
+extern Arduino_GFX *gfx;
+int16_t st_x, st_y;
+uint16_t st_w, st_h;
+
+void CustomTarStatusProgressCallback( const char* name, size_t size, size_t total_unpacked )
+{
   Serial.printf("[TAR] %-32s %8d bytes - %8d Total bytes\n", name, size, total_unpacked );
+
+  gfx->fillScreen( COLOR_BLUE );
+
+  String text = String( globalFileCount++ );
+
+  /*
+  if ( text.length() >= 12 ) 
+  {
+    // Extract the substring starting from the character at (length - 12) to the end
+    text = text.substring( text.length() - 12 );
+  } 
+  */
+  
+  gfx->setFont( &ScienceFair14pt7b );
+  gfx->setTextColor( COLOR_TEXT_YELLOW );
+  gfx->getTextBounds( text.c_str(), 0, 0, &st_x, &st_y, &st_w, &st_h);
+
+  st_y = 100;
+  st_x = 40;
+
+  gfx->setCursor( ( gfx->width() - st_w ) / 2, st_y );
+  gfx->println( text );
 }
 
 /*
@@ -54,8 +87,6 @@ void myTarMessageCallback(const char* format, ...)
   vsnprintf(tmp_path, 255, format, args);
   va_end(args);
 }
-
-extern Video video;   // Defined in ReflectionsOfFrank.ino
 
 Storage::Storage(){}
 
@@ -107,6 +138,9 @@ void Storage::replicateServerFiles()
   String thefile;
   String arcfile = "";
 
+  globalFileCount = 1;
+  globalFileCountOld = 0;
+
   if ( WiFi.status() != 3 )
   {
     Serial.println( F( "Wifi not connected, skipping replication") );
@@ -114,11 +148,11 @@ void Storage::replicateServerFiles()
   }
 
   Serial.println( F( "Replicating Server Files") );
-
+    
   //Serial.println( getFileListString() );
 
   /* Fixme later: JSON data size limited */
-  DynamicJsonDocument doc( 2000 );
+  DynamicJsonDocument doc( 1000 );
 
   DeserializationError error = deserializeJson(doc, getFileListString() );
   if (error) {
@@ -158,100 +192,25 @@ void Storage::replicateServerFiles()
     }
 
     thefile = "/";
-    thefile += NAND_BASE_DIR;
-    thefile += "/";
     thefile += arcfile;
 
-    // Is there a file already downloaded?
+    Serial.print( "getFileSaveToSD ");
+    Serial.println( thefile );
 
-    if ( SD.exists( thefile ) )
+    if ( ! getFileSaveToSD( arcfile ) )
     {
-      //Serial.print("exists ");
-      //Serial.println( "/" + thefile );
-
-      // Skip if it is the same file size
-
-      File myf = SD.open( thefile );
-      if ( ! myf )
-      {
-        Serial.print( "Storage replicateServerFiles: myf did not open");
-      }
-
-      
-      Serial.print("size = ");
-      Serial.println( myf.size() );
-      Serial.print("lngsize = ");
-      Serial.println( lngsize );
-      
-      
-      if ( ( ( (long) myf.size() ) != 0 ) && ( (long) myf.size() == (long) lngsize ) )
-      {
-        Serial.print( "Skipping existing file " );
-        Serial.println( thefile );
-      }
-      else
-      {
-        // Download the file
-
-        int retrycount = 0;
-        while ( retrycount < 3 )
-        {
-          if ( ! getFileSaveToSD( arcfile ) )
-          {
-            retrycount++;
-            Serial.print( F( "Retry " ) );
-            Serial.println( retrycount );
-            delay(2000);
-            if ( retrycount > 3 ) return;
-          }
-          else
-          {
-            retrycount = 10;
-          }
-        }
-
-        // If it is a tar, then unpack it too
-
-        if ( thefile.endsWith( TAR_FILENAME ) )
-        {
-          Serial.print( "Extractomatic " );
-          Serial.print( "serve/" + thefile );
-          extract_files( thefile );
-        }
-      }
+      Serial.println( "getFileSaveToSD failed" );
+      return;
     }
-    else
+
+    // If it is a tar, then unpack it
+
+    if ( thefile.endsWith( TAR_FILENAME ) )
     {
-      Serial.print( "getFileSaveToSD ");
+      Serial.print( "Extractomatic " );
       Serial.println( thefile );
 
-      int retrycount = 0;
-      while ( retrycount < 3 )
-      {
-        if ( ! getFileSaveToSD( arcfile ) )
-        {
-          retrycount++;
-          Serial.print( F( "Retry " ) );
-          Serial.println( retrycount );
-          delay(2000);
-          if ( retrycount > 3 ) return;
-        }
-        else
-        {
-          retrycount = 10;
-        }
-      }
-
-      // If it is a tar, then unpack it
-
-      if ( thefile.endsWith( TAR_FILENAME ) )
-      {
-        Serial.print( "Extractomatic2 " );
-        Serial.println( thefile );
-
-        extract_files( thefile );
-      }
-
+      extract_files( thefile );
     }
   }
 
@@ -264,12 +223,10 @@ void Storage::replicateServerFiles()
 
 void Storage::extract_files( String tarfilename )
 {
-  Serial.println("Extracting TAR");
-
   char tarFolder[100];
   String mef = "/";
-  mef += NAND_BASE_DIR;
-  mef += "/";
+  //mef += NAND_BASE_DIR;
+  //mef += "/";
   mef += tarfilename.substring( mef.length(), tarfilename.length() - 4 );
   mef.toCharArray( tarFolder, 100 );
 
@@ -283,7 +240,7 @@ void Storage::extract_files( String tarfilename )
 
   TARUnpacker->setupFSCallbacks( targzTotalBytesFn, targzFreeBytesFn ); // prevent the partition from exploding, recommended
   TARUnpacker->setTarProgressCallback( BaseUnpacker::defaultProgressCallback ); // prints the untarring progress for each individual file
-  TARUnpacker->setTarStatusProgressCallback( BaseUnpacker::defaultTarStatusProgressCallback ); // print the filenames as they're expanded
+  TARUnpacker->setTarStatusProgressCallback( CustomTarStatusProgressCallback ); // print the filenames as they're expanded
   TARUnpacker->setTarMessageCallback( myTarMessageCallback /*BaseUnpacker::targzPrintLoggerCallback*/ ); // tar log verbosity
 
   if( !TARUnpacker -> tarExpander( SD, fnbuff, SD, tarFolder ) )
@@ -338,6 +295,86 @@ boolean Storage::removeFiles(fs::FS &fs, const char * dirname, uint8_t levels)
     file = root.openNextFile();
   }
   return true;
+}
+
+/*
+ * Recursively removes all files and directories
+ * Thank you to @jenschr https://gist.github.com/jenschr/5713c927c3fb8663d662
+ */
+
+void Storage::rm( File dir, String tempPath )
+{
+  while(true) 
+  {
+    File entry =  dir.openNextFile();
+    String localPath;
+
+    if (entry) {
+      if ( entry.isDirectory() )
+      {
+        localPath = tempPath + entry.name() + rootpath + '\0';
+        char folderBuf[localPath.length()];
+        localPath.toCharArray(folderBuf, localPath.length() );
+
+        Serial.print( "rm entry = ");
+        Serial.print( entry.name() );
+        Serial.print( ", folderBuf = ");
+        Serial.println( folderBuf );
+
+        rm(entry, folderBuf);
+
+        if ( strlen( folderBuf ) > 0 )
+        {
+          folderBuf[ strlen( folderBuf ) - 1] = 0;  // move null-terminator in
+        }
+
+        Serial.print( "rm 2 folderBuf = ");
+        Serial.println( folderBuf );
+
+        if( SD.rmdir( folderBuf ) )
+        {
+          Serial.print("rm deleted folder ");
+          Serial.println(folderBuf);
+          FolderDeleteCount++;
+        } 
+        else
+        {
+          Serial.print("rm unable to delete folder ");
+          Serial.println(folderBuf);
+          FailCount++;
+        }
+      } 
+      else
+      {
+        localPath = tempPath + entry.name() + '\0';
+        char charBuf[localPath.length()];
+        localPath.toCharArray(charBuf, localPath.length() );
+
+        Serial.print( "rm 3 entry = ");
+        Serial.print( entry.name() );
+        Serial.print( ", charBuf = ");
+        Serial.println( charBuf );
+
+        if( SD.remove( charBuf ) )
+        {
+          Serial.print("rm deleted ");
+          Serial.println(localPath);
+          DeletedCount++;
+        } 
+        else
+        {
+          Serial.print("rm failed to delete ");
+          Serial.println(localPath);
+          FailCount++;
+        }
+
+      }
+    } 
+    else {
+      // break out of recursion
+      break;
+    }
+  }
 }
 
 boolean Storage::listDir(fs::FS &fs, const char * dirname, uint8_t levels, bool monitor){
@@ -674,14 +711,14 @@ boolean Storage::getFileSaveToSD( String thedoc )
         WiFiClient * stream = http.getStreamPtr();
 
         String mef = "/";
-        mef += NAND_BASE_DIR;
-        mef += "/";
+        //mef += NAND_BASE_DIR;
+        //mef += "/";
         mef += thedoc;
 
         File myFile = SD.open( mef, FILE_WRITE );
         if ( myFile )
         {
-          Serial.print( F( "SD file opened for write: " ) );
+          Serial.print( F( "Write: " ) );
           Serial.println( mef );
         }
         else

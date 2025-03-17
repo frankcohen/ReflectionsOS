@@ -51,9 +51,6 @@ void TextMessageService::runMysticShow()
 
   if ( showStep == 1 )
   {
-
-    //if ( fadeInCenteredText( theMsg1, 80, 10, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b, false ) )
-
     if ( fadeInCenteredText( theMsg1, 80, 10, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later12pt7b, false ) )
     {
       showStep = 2;

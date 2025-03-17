@@ -12,8 +12,8 @@
  Thank you!
 */
 
-// #define SECRET_SSID "frankcohen"
-// #define SECRET_PASS "thanksfrank"
+//#define SECRET_SSID "frankcohen"
+//#define SECRET_PASS "thanksfrank"
 
 #define SECRET_SSID "FranksFree-passwordFrank123"
 #define SECRET_PASS "Frank123"

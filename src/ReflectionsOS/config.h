@@ -37,7 +37,7 @@ Read the license in the license.txt file that comes with this code.
 
 #define EyesFollowFinger_video "f99c9b5031e6102ef45fbdf71cb09134"
 
-#define MysticCat_video "076b4692f07254d0457595ada2a89f37"   //"bc481c1a678e0f62e2838e7fc8cd922f"
+#define MysticCat_video "076b4692f07254d0457595ada2a89f37"
 
 #define ParallaxCat_video "7f4f62c859d8a8638cb9126c23775372"
 
@@ -157,8 +157,8 @@ Read the license in the license.txt file that comes with this code.
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
-#define MY_SERVICE_UUID "7d9029fe-48d5-49e0-b9ad-8fd7dac70354"
-#define MY_CHARACTERISTIC_UUID "33a03886-0db0-43c8-90a2-bca6a8c7eaf0"
+#define BLE_SERVICE_UUID "7d9029fe-48d5-49e0-b9ad-8fd7dac70354"
+#define BLE_CHARACTERISTIC_UUID "33a03886-0db0-43c8-90a2-bca6a8c7eaf0"
 
 #define bleServerName "REFLECTIONS"
 

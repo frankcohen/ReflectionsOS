@@ -38,6 +38,22 @@ void SystemLoad::logtasktime( unsigned long tsktime, int mes,  String mname )
   if ( mes == 3 ) accumulatedTaskTime3 = accumulatedTaskTime3 + tsktime;
 }
 
+void SystemLoad::printHeapSpace( String message )
+{
+  size_t freeHeap8 = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+  Serial.print( message );
+  Serial.print(", Heap: ");
+  Serial.print(freeHeap8);
+  Serial.println(" bytes");
+  
+  /*
+  size_t freeHeapDefault = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
+  Serial.print("Default Free Heap: ");
+  Serial.print(freeHeapDefault);
+  Serial.println(" bytes");
+  */
+}
+
 void SystemLoad::loop() {
   unsigned long currentMillis = millis();
 
@@ -54,7 +70,8 @@ void SystemLoad::loop() {
     Serial.print( float( accumulatedTaskTime2 ) / float( interval) );
     Serial.print("% ");
     Serial.print( float( accumulatedTaskTime3 ) / float( interval) );
-    Serial.println("% ");
+    Serial.print("% ");
+    printHeapSpace( ", memory");
 
     // Reset the accumulated values for the next interval
     accumulatedTaskTime = 0;

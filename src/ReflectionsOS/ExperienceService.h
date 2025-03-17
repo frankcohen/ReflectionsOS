@@ -22,7 +22,7 @@
 #include "TOF.h"
 #include "AccelSensor.h"
 #include "Battery.h"
-#include "BLE.h"
+#include "BLEsupport.h"
 #include "TextMessageService.h"
 
 extern Battery battery;  // External Battery class
@@ -32,8 +32,6 @@ extern TOF tof;
 
 extern Video video;
 extern TextMessageService textmessageservice;
-//extern BLEServerClass bleServer;
-//extern BLEClientClass bleClient;
 
 /*
 ChatGPT says RSSI values:

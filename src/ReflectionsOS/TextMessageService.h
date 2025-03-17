@@ -22,7 +22,6 @@
 
 // Additional fonts at https://github.com/moononournation/ArduinoFreeFontFile/tree/master/Fonts
 
-#include "MKXTitle20pt7b.h"
 #include "SomeTimeLater20pt7b.h"
 #include "Minya16pt7b.h"
 #include "ScienceFair14pt7b.h"

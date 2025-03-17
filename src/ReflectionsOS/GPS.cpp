@@ -112,6 +112,30 @@ void GPS::printHeader()
   Serial.println(F("----------------------------------------------------------------------------------------------------------------------------------------"));
 }
 
+float GPS::getLat()
+{
+  if ( gps.location.isValid() )
+  {
+    return gps.location.lat();
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+float GPS::getLng()
+{
+  if ( gps.location.isValid() )
+  {
+    return gps.location.lng();
+  }
+  else
+  {
+    return 0;
+  }
+}
+
 void GPS::printLocation()
 {
   static const double LONDON_LAT = 51.508131, LONDON_LON = -0.128002;
