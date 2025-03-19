@@ -312,7 +312,7 @@ void ExperienceService::loop()
 
       case TOF::TOFGesture::Hover:
         // Finger hovers in one spot
-        startExperience( ExperienceService::Hover );
+        //startExperience( ExperienceService::Hover );
         return;
 
       case TOF::TOFGesture::Down:

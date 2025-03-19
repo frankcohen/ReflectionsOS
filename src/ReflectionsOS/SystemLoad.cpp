@@ -40,12 +40,21 @@ void SystemLoad::logtasktime( unsigned long tsktime, int mes,  String mname )
 
 void SystemLoad::printHeapSpace( String message )
 {
-  size_t freeHeap8 = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+ // Get total free heap available in bytes.
+  uint32_t freeHeap = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+  // Get the size of the largest contiguous free block.
+  uint32_t largestBlock = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+  // Compute a rough fragmentation ratio.
+  float fragRatio = (float)freeHeap / largestBlock;
+
   Serial.print( message );
   Serial.print(", Heap: ");
-  Serial.print(freeHeap8);
-  Serial.println(" bytes");
-  
+  Serial.print( freeHeap );
+  Serial.print(" , FreeBlock: ");
+  Serial.print( largestBlock );
+  Serial.print(" , Fragmentation ratio: ");
+  Serial.println( fragRatio );
+
   /*
   size_t freeHeapDefault = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
   Serial.print("Default Free Heap: ");

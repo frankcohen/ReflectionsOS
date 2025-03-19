@@ -9,16 +9,15 @@
  Read the license in the license.txt file that comes with this code.
 */
 
-#ifndef BLEsupport_H
-#define BLEsupport_H
+#ifndef BLE_SUPPORT_H
+#define BLE_SUPPORT_H
 
 #include <Arduino.h>
 
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEAdvertising.h>
-#include <BLEScan.h>
-#include <BLEAdvertisedDevice.h>
+#include <NimBLEDevice.h>
+#include <NimBLEScan.h>
+#include <NimBLEAdvertisedDevice.h> // This header defines NimBLEAdvertisedDevice and its callbacks.
+
 #include <ArduinoJson.h>
 
 #include "config.h"
@@ -33,6 +32,7 @@ extern LOGGER logger;
 extern Compass compass;
 extern GPS gps;
 extern RealTimeClock realtimeclock;
+extern Wifi wifi;
 
 // Custom BLE service UUID and timing constants
 #define REMOTE_WATCHDOG_TIMEOUT 30000   // 30 seconds: remote device stale if no update
@@ -40,9 +40,12 @@ extern RealTimeClock realtimeclock;
 #define UPDATE_INTERVAL         15000   // Update and advertise every 15 seconds
 #define MAX_DEVICES             10      // Maximum number of remote devices to track
 
-// Structure to hold remote device information
-struct DeviceInfo 
-{
+static const NimBLEAdvertisedDevice* advDevice;
+static bool                          doConnect  = false;
+static uint32_t                      scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
+
+// Structure to hold remote device information (including GPS location)
+struct DeviceInfo {
   String address;
   unsigned long lastUpdate;
   int heading;
@@ -51,24 +54,22 @@ struct DeviceInfo
   float longitude;
 };
 
-class BLEsupport
+class BLEsupport 
 {
   public:
     BLEsupport();
-    void begin();  // Initialize BLE, advertising, and scanning
-    void loop();   // Call this from the main loop to update advertisement and run watchdog checks
+    void begin();  // Initialize NimBLE, advertising, and scanning
+    void loop();   // Call from the main loop to update advertisement and run watchdog checks
 
   private:
-    int latestheading;
-    bool gotAPounce;
-    unsigned long pounceTimer;
+    // Updates the advertisement with the latest compass heading, pounce, and GPS location.
+    void updateAdvertisement();
+    // Checks the watchdog timers (for our own advertisement and remote devices).
+    void checkWatchdog();
+    // Updates or adds a remote device record.
+    void updateDevice(const String &address, int heading, bool pounce, float latitude, float longitude);
 
     String devicename;
-
-    // Updates the advertisement with the latest compass heading and pounce values.
-    void updateAdvertisement();
-    // Checks the watchdog timers (for own advertisement and remote devices).
-    void checkWatchdog();
 
     // Remote device tracking
     DeviceInfo devices[MAX_DEVICES];
@@ -76,23 +77,10 @@ class BLEsupport
     
     // Timing variable for our own advertisement update
     unsigned long lastOwnUpdate;
-    // Pointers to BLEAdvertising and BLEScan instances
-    BLEAdvertising* pAdvertising;
-    BLEScan* pBLEScan;
-
-    // Nested callback class for processing received advertisements.
-    class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks 
-    {
-      public:
-        MyAdvertisedDeviceCallbacks(BLEsupport* parent) : parentService(parent) {}
-        void onResult(BLEAdvertisedDevice advertisedDevice) override;
-      private:
-        BLEsupport* parentService;
-    };    
-
-    // Helper method to update or add a remote device record.
-    void updateDevice(const String& address, int heading, bool pounce, float latitude, float longitude);
+    // Pointers to NimBLE advertising and scanning instances
+    NimBLEAdvertising* pAdvertising;
+    NimBLEScan* pBLEScan;
 
 };
 
-#endif // BLEsupport_H
+#endif // BLE_SUPPORT_H

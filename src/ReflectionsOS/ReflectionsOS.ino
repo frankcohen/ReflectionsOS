@@ -143,10 +143,6 @@ BLEsupport blesupport;
 
 const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
 
-// Host name
-std::string devname;
-String devicename;
-
 bool tofstarted = false;
 bool accelstarted = false;
 
@@ -267,7 +263,7 @@ static void smartdelay(unsigned long ms) {
     utils.loop();
     compass.loop();
     haptic.loop();
-    //blesupport.loop();
+    blesupport.loop();
     realtimeclock.loop();
     gps.loop();
     steps.loop();
@@ -337,20 +333,23 @@ void setup() {
 
   systemload.printHeapSpace( "Video" );
 
-  //utils.WireScan();
+  //utils.WireScan();   // Shows devices on the I2S bus, including compass, TOF, accelerometeer
+
   /*
+  // Clears the NVS Flash memory
+
   Serial.println( "nvs_flash_init()" );
   nvs_flash_erase();
   esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        // NVS partition was truncated and needs to be erased
-        Serial.println( "nvs_flash_erase()" );
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
-    Serial.println( "nvs done" );
-*/
+  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      // NVS partition was truncated and needs to be erased
+      Serial.println( "nvs_flash_erase()" );
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret = nvs_flash_init();
+  }
+  ESP_ERROR_CHECK(ret);
+  Serial.println( "nvs done" );
+  */
 
   logger.begin();
   logger.setEchoToSerial(true);
@@ -358,12 +357,8 @@ void setup() {
 
   systemload.printHeapSpace( "Logger" );
 
-  devname = host_name_me;
-  std::string mac = WiFi.macAddress().c_str();
-  devname.append(mac.substr(15, 2));
-  devicename = devname.c_str();
   String hostinfo = "Host: ";
-  hostinfo += devicename;
+  hostinfo += wifi.getDeviceName().c_str();
   logger.info(hostinfo);
 
   // Self-test: NAND, I2C, SPI
@@ -382,13 +377,14 @@ void setup() {
   accel.begin();
   compass.begin();
   utils.begin();
-  //blesupport.begin();
 
   systemload.printHeapSpace( "Devices" );
 
   BoardInitializationUtility();   // Installs needed video and other files
 
   video.beginBuffer();      // Secondary begin to initiaize the secondary video buffer
+
+  blesupport.begin();
 
   // Support service initialization
 

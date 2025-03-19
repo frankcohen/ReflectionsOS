@@ -22,11 +22,6 @@ void Wifi::begin()
 
   WiFi.begin( SECRET_SSID, SECRET_PASS);
 
-  String devname = host_name_me;
-  String mac = WiFi.macAddress().c_str();
-  devname.concat( mac.substring( 15, 17 ) );
-  devicename = devname.c_str();
-
   bool again = true;
 
   // Wait for connection
@@ -46,6 +41,8 @@ void Wifi::begin()
   lastWifiTime = millis();
   checkNTP = millis();
 }
+
+// Looking for getDeviceName() ? See Wifi.h
 
 /*
   WifiManager optionally auto-reconnects the device to the previous network
