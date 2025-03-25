@@ -56,7 +56,7 @@ static const char* const noncommital[][2] =
 static const char* const negative[][2] = 
 {
   {"Play fair?", "Not today"},
-  {"I'm not all there myself", "so no, no no"},
+  {"I'm not all there", "so no, no no"},
   {"No time for joy", "nor play, no"},
   {"Right on time", "just not today"},
   {"Hidden in", "plain sight."},

@@ -13,16 +13,18 @@
 #define BLE_SUPPORT_H
 
 #include <Arduino.h>
-
-#include <NimBLEDevice.h>
-#include <NimBLEScan.h>
-#include <NimBLEAdvertisedDevice.h> // This header defines NimBLEAdvertisedDevice and its callbacks.
-
+#include "NimBLEDevice.h"
+#include "NimBLEScan.h"             // Contains NimBLEScanCallbacks in 2.2.3
+#include "NimBLEAdvertisementData.h"
+#include "NimBLEAdvertising.h"
 #include <ArduinoJson.h>
+
+#include <map>
+#include <set>
+#include <vector>
 
 #include "config.h"
 #include "secrets.h"
-
 #include "Logger.h"
 #include "Compass.h"
 #include "GPS.h"
@@ -34,19 +36,16 @@ extern GPS gps;
 extern RealTimeClock realtimeclock;
 extern Wifi wifi;
 
-// Custom BLE service UUID and timing constants
-#define REMOTE_WATCHDOG_TIMEOUT 30000   // 30 seconds: remote device stale if no update
-#define OWN_WATCHDOG_TIMEOUT    20000   // 20 seconds: own update watchdog timeout
-#define UPDATE_INTERVAL         15000   // Update and advertise every 15 seconds
+// Timing definitions (milliseconds)
+#define SCAN_TIME_MS            0       // 0 = scan forever
+#define OWN_WATCHDOG_TIMEOUT    40000   // 20 seconds until our advertisement is considered stale
 #define MAX_DEVICES             10      // Maximum number of remote devices to track
+#define BLE_CLIENT_SCAN_TIME    20000   // Client scan duration
+#define BLE_CLIENT_ATTEMPT_TIME 20000   // How long the client tries to connect
 
-static const NimBLEAdvertisedDevice* advDevice;
-static bool                          doConnect  = false;
-static uint32_t                      scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
-
-// Structure to hold remote device information (including GPS location)
-struct DeviceInfo {
-  String address;
+// Structure to hold remote device information.
+struct ReflectionsData {
+  String devicename;
   unsigned long lastUpdate;
   int heading;
   bool pounce;
@@ -58,29 +57,51 @@ class BLEsupport
 {
   public:
     BLEsupport();
-    void begin();  // Initialize NimBLE, advertising, and scanning
-    void loop();   // Call from the main loop to update advertisement and run watchdog checks
+    void begin();         // Initialize BLE (server, advertising, scanning)
+    void loop();          // Process BLE events (connections, watchdog, etc.)
+    void watchdogCheck(); // Check local and remote watchdog timers
+    String getJsonData();
+    void printRemoteDevices();  // For debugging: print list of remote devices
 
-  private:
-    // Updates the advertisement with the latest compass heading, pounce, and GPS location.
-    void updateAdvertisement();
-    // Checks the watchdog timers (for our own advertisement and remote devices).
-    void checkWatchdog();
-    // Updates or adds a remote device record.
-    void updateDevice(const String &address, int heading, bool pounce, float latitude, float longitude);
+    // Helper function used by the scan callback to connect to remote devices.
+    void connectAndRead(NimBLEAdvertisedDevice* advertisedDevice);
 
-    String devicename;
-
-    // Remote device tracking
-    DeviceInfo devices[MAX_DEVICES];
-    int deviceCount;
+    // Map to store remote device data; key is the device address.
+    std::map<String, ReflectionsData> remoteDevices;
     
-    // Timing variable for our own advertisement update
-    unsigned long lastOwnUpdate;
-    // Pointers to NimBLE advertising and scanning instances
-    NimBLEAdvertising* pAdvertising;
-    NimBLEScan* pBLEScan;
+  private:
+    unsigned long compasstime;
+    unsigned long lastAdvUpdate;
 
+    // Server BLE objects.
+    NimBLEServer* pServer;
+    NimBLEService* pService;
+    NimBLECharacteristic* pCharacteristic; // Local server characteristic.
+    NimBLEAdvertising* pAdvertising;    
+
+    // ----------------- SERVER CALLBACK -----------------
+    class MyCharacteristicCallbacks : public NimBLECharacteristicCallbacks 
+    {
+      public:
+        MyCharacteristicCallbacks(BLEsupport* parent);
+        void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;
+      private:
+        BLEsupport* _parent;
+    };
+
+    // ----------------- CLIENT SCAN CALLBACK -----------------
+    // Use NimBLEScanCallbacks (available in 2.2.3).
+    class ScanCallbacks : public NimBLEScanCallbacks {
+      public:
+        // Constructor takes a pointer to the parent BLEsupport instance.
+        ScanCallbacks(BLEsupport* parent);
+        void onResult(const NimBLEAdvertisedDevice* advertisedDevice) override;
+      private:
+        BLEsupport* _parent;
+    };
+
+    // Member variable for scan callbacks (initialized in the constructor’s initializer list).
+    ScanCallbacks scanCallbacks;
 };
 
 #endif // BLE_SUPPORT_H

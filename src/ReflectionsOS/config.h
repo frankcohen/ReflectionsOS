@@ -18,6 +18,8 @@ Read the license in the license.txt file that comes with this code.
 #ifndef _config_
 #define _config_
 
+#include "NimBLEDevice.h"
+
 /* Experience videos */
 
 #define OutOfTheBox_video "a1d7900fc81c714ccbdb692231c16d70"
@@ -157,8 +159,8 @@ Read the license in the license.txt file that comes with this code.
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
-#define BLE_SERVICE_UUID "7d9029fe-48d5-49e0-b9ad-8fd7dac70354"
-#define BLE_CHARACTERISTIC_UUID "33a03886-0db0-43c8-90a2-bca6a8c7eaf0"
+static const NimBLEUUID BLE_SERVICE_UUID("7d9029fe-48d5-49e0-b9ad-8fd7dac70354");
+static const NimBLEUUID BLE_CHARACTERISTIC_UUID("33a03886-0db0-43c8-90a2-bca6a8c7eaf0");
 
 #define bleServerName "REFLECTIONS"
 

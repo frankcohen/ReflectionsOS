@@ -21,6 +21,9 @@ Depends on WiFiManager by Tzapu, https://github.com/tzapu/WiFiManager
 #include <WiFiUdp.h>
 #include "secrets.h"
 #include <WiFiMulti.h>
+#include <esp_efuse.h>
+#include <stdio.h>
+#include "esp_mac.h"
 
 extern "C" {
   #include "esp_system.h"  // Contains esp_read_mac()
@@ -36,11 +39,15 @@ class Wifi
     bool isConnected();
     bool isTurnedOn();
     void setRTCfromNTP();
-    
+
+    String getMACAddress();
+
     inline const std::string getDeviceName() 
     {      
       uint64_t mac = ESP.getEfuseMac();
-      uint8_t lastByte = mac & 0xFF;
+      
+      uint8_t lastByte = (mac >> 40) & 0xFF;
+
       char deviceName[20];
       sprintf(deviceName, "Reflections-%02X", lastByte);
       return std::string(deviceName);

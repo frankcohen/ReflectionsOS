@@ -73,6 +73,12 @@ Reflections uses a custom partition scheme to maximize available flash storage.
 See instructions at: https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Partition%20tables%20and%20optimizing%20memory%20in%20Arduino%20IDE.md
 Arduino IDE 2.x automatically uses partitions.csv in the source code directory
 
+ESP32-S3 memory starts as:
+  Total Size        :   238232 B ( 232.6 KB)
+  Free Bytes        :    98480 B (  96.2 KB)
+  Allocated Bytes   :   132816 B ( 129.7 KB)
+  Minimum Free Bytes:    98376 B (  96.1 KB)
+  Largest Free Block:    86004 B (  84.0 KB)
 */
 
 #include "Arduino.h"
@@ -333,6 +339,10 @@ void setup() {
 
   systemload.printHeapSpace( "Video" );
 
+  //video.beginBuffer();      // Secondary begin to initiaize the secondary video buffer
+
+  //systemload.printHeapSpace( "Video buffer" );
+
   //utils.WireScan();   // Shows devices on the I2S bus, including compass, TOF, accelerometeer
 
   /*
@@ -359,6 +369,8 @@ void setup() {
 
   String hostinfo = "Host: ";
   hostinfo += wifi.getDeviceName().c_str();
+  hostinfo += ", ";
+  hostinfo += wifi.getMACAddress();
   logger.info(hostinfo);
 
   // Self-test: NAND, I2C, SPI
@@ -382,15 +394,17 @@ void setup() {
 
   BoardInitializationUtility();   // Installs needed video and other files
 
-  video.beginBuffer();      // Secondary begin to initiaize the secondary video buffer
+  systemload.printHeapSpace( "Board util" );
 
+  realtimeclock.begin();
   blesupport.begin();
+
+  systemload.printHeapSpace( "BLE start" );
 
   // Support service initialization
 
   steps.begin();
   timerservice.begin();
-  realtimeclock.begin();
 
   // Core 0 services
 
