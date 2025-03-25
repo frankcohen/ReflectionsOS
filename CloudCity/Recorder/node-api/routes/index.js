@@ -1,17 +1,40 @@
 var express = require('express');
 var router = express.Router();
 var path = require('path');
+const aws = require("aws-sdk");
 
 const folderPath = "/home/fcohen/files/";
 // const folderPath = "/home/ec2-user/cloudCity/files/";
 // "/var/www/node-api/uploads/final/";
 const fs = require("fs");
 
+const cloudwatchLogs = new aws.CloudWatchLogs({
+  accessKeyId: "AKIARQP7V4BTI47Y2ZEW",
+  secretAccessKey: "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",
+  region: "us-west-1",
+});
+
 // GET to make a log entry
 
 var timestamp = require('log-timestamp');
 router.get( "/logit", (req, res) => {
+  const logMsg = req.query.message;
   console.log( req.query.message );
+  const params = {
+    logGroupName: "reflections",
+    logStreamName: "reflections",
+    logEvents: [
+      {
+        message: logMsg,
+        timestamp: Date.now(),
+      },
+    ],
+  };
+
+  cloudwatchLogs.putLogEvents(params, (err, data) => {
+    if (err) console.log("Error", err);
+    else console.log("Log event logged successfully");
+  });
   res.send( "<html><body>Logged</body></html>" );
 });
 
