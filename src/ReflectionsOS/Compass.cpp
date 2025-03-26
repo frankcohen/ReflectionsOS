@@ -236,6 +236,11 @@ float Compass::getHeading(void)
   deg += ( 180 + 40 );
   if ( deg > 360 ) deg -= 360;
 
+
+  String mef = "Compass: ";
+  mef += deg;
+  Serial.println( mef );
+
   return deg;
 }
 

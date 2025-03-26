@@ -9,6 +9,9 @@
 
 #include "BLEsupport.h"
 
+// Declare the ClientCallbacks instance here
+BLEsupport::ClientCallbacks clientCallbacks; 
+
 // ----------------- SERVER CALLBACK IMPLEMENTATION -----------------
 
 // Constructor for the nested MyCharacteristicCallbacks.
@@ -35,24 +38,65 @@ BLEsupport::ScanCallbacks::ScanCallbacks(BLEsupport* parent)
 }
 
 // onResult is called for each discovered advertised device.
-void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertisedDevice) {
-  // Check if the advertised device contains our service UUID.
-  if (!advertisedDevice->isAdvertisingService(BLE_SERVICE_UUID))
-    return;
-  
-  String addr = String(advertisedDevice->getAddress().toString().c_str());
-
-  String mef = F( "Found device with our service: " );
-  mef += addr;
-  Serial.println( mef );
-
-  // If already known, update its lastUpdate timestamp.
-  if (_parent->remoteDevices.find(addr) != _parent->remoteDevices.end()) {
-    _parent->remoteDevices[addr].lastUpdate = millis();
+void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertisedDevice)
+{
+  // Check if the advertised device is the same as our own device.
+  if ( advertisedDevice->getAddress().equals( NimBLEDevice::getAddress() ) ) 
+  {
+    // Optionally print a message or just skip.
+    Serial.println("Skipping self advertisement");
     return;
   }
-  // Otherwise, attempt to connect and read.
-  _parent->connectAndRead(const_cast<NimBLEAdvertisedDevice*>(advertisedDevice));
+
+  // Check if the advertised device contains our service UUID.
+  if ( !advertisedDevice->isAdvertisingService( NimBLEUUID( BLE_SERVICE_UUID ) ) ) return;
+  
+  NimBLEDevice::getScan()->stop();
+  /** Save the device reference in a global for the client to use*/
+  advDevice = advertisedDevice;
+  /** Ready to connect now */
+  doConnect = true;
+
+  // Add or update the device data in remoteDevices
+  String deviceAddress = String(advertisedDevice->getAddress().toString().c_str()); // Convert to String
+  ReflectionsData& data = _parent->remoteDevices[deviceAddress];
+  
+  // Update the data for the device
+  data.devicename = String(advertisedDevice->getName().c_str()); // Convert to String
+  data.lastUpdate = millis();
+
+  float heading = compass.getHeading();
+  if ( ( heading > 0 ) && ( heading < 360 ) ) 
+  {
+    data.heading = (int) heading;
+  } 
+  else 
+  {
+    data.heading = 0;  // Use 0 or some default value if invalid
+  }
+
+  data.rssi = advertisedDevice->getRSSI();
+  data.pounce = false;  // Set your logic for pounce state
+  data.latitude = gps.getLat();  // Access gps directly
+  data.longitude = gps.getLng();  // Access gps directly
+}
+
+void BLEsupport::ScanCallbacks::onScanEnd(const NimBLEScanResults& results, int reason) 
+{
+  Serial.printf( "Scan Ended, reason: %d, device count: %d; Restarting scan\n", reason, results.getCount() );
+  NimBLEDevice::getScan()->start(scanTimeMs, false, true);
+}
+
+/** Notification / Indication receiving handler callback */
+void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) 
+{
+    std::string str  = (isNotify == true) ? "Notification" : "Indication";
+    str += " from ";
+    str += pRemoteCharacteristic->getClient()->getPeerAddress().toString();
+    str += ": Service = " + pRemoteCharacteristic->getRemoteService()->getUUID().toString();
+    str += ", Characteristic = " + pRemoteCharacteristic->getUUID().toString();
+    str += ", Value = " + std::string((char*)pData, length);
+    Serial.printf("%s\n", str.c_str());
 }
 
 // ----------------- BLEsupport METHODS -----------------
@@ -61,6 +105,7 @@ void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertise
 BLEsupport::BLEsupport() : scanCallbacks(this) {
   compasstime = 0;
   lastAdvUpdate = 0;
+  lastPrintTime = 0;  // Initialize the last print time to 0
   pServer = nullptr;
   pService = nullptr;
   pCharacteristic = nullptr;
@@ -74,8 +119,10 @@ void BLEsupport::begin() {
 
   // Initialize the BLE device using the WiFi device name.
   NimBLEDevice::init(wifi.getDeviceName().c_str());
-  
-  // --- SERVER SETUP ---
+  NimBLEDevice::setPower(3); /** 3dbm */
+
+  // Server Setup
+
   pServer = NimBLEDevice::createServer();
   pService = pServer->createService(BLE_SERVICE_UUID);
   pCharacteristic = pService->createCharacteristic(BLE_CHARACTERISTIC_UUID, NIMBLE_PROPERTY::READ);
@@ -88,34 +135,42 @@ void BLEsupport::begin() {
   NimBLEAdvertisementData scanResponse;
   scanResponse.setName(wifi.getDeviceName().c_str());
   pAdvertising->setScanResponseData(scanResponse);
-  
   pAdvertising->start();
-  Serial.println("BLE Advertising started");
 
   lastAdvUpdate = millis();
-  
-  // --- CLIENT SETUP ---
 
-/*
-  Serial.println("BLE client starting");
+  // Client Setup
+
   NimBLEScan* pScan = NimBLEDevice::getScan();
   pScan->setScanCallbacks(&scanCallbacks, false);
+
+  /** Set scan interval (how often) and window (how long) in milliseconds */
+  pScan->setInterval(100);
+  pScan->setWindow(100);
+
   pScan->setActiveScan(true); // Enable active scanning.
   pScan->start(SCAN_TIME_MS, false);  // false: do not resume scanning automatically.
-  Serial.println("BLE client started");
-*/
 
-    compasstime = millis();
+  Serial.println("BLE started");
+
+  compasstime = millis();
 }
 
 String BLEsupport::getJsonData()
 {
-  Serial.print( "getJsonData() here ");
-  Serial.println( compass.getHeading() );
-
   StaticJsonDocument<256> doc;
   doc["devicename"] = wifi.getDeviceName();
-  doc["heading"] = compass.getHeading();
+
+  float heading = compass.getHeading();
+  if ( ( heading > 0 ) && ( heading < 360 ) ) 
+  {
+    doc["heading"] = (int) heading;
+  } 
+  else 
+  {
+    doc["heading"] = 0;  // Use 0 or some default value if invalid
+  }
+
   doc["pounce"] = false;
   doc["latitude"] = gps.getLat();
   doc["longitude"] = gps.getLng();
@@ -124,8 +179,9 @@ String BLEsupport::getJsonData()
   return output;
 }
 
-void BLEsupport::watchdogCheck() {
-  return;   // Server only
+void BLEsupport::watchdogCheck() 
+{
+  return;
 
   unsigned long currentMillis = millis();
   if (currentMillis - lastAdvUpdate > OWN_WATCHDOG_TIMEOUT) {
@@ -151,182 +207,34 @@ void BLEsupport::watchdogCheck() {
   }
 }
 
-/* Client connects to a known service and gets its data */
-
-void BLEsupport::connectAndRead(NimBLEAdvertisedDevice* advertisedDevice) 
+void BLEsupport::loop()
 {
-  return;
-
-
-
-  // Convert the advertised device address to an Arduino String.
-  String addr = String( advertisedDevice->getAddress().toString().c_str() );
+  unsigned long currentMillis = millis();
   
-  // Static set to track connection attempts.
-  static std::set<String> pendingConnections;
-  
-  // If a connection attempt is already in progress for this address, skip it.
-  if (pendingConnections.find(addr) != pendingConnections.end()) 
-  {
-    String mef = F( "Already trying to connect to ");
-    mef += addr;
-    Serial.println( mef );
-    return;
-  }
-
-  // Mark this address as pending.
-  pendingConnections.insert(addr);
-  
-  // Check if there's already an active connection.
-  std::vector<NimBLEClient*> clients = NimBLEDevice::getConnectedClients();
-  for (auto client : clients) {
-    if (client->getPeerAddress().equals(advertisedDevice->getAddress())) 
-    {
-      String mef = F("Already connected to ");
-      mef += addr;
-      Serial.println( mef );
-
-      pendingConnections.erase(addr);
-      return;
-    }
-  }
-  
-  String mef3 = F("Attempting to connect to ");
-  mef3 += addr;
-  Serial.println( mef3 );
-  
-  NimBLEClient* pClient = NimBLEDevice::createClient();
-
-  if (!pClient->connect(advertisedDevice, BLE_CLIENT_ATTEMPT_TIME)) 
-  { 
-    String mef4 = F( "Client failed to connect to " );
-    mef4 += addr;
-    Serial.println( mef4 );
-
-    // Attempt to force a disconnect up to 5 times (total about 20 seconds).
-    const int maxAttempts = 5;
-    const unsigned long disconnectInterval = 4000; // 4 seconds between attempts
-    int attempts = 0;
-
-    while ( ( pClient->isConnected() ) && ( attempts < maxAttempts ) ) 
-    {
-      String mef = F("Client appears connected; attempting disconnect...");
-      mef += attempts;
-      Serial.println( mef );
-
-      pClient->disconnect();
-      
-      delay(disconnectInterval);
-      attempts++;
-    }
-    
-    NimBLEDevice::deleteClient(pClient);
-    pendingConnections.erase(addr);
-    return;
-  }
-
-  Serial.println( F( "Connected to remote device!" ) );
-  
-  // Get the remote service.
-  NimBLERemoteService* pRemoteService = pClient->getService( BLE_SERVICE_UUID );
-  if (!pRemoteService) 
-  {
-    Serial.println( F( "Remote service not found." ) );
-    pClient->disconnect();
-    NimBLEDevice::deleteClient(pClient);
-    pendingConnections.erase(addr);
-    return;
-  }
-  
-  // Get the remote characteristic.
-  NimBLERemoteCharacteristic* pRemoteCharacteristic = pRemoteService->getCharacteristic(BLE_CHARACTERISTIC_UUID);
-  if (!pRemoteCharacteristic) {
-    Serial.println( F( "Remote characteristic not found." ) );
-    pClient->disconnect();
-    NimBLEDevice::deleteClient(pClient);
-    pendingConnections.erase(addr);
-    return;
-  }
-  
-  // Read the JSON value (readValue() returns an std::string).
-  std::string value = pRemoteCharacteristic->readValue();
-  String json = String(value.c_str());
-  String mef2 = F( "Read JSON from remote: " );
-  mef2 += json;
-  Serial.println( mef2 );
-  
-  StaticJsonDocument<256> doc;
-  DeserializationError err = deserializeJson(doc, json);
-  if (err) 
-  {
-    String mef = F( "JSON parse failed: " );
-    mef += err.c_str();
-    Serial.println( mef );
-  } 
-  else 
-  {
-    ReflectionsData data;
-    data.devicename = String(wifi.getDeviceName().c_str());
-    data.heading = doc[ F( "heading" ) ] | 0;
-    data.pounce = doc[ F( "pounce" ) ] | false;
-    data.latitude = doc[ F( "latitude" ) ] | 0.0;
-    data.longitude = doc[ F( "longitude" ) ] | 0.0;
-    
-    // Enforce a maximum number of remote devices.
-    if (remoteDevices.size() >= MAX_DEVICES) {
-      auto oldest = remoteDevices.begin();
-      for (auto it = remoteDevices.begin(); it != remoteDevices.end(); ++it) {
-        if (it->second.lastUpdate < oldest->second.lastUpdate)
-          oldest = it;
-      }
-      String mef = F( "Max devices reached. Removing oldest device: " );
-      mef += oldest->first;
-      Serial.println( mef );
-
-      remoteDevices.erase(oldest);
-    }
-    data.lastUpdate = millis();
-    remoteDevices[addr] = data;
-    Serial.println( F( "Stored remote device data." ) );
-  }
-  
-  // Proper cleanup: disconnect and delete the client.
-  pClient->disconnect();
-  NimBLEDevice::deleteClient(pClient);
-  
-  // Remove the address from pending connections.
-  pendingConnections.erase(addr);
-}
-
-void BLEsupport::loop() {
-  watchdogCheck();
-  
-  if (millis() - compasstime > 5000) {
-    compasstime = millis();
+  // Print remote devices' data every 30 seconds
+  if (currentMillis - lastPrintTime >= 30000) {
     printRemoteDevices();
-    //Serial.print("Compass Heading: ");
-    //Serial.println(compass.getHeading());
+    lastPrintTime = currentMillis;
   }
 }
 
-void BLEsupport::printRemoteDevices() 
-{
-  if (remoteDevices.empty()) return;
-
-  Serial.println("Remote Devices:");
-
-  for (auto const &entry : remoteDevices) {
-    Serial.print("Address: ");
-    Serial.println(entry.first);
+void BLEsupport::printRemoteDevices() {
+  Serial.println("Tracking Remote Devices:");
+  for (const auto& entry : remoteDevices) {
+    const ReflectionsData& data = entry.second;
     Serial.print("Device Name: ");
-    Serial.println(entry.second.devicename);
-    Serial.print("Heading: ");
-    Serial.println(entry.second.heading);
-    Serial.print("Latitude: ");
-    Serial.println(entry.second.latitude);
-    Serial.print("Longitude: ");
-    Serial.println(entry.second.longitude);
-    Serial.print("Last update (ms): ");
-    Serial.println(entry.second.lastUpdate);
+    Serial.print(data.devicename);
+    Serial.print(", Heading: ");
+    Serial.print(data.heading);
+    Serial.print(", Pounce: ");
+    Serial.print(data.pounce);
+    Serial.print(", Latitude: ");
+    Serial.print(data.latitude);
+    Serial.print(", Longitude: ");
+    Serial.print(data.longitude);
+    Serial.print(", RSSI: ");
+    Serial.println(data.rssi);  
   }
 }
+
+

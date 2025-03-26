@@ -36,12 +36,20 @@ extern GPS gps;
 extern RealTimeClock realtimeclock;
 extern Wifi wifi;
 
+static NimBLEServer* pServer;
+static NimBLEService* pService;
+static NimBLECharacteristic* pCharacteristic;
+static NimBLEAdvertising* pAdvertising;    
+static const NimBLEAdvertisedDevice* advDevice;
+static bool doConnect  = false;
+static uint32_t scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
+
 // Timing definitions (milliseconds)
 #define SCAN_TIME_MS            0       // 0 = scan forever
-#define OWN_WATCHDOG_TIMEOUT    40000   // 20 seconds until our advertisement is considered stale
+#define OWN_WATCHDOG_TIMEOUT    60000   // 20 seconds until our advertisement is considered stale
 #define MAX_DEVICES             10      // Maximum number of remote devices to track
-#define BLE_CLIENT_SCAN_TIME    20000   // Client scan duration
-#define BLE_CLIENT_ATTEMPT_TIME 20000   // How long the client tries to connect
+#define BLE_CLIENT_SCAN_TIME    60000   // Client scan duration
+#define BLE_CLIENT_ATTEMPT_TIME 60000   // How long the client tries to connect
 
 // Structure to hold remote device information.
 struct ReflectionsData {
@@ -51,6 +59,7 @@ struct ReflectionsData {
   bool pounce;
   float latitude;
   float longitude;
+  int rssi;
 };
 
 class BLEsupport 
@@ -69,15 +78,27 @@ class BLEsupport
     // Map to store remote device data; key is the device address.
     std::map<String, ReflectionsData> remoteDevices;
     
+    // **Move ClientCallbacks here to public access**
+    class ClientCallbacks : public NimBLEClientCallbacks 
+    {
+      public:
+        void onConnect(NimBLEClient* pClient) override { Serial.printf("Connected\n"); }
+        
+        void onDisconnect(NimBLEClient* pClient, int reason) override 
+        {
+            Serial.printf("%s Disconnected, reason = %d - Starting scan\n", pClient->getPeerAddress().toString().c_str(), reason);
+            NimBLEDevice::getScan()->start(scanTimeMs, false, true);
+        }
+    };
+
   private:
     unsigned long compasstime;
     unsigned long lastAdvUpdate;
+    unsigned long lastPrintTime;  // Timer for printing devices' data
 
-    // Server BLE objects.
-    NimBLEServer* pServer;
-    NimBLEService* pService;
-    NimBLECharacteristic* pCharacteristic; // Local server characteristic.
-    NimBLEAdvertising* pAdvertising;    
+    bool connectToServer();
+
+    void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
 
     // ----------------- SERVER CALLBACK -----------------
     class MyCharacteristicCallbacks : public NimBLECharacteristicCallbacks 
@@ -91,17 +112,17 @@ class BLEsupport
 
     // ----------------- CLIENT SCAN CALLBACK -----------------
     // Use NimBLEScanCallbacks (available in 2.2.3).
+
     class ScanCallbacks : public NimBLEScanCallbacks {
       public:
         // Constructor takes a pointer to the parent BLEsupport instance.
         ScanCallbacks(BLEsupport* parent);
         void onResult(const NimBLEAdvertisedDevice* advertisedDevice) override;
+        void onScanEnd(const NimBLEScanResults& results, int reason) override;
       private:
         BLEsupport* _parent;
-    };
-
-    // Member variable for scan callbacks (initialized in the constructor’s initializer list).
-    ScanCallbacks scanCallbacks;
+    } scanCallbacks;
+    
 };
 
 #endif // BLE_SUPPORT_H
