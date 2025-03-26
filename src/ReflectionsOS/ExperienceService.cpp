@@ -331,6 +331,27 @@ void ExperienceService::loop()
       //startExperience( ExperienceService::Shaken );
     }
 
+    // Cats Play
+
+    /*
+
+    When another cat is in BLE range, go into Cats Play for the next 2 minutes
+    Show Cats Play video, estimating diraction
+
+    */
+
+    // Pounce
+
+    /*
+
+    React to pounces from other cats facing your direction, play pounce experience
+
+    When in Cats Play, triple tap sends a pounce
+
+    */
+
+
+
     // Hover
 
     // GettingSleepy
@@ -339,9 +360,6 @@ void ExperienceService::loop()
 
     // Swipe
 
-    // Pounce
-
-    // Cats Play
 
 
 

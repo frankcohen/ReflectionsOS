@@ -71,6 +71,7 @@ class BLEsupport
     void watchdogCheck(); // Check local and remote watchdog timers
     String getJsonData();
     void printRemoteDevices();  // For debugging: print list of remote devices
+    unsigned long lastServerUpdate;    
 
     // Helper function used by the scan callback to connect to remote devices.
     void connectAndRead(NimBLEAdvertisedDevice* advertisedDevice);

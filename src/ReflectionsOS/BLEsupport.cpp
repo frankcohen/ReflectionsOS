@@ -110,6 +110,7 @@ BLEsupport::BLEsupport() : scanCallbacks(this) {
   pService = nullptr;
   pCharacteristic = nullptr;
   pAdvertising = nullptr;
+  lastServerUpdate = 0;
 }
 
 void BLEsupport::begin() {  
@@ -216,6 +217,29 @@ void BLEsupport::loop()
     printRemoteDevices();
     lastPrintTime = currentMillis;
   }
+
+  // Remove stale remote devices (timeout after 2 minutes)
+  for (auto it = remoteDevices.begin(); it != remoteDevices.end(); ) {
+    if (currentMillis - it->second.lastUpdate >= 120000) {  // 2 minutes timeout
+      Serial.print("Removing stale device: ");
+      Serial.println(it->first);
+      it = remoteDevices.erase(it);
+    } else {
+      ++it;
+    }
+  }
+  
+  // Update the server's characteristic value every 20 seconds
+  if (currentMillis - lastServerUpdate >= 20000) {
+    if (pCharacteristic != nullptr) {
+      String json = getJsonData();
+      pCharacteristic->setValue((uint8_t*)json.c_str(), json.length());
+      Serial.println("Server updated characteristic with new JSON data:");
+      Serial.println(json);
+    }
+    lastServerUpdate = currentMillis;
+  }
+
 }
 
 void BLEsupport::printRemoteDevices() {
