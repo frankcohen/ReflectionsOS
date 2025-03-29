@@ -29,6 +29,7 @@ extern Battery battery;  // External Battery class
 extern LOGGER logger;
 extern AccelSensor accel;
 extern TOF tof;
+extern BLEsupport blesupport;
 
 extern Video video;
 extern TextMessageService textmessageservice;
@@ -92,6 +93,9 @@ class ExperienceService
     unsigned long afterTimer;
     unsigned long noopTimer;
     bool noopFlag;
+
+    unsigned long afterCatsPlay;
+    unsigned long afterPounce;
 
 };
 

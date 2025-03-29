@@ -66,12 +66,14 @@ class BLEsupport
 {
   public:
     BLEsupport();
+
     void begin();         // Initialize BLE (server, advertising, scanning)
     void loop();          // Process BLE events (connections, watchdog, etc.)
-    void watchdogCheck(); // Check local and remote watchdog timers
+
     String getJsonData();
     void printRemoteDevices();  // For debugging: print list of remote devices
     unsigned long lastServerUpdate;    
+    int getRemoteDevicesCount();  // Devices in BLE range
 
     // Helper function used by the scan callback to connect to remote devices.
     void connectAndRead(NimBLEAdvertisedDevice* advertisedDevice);

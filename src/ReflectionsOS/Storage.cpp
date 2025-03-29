@@ -36,31 +36,37 @@ extern Arduino_GFX *gfx;
 int16_t st_x, st_y;
 uint16_t st_w, st_h;
 
-void CustomTarStatusProgressCallback( const char* name, size_t size, size_t total_unpacked )
+void ShowProgress( String message )
 {
-  Serial.printf("[TAR] %-32s %8d bytes - %8d Total bytes\n", name, size, total_unpacked );
-
   gfx->fillScreen( COLOR_BLUE );
 
-  String text = String( globalFileCount++ );
-
   /*
-  if ( text.length() >= 12 ) 
+  if ( message.length() >= 12 ) 
   {
     // Extract the substring starting from the character at (length - 12) to the end
-    text = text.substring( text.length() - 12 );
+    message = message.substring( message.length() - 12 );
   } 
   */
   
   gfx->setFont( &ScienceFair14pt7b );
   gfx->setTextColor( COLOR_TEXT_YELLOW );
-  gfx->getTextBounds( text.c_str(), 0, 0, &st_x, &st_y, &st_w, &st_h);
+  gfx->getTextBounds( message.c_str(), 0, 0, &st_x, &st_y, &st_w, &st_h);
 
-  st_y = 100;
+  st_y = 130;
   st_x = 40;
 
   gfx->setCursor( ( gfx->width() - st_w ) / 2, st_y );
-  gfx->println( text );
+
+  gfx->println( message );
+}
+
+void CustomTarStatusProgressCallback( const char* name, size_t size, size_t total_unpacked )
+{
+  Serial.printf("[TAR] %-32s %8d bytes - %8d Total bytes\n", name, size, total_unpacked );
+
+  String mef = String( globalFileCount++ );
+  mef += " files";
+  ShowProgress( mef );
 }
 
 /*
@@ -225,9 +231,7 @@ void Storage::extract_files( String tarfilename )
 {
   char tarFolder[100];
   String mef = "/";
-  //mef += NAND_BASE_DIR;
-  //mef += "/";
-  mef += tarfilename.substring( mef.length(), tarfilename.length() - 4 );
+  mef += NAND_BASE_DIR;  // e.g., "/REFLECTIONS"
   mef.toCharArray( tarFolder, 100 );
 
   Serial.print( "extract dir = ");
@@ -254,7 +258,7 @@ void Storage::extract_files( String tarfilename )
 
 // Recursively removes files in directory, including any files in sub directories
 
-boolean Storage::removeFiles(fs::FS &fs, const char * dirname, uint8_t levels)
+bool Storage::removeFiles(fs::FS &fs, const char * dirname, uint8_t levels)
 {
   Serial.printf("Removing files from directory: %s\n", dirname);
 
@@ -679,104 +683,117 @@ void Storage::smartDelay(unsigned long ms)
 
 boolean Storage::getFileSaveToSD( String thedoc )
 {
-        HTTPClient http;
+    HTTPClient http;
 
-        String ccurl = cloudCityURL;
-        ccurl += "api/download?name=";
-        ccurl += thedoc;
+    String ccurl = cloudCityURL;
+    ccurl += "api/download?name=";
+    ccurl += thedoc;
 
-        Serial.print( F( " ccurl = " ) );
-        Serial.println( ccurl );
-        
-        http.begin( ccurl, root_ca );
+    Serial.print( F( " ccurl = " ) );
+    Serial.println( ccurl );
 
-        int httpCode = http.GET();
+    http.begin( ccurl, root_ca );
 
-        if( httpCode != HTTP_CODE_OK )
+    int httpCode = http.GET();
+
+    if( httpCode != HTTP_CODE_OK )
+    {
+        Serial.print( F( "Server response code: " ) );
+        Serial.println( httpCode );
+        return false;
+    }
+
+    // Get the length of the document
+    int len = http.getSize();
+    Serial.print( "Size: " );
+    Serial.println( len );
+
+    // Create buffer for read
+    uint8_t buff[130] = { 0 };
+
+    // Get tcp stream
+    WiFiClient * stream = http.getStreamPtr();
+
+    String mef = "/";
+    mef += thedoc;
+
+    File myFile = SD.open( mef, FILE_WRITE );
+    if ( myFile )
+    {
+        Serial.print( F( "Write: " ) );
+        Serial.println( mef );
+    }
+    else
+    {
+        Serial.print( F( "Error opening new file for writing: " ) );
+        Serial.println( mef );
+        return false;
+    }
+
+    int startTime = millis();
+    int bytesReceived = 0;
+
+    // Initialize previousProgress for 10% increments
+    int previousProgress = -1;
+
+    // Read data from server
+    while( http.connected() && (len > 0 || len == -1))
+    {
+        size_t size = stream->available();
+        if(size)
         {
-          Serial.print( F( "Server response code: " ) );
-          Serial.println( httpCode );
-          return false;
+            int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
+            bytesReceived += c;
+
+            myFile.write( buff, c );
+            if(len > 0)
+            {
+                len -= c;
+            }
+
+            // Calculate progress
+            int currentProgress = (len > 0) ? (bytesReceived * 100) / len : 100;
+            currentProgress = min(currentProgress, 100);  // Ensure it doesn't exceed 100%
+
+            // Only update progress if it has changed by 10%
+            if (currentProgress / 10 > previousProgress / 10)
+            {
+                previousProgress = currentProgress;
+
+                String mef = String(currentProgress);
+                mef += "% downloaded";
+                ShowProgress( mef );
+            }
         }
+        smartDelay(1);
+    }
 
-        // get length of document (is -1 when Server sends no Content-Length header)
-        int len = http.getSize();
-        Serial.print( "Size: " );
-        Serial.println( len );
+    // Ensure we mark the progress as complete if download is finished
+    if (bytesReceived > 0 && previousProgress < 100) {
+        previousProgress = 100;
+        String mef = String(previousProgress);
+        mef += "% downloaded";
+        ShowProgress( mef );
+    }
 
-        // create buffer for read
-        uint8_t buff[130] = { 0 };
+    myFile.close();
+    http.end();
 
-        // get tcp stream
-        WiFiClient * stream = http.getStreamPtr();
+    Serial.print( F( "Bytes received " ) );
+    Serial.print( bytesReceived );
+    Serial.print( F( " in " ) );
+    Serial.print( ( millis() - startTime ) / 1000 );
+    Serial.print( F( " seconds " ) );
+    if ( ( ( millis() - startTime ) / 1000 ) > 0 )
+    {
+            Serial.print( bytesReceived / ( ( millis() - startTime ) / 1000 ) );
+            Serial.print( F( " bytes/second" ) );
+    }
+    Serial.println( F( " " ) );
 
-        String mef = "/";
-        //mef += NAND_BASE_DIR;
-        //mef += "/";
-        mef += thedoc;
-
-        File myFile = SD.open( mef, FILE_WRITE );
-        if ( myFile )
-        {
-          Serial.print( F( "Write: " ) );
-          Serial.println( mef );
-        }
-        else
-        {
-          Serial.print( F( "Error opening new file for writing: " ) );
-          Serial.println( mef );
-          return false;
-        }
-
-        int startTime = millis();
-        int bytesReceived = 0;
-        boolean buffirst = true;
-
-        // read data from server
-        while( http.connected() && (len > 0 || len == -1))
-        {
-          size_t size = stream->available();
-          if(size)
-          {
-              int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size) );
-              bytesReceived += c;
-
-              // Use in case of endian problem
-              /*
-              byte swapper = 0;
-              for ( int n = 0; n<130; n = n+2 )
-              {
-                swapper = buff[n];
-                buff[n] = buff[n+1];
-                buff[n+1] = swapper;
-              }
-              */
-              myFile.write( buff, c );
-              if(len > 0)
-              {
-                      len -= c;
-              }
-          }
-          smartDelay(1);
-        }
-
-        myFile.close();
-        http.end();
-
-        Serial.print( F( "Bytes received " ) );
-        Serial.print( bytesReceived );
-        Serial.print( F( " in " ) );
-        Serial.print( ( millis() - startTime ) / 1000 );
-        Serial.print( F( " seconds " ) );
-        if ( ( ( millis() - startTime ) / 1000 ) > 0 )
-        {
-                Serial.print( bytesReceived / ( ( millis() - startTime ) / 1000 ) );
-                Serial.print( F( " bytes/second" ) );
-        }
-        Serial.println( F( " " ) );
-
-        return true;
+    return true;
 }
+
 
 /*
   Client to Cloud City service on server

@@ -44,6 +44,9 @@ class Experience_CatsPlay : public Experience {
     unsigned long overallTimer;
     float calculateBearing( float headingA, float headingB, float rssi );
 
+    float lastHeading;               // stores last compass heading value
+    unsigned long lastHeadingChangeTime; // timestamp when heading last changed
+
 };
 
 #endif // Experience_CatsPlay

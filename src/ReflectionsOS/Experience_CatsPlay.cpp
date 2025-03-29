@@ -73,7 +73,7 @@ void Experience_CatsPlay::run()
     directionTimer = millis();
 
     float headingA = compass.getHeading();
-    float headingB; // = bleServer.getLatestHeading();
+    float headingB = 180; // = bleServer.getLatestHeading();
     
     // Placeholder RSSI value (should be obtained via BLE communication)
     float rssi; // bleClient.getDistance();

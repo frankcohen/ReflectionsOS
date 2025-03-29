@@ -26,16 +26,16 @@ Read the license in the license.txt file that comes with this code.
 
 #define Chastise_video "29eebc0d0804260f934575ceaedc50b1"
 
-#define CatsPlayFound_video "8e1cb81b32d7fb3ecb6ac9f16286d1f7"
+#define CatsPlay1_video "a3c206e2119515fd43d5e3b428d14997"
+#define CatsPlay2_video "bdd5ba9d704154cfda69040c52c23c11"
+#define CatsPlay3_video "c936f8c81cb95e795dcb9daa3ccab59c"
+#define CatsPlay4_video "5cb598bfe033d648219c7e1adeca90bc"
+#define CatsPlay5_video "cd1fcfb794e7bb03012538cec3bcc7db"
+#define CatsPlay6_video "825a19b7500882ea76f6f416196331d9"
+#define CatsPlay7_video "b1bcc5333edec805a9a092812b0c23de"
+#define CatsPlay8_video "fc3281880963ef991606627723d20bcd"
+#define CatsPlayFound_video "9c82b77f2b46c08107d6483436a622e5"
 #define Pounce_video "c4e530e40e5f99e1c8a7afd6cb202423"
-#define CatsPlay1_video "52bfa7cd386d6882f49cbdfd04379270"
-#define CatsPlay2_video "dfaafa5d7737fa608f562dc65d6a57f4"
-#define CatsPlay3_video "e2668735da694ecf0d4208f03e065b1d"
-#define CatsPlay4_video "03f9a11699c463e1a5ace6c2f978eecd"
-#define CatsPlay5_video "6f37e50a4f148fb74801df10370552bb"
-#define CatsPlay6_video "4253ae461e66bd7b04cfd1f1a773f1cd"
-#define CatsPlay7_video "7d75dbfe1ac31dd914f6ead0706d38c1"
-#define CatsPlay8_video "3f5f5e3f087b6db73a39fad9a7ec4217"
 
 #define EyesFollowFinger_video "f99c9b5031e6102ef45fbdf71cb09134"
 

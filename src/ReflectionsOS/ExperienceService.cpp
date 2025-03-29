@@ -160,6 +160,9 @@ void ExperienceService::begin()
 
   experienceIndex = 0;
 
+  afterCatsPlay = millis();
+  afterPounce = millis();
+
   //startExperience( ExperienceService::Awake );   // Sleep experience
 }
 
@@ -267,6 +270,13 @@ void ExperienceService::loop()
 {
   operateExperience();      // Run the current experience, if any
 
+  // If in Cats Play, triple tap, and heading towards this device, then Pounce
+  // Detect triple tap
+  // Calculate heading towards this device
+  // Pounce
+
+
+
   if ( getCurrentState() != STOPPED ) return;
 
   if ( video.getStatus() != 0 ) return;
@@ -291,32 +301,25 @@ void ExperienceService::loop()
       case TOF::TOFGesture::Left:
         //startExperience( ExperienceService::Chastise );
         //startExperience( ExperienceService::EyesFollowFinger );
-        return;
 
       case TOF::TOFGesture::Circular:
         startExperience( ExperienceService::MysticCat );
-        return;
 
       case TOF::TOFGesture::Sleep:
-        return;
 
       case TOF::TOFGesture::Right:
         // ShowTime with fun messages
         //startExperience( ExperienceService::ShowTime );
-        return;
 
       case TOF::TOFGesture::Up:
         // Parallax cat
         //startExperience( ExperienceService::ParallaxCat );
-        return;
 
       case TOF::TOFGesture::Hover:
         // Finger hovers in one spot
         //startExperience( ExperienceService::Hover );
-        return;
 
       case TOF::TOFGesture::Down:
-        return;
 
       default:
         Serial.print( "Unknown TOF experience ");
@@ -334,13 +337,24 @@ void ExperienceService::loop()
     // Cats Play
 
     /*
-
     When another cat is in BLE range, go into Cats Play for the next 2 minutes
     Show Cats Play video, estimating diraction
-
     */
 
-    // Pounce
+    String mef = "BLE count ";
+    mef += blesupport.getRemoteDevicesCount();
+    Serial.println( mef );
+
+
+    if ( ( blesupport.getRemoteDevicesCount() > 0 ) && ( ( millis() - afterCatsPlay) > ( 60 * 1000 ) ) ) 
+    {
+      afterCatsPlay = millis();
+
+      startExperience( ExperienceService::CatsPlay );
+    }
+    
+    
+
 
     /*
 
