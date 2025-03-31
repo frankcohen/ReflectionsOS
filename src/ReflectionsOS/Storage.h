@@ -52,7 +52,7 @@ class Storage
     bool findOneFile();
     bool getFileSaveToSD( String thedoc );
     String getFileListString();
-    void replicateServerFiles();
+    bool replicateServerFiles();
 
     // Utils
     void smartDelay(unsigned long ms);
@@ -72,8 +72,10 @@ class Storage
     boolean testFileIO(fs::FS &fs, const char * path);
     boolean testNandStorage();
     void setMounted( bool mounted );
-    void extract_files( String tarfilename );
+    bool extract_files( String tarfilename );
     void sizeNAND();    
+
+    void printStats();
 
   private:
     String _fileName;

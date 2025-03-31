@@ -26,20 +26,21 @@ Read the license in the license.txt file that comes with this code.
 
 #define Chastise_video "29eebc0d0804260f934575ceaedc50b1"
 
-#define CatsPlay1_video "a3c206e2119515fd43d5e3b428d14997"
-#define CatsPlay2_video "bdd5ba9d704154cfda69040c52c23c11"
-#define CatsPlay3_video "c936f8c81cb95e795dcb9daa3ccab59c"
-#define CatsPlay4_video "5cb598bfe033d648219c7e1adeca90bc"
-#define CatsPlay5_video "cd1fcfb794e7bb03012538cec3bcc7db"
-#define CatsPlay6_video "825a19b7500882ea76f6f416196331d9"
-#define CatsPlay7_video "b1bcc5333edec805a9a092812b0c23de"
-#define CatsPlay8_video "fc3281880963ef991606627723d20bcd"
-#define CatsPlayFound_video "9c82b77f2b46c08107d6483436a622e5"
-#define Pounce_video "c4e530e40e5f99e1c8a7afd6cb202423"
+#define CatsPlayFound_video "5a9d9f72264522abc51300f9e772b136"
+#define Pounce_video "c3d2eb0ad90b7a91db981fe01e8ee1b3"
+
+#define CatsPlay1_video "001c0e74e770ec34c053879be10d1a7e"
+#define CatsPlay2_video "6216cf1923de998474b25afeda659448"
+#define CatsPlay3_video "d5794454c11bca1f990e6a817e9b3b1e"
+#define CatsPlay4_video "6f119daa4433a28d44e19f37c4d9133f"
+#define CatsPlay5_video "22ccc18e5b0c467fa209af54940b6773"
+#define CatsPlay6_video "98d5dacbc40ef6b1b8cfec4e5c6d230c"
+#define CatsPlay7_video "bb0f5dbf32a9000787626cf71057fa26"
+#define CatsPlay8_video "6f19334918db04ddf84050696485c0d9"
 
 #define EyesFollowFinger_video "f99c9b5031e6102ef45fbdf71cb09134"
 
-#define MysticCat_video "076b4692f07254d0457595ada2a89f37"
+#define MysticCat_video "af8d13e501bc2e6d61275e5faffde141"
 
 #define ParallaxCat_video "7f4f62c859d8a8638cb9126c23775372"
 
@@ -230,6 +231,7 @@ static const NimBLEUUID BLE_CHARACTERISTIC_UUID("33a03886-0db0-43c8-90a2-bca6a8c
 #define COLOR_STRIPE_MEDIUM_GRAY RGB565( 153, 105, 140 )
 #define COLOR_STRIPE_PINK RGB565( 166, 139, 186 )
 #define COLOR_BLUE RGB565( 0, 0, 140 )
+#define COLOR_RED RGB565( 140, 0, 0 )
 #define COLOR_BLACK RGB565(0, 0, 0)
 #define COLOR_MAIN_BACK RGB565( 55, 161, 224 )
 

@@ -64,6 +64,8 @@ void CustomTarStatusProgressCallback( const char* name, size_t size, size_t tota
 {
   Serial.printf("[TAR] %-32s %8d bytes - %8d Total bytes\n", name, size, total_unpacked );
 
+  delay(200);   // Added to govern the speed of writes to the NAND
+
   String mef = String( globalFileCount++ );
   mef += " files";
   ShowProgress( mef );
@@ -139,7 +141,7 @@ void Storage::loop()
 
 /* Mirrors files on Cloud City server to local storage */
 
-void Storage::replicateServerFiles()
+bool Storage::replicateServerFiles()
 {  
   String thefile;
   String arcfile = "";
@@ -150,7 +152,7 @@ void Storage::replicateServerFiles()
   if ( WiFi.status() != 3 )
   {
     Serial.println( F( "Wifi not connected, skipping replication") );
-    return;
+    return false;
   }
 
   Serial.println( F( "Replicating Server Files") );
@@ -165,7 +167,7 @@ void Storage::replicateServerFiles()
     Serial.print(F("deserializeJson() failed: "));
     Serial.println(error.c_str());
     smartDelay(500);
-    return;
+    return false;
   }
 
   JsonObject fileseq = doc.as<JsonObject>();
@@ -206,7 +208,7 @@ void Storage::replicateServerFiles()
     if ( ! getFileSaveToSD( arcfile ) )
     {
       Serial.println( "getFileSaveToSD failed" );
-      return;
+      return false;
     }
 
     // If it is a tar, then unpack it
@@ -216,18 +218,22 @@ void Storage::replicateServerFiles()
       Serial.print( "Extractomatic " );
       Serial.println( thefile );
 
-      extract_files( thefile );
+      if ( ! extract_files( thefile ) )
+      {
+        return false;
+      }
     }
   }
 
   Serial.println("Replicate done");  
+  return true;
 }
 
 /*
 * Extracts TAR files to local storage
 */
 
-void Storage::extract_files( String tarfilename )
+bool Storage::extract_files( String tarfilename )
 {
   char tarFolder[100];
   String mef = "/";
@@ -251,9 +257,11 @@ void Storage::extract_files( String tarfilename )
   {
      Serial.print("tarExpander failed with return code #%d");
      Serial.println( TARUnpacker->tarGzGetError() );
+     return false;
   }
 
   Serial.println("Extracting Complete");
+  return true;
 }
 
 // Recursively removes files in directory, including any files in sub directories
@@ -873,4 +881,19 @@ String Storage::getFileListString()
   Serial.println( response );
   
   return response;
+}
+
+/* Shows NAND capacity and storage used */
+
+void Storage::printStats()
+{
+  // Get total, used space, and card size
+  uint64_t totalBytes = SD.totalBytes();
+  uint64_t usedBytes = SD.usedBytes();
+  uint64_t cardSize = SD.cardSize();
+
+  // Display storage information
+  Serial.printf("Total space: %llu MB\n", totalBytes / (1024 * 1024));
+  Serial.printf("Used space: %llu bytes\n", usedBytes);
+  Serial.printf("Card size: %llu bytes\n", cardSize);
 }

@@ -189,6 +189,27 @@ void printCentered( String text )
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 }
 
+void BIUfaled( String text )
+{
+  gfx->fillScreen( COLOR_RED );
+  gfx->setFont( &ScienceFair14pt7b );
+  gfx->setTextColor( COLOR_TEXT_YELLOW );
+  gfx->getTextBounds( text.c_str(), 0, 0, &in_x, &in_y, &in_w, &in_h);
+
+  in_y = 120;
+  in_x = 40;
+
+  gfx->setCursor( ( gfx->width() - in_w ) / 2, in_y );
+  gfx->println( text );
+
+  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
+
+  Serial.println("Board Initialization Utility Failed ");
+  Serial.println( text );
+  Serial.println( "Stopping" );
+  while (1);
+}
+
 /*
 Reflections board initialization utility
 */
@@ -224,15 +245,26 @@ void BoardInitializationUtility()
   printCentered( F( "Wifi" ) );
   delay( 1000 );
 
-  wifi.begin();  // Non-blocking, until guest uses it to connect
+  if ( ! wifi.begin() )  // Non-blocking, until guest uses it to connect
+  {
+    BIUfaled( "Wifi failed" );
+  }
 
   delay( 1000 );
   printCentered( F( "Replicate" ) );
   delay( 1000 );
 
+  storage.printStats();
+
   // Download cat-file-package.tar and any other files, then expand the tars
 
-  storage.replicateServerFiles();
+  if ( ! storage.replicateServerFiles() )
+  {
+    BIUfaled( "Replicate failed" );
+  }
+
+  Serial.println( "After: ");
+  storage.printStats();
 
   /*
   Serial.println( "- - -" );
@@ -511,5 +543,5 @@ void loop()
     //if ( myx ) Serial.println( "Shaken" );
   }
 
-  smartdelay(500);
+  smartdelay(100);
 }

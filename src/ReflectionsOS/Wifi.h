@@ -33,7 +33,7 @@ class Wifi
 {
   public:
     Wifi();
-    void begin();
+    bool begin();
     void reset();
     void loop();
     bool isConnected();

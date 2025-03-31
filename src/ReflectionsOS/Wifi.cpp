@@ -16,7 +16,7 @@ This file is for operating the video display.
 
 Wifi::Wifi() {}
 
-void Wifi::begin()
+bool Wifi::begin()
 { 
   //Serial.println("Wifi begin");
 
@@ -32,6 +32,8 @@ void Wifi::begin()
     delay(1000);
   }
 
+  if ( again ) return false;
+
   // Once connected, print the IP address
   Serial.print("Connected to WiFi, ");
   Serial.println(WiFi.localIP());
@@ -40,6 +42,8 @@ void Wifi::begin()
 
   lastWifiTime = millis();
   checkNTP = millis();
+
+  return true;
 }
 
 // Looking for getDeviceName() ? See Wifi.h
