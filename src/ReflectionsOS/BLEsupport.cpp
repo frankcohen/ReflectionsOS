@@ -151,6 +151,8 @@ void BLEsupport::begin() {
   pScan->setWindow(100);
 
   pScan->setActiveScan(true); // Enable active scanning.
+  pScan->setDuplicateFilter(false);
+
   // Start scanning continuously. The scan will not automatically resume after stopping.
   pScan->start(SCAN_TIME_MS, false);
 
@@ -195,12 +197,16 @@ void BLEsupport::loop()
   }
 
   // Remove stale remote devices (timeout after 2 minutes).
-  for (auto it = remoteDevices.begin(); it != remoteDevices.end(); ) {
-    if (currentMillis - it->second.lastUpdate >= 120000) {
+  for (auto it = remoteDevices.begin(); it != remoteDevices.end(); ) 
+  {
+    if (currentMillis - it->second.lastUpdate >= 60000) 
+    {
       Serial.print("Removing stale device: ");
       Serial.println(it->first);
       it = remoteDevices.erase(it);
-    } else {
+    } 
+    else 
+    {
       ++it;
     }
   }

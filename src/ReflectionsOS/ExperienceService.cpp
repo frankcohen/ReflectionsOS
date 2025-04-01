@@ -341,18 +341,17 @@ void ExperienceService::loop()
     Show Cats Play video, estimating diraction
     */
 
-    //String mef = "BLE count ";
-    //mef += blesupport.getRemoteDevicesCount();
-    //Serial.println( mef );
+    String mef = "BLE count ";
+    mef += blesupport.getRemoteDevicesCount();
+    Serial.println( mef );
 
-/*
     if ( ( blesupport.getRemoteDevicesCount() > 0 ) && ( ( millis() - afterCatsPlay) > ( 60 * 1000 ) ) ) 
     {
       afterCatsPlay = millis();
 
       startExperience( ExperienceService::CatsPlay );
     }
-*/  
+
     
 
 
@@ -360,7 +359,7 @@ void ExperienceService::loop()
 
     React to pounces from other cats facing your direction, play pounce experience
 
-    When in Cats Play, triple tap sends a pounce
+    When in Cats Play, triple tap or circular sends a pounce
 
     */
 
