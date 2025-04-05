@@ -8,13 +8,34 @@
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
 
- Provides compas/magnetometer readings from the MMC56X3 device
+ Provides compas/magnetometer readings from the MMC5603NJ device
  
+ Datasheet on the sensor:
+ - Superior Dynamic Range and Accuracy:
+ - ±30 G FSR
+ - 20bits operation mode
+ - 0.0625mG per LSB resolution
+ - 2 mG total RMS noise
+ - Enables heading accuracy of 1º
+ - Sensor true frequency response up to 1KHz
+
+Pretty cood and tiny chip:
+  Full-Scale Range (FSR): ±30 G (GigaGauss), which is ±30,000 mG (since 1 G = 1000 mG).
+  Resolution: 20-bit operation mode.
+  Resolution per LSB (Least Significant Bit): 0.0625 mG per LSB.
+
+  - ±30 G FSR means the magnetometer is capable of measuring magnetic fields in the range of ±30,000 mG (or ±30 G).
+
+  - 0.0625 mG per LSB is the smallest measurable unit per ADC reading, which corresponds to the resolution of the sensor.
+
+  - 20-bit resolution means the sensor can output a value between 0 and 2^20 (1,048,576 discrete values). Each of these values represents 0.0625 mG of change in the magnetic field.
+
 */
 
 #include "Compass.h"
+#include <Wire.h>
 
-Compass::Compass() {}
+Compass::Compass(){}
 
 void Compass::begin()
 {
@@ -22,9 +43,9 @@ void Compass::begin()
   started = false;
   
   // Initialize the sensor with patched library support for custom chip ID
-  if ( !mag.begin( MMC56X3_DEFAULT_ADDRESS, &Wire, MMC5603NJ_ID ) ) 
+  if ( !mag.begin( MMC56X3_DEFAULT_ADDRESS, &Wire ) ) 
   {
-    if ( !mag.begin( MMC56X3_DEFAULT_ADDRESS, &Wire, MMC5603NJ_ID_Alt ) ) 
+    if ( !mag.begin( MMC56X3_DEFAULT_ADDRESS, &Wire ) ) 
     {
       Serial.println( F("Compass not detected") );
       return;
@@ -47,33 +68,38 @@ void Compass::begin()
 
 String Compass::decodeHeading(float measured_angle) 
 {
-  // Decoding heading angle according to datasheet
-  if ( ( measured_angle > 337.25 ) || ( measured_angle < 22.5 ) )
-  {
-    return "N";
+  // Adjust angle so that it fits the range [0, 360)
+  if (measured_angle < 0) {
+    measured_angle += 360;
+  }
+
+  // Decoding heading angle with counterclockwise rotation
+  if (measured_angle >= 337.25 || measured_angle < 22.5) {
+    return "N";  // North
+  }
+  else if (measured_angle >= 22.5 && measured_angle < 67.5) {
+    return "NE"; // North-East
+  }
+  else if (measured_angle >= 67.5 && measured_angle < 112.5) {
+    return "E";  // East
+  }
+  else if (measured_angle >= 112.5 && measured_angle < 157.5) {
+    return "SE"; // South-East
+  }
+  else if (measured_angle >= 157.5 && measured_angle < 202.5) {
+    return "S";  // South
+  }
+  else if (measured_angle >= 202.5 && measured_angle < 247.5) {
+    return "SW"; // South-West
+  }
+  else if (measured_angle >= 247.5 && measured_angle < 292.5) {
+    return "W";  // West
+  }
+  else if (measured_angle >= 292.5 && measured_angle < 337.25) {
+    return "NW"; // North-West
   }
   else {
-    if (measured_angle > 292.5) {
-      return "NW";
-    }
-    else if (measured_angle > 247.5) {
-      return "W";
-    }
-    else if (measured_angle > 202.5) {
-      return "SW";
-    }
-    else if (measured_angle > 157.5) {
-      return "S";
-    }
-    else if (measured_angle > 112.5) {
-      return "SE";
-    }
-    else if (measured_angle > 67.5) {
-      return "E";
-    }
-    else {
-      return "NE";
-    }
+    return "N";  // Default case, should not occur.
   }
 }
 
@@ -91,6 +117,11 @@ float Compass::getHeading(void)
 
   // Use atan2 for robust handling of quadrants and zero divisions
   float deg = atan2(dy, dx) * (180.0 / PI);
+
+  // Invert the angle to make counterclockwise decrease the heading
+  deg = -deg;
+  
+  // Normalize angle to be within 0 to 360 degrees
   if (deg < 0) {
     deg += 360;
   }
@@ -105,16 +136,18 @@ float Compass::getHeading(void)
   }
 
   // Apply board fixed offset correction (adjust for sensor mounting)
-  deg += (180 + 40);
+  deg += CompassOffsetAdjustment;
   if (deg >= 360) {
     deg -= 360;
   }
+  else if (deg < 0) {
+    deg += 360;
+  }
 
-  Serial.print("Compass: ");
-  Serial.println(deg);
-  
+  // Return the final heading
   return deg;
 }
+
 
 /*
  * Read X, Y components of the magnetic field and update calibration
@@ -126,8 +159,8 @@ void Compass::read_XYZ()
 
   // Convert raw data to mG using the conversion factor from the datasheet
   float measured_data[2];
-  measured_data[0] = 0.48828125 * event.magnetic.x;
-  measured_data[1] = 0.48828125 * event.magnetic.y;
+  measured_data[0] = 0.0625 * event.magnetic.x;
+  measured_data[1] = 0.0625 * event.magnetic.y;
 
   X = measured_data[0];
   Y = measured_data[1];
@@ -149,13 +182,8 @@ void Compass::read_XYZ()
   Mid[1] = (Max[1] + Min[1]) / 2;
 }
 
-String Compass::updateHeading() {
-  // This stub returns a simple string formatted heading.
-  float headingValue = getHeading();
-  return String(headingValue);
-}
-
-void Compass::callibrate() {
+void Compass::callibrate() 
+{
   // Implement a proper calibration routine here, for example:
   // instruct the user to rotate the sensor through all directions
   // and possibly record multiple values to refine Max, Min, and Mid.
@@ -168,7 +196,7 @@ boolean Compass::test()
 
 void Compass::loop()
 {
-  /*
+  
   if ( millis() - ctimer > 2000 )
   {
     ctimer = millis();
@@ -178,5 +206,5 @@ void Compass::loop()
     Serial.print(", ");
     Serial.println(decodeHeading(headingValue));
   }
-  */
+  
 }

@@ -341,9 +341,11 @@ void ExperienceService::loop()
     Show Cats Play video, estimating diraction
     */
 
+    /*
     String mef = "BLE count ";
     mef += blesupport.getRemoteDevicesCount();
     Serial.println( mef );
+    */
 
     if ( ( blesupport.getRemoteDevicesCount() > 0 ) && ( ( millis() - afterCatsPlay) > ( 60 * 1000 ) ) ) 
     {

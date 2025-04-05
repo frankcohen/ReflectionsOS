@@ -59,8 +59,8 @@ void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertise
 
   // Debug: Print device address.
   String deviceAddress = String(advertisedDevice->getAddress().toString().c_str());
-  Serial.print("Received advertisement from device: ");
-  Serial.println(deviceAddress);
+  //Serial.print("Received advertisement from device: ");
+  //Serial.println(deviceAddress);
 
   // Add or update the device data in remoteDevices.
   ReflectionsData& data = _parent->remoteDevices[deviceAddress];
