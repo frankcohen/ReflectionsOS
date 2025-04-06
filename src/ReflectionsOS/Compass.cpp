@@ -66,6 +66,47 @@ void Compass::begin()
   started = true;
 }
 
+/* Returns compass headings as an int value 0 = North */
+
+int Compass::decodeHeadingVal( float measured_angle ) 
+{
+  // Adjust angle so that it fits the range [0, 360)
+  if (measured_angle < 0) {
+    measured_angle += 360;
+  }
+
+  // Decoding heading angle with counterclockwise rotation
+  if (measured_angle >= 337.25 || measured_angle < 22.5) {
+    return 3;  // North
+  }
+  else if (measured_angle >= 22.5 && measured_angle < 67.5) {
+    return 2; // North-East
+  }
+  else if (measured_angle >= 67.5 && measured_angle < 112.5) {
+    return 1;  // East
+  }
+  else if (measured_angle >= 112.5 && measured_angle < 157.5) {
+    return 8; // South-East
+  }
+  else if (measured_angle >= 157.5 && measured_angle < 202.5) {
+    return 7;  // South
+  }
+  else if (measured_angle >= 202.5 && measured_angle < 247.5) {
+    return 6; // South-West
+  }
+  else if (measured_angle >= 247.5 && measured_angle < 292.5) {
+    return 5;  // West
+  }
+  else if (measured_angle >= 292.5 && measured_angle < 337.25) {
+    return 4; // North-West
+  }
+  else {
+    return 3;  // Default case, should not occur.
+  }
+}
+
+/* Returns compass headings */
+
 String Compass::decodeHeading(float measured_angle) 
 {
   // Adjust angle so that it fits the range [0, 360)
@@ -196,7 +237,7 @@ boolean Compass::test()
 
 void Compass::loop()
 {
-  
+  /*
   if ( millis() - ctimer > 2000 )
   {
     ctimer = millis();
@@ -206,5 +247,5 @@ void Compass::loop()
     Serial.print(", ");
     Serial.println(decodeHeading(headingValue));
   }
-  
+  */
 }

@@ -29,14 +29,14 @@ Read the license in the license.txt file that comes with this code.
 #define CatsPlayFound_video "5a9d9f72264522abc51300f9e772b136"
 #define Pounce_video "c3d2eb0ad90b7a91db981fe01e8ee1b3"
 
-#define CatsPlay1_video "001c0e74e770ec34c053879be10d1a7e"
-#define CatsPlay2_video "6216cf1923de998474b25afeda659448"
-#define CatsPlay3_video "d5794454c11bca1f990e6a817e9b3b1e"
-#define CatsPlay4_video "6f119daa4433a28d44e19f37c4d9133f"
-#define CatsPlay5_video "22ccc18e5b0c467fa209af54940b6773"
-#define CatsPlay6_video "98d5dacbc40ef6b1b8cfec4e5c6d230c"
-#define CatsPlay7_video "bb0f5dbf32a9000787626cf71057fa26"
-#define CatsPlay8_video "6f19334918db04ddf84050696485c0d9"
+#define CatsPlay1_video "001c0e74e770ec34c053879be10d1a7e"    // E
+#define CatsPlay2_video "6216cf1923de998474b25afeda659448"    // NE
+#define CatsPlay3_video "d5794454c11bca1f990e6a817e9b3b1e"    // N
+#define CatsPlay4_video "6f119daa4433a28d44e19f37c4d9133f"    // NW
+#define CatsPlay5_video "22ccc18e5b0c467fa209af54940b6773"    // W
+#define CatsPlay6_video "98d5dacbc40ef6b1b8cfec4e5c6d230c"    // SW
+#define CatsPlay7_video "bb0f5dbf32a9000787626cf71057fa26"    // S
+#define CatsPlay8_video "6f19334918db04ddf84050696485c0d9"    // SE
 
 #define EyesFollowFinger_video "f99c9b5031e6102ef45fbdf71cb09134"
 

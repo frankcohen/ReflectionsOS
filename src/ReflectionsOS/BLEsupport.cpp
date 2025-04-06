@@ -40,7 +40,10 @@ BLEsupport::ScanCallbacks::ScanCallbacks(BLEsupport* parent)
 // onResult is called for each discovered advertised device.
 void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertisedDevice)
 {
-  // Skip self advertisement.
+  //Serial.print("Discovered device: ");
+  //Serial.println(advertisedDevice->getAddress().toString().c_str());
+
+  // Skip self advertisement
   if ( advertisedDevice->getAddress().equals( NimBLEDevice::getAddress() ) ) 
   {
     Serial.println("Skipping self advertisement");
@@ -48,8 +51,12 @@ void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertise
   }
 
   // Only process devices advertising our service UUID.
-  if ( !advertisedDevice->isAdvertisingService( NimBLEUUID( BLE_SERVICE_UUID ) ) ) return;
-  
+  if ( !advertisedDevice->isAdvertisingService( NimBLEUUID( BLE_SERVICE_UUID ) ) ) 
+  {
+    //Serial.println( "Doesn't match our service" );
+    return;
+  }
+    
   // NOTE: Removed the stop() call to allow continuous scanning.
   // NimBLEDevice::getScan()->stop();
 
@@ -59,8 +66,8 @@ void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertise
 
   // Debug: Print device address.
   String deviceAddress = String(advertisedDevice->getAddress().toString().c_str());
-  //Serial.print("Received advertisement from device: ");
-  //Serial.println(deviceAddress);
+  Serial.print("Received advertisement from device: ");
+  Serial.println(deviceAddress);
 
   // Add or update the device data in remoteDevices.
   ReflectionsData& data = _parent->remoteDevices[deviceAddress];
@@ -197,9 +204,9 @@ void BLEsupport::loop()
   }
 
   // Remove stale remote devices (timeout after 2 minutes).
-  for (auto it = remoteDevices.begin(); it != remoteDevices.end(); ) 
+  for ( auto it = remoteDevices.begin(); it != remoteDevices.end(); ) 
   {
-    if (currentMillis - it->second.lastUpdate >= 60000) 
+    if ( currentMillis - it->second.lastUpdate >= 60000 ) 
     {
       Serial.print("Removing stale device: ");
       Serial.println(it->first);
@@ -223,9 +230,18 @@ void BLEsupport::loop()
   }
 }
 
-void BLEsupport::printRemoteDevices() {
-  Serial.println("Tracking Remote Devices:");
-  for (const auto& entry : remoteDevices) {
+void BLEsupport::printRemoteDevices() 
+{
+  bool first = true;
+
+  for (const auto& entry : remoteDevices) 
+  {
+    if ( first )
+    {
+      Serial.println("Tracking Remote Devices:");
+      first = false;
+    }
+
     const ReflectionsData& data = entry.second;
     Serial.print("Device Name: ");
     Serial.print(data.devicename);
@@ -240,4 +256,10 @@ void BLEsupport::printRemoteDevices() {
     Serial.print(", RSSI: ");
     Serial.println(data.rssi);  
   }
+
+  if ( first )
+  {
+    Serial.println( "No remote devices tracked" );
+  }
+
 }

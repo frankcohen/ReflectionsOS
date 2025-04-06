@@ -58,7 +58,9 @@ class Compass {
     void loop();
     bool test();
 
-    String decodeHeading(float measured_angle);
+    String decodeHeading( float measured_angle );
+    int decodeHeadingVal( float measured_angle );
+
     void callibrate();
     float getHeading();
     void read_XYZ();
