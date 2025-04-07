@@ -66,8 +66,11 @@ void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertise
 
   // Debug: Print device address.
   String deviceAddress = String(advertisedDevice->getAddress().toString().c_str());
+
+  /*
   Serial.print("Received advertisement from device: ");
   Serial.println(deviceAddress);
+  */
 
   // Add or update the device data in remoteDevices.
   ReflectionsData& data = _parent->remoteDevices[deviceAddress];
@@ -141,6 +144,10 @@ void BLEsupport::begin() {
   
   pAdvertising = NimBLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(BLE_SERVICE_UUID);
+
+  // Set both the maximum and minimum interval to the same value for a consistent advertisement rate
+  pAdvertising->setMinInterval(advInterval);
+  pAdvertising->setMaxInterval(advInterval);
   
   NimBLEAdvertisementData scanResponse;
   scanResponse.setName(wifi.getDeviceName().c_str());
@@ -154,8 +161,8 @@ void BLEsupport::begin() {
   pScan->setScanCallbacks(&scanCallbacks, false);
 
   // Set scan interval and window in milliseconds.
-  pScan->setInterval(100);
-  pScan->setWindow(100);
+  pScan->setInterval( scanInterval );
+  pScan->setWindow( scanWindow );
 
   pScan->setActiveScan(true); // Enable active scanning.
   pScan->setDuplicateFilter(false);
@@ -224,6 +231,7 @@ void BLEsupport::loop()
       String json = getJsonData();
       pCharacteristic->setValue((uint8_t*)json.c_str(), json.length());
       Serial.println("Server updated characteristic with new JSON data:");
+      Serial.print( "  " );
       Serial.println(json);
     }
     lastServerUpdate = currentMillis;
@@ -243,7 +251,7 @@ void BLEsupport::printRemoteDevices()
     }
 
     const ReflectionsData& data = entry.second;
-    Serial.print("Device Name: ");
+    Serial.print("  Device Name: ");
     Serial.print(data.devicename);
     Serial.print(", Heading: ");
     Serial.print(data.heading);

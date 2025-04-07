@@ -145,6 +145,26 @@ ExperienceService::ExperienceService() : currentExperience( nullptr ), currentSt
 
 }
 
+String ExperienceService::experienceNameToString( int experience ) 
+{
+  switch (experience) 
+  {
+    case Awake: return "Awake";
+    case ShowTime: return "ShowTime";
+    case Sleep: return "Sleep";
+    case Chastise: return "Chastise";
+    case EyesFollowFinger: return "EyesFollowFinger";
+    case ParallaxCat: return "ParallaxCat";
+    case Hover: return "Hover";
+    case CatsPlay: return "CatsPlay";
+    case MysticCat: return "MysticCat";
+    case Shaken: return "Shaken";
+    case GettingSleepy: return "GettingSleepy";
+    case Pounce: return "Pounce";
+    default: return "Unknown Experience";
+  }
+}
+
 void ExperienceService::begin() 
 {
   currentState = STOPPED;
@@ -183,7 +203,7 @@ void ExperienceService::startExperience( int exper )
   }
 
   Serial.print( "startExperience " );
-  Serial.println( exper );
+  Serial.println( experienceNameToString( exper ) );
 
   currentExperience->init();
   currentState = SETUP;
@@ -269,13 +289,6 @@ bool ExperienceService::active()
 void ExperienceService::loop()
 {
   operateExperience();      // Run the current experience, if any
-
-  // If in Cats Play, triple tap, and heading towards this device, then Pounce
-  // Detect triple tap
-  // Calculate heading towards this device
-  // Pounce
-
-
 
   if ( getCurrentState() != STOPPED ) return;
 

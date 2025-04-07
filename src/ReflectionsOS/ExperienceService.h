@@ -60,6 +60,7 @@ class ExperienceService
     bool active();
     void resetAfterTimer();
 
+    // Be certain to update experienceNameToString() when making changes to this structure
     enum ExperienceName
     {
       Awake,
@@ -76,6 +77,8 @@ class ExperienceService
       Pounce,
       ExperienceCount   // Used to iterate through the list,  add new elements above
     };
+
+    String experienceNameToString( int experience);
 
   private:
     Experience* currentExperience;

@@ -8,13 +8,7 @@
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
 
- Experience finds nearby devices and lets them pounce on each other
-
-Next up I am incorporating the ble code into the ReflectionsOfFrank project. There will be two classes: BLE.cpp and BLEMessaging.cpp
-BLEMessaging will provide the message level tasks
-AnimationService starts a CatsPlay experience based on RSSI distance values from BLE.cpp
-CatsPlay experience is going to be big. SetUp will determine the heading to the other cat and play 1 of 8 videos where the cat looks to the other cat. Run will let the user make a TOF gesture to send a Pounce method to the other cat, and making no gestures after 10 seconds runs TearDown to show the cat video ending the play
-AnimationService also calls BLEmessaging to see if it received a Pounce from another cat
+ Experience finds nearby devices and lets them pounce on others
 
 */
 
@@ -31,6 +25,12 @@ void Experience_CatsPlay::init()
   setupVidplayed = false;
 
 } 
+
+/*
+  Given the devices exchanged their compass heading and the distance (RSSI) is known
+  some fun trigonometry shows a bearing between devices. I really should have been
+  paying better attention in Art's Algebra class in high school!
+*/
 
 float Experience_CatsPlay::calculateBearing( float headingA, float headingB, float rssi ) 
 {
@@ -68,54 +68,25 @@ void Experience_CatsPlay::run()
 {
   // Determine direction
 
-  if ( millis() - directionTimer > 2000 )
+  if ( millis() - directionTimer > 1000 )
   {
     directionTimer = millis();
+    if ( video.getStatus() != 0 ) return;
 
-    float headingA = compass.getHeading();
-    float headingB = 180; // = bleServer.getLatestHeading();
-    
-    // Placeholder RSSI value (should be obtained via BLE communication)
-    float rssi; // bleClient.getDistance();
+    String vid = CatsPlay1_video;
+    String head = compass.decodeHeading( compass.getHeading() );
+    if ( head == "E" ) vid = CatsPlay1_video;
+    if ( head == "NE" ) vid = CatsPlay2_video;
+    if ( head == "N" ) vid = CatsPlay3_video;
+    if ( head == "NW" ) vid = CatsPlay4_video;
+    if ( head == "W" ) vid = CatsPlay5_video;
+    if ( head == "SW" ) vid = CatsPlay6_video;
+    if ( head == "S" ) vid = CatsPlay7_video;
+    if ( head == "SE" ) vid = CatsPlay8_video;
+    video.startVideo( vid );
 
-    // Calculate bearing from A to B
-    float bearingAB = calculateBearing(headingA, headingB, rssi);
-
-    Serial.print( "Bearing from A to B: " );
-    Serial.println( bearingAB );
-
-    // Show video of cat's face pointing to other cat
-
-    if ( ( bearingAB > 0 ) && ( bearingAB < 360 ) )
-    {
-      switch ( int ( ( bearingAB / ( 360 / 8 ) ) + 1 ) )
-      {
-        case 1:
-          video.startVideo( CatsPlay1_video );
-          break;
-        case 2:
-          video.startVideo( CatsPlay1_video );
-          break;
-        case 3:
-          video.startVideo( CatsPlay1_video );
-          break;
-        case 4:
-          video.startVideo( CatsPlay1_video );
-          break;
-        case 5:
-          video.startVideo( CatsPlay1_video );
-          break;
-        case 6:
-          video.startVideo( CatsPlay1_video );
-          break;
-        case 7:
-          video.startVideo( CatsPlay1_video );
-          break;
-        case 8:
-          video.startVideo( CatsPlay1_video );
-          break;
-      }
-    }
+    Serial.print( "CatsPlay run: " );
+    Serial.println( head );
   }
 
   // Pounce gesture made? Send pounce message

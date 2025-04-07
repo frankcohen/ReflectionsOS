@@ -45,6 +45,10 @@ static bool doConnect  = false;
 static uint32_t scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
 
 // Timing definitions (milliseconds)
+#define scanInterval 1000    // Scan cycle in milliseconds
+#define scanWindow 1000      // How long the scan waits
+#define advInterval 10000    // Advertise every 10 seconds (10000 ms)
+
 #define SCAN_TIME_MS            0       // 0 = scan forever
 #define OWN_WATCHDOG_TIMEOUT    60000   // 20 seconds until our advertisement is considered stale
 #define MAX_DEVICES             10      // Maximum number of remote devices to track
