@@ -38,9 +38,9 @@ void Steps::loop()
     float magnitude = sqrt(x * x + y * y + z * z);
 
     /*
-    Serial.print( "Steps " );
+    Serial.print( F("Steps ") );
     Serial.print( stepCount );
-    Serial.print( ", mag " );
+    Serial.print( F(", mag ") );
     Serial.println( magnitude );
     */
         

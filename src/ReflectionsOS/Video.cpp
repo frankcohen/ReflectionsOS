@@ -65,12 +65,12 @@ void Video::begin()
 
   if ( ! gfx->begin() )
   {
-    Serial.println("gfx->begin() failed. Stopping.");
+    Serial.println(F("gfx->begin() failed. Stopping."));
     while(1);
   }
   else
   {
-    //Serial.println("gfx->begin() suceeded" );
+    //Serial.println(F("gfx->begin() suceeded") );
   }
 
   gfx->fillScreen( BLACK );
@@ -119,15 +119,15 @@ void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, Str
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
-  String errmsg = "Video stopOnError ";
+  String errmsg = F("Video stopOnError ");
   errmsg += msg1;
-  errmsg += ", ";
+  errmsg += F(", ");
   errmsg += msg2;
-  errmsg += ", ";
+  errmsg += F(", ");
   errmsg += msg3;
-  errmsg += ", ";
+  errmsg += F(", ");
   errmsg += msg4;
-  errmsg += ", ";
+  errmsg += F(", ");
   errmsg += msg5;
   logger.error( errmsg );
 
@@ -153,7 +153,7 @@ void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, Str
     bufferCanvas->setFont(&ScienceFair14pt7b);
     bufferCanvas->setTextColor( COLOR_LEADING );
     bufferCanvas->setCursor( leftmargin, topmargin - 5 );
-    bufferCanvas->println("REFLECTIONS");
+    bufferCanvas->println(F("REFLECTIONS"));
 
     bufferCanvas->setCursor( leftmargin, topmargin + ( 1 * linespacing ) );
     bufferCanvas->setFont(&ScienceFair14pt7b);
@@ -204,16 +204,16 @@ int Video::getStatus()
 
 void Video::startVideo( String vname )
 {
-  String mef = "/";
+  String mef = F("/");
   mef += NAND_BASE_DIR;
-  mef += "/";
+  mef += F("/");
   mef += vname;
-  mef += "/";
+  mef += F("/");
   mef += vname;
   mef += videoname_end;
 
   /*
-  String msg = "startVideo ";
+  String msg = F("startVideo ");
   msg += mef;
   logger.info( msg );
   */
@@ -222,7 +222,7 @@ void Video::startVideo( String vname )
   if ( ! mjpegFile )
   {
     videoStatus = 0;
-    String msg = "startVideo failed to open ";
+    String msg = F("startVideo failed to open ");
     msg += mef;
     logger.error( msg );
     return;
@@ -293,26 +293,26 @@ void Video::loop()
     totalTime = millis() - startMs;
 
     /*
-    String stats = "Video stats, ";
-    stats += "Total frames ";
+    String stats = F("Video stats, ");
+    stats += F("Total frames ");
     stats += totalFrames;
-    stats += ", time used ";
+    stats += F(", time used ");
     stats += totalTime;
 
-    stats += ", totalReadVideo ";
+    stats += F(", totalReadVideo ");
     stats += totalReadVideo;
-    stats += ", totalDecodeVideo ";
+    stats += F(", totalDecodeVideo ");
     stats += totalDecodeVideo;
-    stats += ", totalShowVideo ";
+    stats += F(", totalShowVideo ");
     stats += totalShowVideo;
     
-    stats += ", read ";
+    stats += F(", read ");
     stats += ( 100.0 * ( totalReadVideo / totalTime ) );
-    stats += "%, decode ";
+    stats += F("%, decode ");
     stats += ( 100.0 * ( totalDecodeVideo / totalTime ) );
-    stats += "%, show ";
+    stats += F("%, show ");
     stats += ( 100.0 * ( totalShowVideo / totalTime ) );
-    stats += "%, fps ";
+    stats += F("%, fps ");
     stats += ( 1000.0 * ( totalFrames / totalTime ) );
     logger.info( stats );
     */

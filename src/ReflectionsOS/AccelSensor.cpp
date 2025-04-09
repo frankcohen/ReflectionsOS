@@ -251,9 +251,9 @@ void AccelSensor::SimpleRangeFiltering()
       if ( ( fabs( jerk ) <= accelThreshold ) && ( fabs( jerk ) > accelThresholdLow ) )
       {
         /*
-        String mef = " > ";
+        String mef = F(" > ");
         mef += fabs( jerk );
-        mef += ", ";
+        mef += F(", ");
         mef += ( millis() - debounceTapTime );
         Serial.println( mef );
         */
@@ -281,9 +281,9 @@ void AccelSensor::SimpleRangeFiltering()
           return;
 
           /*
-          String mef = " >>";
+          String mef = F(" >>");
           mef += fabs( jerk );
-          mef += ", ";
+          mef += F(", ");
           mef += ( millis() - mostrecentdoubletaptime );
           Serial.println( mef );
           */

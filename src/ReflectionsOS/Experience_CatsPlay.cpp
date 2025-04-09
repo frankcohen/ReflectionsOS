@@ -85,7 +85,7 @@ void Experience_CatsPlay::run()
     if ( head == "SE" ) vid = CatsPlay8_video;
     video.startVideo( vid );
 
-    Serial.print( "CatsPlay run: " );
+    Serial.print( F("CatsPlay run: ") );
     Serial.println( head );
   }
 
@@ -93,7 +93,7 @@ void Experience_CatsPlay::run()
 
   if ( 0 ) // bleServer.isPounced() )
   {
-    Serial.println( "CatsPlay pounced" );
+    Serial.println( F("CatsPlay pounced") );
 
     // Pounce gesture message received?
     video.stopVideo();
@@ -120,11 +120,11 @@ void Experience_CatsPlay::run()
   if ( mygs == TOF::None ) return;
 
   Serial.print( mygs );
-  Serial.println( " sending pounce");
+  Serial.println( F(" sending pounce"));
 
   //bleClient.sendPounce();
 
-  Serial.println( "Asked client to send pounce");
+  Serial.println( F("Asked client to send pounce"));
 }
 
 void Experience_CatsPlay::teardown() 

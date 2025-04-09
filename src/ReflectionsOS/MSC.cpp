@@ -74,13 +74,13 @@ static int32_t onWrite(uint32_t lba, uint32_t offset, uint8_t* buffer, uint32_t 
 {
   //Serial.printf("MSC WRITE: lba: %u, offset: %u, bufsize: %u\n", lba, offset, bufsize);   
 
-  String msg = "MSC WRITE: lba: ";
+  String msg = F("MSC WRITE: lba: ");
   msg += lba;
-  msg += ", offset: ";
+  msg += F(", offset: ");
   msg += offset;
-  msg += ", bufsize: ";
+  msg += F(", bufsize: ");
   msg += bufsize;
-  msg += "\0";
+  msg += F("\0");
   logger.info( msg );
 
   return SD.writeRAW( (uint8_t*) buffer, lba) ? bufsize : -1 ;
@@ -90,14 +90,14 @@ static int32_t onWrite(uint32_t lba, uint32_t offset, uint8_t* buffer, uint32_t 
 /*
 static int32_t onRead(uint32_t lba, uint32_t offset, void* buffer, uint32_t bufsize)
 {
-  //Serial.printf("MSC READ: lba: %u, offset: %u, bufsize: %u\n", lba, offset, bufsize);    
+  //Serial.printf(F("MSC READ: lba: %u, offset: %u, bufsize: %u\n"), lba, offset, bufsize);    
 
-  String msg = "MSC READ: lba: ";
+  String msg = F("MSC READ: lba: ");
   msg += lba;
-  msg += ", offset: ";
+  msg += F(", offset: ");
   msg += offset;
-  msg += ", bufsize: ";
-  msg += "\0";
+  msg += F(", bufsize: ");
+  msg += F("\0");
   logger.info( msg );
   
   return SD.readRAW( (uint8_t*) buffer, lba) ? bufsize : -1 ;
@@ -106,15 +106,15 @@ static int32_t onRead(uint32_t lba, uint32_t offset, void* buffer, uint32_t bufs
 
 /*
 static bool onStartStop(uint8_t power_condition, bool start, bool load_eject){
-  //Serial.printf("MSC START/STOP: power: %u, start: %u, eject: %u\n", power_condition, start, load_eject);
+  //Serial.printf(F("MSC START/STOP: power: %u, start: %u, eject: %u\n"), power_condition, start, load_eject);
   
-  String msg = "MSC START/STOP: power: ";
+  String msg = F("MSC START/STOP: power: ");
   msg += power_condition;
-  msg += ", start: ";
+  msg += F(", start: ");
   msg += start;
-  msg += ", ejection: ";
+  msg += F(", ejection: ");
   msg += load_eject;
-  msg += "\0";
+  msg += F("\0");
   logger.info( msg );
 
   return true;
@@ -155,9 +155,9 @@ void startMSC()
   
   logger.info( msg );
   
-  msc.vendorID( "ROF32" );
-  msc.productID( "USB_MSC" );
-  msc.productRevision( "1.0" );
+  msc.vendorID( F("ROF32") );
+  msc.productID( F("USB_MSC") );
+  msc.productRevision( F("1.0") );
   msc.onRead(onRead);
   msc.onWrite(onWrite);
   msc.onStartStop(onStartStop);

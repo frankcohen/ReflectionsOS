@@ -149,19 +149,19 @@ String ExperienceService::experienceNameToString( int experience )
 {
   switch (experience) 
   {
-    case Awake: return "Awake";
-    case ShowTime: return "ShowTime";
-    case Sleep: return "Sleep";
-    case Chastise: return "Chastise";
-    case EyesFollowFinger: return "EyesFollowFinger";
-    case ParallaxCat: return "ParallaxCat";
-    case Hover: return "Hover";
-    case CatsPlay: return "CatsPlay";
-    case MysticCat: return "MysticCat";
-    case Shaken: return "Shaken";
-    case GettingSleepy: return "GettingSleepy";
-    case Pounce: return "Pounce";
-    default: return "Unknown Experience";
+    case Awake: return F("Awake");
+    case ShowTime: return F("ShowTime");
+    case Sleep: return F("Sleep");
+    case Chastise: return F("Chastise");
+    case EyesFollowFinger: return F("EyesFollowFinger");
+    case ParallaxCat: return F("ParallaxCat");
+    case Hover: return F("Hover");
+    case CatsPlay: return F("CatsPlay");
+    case MysticCat: return F("MysticCat");
+    case Shaken: return F("Shaken");
+    case GettingSleepy: return F("GettingSleepy");
+    case Pounce: return F("Pounce");
+    default: return F("Unknown Experience");
   }
 }
 
@@ -197,12 +197,12 @@ void ExperienceService::startExperience( int exper )
   
   if ( currentExperience == nullptr )
   {
-    Serial.print( "Inveigel null pointer on starting experience " );
+    Serial.print( F("Inveigel null pointer on starting experience ") );
     Serial.println( exper );
     return;
   }
 
-  Serial.print( "startExperience " );
+  Serial.print( F("startExperience ") );
   Serial.println( experienceNameToString( exper ) );
 
   currentExperience->init();
@@ -228,7 +228,7 @@ void ExperienceService::operateExperience()
     case SETUP:
       if ( currentExperience == NULL )
       {
-        Serial.println( "ExperienceService setup currentExperience is null");
+        Serial.println( F("ExperienceService setup currentExperience is null"));
         while(1);
       }
 
@@ -245,7 +245,7 @@ void ExperienceService::operateExperience()
     case RUN:
       if ( currentExperience == NULL )
       {
-        Serial.println( "ExperienceService run currentExperience is null");
+        Serial.println( F("ExperienceService run currentExperience is null"));
         while(1);
       }
 
@@ -261,7 +261,7 @@ void ExperienceService::operateExperience()
 
       if ( currentExperience == nullptr )
       {
-        Serial.println( "ExperienceService teardown currentExperience is null");
+        Serial.println( F("ExperienceService teardown currentExperience is null"));
       }
       
       currentExperience->teardown();
@@ -335,7 +335,7 @@ void ExperienceService::loop()
       case TOF::TOFGesture::Down:
 
       default:
-        Serial.print( "Unknown TOF experience ");
+        Serial.print( F("Unknown TOF experience "));
         Serial.println( recentGesture );
         break;
     }
@@ -355,7 +355,7 @@ void ExperienceService::loop()
     */
 
     /*
-    String mef = "BLE count ";
+    String mef = F("BLE count ");
     mef += blesupport.getRemoteDevicesCount();
     Serial.println( mef );
     */

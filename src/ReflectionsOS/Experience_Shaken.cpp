@@ -29,7 +29,7 @@ void Experience_Shaken::init()
 void Experience_Shaken::setup() 
 {
   Serial.print( shakenname );
-  Serial.println( "SETUP" );
+  Serial.println( F("SETUP") );
 
   video.startVideo( Shaken_video );
   setSetupComplete(true);  // Signal that setup is complete

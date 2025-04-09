@@ -161,7 +161,7 @@ void WatchFaceBase::drawImageFromFile( String filename, bool embellishfilename, 
     return;
   }
 
-  if ( filename.endsWith( ".jpg"))
+  if ( filename.endsWith( F(".jpg")))
   {
     jpg.open(filename.c_str(), myOpen, myClose, myReadJpeg, mySeekJpeg, WatchFaceJPEGDraw);
 
@@ -186,7 +186,7 @@ void WatchFaceBase::drawImageFromFile( String filename, bool embellishfilename, 
     }
     else
     {
-      Serial.println("png.open() failed");
+      Serial.println(F("png.open() failed"));
     }
   }
 }

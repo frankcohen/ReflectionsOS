@@ -29,10 +29,10 @@ bool Battery::test()
 
 String Battery::batLevel( float analogVolts )
 {
-  if ( analogVolts < batterylow ) return "Low";
-  if ( analogVolts < battermedium ) return "Medium";
-  if ( analogVolts > batteryhigh ) return "High";
-  return " ";
+  if ( analogVolts < batterylow ) return F("Low");
+  if ( analogVolts < battermedium ) return F("Medium");
+  if ( analogVolts > batteryhigh ) return F("High");
+  return F(" ");
 }
 
 int Battery::getBatteryLevel()
@@ -59,9 +59,9 @@ void Battery::loop()
 
     analogVolts = analogReadMilliVolts( Battery_Sensor ) * 5.4014;
     
-    String myl = "Battery voltage = ";
+    String myl = F("Battery voltage = ");
     myl += String( analogVolts );
-    myl += " ";
+    myl += F(" ");
     myl += batLevel( analogVolts );
 
     logger.info( myl );

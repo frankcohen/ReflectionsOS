@@ -116,31 +116,31 @@ String Compass::decodeHeading(float measured_angle)
 
   // Decoding heading angle with counterclockwise rotation
   if (measured_angle >= 337.25 || measured_angle < 22.5) {
-    return "N";  // North
+    return F("N");  // North
   }
   else if (measured_angle >= 22.5 && measured_angle < 67.5) {
-    return "NE"; // North-East
+    return F("NE"); // North-East
   }
   else if (measured_angle >= 67.5 && measured_angle < 112.5) {
-    return "E";  // East
+    return F("E");  // East
   }
   else if (measured_angle >= 112.5 && measured_angle < 157.5) {
-    return "SE"; // South-East
+    return F("SE"); // South-East
   }
   else if (measured_angle >= 157.5 && measured_angle < 202.5) {
-    return "S";  // South
+    return F("S");  // South
   }
   else if (measured_angle >= 202.5 && measured_angle < 247.5) {
-    return "SW"; // South-West
+    return F("SW"); // South-West
   }
   else if (measured_angle >= 247.5 && measured_angle < 292.5) {
-    return "W";  // West
+    return F("W");  // West
   }
   else if (measured_angle >= 292.5 && measured_angle < 337.25) {
-    return "NW"; // North-West
+    return F("NW"); // North-West
   }
   else {
-    return "N";  // Default case, should not occur.
+    return F("N");  // Default case, should not occur.
   }
 }
 
@@ -242,9 +242,9 @@ void Compass::loop()
   {
     ctimer = millis();
     float headingValue = getHeading();
-    Serial.print("getHeading ");
+    Serial.print(F("getHeading "));
     Serial.print(headingValue);
-    Serial.print(", ");
+    Serial.print(F(", "));
     Serial.println(decodeHeading(headingValue));
   }
   */

@@ -17,7 +17,7 @@ RealTimeClock::RealTimeClock(){}
 
 void RealTimeClock::begin()
 { 
-  //Serial.println( "RealTimeClock begin");
+  //Serial.println( F("RealTimeClock begin"));
 
   struct tm timeinfo;
 
@@ -42,15 +42,15 @@ void RealTimeClock::begin()
     }
 
     /*
-    Serial.print( "GPS " );
+    Serial.print( F("GPS ") );
     Serial.print( millis() - gpsstartup );
-    Serial.print( " " );
+    Serial.print( F(" ") );
     Serial.print( gps.getHour() );
-    Serial.print( ":" );
+    Serial.print( F(":") );
     Serial.print( gps.getMinute() );
-    Serial.print( " " );
+    Serial.print( F(" ") );
     Serial.print( gps.getMonth() );
-    Serial.print( "/" );
+    Serial.print( F("/") );
     Serial.println( gps.getDay() );
     */
 
@@ -61,11 +61,11 @@ void RealTimeClock::begin()
       unsigned int hour = gps.getHour() + ( timeRegionOffset ) ;    // Set in config.h TODO this must be fixed
       unsigned int minute = gps.getMinute();
 
-      Serial.print( "RTC using GPS values " );
+      Serial.print( F("RTC using GPS values ") );
       Serial.print( hour );
-      Serial.print( ":" );
-      String mymin = "";
-      if ( minute < 10 ) mymin += "0"; 
+      Serial.print( F(":") );
+      String mymin = F("");
+      if ( minute < 10 ) mymin += F("0"); 
       mymin += String( minute );
       Serial.print( mymin );
 
@@ -79,11 +79,11 @@ void RealTimeClock::begin()
       unsigned int day = gps.getDay();
       unsigned int year = gps.getYear();
 
-      Serial.print( ", (mm/dd/yyyy) " );
+      Serial.print( F(", (mm/dd/yyyy) ") );
       Serial.print( month );
-      Serial.print( "/" );
+      Serial.print( F("/") );
       Serial.print( day );
-      Serial.print( "/" );
+      Serial.print( F("/") );
       Serial.println( year );
 
       timeinfo.tm_year = year - 1900;  // tm_year is years since 1900
@@ -95,7 +95,7 @@ void RealTimeClock::begin()
 
     if ( setsup )
     {
-      Serial.println( "RTC using default values 2 hours, 50 minutes" );
+      Serial.println( F("RTC using default values 2 hours, 50 minutes") );
 
       timeinfo.tm_hour = 2;         // Hour
       timeinfo.tm_min = 50;        // Minute
@@ -108,11 +108,11 @@ void RealTimeClock::begin()
   }
   else
   {
-    Serial.print( "Real time clock: " );
+    Serial.print( F("Real time clock: ") );
     Serial.print( getHour() );
-    Serial.print( ":" );
-    String mef = "";
-    if ( getMinute() < 10 ) mef += "0";
+    Serial.print( F(":") );
+    String mef = F("");
+    if ( getMinute() < 10 ) mef += F("0");
     mef += getMinute();
     Serial.println( mef );
   }
@@ -129,7 +129,7 @@ int RealTimeClock::getHour()
   } 
   else 
   {
-    Serial.println("Failed to get local time from RTC.");
+    Serial.println(F("Failed to get local time from RTC."));
     return -1;  // Return -1 if time cannot be obtained
   }
 }
@@ -145,7 +145,7 @@ int RealTimeClock::getMinute()
   } 
   else 
   {
-    Serial.println("Failed to get local time from RTC.");
+    Serial.println(F("Failed to get local time from RTC."));
     return -1;  // Return -1 if time cannot be obtained
   }
 }

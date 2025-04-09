@@ -19,7 +19,7 @@
 #include "Logger.h"
 #include "Video.h"
 
-#define shakenname "Shaken "
+#define shakenname F("Shaken ")
 
 class Experience_Shaken : public Experience {
   public:

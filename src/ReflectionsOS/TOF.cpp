@@ -49,9 +49,9 @@ void TOF::begin()
     int frequency = sensor.getRangingFrequency();
     if (frequency > 0)
     {
-      Serial.print("TOF ranging frequency set to ");
+      Serial.print(F("TOF ranging frequency set to "));
       Serial.print(frequency);
-      Serial.println(" Hz.");
+      Serial.println(F(" Hz."));
     }
     else
       Serial.println( F( "TOF error getting ranging frequency." ));
@@ -101,8 +101,8 @@ void TOF::begin()
 
   previousMillis = millis();
 
-  myMef = "";
-  myMef2 = "";
+  myMef = F("");
+  myMef2 = F("");
 
   for (int i = 0; i<8; i++ )
   {
@@ -155,35 +155,35 @@ void TOF::setStatus( TOFGesture status )
 
 String TOF::getGestureName()
 {
-    String gestureName = "";
+    String gestureName = F("");
 
     // Map the gesture enum to a string
     switch ( recentGesture )
     {
         case None:
-            gestureName = "None";
+            gestureName = F("None");
             break;
         case Sleep:
-            gestureName = "Sleep";
+            gestureName = F("Sleep");
             break;
         case Circular:
-            gestureName = "Circular";
+            gestureName = F("Circular");
             break;
         case Right:
-            gestureName = "Right";
+            gestureName = F("Right");
             break;
         case Left:
-            gestureName = "Left";
+            gestureName = F("Left");
             break;
         case Up:
-            gestureName = "Up";
+            gestureName = F("Up");
             break;
         case Down:
-            gestureName = "Down";
+            gestureName = F("Down");
             break;
         default:
             gestureName = String( recentGesture );
-            //gestureName = "Unknown";
+            //gestureName = F("Unknown");
             break;
     }
 
@@ -250,7 +250,7 @@ bool TOF::detectFab5Gestures()
     int16_t* newFrame = tofbuffer + (indexNew * SET_SIZE);
     int16_t* oldFrame = tofbuffer + (indexOld * SET_SIZE);
 
-    myMef2 = "";
+    myMef2 = F("");
 
     // Loop through each row
     for (int row = 0; row < 7; row++) 
@@ -305,9 +305,9 @@ bool TOF::detectFab5Gestures()
   {
     recentGesture = TOFGesture::Circular;
 
-    myMef = "Circular ";
+    myMef = F("Circular ");
     myMef += leftMovement;    
-    myMef += " ";
+    myMef += F(" ");
     myMef += rightMovement;
     resetBuffer();
     return true;
@@ -319,9 +319,9 @@ bool TOF::detectFab5Gestures()
     if ( leftMovement > rightMovement ) 
     {
       recentGesture = TOFGesture::Left;
-      myMef = "Left ";
+      myMef = F("Left ");
       myMef += leftMovement;    
-      myMef += " ";
+      myMef += F(" ");
       myMef += rightMovement;
       resetBuffer();
       return true;
@@ -330,9 +330,9 @@ bool TOF::detectFab5Gestures()
     else if ( rightMovement > leftMovement) 
     {
       recentGesture = TOFGesture::Right;
-      myMef = "Right ";
+      myMef = F("Right ");
       myMef += leftMovement;    
-      myMef += " ";
+      myMef += F(" ");
       myMef += rightMovement;
       resetBuffer();
       return true;
@@ -345,9 +345,9 @@ bool TOF::detectFab5Gestures()
     if ( upMovement > downMovement ) 
     {
       recentGesture = TOFGesture::Up;
-      myMef = "Up ";
+      myMef = F("Up ");
       myMef += upMovement;    
-      myMef += " ";
+      myMef += F(" ");
       myMef += downMovement;
       resetBuffer();
       return true;
@@ -356,16 +356,16 @@ bool TOF::detectFab5Gestures()
     else if ( downMovement > upMovement ) 
     {
       recentGesture = TOFGesture::Down;
-      myMef = "Down ";
+      myMef = F("Down ");
       myMef += upMovement;    
-      myMef += " ";
+      myMef += F(" ");
       myMef += downMovement;
       resetBuffer();
       return true;
     } 
   }
 
-  myMef = "";
+  myMef = F("");
   return false;
 }
 
@@ -444,9 +444,9 @@ bool TOF::detectFingerTip( int setnum )
 
 String TOF::getRawMeasurements()
 {
-  if ( ! started ) return "";
+  if ( ! started ) return F("");
 
-  rawMeasurements = "";
+  rawMeasurements = F("");
   
   if ( sensor.isDataReady() == true )
   {
@@ -469,9 +469,9 @@ String TOF::getRawMeasurements()
             rawMeasurements += dist;
           }
         }
-        rawMeasurements += "\n";
+        rawMeasurements += F("\n");
       }
-      rawMeasurements += "\n";
+      rawMeasurements += F("\n");
     }
   }
   return rawMeasurements;
@@ -479,7 +479,7 @@ String TOF::getRawMeasurements()
 
 /* Used to send debug information to the Serial Monitor
    TOF operates in Core 0 in paralell to the Arduino code
-   running the Serial Monitor in Core 1. Using Serial.println( "hi" )
+   running the Serial Monitor in Core 1. Using Serial.println( F("hi") )
    will often be clipped or ignored when run in Core 0. The main
    loop() in ReflectionsOS.ino calls TOF::getMef() and prints to
    Serial Monitor from there. */
@@ -487,14 +487,14 @@ String TOF::getRawMeasurements()
 String TOF::getRecentMessage()
 {
   String myMefa = myMef;
-  myMef = "";
+  myMef = F("");
   return myMefa;
 }
 
 String TOF::getRecentMessage2()
 {
   String myMefa = myMef2;
-  myMef2 = "";
+  myMef2 = F("");
   return myMefa;
 }
 
@@ -573,20 +573,20 @@ bool TOF::checkBuffer()
   // Check if buffer and measurementData are valid
   if ( tofbuffer == NULL ) 
   {
-    Serial.println("TOF Error: buffer is null");
+    Serial.println(F("TOF Error: buffer is null"));
     return false;
   }
 
   if ( measurementData.distance_mm == NULL ) 
   {
-    Serial.println("TOF Error: measurementData.distance_mm is null");
+    Serial.println(F("TOF Error: measurementData.distance_mm is null"));
     return false;
   }
 
   // Ensure currentSetIndex is within bounds for the buffer
   if ( currentSetIndex >= 100 ) 
   {
-    Serial.println("Error: currentSetIndex is out of bounds");
+    Serial.println(F("Error: currentSetIndex is out of bounds"));
     return false;
   }
 
@@ -602,7 +602,7 @@ void TOF::acquireDataToBuffer()
   if ( ! sensor.getRangingData( &measurementData ) )
   {
     SF_VL53L5CX_ERROR_TYPE errorCode = sensor.lastError.lastErrorCode;
-    Serial.println( "TOF sensor error" );
+    Serial.println( F("TOF sensor error") );
     Serial.println( (int) errorCode );
     return;
   }
@@ -637,13 +637,13 @@ void TOF::acquireDataToBuffer()
   // Debugging helpers, enable as you wish
   
   /*
-    myMef2 = "Bubbles: ";
+    myMef2 = F("Bubbles: ");
     for ( int j = 0; j < 64; j++ )
     {
       myMef2 += recentSet[ j ];
-      myMef2 += ", ";
+      myMef2 += F(", ");
     }
-    myMef2 += "\n#";
+    myMef2 += F("\n#");
   */
 
   /* Show bubbles on display
@@ -751,7 +751,7 @@ void TOF::loop()
       // If the reading has been stable for at least 4 seconds, trigger the gesture.
       else if (currentTime - hoverStartTime >= HOVER_DURATION_MS) 
       {
-        Serial.println("Hover gesture detected for 4 seconds");
+        Serial.println(F("Hover gesture detected for 4 seconds"));
         recentGesture = TOFGesture::Hover;
 
         hoverStartTime = currentTime;  // or set to 0 if you want to start fresh next time

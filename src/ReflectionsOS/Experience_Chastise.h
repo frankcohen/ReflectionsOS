@@ -22,7 +22,7 @@
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
 
-#define chastisename "Chastise "
+#define chastisename F("Chastise ")
 
 class Experience_Chastise : public Experience {
   public:

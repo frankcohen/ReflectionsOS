@@ -167,7 +167,7 @@ void assertI2Cdevice(byte deviceNum, String devName) {
   Serial.print(devName);
   Serial.println(F(" not found."));
 
-  video.stopOnError(devName, "not found", "", "", "");
+  video.stopOnError(devName, F("not found"), "", "", "");
 }
 
 int16_t in_x, in_y;
@@ -204,9 +204,9 @@ void BIUfaled( String text )
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
-  Serial.println("Board Initialization Utility Failed ");
+  Serial.println(F("Board Initialization Utility Failed "));
   Serial.println( text );
-  Serial.println( "Stopping" );
+  Serial.println( F("Stopping") );
   while (1);
 }
 
@@ -218,7 +218,7 @@ void BoardInitializationUtility()
 {
   // Check if otaversion.txt exists, if so skip initialization
 
-  String mfd = "/";
+  String mfd = F("/");
   mfd += NAND_BASE_DIR;
   mfd += OTA_VERSION_FILE_NAME;
 
@@ -237,7 +237,7 @@ void BoardInitializationUtility()
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
-  printCentered("Initialize");
+  printCentered(F("Initialize"));
 
   // Start Wifi
 
@@ -247,7 +247,7 @@ void BoardInitializationUtility()
 
   if ( ! wifi.begin() )  // Non-blocking, until guest uses it to connect
   {
-    BIUfaled( "Wifi failed" );
+    BIUfaled( F("Wifi failed") );
   }
 
   delay( 1000 );
@@ -260,16 +260,16 @@ void BoardInitializationUtility()
 
   if ( ! storage.replicateServerFiles() )
   {
-    BIUfaled( "Replicate failed" );
+    BIUfaled( F("Replicate failed") );
   }
 
-  Serial.println( "After: ");
+  Serial.println( F("After: "));
   storage.printStats();
 
   /*
-  Serial.println( "- - -" );
-  Serial.println( "Files:" );
-  storage.listDir(SD, "/", 100, true);
+  Serial.println( F("- - -") );
+  Serial.println( F("Files:") );
+  storage.listDir(SD, F("/"), 100, true);
   */
 
   delay( 1000 );
@@ -311,13 +311,13 @@ static void smartdelay(unsigned long ms) {
 
     unsigned long fellow = millis();
     //watchfaceexperiences.loop();
-    systemload.logtasktime(millis() - fellow, 1, "we");
+    systemload.logtasktime(millis() - fellow, 1, F("we"));
     fellow = millis();
     experienceservice.loop();
-    systemload.logtasktime(millis() - fellow, 2, "ex");
+    systemload.logtasktime(millis() - fellow, 2, F("ex"));
     fellow = millis();
     textmessageservice.loop();
-    systemload.logtasktime(millis() - fellow, 3, "tm");
+    systemload.logtasktime(millis() - fellow, 3, F("tm"));
 
     systemload.loop();
 
@@ -330,14 +330,14 @@ static void smartdelay(unsigned long ms) {
 /*
     if ( watchfaceexperiences.okToSleep() )
     {
-      Serial.println( "Light sleep" );
+      Serial.println( F("Light sleep") );
 
       esp_sleep_enable_timer_wakeup( 100000 * 3 );  // Time in microseconds, 3 = 300 milliseconds ms
       esp_light_sleep_start();                      // Enter light sleep mode
     }
 */
 
-    systemload.logtasktime(millis() - tasktime, 0, "");
+    systemload.logtasktime(millis() - tasktime, 0, F(""));
   } while (millis() - start < ms);
 }
 
@@ -348,28 +348,28 @@ void setup() {
     ;  // wait up to 2 seconds for Arduino Serial Monitor
   Serial.setDebugOutput(true);
 
-  Serial.println(" ");
-  Serial.println("Starting");
+  Serial.println(F(" "));
+  Serial.println(F("Starting"));
   Serial.println(F("ReflectionsOS"));
 
   // Core 1 services
 
   systemload.begin();  // System load monitor
 
-  systemload.printHeapSpace( "Start" );
+  systemload.printHeapSpace( F("Start") );
 
   hardware.begin();  // Sets all the hardware pins
 
-  systemload.printHeapSpace( "Hardware begin" );
+  systemload.printHeapSpace( F("Hardware begin") );
 
   storage.begin();
   storage.setMounted(hardware.getMounted());
 
-  systemload.printHeapSpace( "Storage" );
+  systemload.printHeapSpace( F("Storage") );
 
   video.begin();
 
-  systemload.printHeapSpace( "Video" );
+  systemload.printHeapSpace( F("Video") );
 
   //video.beginBuffer();      // Secondary begin to initiaize the secondary video buffer
 
@@ -380,37 +380,37 @@ void setup() {
   /*
   // Clears the NVS Flash memory
 
-  Serial.println( "nvs_flash_init()" );
+  Serial.println( F("nvs_flash_init()") );
   nvs_flash_erase();
   esp_err_t ret = nvs_flash_init();
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
       // NVS partition was truncated and needs to be erased
-      Serial.println( "nvs_flash_erase()" );
+      Serial.println( F("nvs_flash_erase()") );
       ESP_ERROR_CHECK(nvs_flash_erase());
       ret = nvs_flash_init();
   }
   ESP_ERROR_CHECK(ret);
-  Serial.println( "nvs done" );
+  Serial.println( F("nvs done") );
   */
 
   logger.begin();
   logger.setEchoToSerial(true);
   logger.setEchoToServer(false);
 
-  systemload.printHeapSpace( "Logger" );
+  systemload.printHeapSpace( F("Logger") );
 
-  String hostinfo = "Host: ";
+  String hostinfo = F("Host: ");
   hostinfo += wifi.getDeviceName().c_str();
-  hostinfo += ", ";
+  hostinfo += F(", ");
   hostinfo += wifi.getMACAddress();
   logger.info(hostinfo);
 
   // Self-test: NAND, I2C, SPI
 
-  assertI2Cdevice(24, "Acclerometer");
-  assertI2Cdevice(48, "Compass");
-  assertI2Cdevice(90, "Haptic");
-  assertI2Cdevice(41, "TOF Accel");
+  assertI2Cdevice(24, F("Acclerometer"));
+  assertI2Cdevice(48, F("Compass"));
+  assertI2Cdevice(90, F("Haptic"));
+  assertI2Cdevice(41, F("TOF Accel"));
 
   // Device initialization
 
@@ -422,16 +422,16 @@ void setup() {
   compass.begin();
   utils.begin();
 
-  systemload.printHeapSpace( "Devices" );
+  systemload.printHeapSpace( F("Devices") );
 
   BoardInitializationUtility();   // Installs needed video and other files
 
-  systemload.printHeapSpace( "Board util" );
+  systemload.printHeapSpace( F("Board util") );
 
   realtimeclock.begin();
   blesupport.begin();
 
-  systemload.printHeapSpace( "BLE start" );
+  systemload.printHeapSpace( F("BLE start") );
 
   // Support service initialization
 
@@ -540,7 +540,7 @@ void loop()
     }
 
     //bool myx = accel.shaken();
-    //if ( myx ) Serial.println( "Shaken" );
+    //if ( myx ) Serial.println( F("Shaken") );
   }
 
   smartdelay(100);

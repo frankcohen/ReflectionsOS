@@ -22,9 +22,9 @@ BLEsupport::MyCharacteristicCallbacks::MyCharacteristicCallbacks(BLEsupport* par
 
 // Callback invoked when a client reads the characteristic.
 void BLEsupport::MyCharacteristicCallbacks::onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-  Serial.println("Characteristic read requested");
+  Serial.println(F("Characteristic read requested"));
   String json = _parent->getJsonData();
-  Serial.print("Sending JSON: ");
+  Serial.print(F("Sending JSON: "));
   Serial.println(json);
   pCharacteristic->setValue((uint8_t*)json.c_str(), json.length());
 }
@@ -40,20 +40,20 @@ BLEsupport::ScanCallbacks::ScanCallbacks(BLEsupport* parent)
 // onResult is called for each discovered advertised device.
 void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertisedDevice)
 {
-  //Serial.print("Discovered device: ");
+  //Serial.print(F("Discovered device: "));
   //Serial.println(advertisedDevice->getAddress().toString().c_str());
 
   // Skip self advertisement
   if ( advertisedDevice->getAddress().equals( NimBLEDevice::getAddress() ) ) 
   {
-    Serial.println("Skipping self advertisement");
+    Serial.println(F("Skipping self advertisement"));
     return;
   }
 
   // Only process devices advertising our service UUID.
   if ( !advertisedDevice->isAdvertisingService( NimBLEUUID( BLE_SERVICE_UUID ) ) ) 
   {
-    //Serial.println( "Doesn't match our service" );
+    //Serial.println( F("Doesn't match our service") );
     return;
   }
     
@@ -68,7 +68,7 @@ void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertise
   String deviceAddress = String(advertisedDevice->getAddress().toString().c_str());
 
   /*
-  Serial.print("Received advertisement from device: ");
+  Serial.print(F("Received advertisement from device: "));
   Serial.println(deviceAddress);
   */
 
@@ -96,7 +96,7 @@ void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertise
 
 void BLEsupport::ScanCallbacks::onScanEnd(const NimBLEScanResults& results, int reason) 
 {
-  Serial.printf("Scan Ended, reason: %d, device count: %d; Restarting scan\n", reason, results.getCount());
+  Serial.printf(F("Scan Ended, reason: %d, device count: %d; Restarting scan\n"), reason, results.getCount());
   // Restart scanning automatically.
   NimBLEDevice::getScan()->start(scanTimeMs, false, true);
 }
@@ -105,12 +105,12 @@ void BLEsupport::ScanCallbacks::onScanEnd(const NimBLEScanResults& results, int 
 void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) 
 {
     std::string str  = (isNotify ? "Notification" : "Indication");
-    str += " from ";
+    str += F(" from ");
     str += pRemoteCharacteristic->getClient()->getPeerAddress().toString();
-    str += ": Service = " + pRemoteCharacteristic->getRemoteService()->getUUID().toString();
-    str += ", Characteristic = " + pRemoteCharacteristic->getUUID().toString();
-    str += ", Value = " + std::string((char*)pData, length);
-    Serial.printf("%s\n", str.c_str());
+    str += F(": Service = ") + pRemoteCharacteristic->getRemoteService()->getUUID().toString();
+    str += F(", Characteristic = ") + pRemoteCharacteristic->getUUID().toString();
+    str += F(", Value = ") + std::string((char*)pData, length);
+    Serial.printf(F("%s\n"), str.c_str());
 }
 
 // ----------------- BLEsupport METHODS -----------------
@@ -170,7 +170,7 @@ void BLEsupport::begin() {
   // Start scanning continuously. The scan will not automatically resume after stopping.
   pScan->start(SCAN_TIME_MS, false);
 
-  Serial.println("BLE started");
+  Serial.println(F("BLE started"));
 
   compasstime = millis();
 }
@@ -215,7 +215,7 @@ void BLEsupport::loop()
   {
     if ( currentMillis - it->second.lastUpdate >= 60000 ) 
     {
-      Serial.print("Removing stale device: ");
+      Serial.print(F("Removing stale device: "));
       Serial.println(it->first);
       it = remoteDevices.erase(it);
     } 
@@ -230,8 +230,8 @@ void BLEsupport::loop()
     if (pCharacteristic != nullptr) {
       String json = getJsonData();
       pCharacteristic->setValue((uint8_t*)json.c_str(), json.length());
-      Serial.println("Server updated characteristic with new JSON data:");
-      Serial.print( "  " );
+      Serial.println(F("Server updated characteristic with new JSON data:"));
+      Serial.print( F("  ") );
       Serial.println(json);
     }
     lastServerUpdate = currentMillis;
@@ -246,28 +246,28 @@ void BLEsupport::printRemoteDevices()
   {
     if ( first )
     {
-      Serial.println("Tracking Remote Devices:");
+      Serial.println(F("Tracking Remote Devices:"));
       first = false;
     }
 
     const ReflectionsData& data = entry.second;
-    Serial.print("  Device Name: ");
+    Serial.print(F("  Device Name: "));
     Serial.print(data.devicename);
-    Serial.print(", Heading: ");
+    Serial.print(F(", Heading: "));
     Serial.print(data.heading);
-    Serial.print(", Pounce: ");
+    Serial.print(F(", Pounce: "));
     Serial.print(data.pounce);
-    Serial.print(", Latitude: ");
+    Serial.print(F(", Latitude: "));
     Serial.print(data.latitude);
-    Serial.print(", Longitude: ");
+    Serial.print(F(", Longitude: "));
     Serial.print(data.longitude);
-    Serial.print(", RSSI: ");
+    Serial.print(F(", RSSI: "));
     Serial.println(data.rssi);  
   }
 
   if ( first )
   {
-    Serial.println( "No remote devices tracked" );
+    Serial.println( F("No remote devices tracked") );
   }
 
 }

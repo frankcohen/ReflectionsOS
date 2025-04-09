@@ -46,22 +46,22 @@ LOGGER::LOGGER(){}
 
 void LOGGER::info( String message )
 {
-  logit( "Info", message );
+  logit( F("Info"), message );
 }
 
 void LOGGER::warning( String message )
 {
-  logit( "Warning", message );
+  logit( F("Warning"), message );
 }
 
 void LOGGER::error( String message )
 {
-  logit( "Error", message );
+  logit( F("Error"), message );
 }
 
 void LOGGER::critical( String message)
 {
-  logit( "Critical", message );
+  logit( F("Critical"), message );
 }
 
 /*
@@ -82,11 +82,11 @@ void LOGGER::logit( String msgtype, String msg )
   if ( echoServer )
   {
     String logmsg = devname.c_str();
-    logmsg += ",";
+    logmsg += F(",");
     logmsg += msgtype;
-    logmsg += ",";
+    logmsg += F(",");
     logmsg += msg;
-    logmsg += "\n";
+    logmsg += F("\n");
 
     appendToBuffer( logmsg );
   }
@@ -135,11 +135,11 @@ void LOGGER::writeBufferToFile()
     logFile.flush();
     logFile.close();
     bufferIndex = 0; // Reset buffer index
-    Serial.println("Buffer written to log file.");
+    Serial.println(F("Buffer written to log file."));
   }
   else
   {
-    Serial.println("Error writing to log file");
+    Serial.println(F("Error writing to log file"));
   }
 }
 
@@ -234,7 +234,7 @@ bool LOGGER::sendToServer( String logfilename )
     return false;
   }
 
-  String logData = "";
+  String logData = F("");
 
   while ( logFile.available() ) 
   {
@@ -252,7 +252,7 @@ bool LOGGER::sendToServer( String logfilename )
 
   if (httpResponseCode > 0) 
   {
-    Serial.printf( "Logger sendToServer POST... response code: %d\n", httpResponseCode );
+    Serial.printf( F("Logger sendToServer POST... response code: %d\n"), httpResponseCode );
     if ( httpResponseCode == HTTP_CODE_OK ) 
     {
       return true;
@@ -260,7 +260,7 @@ bool LOGGER::sendToServer( String logfilename )
   } 
   else
   {
-    Serial.printf( "Logger sendToServer POST... failed, response error: %s\n", http.errorToString(httpResponseCode).c_str() );
+    Serial.printf( F("Logger sendToServer POST... failed, response error: %s\n"), http.errorToString(httpResponseCode).c_str() );
   }
 
   http.end();
@@ -400,9 +400,9 @@ void LOGGER::begin()
   
   Serial.print( F( "Opened starting log file " ) );
   Serial.print( mylogname );
-  Serial.print( ", highLogNumber = " );
+  Serial.print( F(", highLogNumber = ") );
   Serial.print( highLogNumber );
-  Serial.print( ", lowLogNumber = " );
+  Serial.print( F(", lowLogNumber = ") );
   Serial.println( lowLogNumber );
 
   bufferIndex = 0;

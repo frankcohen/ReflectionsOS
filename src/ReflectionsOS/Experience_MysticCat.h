@@ -66,7 +66,7 @@ static const char* const negative[][2] =
   {"Absolutely, Not", "No"},
 };
 
-#define mysticname "Mystic "
+#define mysticname F("Mystic ")
 
 class Experience_MysticCat : public Experience {
   public:
