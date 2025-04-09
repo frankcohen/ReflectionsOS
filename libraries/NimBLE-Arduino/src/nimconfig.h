@@ -1,4 +1,6 @@
- #pragma once
+/*
+
+#pragma once
 
 #ifdef ESP_PLATFORM
 #include "sdkconfig.h"
@@ -7,7 +9,10 @@
 #endif
 
 #include "nimconfig_rename.h"
+*/
 
+blahblahblah_error!!!!
+	
 /***********************************************
  * Arduino user-config options start here
  **********************************************/
@@ -38,7 +43,7 @@
  ***************************************************/
 
 /** @brief Un-comment to enable extended advertising */
-// #define CONFIG_BT_NIMBLE_EXT_ADV 1
+#define CONFIG_BT_NIMBLE_EXT_ADV 1
 
 /** @brief Un-comment to set the max number of extended advertising instances (Range: 0 - 4) */
 // #define CONFIG_BT_NIMBLE_MAX_EXT_ADV_INSTANCES 1

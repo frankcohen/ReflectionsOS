@@ -3,9 +3,9 @@ ESP32 and Arduino-based Internet-enabled watch project and reference architectur
 
 ![Reflections Mobile Experiences](Reflections_logo.jpg)
 
-Many times I imagine making a mobile application connected to the Internet. For example, a watch that shows videos of my children growing-up on my wrist. And the same project is re-used for creative makers to make their own entertaining experiences. Reflections is the architecture and the wrist watch is the first application.
+Many times I imagine making a mobile application connected to the Internet. For example, a watch that shows videos of my children growing-up on my wrist. And the same project is re-used for creative makers to build their own entertaining experiences. Reflections is the architecture and the wrist watch is the first application.
 
-Reflections integrates video displays, Bluetooth, Wifi, SD storage, sound, and a bunch of sensors (compass/magnetometer, gestures, accelerometer). It is battery powered, powered managed from software, and charges from USB. It is small in size (34 mm round) and powerful from an ESP32-S3 dual core processor. Reflections software, hardware, and cloud components are open-source (GPL v3) so anyone can use it and they must contribute improvements back to the project.
+Reflections integrates video displays, Bluetooth, Wifi, SD flash storage, sound, and a bunch of sensors (compass/magnetometer, gestures, accelerometer, time of flight TOF sensor). It is battery powered, powered managed from software, and charges from USB. It is small in size (34 mm round) and powerful from an ESP32-S3 dual core processor. Reflections software, hardware, and cloud components are open-source (GPL v3) so anyone can use it and they must contribute improvements back to the project.
 
 ![Reflections Mobile Experiences](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/ReflectionsIntro.jpg)
 
@@ -13,24 +13,26 @@ Reflections goes beyond the wearable device to deliver server side architecture.
 
 ![Reflections Server Side Architecture](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/ReflectionsServerSide.jpg)
 
-I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry pocket watches with Disney Imagineer and Mupeteer Terri Hardin. We are working on a new experience powere by Reflections. Announcement coming soon.
+I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry pocket watches with Disney Imagineer and Mupeteer [Terri Hardin](https://terrihardin.com/). We are working on a new experience powered by Reflections. Announcement coming in Spring 2025.
 
 I love working with a group of creative makers and the Arduino community. Please feel free to let me know your feedback and ideas.
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/HIWHx4NLKUU/0.jpg)](https://www.youtube.com/watch?v=HIWHx4NLKUU)
 
-Yertle is the latest version of the Reflections main board. Everything fits into a wrist watch case and I actually wear it on my wrist! Plus the software to drive experiences (codename ReflectionsOfFrank) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the main board.
+[VladPlus](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/VladPlus/VladPlus%20Project%20Notes.md) is the latest version of the Reflections main board. Everything fits into a wrist watch case and I actually wear it on my wrist! Plus the software to drive experiences (codename ReflectionsOS) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the board.
 
-Yertle Gerber files and schematic are at:
-https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Yertle
-EasyEDA project for the previous main board project is at:
-https://oshwlab.com/fcohen/horton-main-board
+VladPlus Gerber files and schematic are at:
+[https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/VladPlus/VladPlus%20Project%20Notes.md](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/VladPlus/VladPlus%20Project%20Notes.md)
 
-Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS), February 14, 2024
+Frank Cohen, [https://github.com/frankcohen/ReflectionsOS](https://github.com/frankcohen/ReflectionsOS), November 9, 2024
 
 ## Articles
 
 I publish articles on the technology needed to make Reflections.
+
+[AccelerometerLab open-source project for LIS3DH 3 Axis accelerometer sensor](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AccelerometerLab)
+
+[ESP32-S3 partition tables and optimizing memory for Arduino IDE 2.x](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Partition%20tables%20and%20optimizing%20memory%20in%20Arduino%20IDE.md)
 
 [Deep Sleep, Extending Battery Life for ESP32-S3 Projects](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/Deep%20Sleep)
 
@@ -54,11 +56,25 @@ I publish articles on the technology needed to make Reflections.
 
 I used the [EleksTube IPS clock](https://elekstube.com/) for experimentation. It is an ESP32 device featuring 6 TFT displays. See [https://github.com/frankcohen/EleksTubeIPSHack](https://github.com/frankcohen/EleksTubeIPSHack)
 
-I made an air-guitar project to learn about streaming music over Bluetooth Clasic, and why it won't work yet on BLE: [https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar]([https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar]
-)
+I made an air-guitar project to learn about streaming music over Bluetooth Clasic, and why it won't work yet on BLE: [https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar)
 
 -Frank
 
+## Update as of January 18, 2025
+
+I published AccelerometerLab as an open-source project to make working with the LIS3DH 3 Axis accelerometer sensor easier. [The code and article are here.](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AccelerometerLab)
+
+Next up is code to detect gestures with the Time Of Flight (TOF) sensor. This should be fun as it includes machine learning.
+
+## Update as October 29, 2024
+
+I made a fun Magic 8 Ball experience for the Maker Faire Bay Area. It was October 18 to 20, 2024 on Mar Island in the California Bay area and 25,000 people attended.
+
+[![Reflections controls Maxwell animatronic at Maker Faire 2024](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/Maxwell.jpg)](https://youtu.be/2h5V32wpsNU)
+
+For Maker Faire I had a Reflections board connect and control Maxwell wirelessly. Ask a question, shake the board and the display shows an answer. Maxwell animates the answer to yes, no, and maybe movements.
+
+Source code for this fun project is in the [/src/MakerFaire2024Maxwell](https://github.com/frankcohen/ReflectionsOS/tree/main/src/MakerFaire2024Maxwell) directory
 
 ## Update as of June 18, 2024
 
