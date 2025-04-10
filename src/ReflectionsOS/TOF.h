@@ -29,7 +29,7 @@ extern Arduino_GFX *gfx;
 #define GRID_ROWS 8
 #define GRID_COLS 8
 #define SET_SIZE 64      // Each block has these many readings
-#define NUM_SETS 100     // Saves the most recent 100 blocks
+#define NUM_SETS 50     // Saves the most recent 50 blocks
 
 #define FRAMES_TO_ANALYZE 10  // Use the most recent 10 frames for analysis
 

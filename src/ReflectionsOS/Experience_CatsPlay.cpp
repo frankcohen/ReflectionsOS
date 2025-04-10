@@ -91,13 +91,16 @@ void Experience_CatsPlay::run()
 
   // Pounce gesture made? Send pounce message
 
-  if ( 0 ) // bleServer.isPounced() )
-  {
-    Serial.println( "CatsPlay pounced" );
+    /*
+    tapped();
+    doubletapped();
+    shaken();
+    */
 
-    // Pounce gesture message received?
-    video.stopVideo();
-    video.startVideo( Pounce_video );
+  if ( accel.tapped() )
+  {
+    Serial.println( "CatsPlay start pounce to remote devices" );
+    blesupport.setPounce( true );
 
     /*
     haptic.playEffect( 12 );  //  12 − Triple Click - 100%

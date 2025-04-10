@@ -44,6 +44,7 @@ void StatusCallback(void *cbData, int code, const char *string)
 
 void Audio::begin()
 {
+  /*
   audioLogger = &Serial;  
 
   in = new AudioFileSourceSD();
@@ -55,16 +56,19 @@ void Audio::begin()
   out = new AudioOutputI2S();
   out -> SetPinout( I2S_bclkPinP, I2S_wclkPinP, I2S_doutPinP );
   out -> SetGain( 0.100 );
+  */
 }
 
 void Audio::play( String aname )
 {
+  /*
   Serial.print( F( "Playing audio file: " ) );
   Serial.println( aname );
 
   in -> open( aname.c_str() );
 
   mp3->begin( in, out );
+  */
 }
 
 bool Audio::test()
@@ -74,6 +78,7 @@ bool Audio::test()
 
 void Audio::loop()
 {
+  /*
   if ( ( mp3 ) && ( mp3 -> isRunning() ) ) 
   {
     if ( ! mp3 -> loop() )
@@ -82,4 +87,5 @@ void Audio::loop()
       mp3 -> stop();
     }
   }
+  */
 }

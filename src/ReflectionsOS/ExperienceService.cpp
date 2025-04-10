@@ -143,6 +143,9 @@ ExperienceService::ExperienceService() : currentExperience( nullptr ), currentSt
   }
   experiences.push_back( makeExp );
 
+  beingpounced = true;
+  pnctimer = millis();
+
 }
 
 String ExperienceService::experienceNameToString( int experience ) 
@@ -197,7 +200,7 @@ void ExperienceService::startExperience( int exper )
   
   if ( currentExperience == nullptr )
   {
-    Serial.print( "Inveigel null pointer on starting experience " );
+    Serial.print( "ExperienceService null pointer on starting experience " );
     Serial.println( exper );
     return;
   }
@@ -290,6 +293,17 @@ void ExperienceService::loop()
 {
   operateExperience();      // Run the current experience, if any
 
+  // Pounce gesture message received, overrides exepriences
+  if ( blesupport.isAnyDevicePounceTrue() && ( millis() - pnctimer > 60000 ))
+  {
+    Serial.println( "Pounce from an other device" );
+    video.stopVideo();
+    beingpounced = true;
+    pnctimer = millis();
+    startExperience( ExperienceService::Pounce );
+    return;
+  }
+
   if ( getCurrentState() != STOPPED ) return;
 
   if ( video.getStatus() != 0 ) return;
@@ -313,26 +327,34 @@ void ExperienceService::loop()
 
       case TOF::TOFGesture::Left:
         //startExperience( ExperienceService::Chastise );
-        //startExperience( ExperienceService::EyesFollowFinger );
+        break;
 
       case TOF::TOFGesture::Circular:
         startExperience( ExperienceService::MysticCat );
+        break;
 
       case TOF::TOFGesture::Sleep:
+        //startExperience( ExperienceService::Sleep );
+        break;
 
       case TOF::TOFGesture::Right:
         // ShowTime with fun messages
         //startExperience( ExperienceService::ShowTime );
+        break;
 
       case TOF::TOFGesture::Up:
         // Parallax cat
         //startExperience( ExperienceService::ParallaxCat );
+        break;
 
       case TOF::TOFGesture::Hover:
         // Finger hovers in one spot
         //startExperience( ExperienceService::Hover );
+        break;
 
       case TOF::TOFGesture::Down:
+        //startExperience( ExperienceService::EyesFollowFinger );
+        break;
 
       default:
         Serial.print( "Unknown TOF experience ");
@@ -344,55 +366,19 @@ void ExperienceService::loop()
 
     if ( accel.shaken() )
     {
-      //startExperience( ExperienceService::Shaken );
+      startExperience( ExperienceService::Shaken );
     }
-
-    // Cats Play
-
-    /*
-    When another cat is in BLE range, go into Cats Play for the next 2 minutes
-    Show Cats Play video, estimating diraction
-    */
-
-    /*
-    String mef = "BLE count ";
-    mef += blesupport.getRemoteDevicesCount();
-    Serial.println( mef );
-    */
 
     if ( ( blesupport.getRemoteDevicesCount() > 0 ) && ( ( millis() - afterCatsPlay) > ( 60 * 1000 ) ) ) 
     {
       afterCatsPlay = millis();
-
       startExperience( ExperienceService::CatsPlay );
     }
 
-    
-
-
-    /*
-
-    React to pounces from other cats facing your direction, play pounce experience
-
-    When in Cats Play, triple tap or circular sends a pounce
-
-    */
-
-
-
-    // Hover
-
     // GettingSleepy
     
-    // Sleep gesture
 
-    // Swipe
-
-
-
-
-
-
+    // Swipe - Shake
 
 
 

@@ -47,8 +47,6 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 
 // Additional fonts at https://github.com/moononournation/ArduinoFreeFontFile/tree/master/Fonts
 
-#include "SomeTimeLater20pt7b.h"
-#include "Minya16pt7b.h"
 #include "ScienceFair14pt7b.h"
 
 #define leftmargin 48
@@ -79,20 +77,10 @@ class Video
   private:
     File mjpegFile;
     long ringtimer;
-    bool firsttime;
-    File vidfile;
     int videoStatus;
     unsigned long vidtimer;
     unsigned long videoStartTime;
     bool paused;
-
-    File showDirectoryIterator;
-    bool findMore;
-    int twice;
-    bool showIteratorFlag;
-    File showDirectory;
-    File showDir;
-    File show;
 
     float totalFrames;
     float totalReadVideo;
@@ -100,21 +88,13 @@ class Video
     float totalShowVideo;
     float startMs;
     float totalTime;
-
-    unsigned long checktime;
-    
-    String nextVideo;
-    String nextAudio;
-    String nextDir;
-
-    String showTitle;
-    String showName;
-    String onStartEventName;
-    String showingEventNumber;
-    String showingAudioFile;
-    String showingVideoFile;
+    float total_read_video;
+    float total_show_video;
 
     int playerStatus;
+    unsigned long curr_ms;
+
+    int x, y, w, h;
 };
 
 #endif // _video_
