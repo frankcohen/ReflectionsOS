@@ -117,12 +117,6 @@ void AccelSensor::begin()
   delay(2000);
 
   //printHeader();
-
-  peaklag = peaklag1;
-  peakthres = peakthres1;
-  peakinfluence = peakinfluence1;
-
-  peakDetection.begin(peaklag, peakthres, peakinfluence);
 }
 
 float AccelSensor::getXreading() 

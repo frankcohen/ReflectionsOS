@@ -38,7 +38,7 @@ ESP32_HTTPS_Server, https://github.com/fhessel/esp32_https_server
 ESP8266Audio, https://github.com/earlephilhower/ESP8266Audio
 FastLED, https://github.com/FastLED/FastLED
 GFX Library for Arduino, https://github.com/moononournation/Arduino_GFX
-JPEGDEC, https://github.com/bitbank2/JPEGDEC.git
+ESP32 JPEG Library, https://github.com/bitbank2/JPEGDEC.git
 SparkFun_VL53L5CX_Arduino_Library, https://github.com/sparkfun/SparkFun_VL53L5CX_Arduino_Library
 Time, https://playground.arduino.cc/Code/Time/
 TinyGPSPlus-ESP32, https://github.com/Tinyu-Zhao/TinyGPSPlus-ESP32
@@ -90,22 +90,15 @@ ESP32-S3 memory starts as:
 #include "Battery.h"
 #include "Video.h"
 #include "MjpegClass.h"
-#include <ESPmDNS.h>
-#include <WiFiUdp.h>
-#include "secrets.h"
 #include "AccelSensor.h"
 #include "Audio.h"
 #include "Compass.h"
 #include "GPS.h"
 #include "TOF.h"
 #include "Haptic.h"
-#include "LED.h"
-#include "USBFlashDrive.h"
-// #include "OTA.h"
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
-#include "driver/gpio.h"
 #include "Hardware.h"
 #include "Wire.h"
 #include "TextMessageService.h"
@@ -119,6 +112,8 @@ ESP32-S3 memory starts as:
 #include "TimerService.h"
 #include "SystemLoad.h"
 #include "ScienceFair14pt7b.h"
+
+#include "secrets.h"
 
 Video video;
 Utils utils;
@@ -142,10 +137,7 @@ Steps steps;
 TimerService timerservice;
 SystemLoad systemload;
 BLEsupport blesupport;
-
-//LED led;
-//USBFlashDrive flash;
-//OTA ota;
+MjpegClass mjpeg;
 
 const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
 
@@ -237,7 +229,7 @@ void BoardInitializationUtility()
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
-  printCentered(F("Initialize"));
+  printCentered( F( "Initialize" ) );
 
   // Start Wifi
 
@@ -247,7 +239,7 @@ void BoardInitializationUtility()
 
   if ( ! wifi.begin() )  // Non-blocking, until guest uses it to connect
   {
-    BIUfaled( F("Wifi failed") );
+    BIUfaled( F( "Wifi failed" ) );
   }
 
   delay( 1000 );
@@ -263,7 +255,7 @@ void BoardInitializationUtility()
     BIUfaled( F("Replicate failed") );
   }
 
-  Serial.println( F("After: "));
+  Serial.println( F( "After: " ) );
   storage.printStats();
 
   /*
@@ -309,22 +301,23 @@ static void smartdelay(unsigned long ms) {
 
     // Watch experience operations
 
+/*
     unsigned long fellow = millis();
-    //watchfaceexperiences.loop();
-    systemload.logtasktime(millis() - fellow, 1, F("we"));
+    watchfaceexperiences.loop();
+    systemload.logtasktime(millis() - fellow, 1, "we");
     fellow = millis();
     experienceservice.loop();
     systemload.logtasktime(millis() - fellow, 2, F("ex"));
     fellow = millis();
     textmessageservice.loop();
-    systemload.logtasktime(millis() - fellow, 3, F("tm"));
+    systemload.logtasktime(millis() - fellow, 3, "tm");
+*/
 
-    systemload.loop();
+	systemload.loop();
 
     /*
     logger.loop();
     audio.loop();
-    led.loop();
     */
 
 /*
@@ -343,10 +336,7 @@ static void smartdelay(unsigned long ms) {
 
 void setup() {
   Serial.begin(115200);
-  long time = millis();
-  while (!Serial && (millis() < time + 2000))
-    ;  // wait up to 2 seconds for Arduino Serial Monitor
-  Serial.setDebugOutput(true);
+  delay( 2000 );
 
   Serial.println(F(" "));
   Serial.println(F("Starting"));
@@ -356,24 +346,28 @@ void setup() {
 
   systemload.begin();  // System load monitor
 
-  systemload.printHeapSpace( F("Start") );
+  systemload.printHeapSpace( F( "Start" ) );
 
   hardware.begin();  // Sets all the hardware pins
 
-  systemload.printHeapSpace( F("Hardware begin") );
+  systemload.printHeapSpace( F( "Hardware begin" ) );
 
   storage.begin();
   storage.setMounted(hardware.getMounted());
 
-  systemload.printHeapSpace( F("Storage") );
+  systemload.printHeapSpace( F( "Storage" ) );
 
   video.begin();
 
-  systemload.printHeapSpace( F("Video") );
+  systemload.printHeapSpace( F( "Video" ) );
+
+  mjpeg.begin();
+
+  systemload.printHeapSpace( F( "Mjpeg" ) );
 
   //video.beginBuffer();      // Secondary begin to initiaize the secondary video buffer
 
-  //systemload.printHeapSpace( "Video buffer" );
+  //systemload.printHeapSpace( F( "Video buffer" ) );
 
   //utils.WireScan();   // Shows devices on the I2S bus, including compass, TOF, accelerometeer
 
@@ -400,6 +394,7 @@ void setup() {
   systemload.printHeapSpace( F("Logger") );
 
   String hostinfo = F("Host: ");
+
   hostinfo += wifi.getDeviceName().c_str();
   hostinfo += F(", ");
   hostinfo += wifi.getMACAddress();
@@ -407,10 +402,10 @@ void setup() {
 
   // Self-test: NAND, I2C, SPI
 
-  assertI2Cdevice(24, F("Acclerometer"));
-  assertI2Cdevice(48, F("Compass"));
-  assertI2Cdevice(90, F("Haptic"));
-  assertI2Cdevice(41, F("TOF Accel"));
+  assertI2Cdevice(24, F( "Acclerometer") );
+  assertI2Cdevice(48, F( "Compass") );
+  assertI2Cdevice(90, F( "Haptic") );
+  assertI2Cdevice(41, F( "TOF Accel") );
 
   // Device initialization
 
@@ -431,7 +426,7 @@ void setup() {
   realtimeclock.begin();
   blesupport.begin();
 
-  systemload.printHeapSpace( F("BLE start") );
+  systemload.printHeapSpace( F( "BLE start" ) );
 
   // Support service initialization
 
@@ -454,26 +449,22 @@ void setup() {
     0              // Core where the task should run (core 0)
   );
 
-  // Unused services
-
-  //ota.begin();
-  //ota.update();     // Just in case previous use of the host replicated an OTA update file
-
-  //startMSC();     // Calliope mounts as a flash drive, showing NAND contents over USB on your computer
-
   // Experience initialization
 
+  /*
   textmessageservice.begin();
   experienceservice.begin();
   watchfaceexperiences.begin();
+  */
 
   // Unused experiences
-
-  //led.begin();
 
   //haptic.playEffect(14);  // 14 Strong Buzz
 
   //experienceservice.startExperience( ExperienceService::MysticCat );
+
+  // For debug
+  video.startVideo( Getting_Sleepy_video );
 
   logger.info(F("Setup complete"));
 }
@@ -527,6 +518,7 @@ void loop()
   // Printing accelerometer statistics here because this code runs in Core 1
   // otherwise the stats compete for the Serial monitor
 
+  /*
   if ( millis() - slowman > 500 )
   {
     slowman = millis();
@@ -542,6 +534,7 @@ void loop()
     //bool myx = accel.shaken();
     //if ( myx ) Serial.println( F("Shaken") );
   }
+  */
 
   smartdelay(100);
 }

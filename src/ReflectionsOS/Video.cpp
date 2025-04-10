@@ -30,23 +30,11 @@ extern LOGGER logger;
 extern TOF tof;
 extern Battery battery;
 extern Wifi wifi;
-
-static MjpegClass mjpeg;
-uint8_t *mjpeg_buf;
+extern MjpegClass mjpeg;
 
 static Arduino_DataBus *bus = new Arduino_HWSPI(Display_SPI_DC, Display_SPI_CS, SPI_SCK, SPI_MOSI, SPI_MISO);
 Arduino_GFX *gfx = new Arduino_GC9A01(bus, Display_SPI_RST, 1 /* rotation */, true /* IPS */);
 Arduino_Canvas *bufferCanvas = new Arduino_Canvas(240, 240, gfx);
-
-#define MJPEG_BUFFER_SIZE (240 * 240 * 2 / 10) // memory for a single JPEG frame
-
-/* pixel drawing callback */
-
-static int jpegDrawCallback( JPEGDRAW *pDraw )
-{
-  gfx->draw16bitBeRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);  
-  return 1;
-}
 
 Video::Video() {}
 
@@ -55,13 +43,6 @@ void Video::begin()
   #ifdef GFX_EXTRA_PRE_INIT
     GFX_EXTRA_PRE_INIT();
   #endif
-
-  mjpeg_buf = (uint8_t *) malloc( MJPEG_BUFFER_SIZE );
-  if ( !mjpeg_buf )
-  {
-    Serial.println( F("mjpeg_buf malloc failed, stopping" ) );
-    stopOnError( "Video buffer", "fail", "", "", "" );
-  }
 
   if ( ! gfx->begin() )
   {
@@ -76,14 +57,10 @@ void Video::begin()
   gfx->fillScreen( BLACK );
 
   videoStatus = 0;   // idle
-  firsttime = true;
   vidtimer = millis();
   paused = false;
 
-  playerStatus = 0;
-  checktime = millis();
-  showIteratorFlag = false;
-
+  curr_ms = millis();
   videoStartTime = millis();
 }
 
@@ -103,7 +80,6 @@ void Video::beginBuffer()
   bufferCanvas->invertDisplay(true);
   bufferCanvas->fillScreen( BLUE );
 }
-
 
 void Video::addReadTime( unsigned long rtime )
 {
@@ -228,12 +204,8 @@ void Video::startVideo( String vname )
     return;
   }
 
-  if ( mjpeg.setup(
-    &mjpegFile, mjpeg_buf, jpegDrawCallback, true /* useBigEndian */,
-    0 /* x */, 0 /* y */, gfx->width() /* widthLimit */, gfx->height() /* heightLimit */, firsttime ) )
+  if ( mjpeg.start( mjpegFile ) )
   {
-    //logger.info( F( "Mjpeg is set-up" ) );
-    firsttime = false;
     videoStatus = 1;
   }
   else
@@ -260,19 +232,20 @@ void Video::loop()
 {
   if ( ( videoStatus == 0 ) || ( paused == 1 ) ) return;
 
-  if ( mjpegFile.available() )
+  if ( (millis() - vidtimer ) > 50 ) 
   {
-    if ( (millis() - vidtimer ) > 50 ) 
-    {
-      vidtimer = millis();
+    vidtimer = millis();
 
-      totalFrames++;
+    while (mjpegFile.available() && mjpeg.readMjpegBuf())
+    {
+      // Read video
+      total_read_video += millis() - curr_ms;
+      curr_ms = millis();
 
       unsigned long dtime = millis();
 
-      if ( ! mjpeg.readMjpegBuf() )
+      if ( ! mjpeg.decodeJpg() )
       {
-        //logger.error( F("readMjpegBuf returned false") );
         stopVideo();
         return;
       }
@@ -280,43 +253,20 @@ void Video::loop()
       totalDecodeVideo += millis() - dtime;
       dtime = millis();
 
-      mjpeg.drawJpg();
+      if (x == -1)
+      {
+        w = mjpeg.getWidth();
+        h = mjpeg.getHeight();
+        x = (w > gfx->width()) ? 0 : ((gfx->width() - w) / 2);
+        y = (h > gfx->height()) ? 0 : ((gfx->height() - h) / 2);
+      }
 
-      totalShowVideo += millis() - dtime;
+      gfx->draw16bitBeRGBBitmap(x, y, mjpeg.getOutputbuf(), w, h);
+
+      total_show_video += millis() - curr_ms;
+
+      curr_ms = millis();
+      totalFrames++;
     }
   }
-  else
-  {
-    vidtimer = millis();
-    stopVideo();
-
-    totalTime = millis() - startMs;
-
-    /*
-    String stats = F("Video stats, ");
-    stats += F("Total frames ");
-    stats += totalFrames;
-    stats += F(", time used ");
-    stats += totalTime;
-
-    stats += F(", totalReadVideo ");
-    stats += totalReadVideo;
-    stats += F(", totalDecodeVideo ");
-    stats += totalDecodeVideo;
-    stats += F(", totalShowVideo ");
-    stats += totalShowVideo;
-    
-    stats += F(", read ");
-    stats += ( 100.0 * ( totalReadVideo / totalTime ) );
-    stats += F("%, decode ");
-    stats += ( 100.0 * ( totalDecodeVideo / totalTime ) );
-    stats += F("%, show ");
-    stats += ( 100.0 * ( totalShowVideo / totalTime ) );
-    stats += F("%, fps ");
-    stats += ( 1000.0 * ( totalFrames / totalTime ) );
-    logger.info( stats );
-    */
-    
-  }
-  
 }

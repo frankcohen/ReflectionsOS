@@ -42,9 +42,6 @@ ChatGPT says RSSI values:
 -90 dBm and below: Weak signal; the devices are likely farther apart or there are significant obstacles/interference.
 */
 
-#define catsplayClose -30
-#define catsplayCloser -50
-
 class ExperienceService 
 {
 
@@ -100,6 +97,8 @@ class ExperienceService
     unsigned long afterCatsPlay;
     unsigned long afterPounce;
 
+    bool beingpounced;
+    unsigned long pnctimer;
 };
 
 #endif   // EXPERIENCESERVICE_H

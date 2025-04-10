@@ -86,7 +86,7 @@ void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertise
   }
 
   data.rssi = advertisedDevice->getRSSI();
-  data.pounce = false;  // Set pounce state as needed.
+  data.pounce = mypounce;  // Set pounce state as needed.
   data.latitude = gps.getLat();
   data.longitude = gps.getLng();
 
@@ -128,12 +128,18 @@ BLEsupport::BLEsupport() : scanCallbacks(this) {
 
 void BLEsupport::begin() {  
   lastAdvUpdate = 0;
-  
+  mypounce = false;  
+  pnctime = millis();
+
+Serial.println("1");
   gps.on();
+
+Serial.println("1a");
 
   // Initialize the BLE device using the WiFi device name.
   NimBLEDevice::init(wifi.getDeviceName().c_str());
   NimBLEDevice::setPower(3);  // 3dbm
+Serial.println("1b");
 
   // Server Setup.
   pServer = NimBLEDevice::createServer();
@@ -141,20 +147,24 @@ void BLEsupport::begin() {
   pCharacteristic = pService->createCharacteristic(BLE_CHARACTERISTIC_UUID, NIMBLE_PROPERTY::READ);
   pCharacteristic->setCallbacks(new MyCharacteristicCallbacks(this));
   pService->start();
-  
+  Serial.println("1c");
+
   pAdvertising = NimBLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(BLE_SERVICE_UUID);
+Serial.println("1d");
 
   // Set both the maximum and minimum interval to the same value for a consistent advertisement rate
   pAdvertising->setMinInterval(advInterval);
   pAdvertising->setMaxInterval(advInterval);
-  
+  Serial.println("1e");
+
   NimBLEAdvertisementData scanResponse;
   scanResponse.setName(wifi.getDeviceName().c_str());
   pAdvertising->setScanResponseData(scanResponse);
   pAdvertising->start();
 
   lastAdvUpdate = millis();
+Serial.println("2");
 
   // Client Setup.
   NimBLEScan* pScan = NimBLEDevice::getScan();
@@ -172,7 +182,20 @@ void BLEsupport::begin() {
 
   Serial.println(F("BLE started"));
 
+Serial.println("3");
+
   compasstime = millis();
+}
+
+void BLEsupport::setPounce( bool pnc )
+{
+  mypounce = pnc;
+  pnctime = millis();
+}
+
+bool BLEsupport::getPounce()
+{
+  return mypounce;
 }
 
 String BLEsupport::getJsonData()
@@ -187,7 +210,7 @@ String BLEsupport::getJsonData()
     doc["heading"] = 0;
   }
 
-  doc["pounce"] = false;
+  doc["pounce"] = mypounce;
   doc["latitude"] = gps.getLat();
   doc["longitude"] = gps.getLng();
   String output;
@@ -199,43 +222,15 @@ int BLEsupport::getRemoteDevicesCount()
 {
   return remoteDevices.size();
 }
-
-void BLEsupport::loop()
-{
-  unsigned long currentMillis = millis();
-  
-  // Print remote devices' data every 30 seconds.
-  if (currentMillis - lastPrintTime >= 30000) {
-    printRemoteDevices();
-    lastPrintTime = currentMillis;
-  }
-
-  // Remove stale remote devices (timeout after 2 minutes).
-  for ( auto it = remoteDevices.begin(); it != remoteDevices.end(); ) 
-  {
-    if ( currentMillis - it->second.lastUpdate >= 60000 ) 
-    {
-      Serial.print(F("Removing stale device: "));
-      Serial.println(it->first);
-      it = remoteDevices.erase(it);
-    } 
-    else 
-    {
-      ++it;
+	
+bool BLEsupport::isAnyDevicePounceTrue() {
+  // Iterate over the remote devices to check if any has a true pounce value
+  for (const auto& entry : remoteDevices) {
+    if (entry.second.pounce) {
+      return true;  // Return true if any device has pounce set to true
     }
   }
-  
-  // Update the server's characteristic value every 20 seconds.
-  if (currentMillis - lastServerUpdate >= 20000) {
-    if (pCharacteristic != nullptr) {
-      String json = getJsonData();
-      pCharacteristic->setValue((uint8_t*)json.c_str(), json.length());
-      Serial.println(F("Server updated characteristic with new JSON data:"));
-      Serial.print( F("  ") );
-      Serial.println(json);
-    }
-    lastServerUpdate = currentMillis;
-  }
+  return false;  // Return false if no device has pounce set to true
 }
 
 void BLEsupport::printRemoteDevices() 
@@ -271,3 +266,48 @@ void BLEsupport::printRemoteDevices()
   }
 
 }
+
+void BLEsupport::loop()
+{
+  unsigned long currentMillis = millis();
+  
+  // Print remote devices' data every 30 seconds.
+  if (currentMillis - lastPrintTime >= 30000) {
+    printRemoteDevices();
+    lastPrintTime = currentMillis;
+  }
+
+  // Remove stale remote devices (timeout after 2 minutes).
+  for ( auto it = remoteDevices.begin(); it != remoteDevices.end(); ) 
+  {
+    if ( currentMillis - it->second.lastUpdate >= 60000 ) 
+    {
+      Serial.print("Removing stale device: ");
+      Serial.println(it->first);
+      it = remoteDevices.erase(it);
+    } 
+    else 
+    {
+      ++it;
+    }
+  }
+  
+  // Update the server's characteristic value every 20 seconds.
+  if (currentMillis - lastServerUpdate >= 20000) {
+    if (pCharacteristic != nullptr) {
+      String json = getJsonData();
+      pCharacteristic->setValue((uint8_t*)json.c_str(), json.length());
+      Serial.print("Server updated: ");
+      Serial.println( json );
+    }
+    lastServerUpdate = currentMillis;
+  }
+
+  if ( millis() - pnctime > 30000 )
+  {
+    pnctime = millis();
+    mypounce = false;
+  }
+
+}
+

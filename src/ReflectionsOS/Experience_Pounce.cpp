@@ -26,6 +26,7 @@ void Experience_Pounce::init()
 void Experience_Pounce::setup() 
 {
   video.startVideo( Pounce_video );
+
   setSetupComplete(true);  // Signal that setup is complete
 }
 

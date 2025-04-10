@@ -237,7 +237,7 @@ boolean Compass::test()
 
 void Compass::loop()
 {
-  /*
+  /*  
   if ( millis() - ctimer > 2000 )
   {
     ctimer = millis();

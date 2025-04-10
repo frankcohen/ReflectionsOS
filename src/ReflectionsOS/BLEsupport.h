@@ -43,6 +43,7 @@ static NimBLEAdvertising* pAdvertising;
 static const NimBLEAdvertisedDevice* advDevice;
 static bool doConnect  = false;
 static uint32_t scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
+static bool mypounce;
 
 // Timing definitions (milliseconds)
 #define scanInterval 1000    // Scan cycle in milliseconds
@@ -78,6 +79,10 @@ class BLEsupport
     void printRemoteDevices();  // For debugging: print list of remote devices
     unsigned long lastServerUpdate;    
     int getRemoteDevicesCount();  // Devices in BLE range
+    bool isAnyDevicePounceTrue();
+
+    void setPounce( bool pnc );
+    bool getPounce();
 
     // Helper function used by the scan callback to connect to remote devices.
     void connectAndRead(NimBLEAdvertisedDevice* advertisedDevice);
@@ -102,6 +107,7 @@ class BLEsupport
     unsigned long compasstime;
     unsigned long lastAdvUpdate;
     unsigned long lastPrintTime;  // Timer for printing devices' data
+    unsigned long pnctime;
 
     bool connectToServer();
 

@@ -22,13 +22,9 @@
 #include <Adafruit_LIS3DH.h>
 #include <Adafruit_Sensor.h>
 
-#include <PeakDetection.h>
-
 #include <Wire.h>
 #include "SD.h"
 #include "SPI.h"
-
-#include <Kalman.h>
 
 #include "Print.h"
 
@@ -136,11 +132,6 @@ class AccelSensor
     float accelThreshold;    // high value for tap detection 
     float accelThresholdLow; // low value for tap detection
 
-    PeakDetection peakDetection;
-    int peaklag;
-    int peakthres;
-    double peakinfluence;
-    
     double currentNeutralMeasurement;
 };
 

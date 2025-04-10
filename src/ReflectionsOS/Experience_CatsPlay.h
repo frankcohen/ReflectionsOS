@@ -17,19 +17,22 @@
 #include "Experience.h"
 #include "Haptic.h"
 
-//#include "BLE.h"
+#include "BLEsupport.h"
 #include "Compass.h"
+#include "AccelSensor.h"
+#include "BLEsupport.h"
 
 #include "Logger.h"
 #include "Video.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
-//extern BLEServerClass bleServer;
-//extern BLEClientClass bleClient;
+
 extern TOF tof;
 extern Compass compass;
 extern Haptic haptic;
+extern AccelSensor accel;
+extern BLEsupport blesupport;
 
 class Experience_CatsPlay : public Experience {
   public:
