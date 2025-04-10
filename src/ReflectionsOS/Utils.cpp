@@ -82,7 +82,7 @@ void Utils::hexDump( File file )
   }
 
   file.close();
-  Serial.println("                  **File closed**");
+  Serial.println(F("                  **File closed**"));
 }
 
 void Utils::WireScan() 
@@ -112,34 +112,34 @@ void Utils::WireScan()
     if (error == 0)
     {
       Serial.print( F( "0x" ) );
-      if (address<16) Serial.print("0");
+      if (address<16) Serial.print(F("0"));
       
       Serial.print(address,HEX);
       bool lastv = false;
       if ( address == 24 )
       {
-        Serial.print( " 24 accelerometer" );
+        Serial.print( F(" 24 accelerometer") );
         lastv = true;
       }
       if ( address == 41 )
       {
-        Serial.print( " 41 TOF gesture" );
+        Serial.print( F(" 41 TOF gesture") );
         lastv = true;
       }
       if ( address == 48 )
       {
-        Serial.print( " 48 compass" );
+        Serial.print( F(" 48 compass") );
         lastv = true;
       }
       if ( address == 90 )
       {
-        Serial.print( " 90 haptic" );
+        Serial.print( F(" 90 haptic") );
         lastv = true;
       }
 
       if ( lastv )
       {
-        Serial.println( "" );
+        Serial.println( F("") );
       }
 
       nDevices++;

@@ -26,7 +26,7 @@ void MDCallback(void *cbData, const char *type, bool isUnicode, const char *stri
   s1[sizeof(s1)-1]=0;
   strncpy_P(s2, string, sizeof(s2));
   s2[sizeof(s2)-1]=0;
-  Serial.printf("METADATA(%s) '%s' = '%s'\n", ptr, s1, s2);
+  Serial.printf(F("METADATA(%s) '%s' = '%s'\n"), ptr, s1, s2);
   Serial.flush();
 }
 
@@ -38,7 +38,7 @@ void StatusCallback(void *cbData, int code, const char *string)
   char s1[64];
   strncpy_P(s1, string, sizeof(s1));
   s1[sizeof(s1)-1]=0;
-  Serial.printf("STATUS(%s) '%d' = '%s'\n", ptr, code, s1);
+  Serial.printf(F("STATUS(%s) '%d' = '%s'\n"), ptr, code, s1);
   Serial.flush();
 }
 
@@ -83,7 +83,7 @@ void Audio::loop()
   {
     if ( ! mp3 -> loop() )
     {
-      Serial.print( "Audio stop" );
+      Serial.print( F("Audio stop") );
       mp3 -> stop();
     }
   }

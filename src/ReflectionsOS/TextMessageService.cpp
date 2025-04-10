@@ -21,7 +21,7 @@ void TextMessageService::begin()
   ShowTimeWaitTime = millis();
   activated = false;
   timeValid = false;
-  theTime = "0 o'clock";
+  theTime = F("0 o'clock");
   timeShowing = false;
   dialActivated = false;
   stTime = millis();
@@ -32,7 +32,7 @@ void TextMessageService::begin()
   lastMoveTime = millis();
   moving = false;
   prior = false;
-  String pastTimeStr = " ";
+  String pastTimeStr = F(" ");
 }
 
 /*
@@ -302,7 +302,7 @@ void TextMessageService::updateTempTime( String tempTime )
 
 String TextMessageService::formatWithCommas(int value)
 {
-  String formatted = "";
+  String formatted = F("");
   String valStr = String(value);
   int length = valStr.length();
 
@@ -312,7 +312,7 @@ String TextMessageService::formatWithCommas(int value)
   // Add commas at appropriate places
   while (commaCount > 0) {
       pos -= 3;
-      formatted = "," + valStr.substring(pos, pos + 3) + formatted;
+      formatted = F(",") + valStr.substring(pos, pos + 3) + formatted;
       commaCount--;
   }
 
@@ -328,7 +328,7 @@ void TextMessageService::updateHealth( int smallsteps )
 {
   bufferCanvas->setFont( &Some_Time_Later20pt7b );
   y = 100;
-  String mef = "Steps";
+  String mef = F("Steps");
   bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
   bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 100 );
   bufferCanvas->setTextColor( COLOR_STRIPE_PINK );
@@ -380,15 +380,15 @@ String TextMessageService::getRTCtime()
   struct tm timeinfo;
   if ( ! getLocalTime( &timeinfo ) ) 
   {
-    return "0 o'clock";
+    return F("0 o'clock");
   }
 
   int hour = timeinfo.tm_hour;
   int minute = timeinfo.tm_min;
-  String period = "AM";
+  String period = F("AM");
 
   if (hour >= 12) {
-    period = "PM";
+    period = F("PM");
     if (hour > 12) {
       hour -= 12;
     }
@@ -396,8 +396,8 @@ String TextMessageService::getRTCtime()
     hour = 12; // Midnight case
   }
 
-  String minuteStr = (minute < 10) ? "0" + String(minute) : String(minute);
-  String timeStr = String(hour) + ":" + minuteStr;
+  String minuteStr = (minute < 10) ? F("0") + String(minute) : String(minute);
+  String timeStr = String(hour) + F(":") + minuteStr;
 
   return timeStr;
 }

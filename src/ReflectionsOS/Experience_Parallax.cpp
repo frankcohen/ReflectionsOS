@@ -42,7 +42,7 @@ void Experience_Parallax::setup()
   if ( vidflag )
   {
     Serial.println( parallaxname );
-    Serial.println( "SETUP" );
+    Serial.println( F("SETUP") );
 
     video.startVideo( ParallaxCat_video );
 
@@ -78,9 +78,9 @@ void Experience_Parallax::run()
 
     int mapped = map( nx, -1500, 1500, 1, 9);
 
-    String mef = "cat";
+    String mef = F("cat");
     mef += String( mapped );
-    mef += "_parallax_baseline.jpg";
+    mef += F("_parallax_baseline.jpg");
 
     //Serial.println( mef );
 
@@ -105,7 +105,7 @@ void Experience_Parallax::teardown()
   {
     tearflag = false;
     Serial.print( parallaxname );
-    Serial.println( "TEARDOWN" );
+    Serial.println( F("TEARDOWN") );
   }
 
   if ( video.getStatus() == 0 )

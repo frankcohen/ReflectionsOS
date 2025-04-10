@@ -46,12 +46,12 @@ void Video::begin()
 
   if ( ! gfx->begin() )
   {
-    Serial.println("gfx->begin() failed. Stopping.");
+    Serial.println(F("gfx->begin() failed. Stopping."));
     while(1);
   }
   else
   {
-    //Serial.println("gfx->begin() suceeded" );
+    //Serial.println(F("gfx->begin() suceeded") );
   }
 
   gfx->fillScreen( BLACK );
@@ -95,15 +95,15 @@ void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, Str
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
-  String errmsg = "Video stopOnError ";
+  String errmsg = F("Video stopOnError ");
   errmsg += msg1;
-  errmsg += ", ";
+  errmsg += F(", ");
   errmsg += msg2;
-  errmsg += ", ";
+  errmsg += F(", ");
   errmsg += msg3;
-  errmsg += ", ";
+  errmsg += F(", ");
   errmsg += msg4;
-  errmsg += ", ";
+  errmsg += F(", ");
   errmsg += msg5;
   logger.error( errmsg );
 
@@ -129,7 +129,7 @@ void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, Str
     bufferCanvas->setFont(&ScienceFair14pt7b);
     bufferCanvas->setTextColor( COLOR_LEADING );
     bufferCanvas->setCursor( leftmargin, topmargin - 5 );
-    bufferCanvas->println("REFLECTIONS");
+    bufferCanvas->println(F("REFLECTIONS"));
 
     bufferCanvas->setCursor( leftmargin, topmargin + ( 1 * linespacing ) );
     bufferCanvas->setFont(&ScienceFair14pt7b);
@@ -180,16 +180,16 @@ int Video::getStatus()
 
 void Video::startVideo( String vname )
 {
-  String mef = "/";
+  String mef = F("/");
   mef += NAND_BASE_DIR;
-  mef += "/";
+  mef += F("/");
   mef += vname;
-  mef += "/";
+  mef += F("/");
   mef += vname;
   mef += videoname_end;
 
   /*
-  String msg = "startVideo ";
+  String msg = F("startVideo ");
   msg += mef;
   logger.info( msg );
   */
@@ -198,7 +198,7 @@ void Video::startVideo( String vname )
   if ( ! mjpegFile )
   {
     videoStatus = 0;
-    String msg = "startVideo failed to open ";
+    String msg = F("startVideo failed to open ");
     msg += mef;
     logger.error( msg );
     return;

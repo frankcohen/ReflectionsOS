@@ -170,7 +170,7 @@ void GPS::printLocation()
 
   const char *cardinalToLondon = TinyGPSPlus::cardinal(courseToLondon);
 
-  printStr(gps.location.isValid() ? cardinalToLondon : "*** ", 6);
+  printStr(gps.location.isValid() ? cardinalToLondon : F("*** "), 6);
 
   printInt(gps.charsProcessed(), true, 6);
   printInt(gps.sentencesWithFix(), true, 10);
@@ -262,7 +262,7 @@ void GPS::loop()
 
     if ( gps.satellites.value() > 0 )
     {
-      Serial.printf("Satellites: %d\n", gps.satellites.value());
+      Serial.printf(F("Satellites: %d\n"), gps.satellites.value());
     }
   }
 

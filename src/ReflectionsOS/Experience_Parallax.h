@@ -26,7 +26,7 @@ extern Video video;
 extern WatchFaceMain watchfacemain;   // Uses WatchFaceBase::drawImageFromFile to draw images to the display
 extern AccelSensor accel;
 
-#define parallaxname "Parallax "
+#define parallaxname F("Parallax ")
 
 #define accxleft 0.62
 #define accxright 1.54

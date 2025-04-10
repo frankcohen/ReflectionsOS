@@ -29,7 +29,7 @@ void Experience_MysticCat::setup()
   if ( vidflag )
   {
     Serial.print( mysticname );
-    Serial.println( "SETUP" );
+    Serial.println( F("SETUP") );
 
     video.startVideo( MysticCat_video );
 
@@ -96,7 +96,7 @@ void Experience_MysticCat::teardown()
   {
     tearflag = false;
     Serial.print( mysticname );
-    Serial.println( "TEARDOWN" );
+    Serial.println( F("TEARDOWN") );
   }
 
   if ( video.getStatus() == 0 )

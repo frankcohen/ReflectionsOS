@@ -29,7 +29,7 @@ void Experience_ShowTime::setup()
   if ( vidflag )
   {
     Serial.print( showtimename );
-    Serial.println( "SETUP" );
+    Serial.println( F("SETUP") );
 
     video.startVideo( ShowTime_video );
     timeflag = true;
@@ -70,7 +70,7 @@ void Experience_ShowTime::teardown() {
   {
     tearflag = false;
     Serial.print( showtimename );
-    Serial.println( "TEARDOWN" );
+    Serial.println( F("TEARDOWN") );
   }
 
   if ( video.getStatus() == 0 )

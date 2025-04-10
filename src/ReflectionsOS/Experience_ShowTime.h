@@ -66,7 +66,7 @@ static const char* const timefunmessages[][2] =
   { "Invisible!",    "Yet here"},
 };
 
-#define showtimename "Show Time "
+#define showtimename F("Show Time ")
 
 class Experience_ShowTime : public Experience {
   public:

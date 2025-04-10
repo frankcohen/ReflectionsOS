@@ -395,7 +395,7 @@ void WatchFaceMain::main()
 {
   if ( needssetup )
   {
-    Serial.println( "MAIN" );
+    Serial.println( F("MAIN") );
     needssetup = false;
     accel.tapped();       // Clears any taps
     accel.doubletapped();
@@ -432,12 +432,12 @@ void WatchFaceMain::displayingdigitaltime()
 {
   if ( needssetup )
   {
-    Serial.println( "DISPLAYING_DIGITAL_TIME" );
+    Serial.println( F("DISPLAYING_DIGITAL_TIME") );
     needssetup = false;
     noMovementTime = millis();
 
     int index = random(0, 37);
-    textmessageservice.startShow( TextMessageExperiences::DigitalTime, "", "" );
+    textmessageservice.startShow( TextMessageExperiences::DigitalTime, F(""), F("") );
     return;
   }
 
@@ -469,7 +469,7 @@ void WatchFaceMain::settingdigitaltime()
 {
   if ( needssetup )
   {
-    Serial.println( "SETTING_DIGITAL_TIME" );
+    Serial.println( F("SETTING_DIGITAL_TIME") );
     needssetup = false;
     noMovementTime = millis();
     tilttimer = millis();
@@ -588,10 +588,10 @@ void WatchFaceMain::settingdigitaltime()
 void WatchFaceMain::drawHourMinute( int currentHour, int currentMinute, bool hourschanging )
 {
   String mef = String( currentHour );
-  mef += ":";
+  mef += F(":");
   if ( currentMinute < 10 )
   {
-    mef += "0";
+    mef += F("0");
   }
   mef += String( currentMinute );
 
@@ -610,7 +610,7 @@ void WatchFaceMain::changetime()
 {
   if ( needssetup )
   {
-    Serial.println( "CONFIRM_TIME" );
+    Serial.println( F("CONFIRM_TIME") );
     needssetup = false;
     drawImageFromFile( wfMain_Face_BlueDot_Background, true, 0, 0 );
     noMovementTime = millis();
@@ -641,14 +641,14 @@ void WatchFaceMain::changetime()
   }
 
   drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
-  textmessageservice.drawCenteredMesssage( "Tap To Set", "New Time" );
+  textmessageservice.drawCenteredMesssage( F("Tap To Set"), F("New Time") );
 }
 
 void WatchFaceMain::clearsteps()
 {
   if ( needssetup )
   {
-    Serial.println( "CONFIRM_CLEAR_STEPS" );
+    Serial.println( F("CONFIRM_CLEAR_STEPS") );
     needssetup = false;
     drawImageFromFile( wfMain_Face_BlueDot_Background, true, 0, 0 );
     noMovementTime = millis();
@@ -679,14 +679,14 @@ void WatchFaceMain::clearsteps()
   }
 
   drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
-  textmessageservice.drawCenteredMesssage( "Tap To", "Clear Steps" );
+  textmessageservice.drawCenteredMesssage( F("Tap To"), F("Clear Steps") );
 }
 
 void WatchFaceMain::starttimer()
 {
   if ( needssetup )
   {
-    Serial.println( "CONFIRM_START_TIMER" );
+    Serial.println( F("CONFIRM_START_TIMER") );
     needssetup = false;
     drawImageFromFile( wfMain_Face_BlueDot_Background, true, 0, 0 );
     noMovementTime = millis();
@@ -716,14 +716,14 @@ void WatchFaceMain::starttimer()
   }
 
   drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
-  textmessageservice.drawCenteredMesssage( "Tap To", "Start Timer" );
+  textmessageservice.drawCenteredMesssage( F("Tap To"), F("Start Timer") );
 }
 
 void WatchFaceMain::displayinghealthstatistics()
 {
   if ( needssetup )
   {
-    Serial.println( "DISPLAYING_HEALTH_STATISTICS" );
+    Serial.println( F("DISPLAYING_HEALTH_STATISTICS") );
     needssetup = false;
     drawImageFromFile( wfMain_Health_Background, true, 0, 0 );
     noMovementTime = millis();
@@ -757,7 +757,7 @@ void WatchFaceMain::displayingtimer()
 {
   if ( needssetup )
   {
-    Serial.println( "DISPLAYING_TIMER" );
+    Serial.println( F("DISPLAYING_TIMER") );
     needssetup = false;
     drawImageFromFile( wfMain_Timer_Background, true, 0, 0 );
     noMovementTime = millis();
@@ -793,7 +793,7 @@ void WatchFaceMain::settingtimer()
 {
   if ( needssetup )
   {
-    Serial.println( "SETTING_TIMER" );
+    Serial.println( F("SETTING_TIMER") );
     needssetup = false;
     drawImageFromFile( wfMain_SetTimer_Background, true, 0, 0 );
     noMovementTime = millis();

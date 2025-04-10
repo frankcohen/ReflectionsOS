@@ -20,9 +20,9 @@ void SystemLoad::begin()
   // Initialize accumulated values
   accumulatedTaskTime = 0;
 
-  taskName1 = "";
-  taskName2 = "";
-  taskName3 = "";
+  taskName1 = F("");
+  taskName2 = F("");
+  taskName3 = F("");
   accumulatedTaskTime1 = 0;
   accumulatedTaskTime2 = 0;
   accumulatedTaskTime3 = 0;
@@ -48,18 +48,18 @@ void SystemLoad::printHeapSpace( String message )
   float fragRatio = (float)freeHeap / largestBlock;
 
   Serial.print( message );
-  Serial.print(", Heap: ");
+  Serial.print(F(", Heap: "));
   Serial.print( freeHeap );
-  Serial.print(" , FreeBlock: ");
+  Serial.print(F(" , FreeBlock: "));
   Serial.print( largestBlock );
-  Serial.print(" , Fragmentation ratio: ");
+  Serial.print(F(" , Fragmentation ratio: "));
   Serial.println( fragRatio );
 
   /*
   size_t freeHeapDefault = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
-  Serial.print("Default Free Heap: ");
+  Serial.print(F("Default Free Heap: "));
   Serial.print(freeHeapDefault);
-  Serial.println(" bytes");
+  Serial.println(F(" bytes"));
   */
 }
 
@@ -71,16 +71,16 @@ void SystemLoad::loop() {
   {
     previousMillis = currentMillis;
 
-    Serial.print("Load: ");
+    Serial.print(F("Load: "));
     Serial.print( float( accumulatedTaskTime ) / float( interval) );
-    Serial.print("% ");
+    Serial.print(F("% "));
     Serial.print( float( accumulatedTaskTime1 ) / float( interval) );
-    Serial.print("% ");
+    Serial.print(F("% "));
     Serial.print( float( accumulatedTaskTime2 ) / float( interval) );
-    Serial.print("% ");
+    Serial.print(F("% "));
     Serial.print( float( accumulatedTaskTime3 ) / float( interval) );
-    Serial.print("% ");
-    printHeapSpace( ", memory");
+    Serial.print(F("% "));
+    printHeapSpace( F(", memory"));
 
     // Reset the accumulated values for the next interval
     accumulatedTaskTime = 0;
@@ -89,8 +89,8 @@ void SystemLoad::loop() {
 
 void SystemLoad::printStats() 
 {
-   Serial.print("Task: ");
+   Serial.print(F("Task: "));
     Serial.print( accumulatedTaskTime );
-    Serial.print(", Interval: ");
+    Serial.print(F(", Interval: "));
     Serial.println( interval );
 }

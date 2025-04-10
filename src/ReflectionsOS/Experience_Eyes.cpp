@@ -40,7 +40,7 @@ void Experience_Eyes::setup()
   if ( vidflag )
   {
     Serial.print( eyesname );
-    Serial.println( "SETUP" );
+    Serial.println( F("SETUP") );
 
     video.startVideo( EyesFollowFinger_video );
 
@@ -76,9 +76,9 @@ void Experience_Eyes::run()
 
       /*
       String myf = String( col );
-      myf += " ";
+      myf += F(" ");
       myf += dur;
-      myf += " ";
+      myf += F(" ");
       myf += dist;
       Serial.println( myf );
       */
@@ -124,6 +124,6 @@ void Experience_Eyes::run()
 
 void Experience_Eyes::teardown() 
 {
-  Serial.println( "Eyes TEARDOWN" );
+  Serial.println( F("Eyes TEARDOWN") );
   setTeardownComplete( true );  // Signal teardown complete
 }

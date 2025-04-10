@@ -27,7 +27,7 @@ void Experience_Hover::init()
 void Experience_Hover::setup() 
 {
   Serial.print( HoverName );
-  Serial.println( "SETUP" );
+  Serial.println( F("SETUP") );
   
   video.startVideo( Swipe_video );
   setSetupComplete(true);  // Signal that setup is complete
@@ -43,6 +43,6 @@ void Experience_Hover::run()
 
 void Experience_Hover::teardown() 
 {
-  Serial.println( "Swipe TEARDOWN" );
+  Serial.println( F("Swipe TEARDOWN") );
   setTeardownComplete( true );  // Signal teardown complete
 }

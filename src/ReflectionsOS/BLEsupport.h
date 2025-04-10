@@ -94,11 +94,11 @@ class BLEsupport
     class ClientCallbacks : public NimBLEClientCallbacks 
     {
       public:
-        void onConnect(NimBLEClient* pClient) override { Serial.printf("Connected\n"); }
+        void onConnect(NimBLEClient* pClient) override { Serial.printf(F("Connected\n")); }
         
         void onDisconnect(NimBLEClient* pClient, int reason) override 
         {
-            Serial.printf("%s Disconnected, reason = %d - Starting scan\n", pClient->getPeerAddress().toString().c_str(), reason);
+            Serial.printf(F("%s Disconnected, reason = %d - Starting scan\n"), pClient->getPeerAddress().toString().c_str(), reason);
             NimBLEDevice::getScan()->start(scanTimeMs, false, true);
         }
     };

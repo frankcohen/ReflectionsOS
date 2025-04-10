@@ -26,7 +26,7 @@ extern Video video;
 extern TOF tof;
 extern Arduino_GFX *gfx;
 
-#define eyesname "Eyes "
+#define eyesname F("Eyes ")
 
 class Experience_Eyes : public Experience {
   public:

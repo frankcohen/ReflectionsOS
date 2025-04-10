@@ -22,7 +22,7 @@
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
 
-#define HoverName "Hover "
+#define HoverName F("Hover ")
 
 class Experience_Hover : public Experience {
   public:

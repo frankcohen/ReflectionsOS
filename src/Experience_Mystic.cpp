@@ -12,13 +12,15 @@
 
 */
 
-#include "Experience_Shaken.h"
+#include "Experience_Mystic.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
+Mystic mystic;
 
-void Experience_Shaken::init()
+void Experience_Mystic::init()
 {
+  vidflag = true;  
   setupComplete = false;
   runComplete = false;
   teardownComplete = false;
@@ -26,22 +28,27 @@ void Experience_Shaken::init()
   idle = false;
 } 
 
-void Experience_Shaken::setup() 
+void Experience_Mystic::setup() 
 {
-  Serial.print( shakenname );
-  Serial.println( F("SETUP") );
-
-  video.startVideo( Shaken_video );
-  setSetupComplete(true);  // Signal that setup is complete
+  if ( vidflag )
+  {
+    video.startVideo( MysticCat_video );
+    timeflag = true;
+    vidflag = false;
+    setSetupComplete(true);  // Signal that setup is complete
+  }
 }
 
-void Experience_Shaken::run() 
+void Experience_Mystic::run() 
 {
+  mystic.runShowTellAnswers();
+  tearflag = true;
   setRunComplete(true);  // Signal run complete
 }
 
-void Experience_Shaken::teardown() 
-{
+void Experience_Mystic::teardown() {
+  // Teardown code for Experience_Awake
+
   if ( video.getStatus() == 0 )
   {
     setTeardownComplete( true );  // Signal teardown complete

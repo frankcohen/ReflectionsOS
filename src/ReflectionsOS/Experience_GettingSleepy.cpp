@@ -26,7 +26,7 @@ void Experience_GettingSleepy::init()
 
 void Experience_GettingSleepy::setup() 
 {
-  Serial.println( "Getting Sleepy SETUP" );
+  Serial.println( F("Getting Sleepy SETUP") );
   video.startVideo( Getting_Sleepy_video );
   setSetupComplete(true);  // Signal that setup is complete
 }
@@ -41,6 +41,6 @@ void Experience_GettingSleepy::run()
 
 void Experience_GettingSleepy::teardown() 
 {
-  Serial.println( "Getting Sleepy TEARDOWN" );
+  Serial.println( F("Getting Sleepy TEARDOWN") );
   setTeardownComplete( true );  // Signal teardown complete
 }

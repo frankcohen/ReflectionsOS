@@ -26,7 +26,7 @@ void Experience_Sleep::init()
 
 void Experience_Sleep::setup() 
 {
-  Serial.println( "Sleep SETUP" );
+  Serial.println( F("Sleep SETUP") );
   video.startVideo( Sleep_video );
   setSetupComplete(true);  // Signal that setup is complete
 }
@@ -41,12 +41,12 @@ void Experience_Sleep::run()
 
 void Experience_Sleep::teardown() 
 {
-  Serial.println( "Sleep TEARDOWN" );
+  Serial.println( F("Sleep TEARDOWN") );
 
   // Put cat to deep sleep
   esp_deep_sleep_start();
 
-  Serial.println( "Sleep after sleep" );
+  Serial.println( F("Sleep after sleep") );
 
   setTeardownComplete( true );  // Signal teardown complete
 }
