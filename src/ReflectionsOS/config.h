@@ -160,8 +160,8 @@ Read the license in the license.txt file that comes with this code.
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
-static const NimBLEUUID BLE_SERVICE_UUID(F("7d9029fe-48d5-49e0-b9ad-8fd7dac70354"));
-static const NimBLEUUID BLE_CHARACTERISTIC_UUID(F("33a03886-0db0-43c8-90a2-bca6a8c7eaf0"));
+static const NimBLEUUID BLE_SERVICE_UUID( "7d9029fe-48d5-49e0-b9ad-8fd7dac70354" );
+static const NimBLEUUID BLE_CHARACTERISTIC_UUID( "33a03886-0db0-43c8-90a2-bca6a8c7eaf0" );
 
 #define bleServerName F("REFLECTIONS")
 
@@ -170,9 +170,6 @@ static const NimBLEUUID BLE_CHARACTERISTIC_UUID(F("33a03886-0db0-43c8-90a2-bca6a
 #define LED_Count 12
 #define LED_Type NEOPIXEL
 #define LED_Pin 39
-
-// Compass
-
 
 // TOF Gesture Sensing
 

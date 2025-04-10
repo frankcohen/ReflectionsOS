@@ -67,7 +67,7 @@ void Wifi::setRTCfromNTP()
 {
   if ( WiFi.status() == WL_CONNECTED ) 
   {
-    configTime(gmtOffset_sec, daylightOffset_sec, F("pool.ntp.org"));
+    configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org" );
 
     struct tm timeinfo;
     if ( ! getLocalTime( &timeinfo ) ) 
@@ -89,8 +89,8 @@ void Wifi::setRTCfromNTP()
       hour = 12; // Midnight case
     }
 
-    String minuteStr = (minute < 10) ? F("0") + String(minute) : String(minute);
-    String timeStr = String(hour) + F(":") + minuteStr + F(" ") + period;
+    String minuteStr = (minute < 10) ? "0" + String(minute) : String(minute);
+    String timeStr = String(hour) + ":" + minuteStr + " " + period;
 
     Serial.print( F("Net time set to ") );
     Serial.print( timeStr );

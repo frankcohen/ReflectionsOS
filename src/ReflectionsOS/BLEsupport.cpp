@@ -105,11 +105,11 @@ void BLEsupport::ScanCallbacks::onScanEnd(const NimBLEScanResults& results, int 
 void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) 
 {
     std::string str  = (isNotify ? "Notification" : "Indication");
-    str += F(" from ");
+    str += " from ";
     str += pRemoteCharacteristic->getClient()->getPeerAddress().toString();
-    str += F(": Service = ") + pRemoteCharacteristic->getRemoteService()->getUUID().toString();
-    str += F(", Characteristic = ") + pRemoteCharacteristic->getUUID().toString();
-    str += F(", Value = ") + std::string((char*)pData, length);
+    str += ": Service = " + pRemoteCharacteristic->getRemoteService()->getUUID().toString();
+    str += ", Characteristic = " + pRemoteCharacteristic->getUUID().toString();
+    str += ", Value = " + std::string((char*)pData, length);
     Serial.printf(F("%s\n"), str.c_str());
 }
 

@@ -312,7 +312,7 @@ String TextMessageService::formatWithCommas(int value)
   // Add commas at appropriate places
   while (commaCount > 0) {
       pos -= 3;
-      formatted = F(",") + valStr.substring(pos, pos + 3) + formatted;
+      formatted = "," + valStr.substring(pos, pos + 3) + formatted;
       commaCount--;
   }
 
@@ -396,8 +396,8 @@ String TextMessageService::getRTCtime()
     hour = 12; // Midnight case
   }
 
-  String minuteStr = (minute < 10) ? F("0") + String(minute) : String(minute);
-  String timeStr = String(hour) + F(":") + minuteStr;
+  String minuteStr = (minute < 10) ? "0" + String(minute) : String(minute);
+  String timeStr = String(hour) + ":" + minuteStr;
 
   return timeStr;
 }
