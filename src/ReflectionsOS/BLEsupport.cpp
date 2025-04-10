@@ -131,15 +131,11 @@ void BLEsupport::begin() {
   mypounce = false;  
   pnctime = millis();
 
-Serial.println("1");
   gps.on();
-
-Serial.println("1a");
 
   // Initialize the BLE device using the WiFi device name.
   NimBLEDevice::init(wifi.getDeviceName().c_str());
   NimBLEDevice::setPower(3);  // 3dbm
-Serial.println("1b");
 
   // Server Setup.
   pServer = NimBLEDevice::createServer();
@@ -147,16 +143,13 @@ Serial.println("1b");
   pCharacteristic = pService->createCharacteristic(BLE_CHARACTERISTIC_UUID, NIMBLE_PROPERTY::READ);
   pCharacteristic->setCallbacks(new MyCharacteristicCallbacks(this));
   pService->start();
-  Serial.println("1c");
 
   pAdvertising = NimBLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(BLE_SERVICE_UUID);
-Serial.println("1d");
 
   // Set both the maximum and minimum interval to the same value for a consistent advertisement rate
   pAdvertising->setMinInterval(advInterval);
   pAdvertising->setMaxInterval(advInterval);
-  Serial.println("1e");
 
   NimBLEAdvertisementData scanResponse;
   scanResponse.setName(wifi.getDeviceName().c_str());
@@ -164,7 +157,6 @@ Serial.println("1d");
   pAdvertising->start();
 
   lastAdvUpdate = millis();
-Serial.println("2");
 
   // Client Setup.
   NimBLEScan* pScan = NimBLEDevice::getScan();
@@ -181,8 +173,6 @@ Serial.println("2");
   pScan->start(SCAN_TIME_MS, false);
 
   Serial.println(F("BLE started"));
-
-Serial.println("3");
 
   compasstime = millis();
 }

@@ -51,7 +51,7 @@ void Video::begin()
   }
   else
   {
-    //Serial.println(F("gfx->begin() suceeded") );
+    Serial.println(F("gfx->begin() suceeded") );
   }
 
   gfx->fillScreen( BLACK );
@@ -188,11 +188,9 @@ void Video::startVideo( String vname )
   mef += vname;
   mef += videoname_end;
 
-  /*
   String msg = F("startVideo ");
   msg += mef;
   logger.info( msg );
-  */
   
   mjpegFile = SD.open( mef );
   if ( ! mjpegFile )
@@ -215,6 +213,8 @@ void Video::startVideo( String vname )
   }
 
   videoStartTime = millis();
+
+  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 }
 
 void Video::stopVideo()
@@ -261,7 +261,19 @@ void Video::loop()
         y = (h > gfx->height()) ? 0 : ((gfx->height() - h) / 2);
       }
 
-      gfx->draw16bitBeRGBBitmap(x, y, mjpeg.getOutputbuf(), w, h);
+      String mef = ">";
+      mef += totalFrames;
+      mef += ", ";
+      mef += x;
+      mef += ", ";
+      mef += y;
+      mef += ", ";
+      mef += w;
+      mef += ", ";
+      mef += h;
+      Serial.println( mef );
+
+      gfx->draw16bitBeRGBBitmap(x, y, mjpeg.getOutputbuf(), 240, 240);
 
       total_show_video += millis() - curr_ms;
 

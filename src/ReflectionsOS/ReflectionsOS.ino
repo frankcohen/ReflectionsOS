@@ -437,7 +437,7 @@ void setup() {
 
   tofstarted = false;
   accelstarted = false;
-
+/*
   // Create a new task for TOF processing, pin it to core 0
   xTaskCreatePinnedToCore(
     Core0Tasks,    // Task function
@@ -448,7 +448,7 @@ void setup() {
     NULL,          // Task handle
     0              // Core where the task should run (core 0)
   );
-
+*/
   // Experience initialization
 
   /*
@@ -464,7 +464,7 @@ void setup() {
   //experienceservice.startExperience( ExperienceService::MysticCat );
 
   // For debug
-  video.startVideo( Getting_Sleepy_video );
+  video.startVideo( OutOfTheBox_video );
 
   logger.info(F("Setup complete"));
 }
