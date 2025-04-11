@@ -15,16 +15,17 @@ public:
   void endWrite() override;
   void writeCommand(uint8_t) override;
   void writeCommand16(uint16_t) override;
+  void writeCommandBytes(uint8_t *data, uint32_t len) override;
   void write(uint8_t) override;
   void write16(uint16_t) override;
   void writeRepeat(uint16_t p, uint32_t len) override;
+  void writeBytes(uint8_t *data, uint32_t len) override;
   void writePixels(uint16_t *data, uint32_t len) override;
 
 #if !defined(LITTLE_FOOT_PRINT)
   void writeC8D8(uint8_t c, uint8_t d) override;
   void writeC8D16(uint8_t c, uint16_t d) override;
   void writeC8D16D16(uint8_t c, uint16_t d1, uint16_t d2) override;
-  void writeBytes(uint8_t *data, uint32_t len) override;
 
   void writeIndexedPixels(uint8_t *data, uint16_t *idx, uint32_t len) override;
   void writeIndexedPixelsDouble(uint8_t *data, uint16_t *idx, uint32_t len) override;
@@ -39,8 +40,7 @@ private:
   INLINE void CS_LOW(void);
   INLINE void WR_HIGH(void);
   INLINE void WR_LOW(void);
-  INLINE void RD_HIGH(void);
-  INLINE void RD_LOW(void);
+
   INLINE void D0_HIGH(void);
   INLINE void D0_LOW(void);
   INLINE void D1_HIGH(void);
@@ -77,8 +77,6 @@ private:
   PORTreg_t _csPortClr;
   PORTreg_t _wrPortSet;
   PORTreg_t _wrPortClr;
-  PORTreg_t _rdPortSet;
-  PORTreg_t _rdPortClr;
   PORTreg_t _d0PortSet;
   PORTreg_t _d0PortClr;
   PORTreg_t _d1PortSet;
@@ -99,7 +97,7 @@ private:
   ARDUINOGFX_PORT_t _dcPinMask;
   ARDUINOGFX_PORT_t _csPinMask;
   ARDUINOGFX_PORT_t _wrPinMask;
-  ARDUINOGFX_PORT_t _rdPinMask;
+
   ARDUINOGFX_PORT_t _d0PinMask;
   ARDUINOGFX_PORT_t _d1PinMask;
   ARDUINOGFX_PORT_t _d2PinMask;
@@ -113,7 +111,7 @@ private:
   PORTreg_t _dcPort;
   PORTreg_t _csPort;
   PORTreg_t _wrPort;
-  PORTreg_t _rdPort;
+
   PORTreg_t _d0Port;
   PORTreg_t _d1Port;
   PORTreg_t _d2Port;

@@ -15,6 +15,7 @@ public:
   void endWrite() override;
   void writeCommand(uint8_t) override;
   void writeCommand16(uint16_t) override;
+  void writeCommandBytes(uint8_t *data, uint32_t len) override;
   void write(uint8_t) override;
   void write16(uint16_t) override;
   void writeRepeat(uint16_t p, uint32_t len) override;
@@ -23,6 +24,7 @@ public:
   void writeC8D8(uint8_t c, uint8_t d) override;
   void writeC8D16(uint8_t c, uint16_t d) override;
   void writeC8D16D16(uint8_t c, uint16_t d1, uint16_t d2) override;
+  void writeBytes(uint8_t *data, uint32_t len) override;
 
 protected:
 private:
@@ -46,10 +48,6 @@ private:
   PORTreg_t _wrPort;                 ///< PORT register for data/command
   ARDUINOGFX_PORT_t _wrPinMaskSet;   ///< Bitmask for data/command SET (OR)
   ARDUINOGFX_PORT_t _wrPinMaskClr;   ///< Bitmask for data/command CLEAR (AND)
-
-  PORTreg_t _rdPort;                 ///< PORT register for data/command
-  ARDUINOGFX_PORT_t _rdPinMaskSet;   ///< Bitmask for data/command SET (OR)
-  ARDUINOGFX_PORT_t _rdPinMaskClr;   ///< Bitmask for data/command CLEAR (AND)
 
   PORTreg_t _dataPort;                 ///< PORT register for data/command
 };

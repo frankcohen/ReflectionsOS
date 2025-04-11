@@ -5,11 +5,21 @@
 #if defined(ESP32)
 #include <driver/spi_master.h>
 
-#define SPI_MAX_PIXELS_AT_ONCE 1024
-#define QSPI_FREQUENCY 80000000
-#define QSPI_SPI_MODE SPI_MODE0
-#define QSPI_SPI_HOST SPI2_HOST
-#define QSPI_DMA_CHANNEL SPI_DMA_CH_AUTO
+#ifndef ESP32QSPI_MAX_PIXELS_AT_ONCE
+#define ESP32QSPI_MAX_PIXELS_AT_ONCE 1024
+#endif
+#ifndef ESP32QSPI_FREQUENCY
+#define ESP32QSPI_FREQUENCY 80000000
+#endif
+#ifndef ESP32QSPI_SPI_MODE
+#define ESP32QSPI_SPI_MODE SPI_MODE0
+#endif
+#ifndef ESP32QSPI_SPI_HOST
+#define ESP32QSPI_SPI_HOST SPI2_HOST
+#endif
+#ifndef ESP32QSPI_DMA_CHANNEL
+#define ESP32QSPI_DMA_CHANNEL SPI_DMA_CH_AUTO
+#endif
 
 class Arduino_ESP32QSPI : public Arduino_DataBus
 {
@@ -22,6 +32,7 @@ public:
   void endWrite() override;
   void writeCommand(uint8_t) override;
   void writeCommand16(uint16_t) override;
+  void writeCommandBytes(uint8_t *data, uint32_t len) override;
   void write(uint8_t) override;
   void write16(uint16_t) override;
 
@@ -29,9 +40,12 @@ public:
   void writeC8D16(uint8_t c, uint16_t d) override;
   void writeC8D16D16(uint8_t c, uint16_t d1, uint16_t d2) override;
 
+  void writeC8Bytes(uint8_t c, uint8_t *data, uint32_t len);
+
   void writeRepeat(uint16_t p, uint32_t len) override;
   void writePixels(uint16_t *data, uint32_t len) override;
 
+  void batchOperation(const uint8_t *operations, size_t len) override;
   void writeBytes(uint8_t *data, uint32_t len) override;
 
   void writeIndexedPixels(uint8_t *data, uint16_t *idx, uint32_t len) override;
@@ -54,11 +68,12 @@ private:
   spi_device_handle_t _handle;
   spi_transaction_ext_t _spi_tran_ext;
   spi_transaction_t *_spi_tran;
+
   union
   {
-    uint8_t _buffer[SPI_MAX_PIXELS_AT_ONCE * 2] = {0};
-    uint16_t _buffer16[SPI_MAX_PIXELS_AT_ONCE];
-    uint32_t _buffer32[SPI_MAX_PIXELS_AT_ONCE / 2];
+    uint8_t* _buffer;
+    uint16_t* _buffer16;
+    uint32_t* _buffer32;
   };
 };
 

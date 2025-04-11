@@ -18,6 +18,7 @@ public:
   void endWrite() override;
   void writeCommand(uint8_t) override;
   void writeCommand16(uint16_t) override;
+  void writeCommandBytes(uint8_t *data, uint32_t len) override;
   void write(uint8_t) override;
   void write16(uint16_t) override;
   void writeRepeat(uint16_t p, uint32_t len) override;
@@ -57,7 +58,11 @@ private:
   PORTreg_t _wrPortClr; ///< PORT register CLEAR
   uint32_t _wrPinMask;  ///< Bitmask
 
+  PORTreg_t _data1PortSet;
+  PORTreg_t _data1PortClr;
   uint32_t _data1ClrMask;
+  PORTreg_t _data2PortSet;
+  PORTreg_t _data2PortClr;
   uint32_t _data2ClrMask;
   // Lookup table for ESP32 parallel bus interface uses 4kbyte RAM
   uint32_t _xset_mask1_lo[256];

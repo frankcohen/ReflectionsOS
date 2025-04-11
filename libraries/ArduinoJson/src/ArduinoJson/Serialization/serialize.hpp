@@ -1,18 +1,19 @@
 // ArduinoJson - https://arduinojson.org
-// Copyright © 2014-2023, Benoit BLANCHON
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #pragma once
 
 #include <ArduinoJson/Serialization/Writer.hpp>
-#include <ArduinoJson/Variant/VariantFunctions.hpp>
 
 ARDUINOJSON_BEGIN_PRIVATE_NAMESPACE
 
 template <template <typename> class TSerializer, typename TWriter>
 size_t doSerialize(ArduinoJson::JsonVariantConst source, TWriter writer) {
-  TSerializer<TWriter> serializer(writer);
-  return variantAccept(VariantAttorney::getData(source), serializer);
+  auto data = VariantAttorney::getData(source);
+  auto resources = VariantAttorney::getResourceManager(source);
+  TSerializer<TWriter> serializer(writer, resources);
+  return VariantData::accept(data, resources, serializer);
 }
 
 template <template <typename> class TSerializer, typename TDestination>
@@ -23,17 +24,15 @@ size_t serialize(ArduinoJson::JsonVariantConst source,
 }
 
 template <template <typename> class TSerializer>
-typename enable_if<!TSerializer<StaticStringWriter>::producesText, size_t>::type
-serialize(ArduinoJson::JsonVariantConst source, void* buffer,
-          size_t bufferSize) {
+enable_if_t<!TSerializer<StaticStringWriter>::producesText, size_t> serialize(
+    ArduinoJson::JsonVariantConst source, void* buffer, size_t bufferSize) {
   StaticStringWriter writer(reinterpret_cast<char*>(buffer), bufferSize);
   return doSerialize<TSerializer>(source, writer);
 }
 
 template <template <typename> class TSerializer>
-typename enable_if<TSerializer<StaticStringWriter>::producesText, size_t>::type
-serialize(ArduinoJson::JsonVariantConst source, void* buffer,
-          size_t bufferSize) {
+enable_if_t<TSerializer<StaticStringWriter>::producesText, size_t> serialize(
+    ArduinoJson::JsonVariantConst source, void* buffer, size_t bufferSize) {
   StaticStringWriter writer(reinterpret_cast<char*>(buffer), bufferSize);
   size_t n = doSerialize<TSerializer>(source, writer);
   // add null-terminator for text output (not counted in the size)
@@ -43,7 +42,7 @@ serialize(ArduinoJson::JsonVariantConst source, void* buffer,
 }
 
 template <template <typename> class TSerializer, typename TChar, size_t N>
-typename enable_if<IsChar<TChar>::value, size_t>::type serialize(
+enable_if_t<IsChar<TChar>::value, size_t> serialize(
     ArduinoJson::JsonVariantConst source, TChar (&buffer)[N]) {
   return serialize<TSerializer>(source, buffer, N);
 }

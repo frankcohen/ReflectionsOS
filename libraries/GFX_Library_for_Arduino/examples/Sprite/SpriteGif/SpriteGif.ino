@@ -28,7 +28,7 @@
 #define GIF_FILENAME "/city17_240.gif"
 
 /*******************************************************************************
- * Start of Arduino_G FX setting
+ * Start of Arduino_GFX setting
  *
  * Arduino_GFX try to find the settings depends on selected board in Arduino IDE
  * Or you can define the display dev kit not in the board list
@@ -111,7 +111,7 @@ void setup()
   Serial.begin(115200);
   // Serial.setDebugOutput(true);
   // while(!Serial);
-  Serial.println("GIF Sprite Demo");
+  Serial.println("Arduino_GFX GIF Sprite example");
 
 #ifdef GFX_EXTRA_PRE_INIT
   GFX_EXTRA_PRE_INIT();

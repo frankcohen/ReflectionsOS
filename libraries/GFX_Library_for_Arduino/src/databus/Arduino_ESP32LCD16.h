@@ -4,13 +4,19 @@
  */
 #include "Arduino_DataBus.h"
 
+#if (ESP_ARDUINO_VERSION_MAJOR < 3)
+
 #if defined(ESP32) && (CONFIG_IDF_TARGET_ESP32S3)
 
 #ifndef _ARDUINO_ESP32LCD16_H_
 #define _ARDUINO_ESP32LCD16_H_
 
+#ifndef LCD_MAX_PIXELS_AT_ONCE
 #define LCD_MAX_PIXELS_AT_ONCE 2046
+#endif
+#ifndef USE_DMA_THRESHOLD
 #define USE_DMA_THRESHOLD 6
+#endif
 
 class Arduino_ESP32LCD16 : public Arduino_DataBus
 {
@@ -25,6 +31,7 @@ public:
   void endWrite() override;
   void writeCommand(uint8_t) override;
   void writeCommand16(uint16_t) override;
+  void writeCommandBytes(uint8_t *data, uint32_t len) override;
   void write(uint8_t) override;
   void write16(uint16_t) override;
   void writeRepeat(uint16_t p, uint32_t len) override;
@@ -79,12 +86,14 @@ private:
 
   union
   {
-    uint8_t _buffer[LCD_MAX_PIXELS_AT_ONCE * 2] = {0};
-    uint16_t _buffer16[LCD_MAX_PIXELS_AT_ONCE];
-    uint32_t _buffer32[LCD_MAX_PIXELS_AT_ONCE / 2];
+    uint8_t* _buffer;
+    uint16_t* _buffer16;
+    uint32_t* _buffer32;
   };
 };
 
 #endif // _ARDUINO_ESP32LCD16_H_
 
 #endif // #if defined(ESP32) && (CONFIG_IDF_TARGET_ESP32S3)
+
+#endif // #if (ESP_ARDUINO_VERSION_MAJOR < 3)

@@ -5,16 +5,26 @@
 #if defined(ESP32)
 #include "soc/spi_struct.h"
 #if CONFIG_IDF_TARGET_ESP32S3
+#if (ESP_ARDUINO_VERSION_MAJOR < 3)
 #include "driver/periph_ctrl.h"
+#else
+#include "esp_private/periph_ctrl.h"
+#endif
 #elif CONFIG_IDF_TARGET_ESP32C3
+#if (ESP_ARDUINO_VERSION_MAJOR < 3)
 #include "driver/periph_ctrl.h"
+#else
+#include "esp_private/periph_ctrl.h"
+#endif
 #include "esp32c3/rom/gpio.h"
 #include "soc/periph_defs.h"
 #else
 #include "soc/dport_reg.h"
 #endif
 
-#define SPI_MAX_PIXELS_AT_ONCE 32
+#ifndef ESP32SPI_MAX_PIXELS_AT_ONCE
+#define ESP32SPI_MAX_PIXELS_AT_ONCE 32
+#endif
 
 class Arduino_ESP32SPI : public Arduino_DataBus
 {
@@ -22,7 +32,7 @@ public:
 #if CONFIG_IDF_TARGET_ESP32
   Arduino_ESP32SPI(int8_t dc = GFX_NOT_DEFINED, int8_t cs = GFX_NOT_DEFINED, int8_t sck = GFX_NOT_DEFINED, int8_t mosi = GFX_NOT_DEFINED, int8_t miso = GFX_NOT_DEFINED, uint8_t spi_num = VSPI, bool is_shared_interface = true); // Constructor
 #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
-  Arduino_ESP32SPI(int8_t dc = GFX_NOT_DEFINED, int8_t cs = GFX_NOT_DEFINED, int8_t sck = GFX_NOT_DEFINED, int8_t mosi = GFX_NOT_DEFINED, int8_t miso = GFX_NOT_DEFINED, uint8_t spi_num = HSPI, bool is_shared_interface = true); // Constructor
+  Arduino_ESP32SPI(int8_t dc = GFX_NOT_DEFINED, int8_t cs = GFX_NOT_DEFINED, int8_t sck = GFX_NOT_DEFINED, int8_t mosi = GFX_NOT_DEFINED, int8_t miso = GFX_NOT_DEFINED, uint8_t spi_num = FSPI, bool is_shared_interface = true); // Constructor
 #else
   Arduino_ESP32SPI(int8_t dc = GFX_NOT_DEFINED, int8_t cs = GFX_NOT_DEFINED, int8_t sck = GFX_NOT_DEFINED, int8_t mosi = GFX_NOT_DEFINED, int8_t miso = GFX_NOT_DEFINED, uint8_t spi_num = FSPI, bool is_shared_interface = true); // Constructor
 #endif
@@ -32,6 +42,7 @@ public:
   void endWrite() override;
   void writeCommand(uint8_t) override;
   void writeCommand16(uint16_t) override;
+  void writeCommandBytes(uint8_t *data, uint32_t len) override;
   void write(uint8_t) override;
   void write16(uint16_t) override;
 
@@ -46,6 +57,7 @@ public:
 
   void writeIndexedPixels(uint8_t *data, uint16_t *idx, uint32_t len) override;
   void writeIndexedPixelsDouble(uint8_t *data, uint16_t *idx, uint32_t len) override;
+  void writeYCbCrPixels(uint8_t *yData, uint8_t *cbData, uint8_t *crData, uint16_t w, uint16_t h) override;
 
 protected:
   void flush_data_buf();
@@ -73,12 +85,14 @@ private:
 
   spi_t *_spi;
   uint8_t _bitOrder = SPI_MSBFIRST;
+
   union
   {
-    uint8_t _buffer[SPI_MAX_PIXELS_AT_ONCE * 2] = {0};
-    uint16_t _buffer16[SPI_MAX_PIXELS_AT_ONCE];
-    uint32_t _buffer32[SPI_MAX_PIXELS_AT_ONCE / 2];
+    uint8_t *_buffer;
+    uint16_t *_buffer16;
+    uint32_t *_buffer32;
   };
+
   uint16_t _data_buf_bit_idx = 0;
 };
 

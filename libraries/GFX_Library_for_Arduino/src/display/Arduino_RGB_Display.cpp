@@ -1,5 +1,7 @@
 #include "../Arduino_DataBus.h"
 
+#if (ESP_ARDUINO_VERSION_MAJOR < 3)
+
 #if defined(ESP32) && (CONFIG_IDF_TARGET_ESP32S3)
 
 #include "../Arduino_GFX.h"
@@ -7,11 +9,18 @@
 
 Arduino_RGB_Display::Arduino_RGB_Display(
     int16_t w, int16_t h, Arduino_ESP32RGBPanel *rgbpanel, uint8_t r, bool auto_flush,
-    Arduino_DataBus *bus, int8_t rst, const uint8_t *init_operations, size_t init_operations_len)
+    Arduino_DataBus *bus, int8_t rst, const uint8_t *init_operations, size_t init_operations_len,
+    uint8_t col_offset1, uint8_t row_offset1, uint8_t col_offset2, uint8_t row_offset2)
     : Arduino_GFX(w, h), _rgbpanel(rgbpanel), _auto_flush(auto_flush),
-      _bus(bus), _rst(rst), _init_operations(init_operations), _init_operations_len(init_operations_len)
+      _bus(bus), _rst(rst), _init_operations(init_operations), _init_operations_len(init_operations_len),
+      COL_OFFSET1(col_offset1), ROW_OFFSET1(row_offset1),
+      COL_OFFSET2(col_offset2), ROW_OFFSET2(row_offset2)
 {
-  _framebuffer_size = w * h * 2;
+  _fb_width = COL_OFFSET1 + WIDTH + COL_OFFSET2;
+  _fb_height = ROW_OFFSET1 + HEIGHT + ROW_OFFSET2;
+  _fb_max_x = _fb_width - 1;
+  _fb_max_y = _fb_height - 1;
+  _framebuffer_size = _fb_width * _fb_height * 2;
   MAX_X = WIDTH - 1;
   MAX_Y = HEIGHT - 1;
   setRotation(r);
@@ -56,7 +65,7 @@ bool Arduino_RGB_Display::begin(int32_t speed)
   }
 
   _rgbpanel->begin(speed);
-  _framebuffer = _rgbpanel->getFrameBuffer(WIDTH, HEIGHT);
+  _framebuffer = _rgbpanel->getFrameBuffer(_fb_width, _fb_height);
 
   if (!_framebuffer)
   {
@@ -68,12 +77,14 @@ bool Arduino_RGB_Display::begin(int32_t speed)
 
 void Arduino_RGB_Display::writePixelPreclipped(int16_t x, int16_t y, uint16_t color)
 {
+  x += COL_OFFSET1;
+  y += ROW_OFFSET1;
   uint16_t *fb = _framebuffer;
   switch (_rotation)
   {
   case 1:
-    fb += (int32_t)x * _height;
-    fb += _max_y - y;
+    fb += (int32_t)x * _fb_width;
+    fb += _fb_max_x - y;
     *fb = color;
     if (_auto_flush)
     {
@@ -81,8 +92,8 @@ void Arduino_RGB_Display::writePixelPreclipped(int16_t x, int16_t y, uint16_t co
     }
     break;
   case 2:
-    fb += (int32_t)(_max_y - y) * _width;
-    fb += _max_x - x;
+    fb += (int32_t)(_fb_max_y - y) * _fb_width;
+    fb += _fb_max_x - x;
     *fb = color;
     if (_auto_flush)
     {
@@ -90,7 +101,7 @@ void Arduino_RGB_Display::writePixelPreclipped(int16_t x, int16_t y, uint16_t co
     }
     break;
   case 3:
-    fb += (int32_t)(_max_x - x) * _height;
+    fb += (int32_t)(_fb_max_y - x) * _fb_width;
     fb += y;
     *fb = color;
     if (_auto_flush)
@@ -99,7 +110,7 @@ void Arduino_RGB_Display::writePixelPreclipped(int16_t x, int16_t y, uint16_t co
     }
     break;
   default: // case 0:
-    fb += (int32_t)y * _width;
+    fb += (int32_t)y * _fb_width;
     fb += x;
     *fb = color;
     if (_auto_flush)
@@ -156,14 +167,16 @@ void Arduino_RGB_Display::writeFastVLineCore(int16_t x, int16_t y,
           h = MAX_Y - y + 1;
         } // Clip bottom
 
-        uint16_t *fb = _framebuffer + ((int32_t)y * WIDTH) + x;
+        x += COL_OFFSET1;
+        y += ROW_OFFSET1;
+        uint16_t *fb = _framebuffer + ((int32_t)y * _fb_width) + x;
         if (_auto_flush)
         {
           while (h--)
           {
             *fb = color;
             Cache_WriteBack_Addr((uint32_t)fb, 2);
-            fb += WIDTH;
+            fb += _fb_width;
           }
         }
         else
@@ -171,7 +184,7 @@ void Arduino_RGB_Display::writeFastVLineCore(int16_t x, int16_t y,
           while (h--)
           {
             *fb = color;
-            fb += WIDTH;
+            fb += _fb_width;
           }
         }
       }
@@ -226,7 +239,9 @@ void Arduino_RGB_Display::writeFastHLineCore(int16_t x, int16_t y,
           w = MAX_X - x + 1;
         } // Clip right
 
-        uint16_t *fb = _framebuffer + ((int32_t)y * WIDTH) + x;
+        x += COL_OFFSET1;
+        y += ROW_OFFSET1;
+        uint16_t *fb = _framebuffer + ((int32_t)y * _fb_width) + x;
         uint32_t cachePos = (uint32_t)fb;
         int16_t writeSize = w * 2;
         while (w--)
@@ -272,8 +287,10 @@ void Arduino_RGB_Display::writeFillRectPreclipped(int16_t x, int16_t y,
     }
   }
   // log_i("adjusted writeFillRectPreclipped(x: %d, y: %d, w: %d, h: %d)", x, y, w, h);
+  x += COL_OFFSET1;
+  y += ROW_OFFSET1;
   uint16_t *row = _framebuffer;
-  row += y * WIDTH;
+  row += y * _fb_width;
   uint32_t cachePos = (uint32_t)row;
   row += x;
   for (int j = 0; j < h; j++)
@@ -282,11 +299,11 @@ void Arduino_RGB_Display::writeFillRectPreclipped(int16_t x, int16_t y,
     {
       row[i] = color;
     }
-    row += WIDTH;
+    row += _fb_width;
   }
   if (_auto_flush)
   {
-    Cache_WriteBack_Addr(cachePos, WIDTH * h * 2);
+    Cache_WriteBack_Addr(cachePos, _fb_width * h * 2);
   }
 }
 
@@ -315,7 +332,7 @@ void Arduino_RGB_Display::drawIndexedBitmap(int16_t x, int16_t y, uint8_t *bitma
       }
       if (y < 0)
       {
-        bitmap -= y * w;
+        bitmap -= y * (w + x_skip);
         h += y;
         y = 0;
       }
@@ -331,8 +348,11 @@ void Arduino_RGB_Display::drawIndexedBitmap(int16_t x, int16_t y, uint8_t *bitma
         w += x;
         x = 0;
       }
+
+      x += COL_OFFSET1;
+      y += ROW_OFFSET1;
       uint16_t *row = _framebuffer;
-      row += y * _width;
+      row += y * _fb_width;
       uint32_t cachePos = (uint32_t)row;
       row += x;
       for (int j = 0; j < h; j++)
@@ -342,11 +362,11 @@ void Arduino_RGB_Display::drawIndexedBitmap(int16_t x, int16_t y, uint8_t *bitma
           row[i] = color_index[*bitmap++];
         }
         bitmap += x_skip;
-        row += _width;
+        row += _fb_width;
       }
       if (_auto_flush)
       {
-        Cache_WriteBack_Addr(cachePos, _width * h * 2);
+        Cache_WriteBack_Addr(cachePos, _fb_width * h * 2);
       }
     }
   }
@@ -355,21 +375,39 @@ void Arduino_RGB_Display::drawIndexedBitmap(int16_t x, int16_t y, uint8_t *bitma
 void Arduino_RGB_Display::draw16bitRGBBitmap(int16_t x, int16_t y,
                                              uint16_t *bitmap, int16_t w, int16_t h)
 {
+  if (_isRoundMode)
+  {
+    if (
+        ((y + h - 1) < 0) || // Outside top
+        (y > _max_y) ||      // Outside bottom
+        (
+            (x > _roundMaxX[y + h - 1]) &&        // top left
+            ((x + w - 1) < _roundMinX[y]) &&      // top right
+            (x > _roundMaxX[y + h - 1]) &&        // bottom left
+            ((x + w - 1) < _roundMinX[y + h - 1]) // bottom right
+            ))
+    {
+      return;
+    }
+  }
+
   bool result;
 
+  x += COL_OFFSET1;
+  y += ROW_OFFSET1;
   switch (_rotation)
   {
   case 1:
-    result = gfx_draw_bitmap_to_framebuffer_rotate_1(bitmap, w, h, _framebuffer, x, y, _width, _height);
+    result = gfx_draw_bitmap_to_framebuffer_rotate_1(bitmap, w, h, _framebuffer, x, y, _fb_width, _height + ROW_OFFSET1);
     break;
   case 2:
-    result = gfx_draw_bitmap_to_framebuffer_rotate_2(bitmap, w, h, _framebuffer, x, y, _width, _height);
+    result = gfx_draw_bitmap_to_framebuffer_rotate_2(bitmap, w, h, _framebuffer, x, y, _fb_width, _height + ROW_OFFSET1);
     break;
   case 3:
-    result = gfx_draw_bitmap_to_framebuffer_rotate_3(bitmap, w, h, _framebuffer, x, y, _width, _height);
+    result = gfx_draw_bitmap_to_framebuffer_rotate_3(bitmap, w, h, _framebuffer, x, y, _fb_width, _height + ROW_OFFSET1);
     break;
   default: // case 0:
-    result = gfx_draw_bitmap_to_framebuffer(bitmap, w, h, _framebuffer, x, y, _width, _height);
+    result = gfx_draw_bitmap_to_framebuffer(bitmap, w, h, _framebuffer, x, y, _fb_width, _height + ROW_OFFSET1);
   }
 
   if (result)
@@ -381,20 +419,20 @@ void Arduino_RGB_Display::draw16bitRGBBitmap(int16_t x, int16_t y,
       switch (_rotation)
       {
       case 1:
-        cachePos = (uint32_t)(_framebuffer + (x * WIDTH));
-        cache_size = HEIGHT * w * 2;
+        cachePos = (uint32_t)(_framebuffer + (x * _fb_width));
+        cache_size = _fb_width * w * 2;
         break;
       case 2:
-        cachePos = (uint32_t)(_framebuffer + ((MAX_Y - y) * WIDTH));
-        cache_size = HEIGHT * h * 2;
+        cachePos = (uint32_t)(_framebuffer + ((HEIGHT - y - h) * _fb_width));
+        cache_size = _fb_width * h * 2;
         break;
       case 3:
-        cachePos = (uint32_t)(_framebuffer + ((MAX_Y - x) * WIDTH));
-        cache_size = HEIGHT * w * 2;
+        cachePos = (uint32_t)(_framebuffer + ((HEIGHT - x - w) * _fb_width));
+        cache_size = _fb_width * w * 2;
         break;
       default: // case 0:
-        cachePos = (uint32_t)(_framebuffer + (y * WIDTH) + x);
-        cache_size = (WIDTH * (h - 1) + w) * 2;
+        cachePos = (uint32_t)(_framebuffer + (y * _fb_width) + x);
+        cache_size = (_fb_width * (h - 1) + w) * 2;
       }
       Cache_WriteBack_Addr(cachePos, cache_size);
     }
@@ -421,7 +459,9 @@ void Arduino_RGB_Display::draw16bitBeRGBBitmap(int16_t x, int16_t y,
     }
     else
     {
-      int16_t xskip = 0;
+      x += COL_OFFSET1;
+      y += ROW_OFFSET1;
+      int16_t x_skip = 0;
       if ((y + h - 1) > _max_y)
       {
         h -= (y + h - 1) - _max_y;
@@ -434,18 +474,18 @@ void Arduino_RGB_Display::draw16bitBeRGBBitmap(int16_t x, int16_t y,
       }
       if ((x + w - 1) > _max_x)
       {
-        xskip = (x + w - 1) - _max_x;
-        w -= xskip;
+        x_skip = (x + w - 1) - _max_x;
+        w -= x_skip;
       }
       if (x < 0)
       {
         bitmap -= x;
-        xskip -= x;
+        x_skip -= x;
         w += x;
         x = 0;
       }
       uint16_t *row = _framebuffer;
-      row += y * _width;
+      row += y * _fb_width;
       uint32_t cachePos = (uint32_t)row;
       row += x;
       uint16_t color;
@@ -456,12 +496,12 @@ void Arduino_RGB_Display::draw16bitBeRGBBitmap(int16_t x, int16_t y,
           color = *bitmap++;
           MSB_16_SET(row[i], color);
         }
-        bitmap += xskip;
-        row += _width;
+        bitmap += x_skip;
+        row += _fb_width;
       }
       if (_auto_flush)
       {
-        Cache_WriteBack_Addr(cachePos, _width * h * 2);
+        Cache_WriteBack_Addr(cachePos, _fb_width * h * 2);
       }
     }
   }
@@ -481,3 +521,5 @@ uint16_t *Arduino_RGB_Display::getFramebuffer()
 }
 
 #endif // #if defined(ESP32) && (CONFIG_IDF_TARGET_ESP32S3)
+
+#endif // #if (ESP_ARDUINO_VERSION_MAJOR < 3)

@@ -29,6 +29,7 @@
 #include "Compass.h"
 #include "GPS.h"
 #include "RealTimeClock.h"
+#include "Wifi.h"
 
 extern LOGGER logger;
 extern Compass compass;

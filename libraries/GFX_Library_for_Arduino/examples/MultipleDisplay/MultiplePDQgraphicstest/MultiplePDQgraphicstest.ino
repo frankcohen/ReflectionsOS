@@ -34,7 +34,7 @@ void setup()
   Serial.begin(115200);
   // Serial.setDebugOutput(true);
   // while(!Serial);
-  Serial.println("Arduino_GFX library Multiple Device Test!");
+  Serial.println("Arduino_GFX Multiple Display example!");
 
 #ifdef GFX_EXTRA_PRE_INIT
   GFX_EXTRA_PRE_INIT();
@@ -375,7 +375,7 @@ int32_t testText()
   gfx->println(F("Size 8"));
 
   gfx->setTextSize(9);
-  gfx->setTextColor(PINK);
+  gfx->setTextColor(PALERED);
   gfx->println(F("Size 9"));
 
   return micros() - start;

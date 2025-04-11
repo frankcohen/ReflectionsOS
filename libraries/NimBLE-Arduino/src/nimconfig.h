@@ -1,6 +1,4 @@
-/*
-
-#pragma once
+ #pragma once
 
 #ifdef ESP_PLATFORM
 #include "sdkconfig.h"
@@ -9,10 +7,7 @@
 #endif
 
 #include "nimconfig_rename.h"
-*/
 
-blahblahblah_error!!!!
-	
 /***********************************************
  * Arduino user-config options start here
  **********************************************/
@@ -39,11 +34,11 @@ blahblahblah_error!!!!
 
 /****************************************************
  *         Extended advertising settings            *
- * For use with ESP32C3, ESP32S3, ESP32H2 ONLY!     *
+ *        NOT FOR USE WITH ORIGINAL ESP32           *
  ***************************************************/
 
 /** @brief Un-comment to enable extended advertising */
-#define CONFIG_BT_NIMBLE_EXT_ADV 1
+// #define CONFIG_BT_NIMBLE_EXT_ADV 1
 
 /** @brief Un-comment to set the max number of extended advertising instances (Range: 0 - 4) */
 // #define CONFIG_BT_NIMBLE_MAX_EXT_ADV_INSTANCES 1
@@ -58,7 +53,7 @@ blahblahblah_error!!!!
 // #define CONFIG_BT_NIMBLE_MAX_PERIODIC_SYNCS 1
 
 /****************************************************
- * END For use with ESP32C3, ESP32S3, ESP32H2 ONLY! *
+ *        END Extended advertising settings         *
  ***************************************************/
 
 
@@ -79,6 +74,9 @@ blahblahblah_error!!!!
  *  Uses approx. 32kB of flash memory.
  */
  // #define CONFIG_NIMBLE_CPP_LOG_LEVEL 0
+
+/** @brief Un-comment to enable the debug asserts in NimBLE CPP wrapper.*/
+// #define CONFIG_NIMBLE_CPP_DEBUG_ASSERT_ENABLED 1
 
 /** @brief Un-comment to see NimBLE host return codes as text debug log messages.
  *  Uses approx. 7kB of flash memory.
@@ -149,6 +147,29 @@ blahblahblah_error!!!!
  * @details this will use slightly more RAM but may provide more stability.
  */
 // #define CONFIG_NIMBLE_STACK_USE_MEM_POOLS 1
+
+/**
+ * @brief Un-comment to change the bit used to block tasks during BLE operations
+ * that call NimBLEUtils::taskWait. This should be different than any other
+ * task notification flag used in the system.
+ */
+// #define CONFIG_NIMBLE_CPP_FREERTOS_TASK_BLOCK_BIT 31
+
+/**
+ * @brief Un-comment to disable showing colon characters when printing address.
+ */
+// #define CONFIG_NIMBLE_CPP_ADDR_FMT_EXCLUDE_DELIMITER 1
+
+/**
+ * @brief Un-comment to use uppercase letters when printing address.
+ */
+// #define CONFIG_NIMBLE_CPP_ADDR_FMT_UPPERCASE 1
+
+/**
+ * @brief Un-comment to use mbedtls instead of tinycrypt.
+ * @details This could save approximately 8k of flash if already using mbedtls for other functionality.
+ */
+// #define CONFIG_BT_NIMBLE_CRYPTO_STACK_MBEDTLS 1
 
 /**********************************
  End Arduino user-config
@@ -239,7 +260,7 @@ blahblahblah_error!!!!
 #define CONFIG_BT_NIMBLE_ACL_BUF_COUNT 12
 
 /** @brief ACL Buffer size */
-#define CONFIG_BT_NIMBLE_ACL_BUF_SIZE 255
+#define CONFIG_BT_NIMBLE_TRANSPORT_ACL_SIZE 255
 
 /** @brief HCI Event Buffer size */
 #if CONFIG_BT_NIMBLE_EXT_ADV || CONFIG_BT_NIMBLE_ENABLE_PERIODIC_ADV
@@ -272,6 +293,18 @@ blahblahblah_error!!!!
 #define CONFIG_BT_NIMBLE_ENABLED 1
 #endif
 
+#ifndef CONFIG_BT_CONTROLLER_ENABLED
+#define CONFIG_BT_CONTROLLER_ENABLED 1
+#endif
+
+#ifndef CONFIG_BT_NIMBLE_CRYPTO_STACK_MBEDTLS
+#define CONFIG_BT_NIMBLE_CRYPTO_STACK_MBEDTLS 0
+#endif
+
+#ifndef MYNEWT_VAL_BLE_CRYPTO_STACK_MBEDTLS
+#define MYNEWT_VAL_BLE_CRYPTO_STACK_MBEDTLS (CONFIG_BT_NIMBLE_CRYPTO_STACK_MBEDTLS)
+#endif
+
 #ifdef ESP_PLATFORM
 #ifndef CONFIG_BTDM_CONTROLLER_MODE_BLE_ONLY
 #define CONFIG_BTDM_CONTROLLER_MODE_BLE_ONLY
@@ -293,12 +326,25 @@ blahblahblah_error!!!!
 #define CONFIG_IDF_TARGET_ESP32 1
 #endif
 
+#if !defined(CONFIG_BT_NIMBLE_LEGACY_VHCI_ENABLE)
+#define CONFIG_BT_NIMBLE_LEGACY_VHCI_ENABLE 1
+#endif
+
+#if !defined(CONFIG_BT_CONTROLLER_DISABLED)
+#define CONFIG_BT_CONTROLLER_DISABLED 0
+#endif
+
 #if CONFIG_BT_NIMBLE_EXT_ADV || CONFIG_BT_NIMBLE_ENABLE_PERIODIC_ADV
 #  if defined(CONFIG_IDF_TARGET_ESP32)
 #    error Extended advertising is not supported on ESP32.
 #  endif
 #endif
+
+#ifndef CONFIG_BT_NIMBLE_USE_ESP_TIMER
+#define CONFIG_BT_NIMBLE_USE_ESP_TIMER 1
 #endif
+
+#endif // ESP_PLATFORM
 
 #if CONFIG_BT_NIMBLE_ENABLE_PERIODIC_ADV && !CONFIG_BT_NIMBLE_EXT_ADV
 #  error Extended advertising must be enabled to use periodic advertising.
@@ -334,4 +380,24 @@ blahblahblah_error!!!!
 #  if __has_include (<Arduino.h>)
 #    define NIMBLE_CPP_ARDUINO_STRING_AVAILABLE
 #  endif
+#endif
+
+#ifndef CONFIG_NIMBLE_CPP_DEBUG_ASSERT_ENABLED
+#define CONFIG_NIMBLE_CPP_DEBUG_ASSERT_ENABLED 0
+#endif
+
+#ifndef CONFIG_NIMBLE_CPP_FREERTOS_TASK_BLOCK_BIT
+#define CONFIG_NIMBLE_CPP_FREERTOS_TASK_BLOCK_BIT 31
+#endif
+
+#if CONFIG_NIMBLE_CPP_DEBUG_ASSERT_ENABLED && !defined NDEBUG
+void nimble_cpp_assert(const char *file, unsigned line) __attribute((weak, noreturn));
+# define NIMBLE_ATT_VAL_FILE  (__builtin_strrchr(__FILE__, '/') ? \
+                            __builtin_strrchr (__FILE__, '/') + 1 : __FILE__)
+# define NIMBLE_CPP_DEBUG_ASSERT(cond) \
+    if (!(cond)) { \
+        nimble_cpp_assert(NIMBLE_ATT_VAL_FILE, __LINE__); \
+    }
+#else
+# define NIMBLE_CPP_DEBUG_ASSERT(cond) (void(0))
 #endif

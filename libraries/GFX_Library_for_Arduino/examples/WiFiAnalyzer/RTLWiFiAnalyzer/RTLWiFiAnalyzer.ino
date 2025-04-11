@@ -144,6 +144,11 @@ static int8_t scanNetworks()
 
 void setup()
 {
+  Serial.begin(115200);
+  // Serial.setDebugOutput(true);
+  // while(!Serial);
+  Serial.println("Arduino_GFX RTL WiFi Analyzer example");
+
   LwIP_Init();
   wifi_on(RTW_MODE_STA);
 
@@ -259,7 +264,7 @@ void loop()
 
       // plot chart
       gfx->startWrite();
-      gfx->drawEllipseHelper(offset, graph_baseline + 1, signal_width, height, 0b0011, color);
+      gfx->writeEllipseHelper(offset, graph_baseline + 1, signal_width, height, 0b0011, color);
       gfx->endWrite();
 
       if (i == peak_id_list[idx])

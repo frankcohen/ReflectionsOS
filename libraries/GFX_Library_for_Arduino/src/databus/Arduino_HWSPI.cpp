@@ -63,6 +63,16 @@ bool Arduino_HWSPI::begin(int32_t speed, int8_t dataMode)
     _csPortClr = &reg->OUTCLR;
     _csPinMask = 1UL << pin;
   }
+#elif defined(ARDUINO_UNOR4_MINIMA) || defined(ARDUINO_UNOR4_WIFI)
+  _dcPinMask = digitalPinToBitMask(_dc);
+  _dcPortSet = (PORTreg_t) & (((R_PORT0_Type *)IOPORT_PRV_PORT_ADDRESS(digitalPinToPort(_dc)))->POSR);
+  _dcPortClr = (PORTreg_t) & (((R_PORT0_Type *)IOPORT_PRV_PORT_ADDRESS(digitalPinToPort(_dc)))->PORR);
+  if (_cs != GFX_NOT_DEFINED)
+  {
+    _csPinMask = digitalPinToBitMask(_cs);
+    _csPortSet = (PORTreg_t) & (((R_PORT0_Type *)IOPORT_PRV_PORT_ADDRESS(digitalPinToPort(_cs)))->POSR);
+    _csPortClr = (PORTreg_t) & (((R_PORT0_Type *)IOPORT_PRV_PORT_ADDRESS(digitalPinToPort(_cs)))->PORR);
+  }
 #elif defined(TARGET_RP2040)
   _dcPinMask = digitalPinToBitMask(_dc);
   _dcPortSet = (PORTreg_t)&sio_hw->gpio_set;
@@ -75,37 +85,37 @@ bool Arduino_HWSPI::begin(int32_t speed, int8_t dataMode)
   }
 #elif defined(ESP32) && (CONFIG_IDF_TARGET_ESP32C3)
   _dcPinMask = digitalPinToBitMask(_dc);
-  _dcPortSet = (PORTreg_t)&GPIO.out_w1ts;
-  _dcPortClr = (PORTreg_t)&GPIO.out_w1tc;
+  _dcPortSet = (PORTreg_t)GPIO_OUT_W1TS_REG;
+  _dcPortClr = (PORTreg_t)GPIO_OUT_W1TC_REG;
   if (_cs != GFX_NOT_DEFINED)
   {
     _csPinMask = digitalPinToBitMask(_cs);
-    _csPortSet = (PORTreg_t)&GPIO.out_w1ts;
-    _csPortClr = (PORTreg_t)&GPIO.out_w1tc;
+    _csPortSet = (PORTreg_t)GPIO_OUT_W1TS_REG;
+    _csPortClr = (PORTreg_t)GPIO_OUT_W1TC_REG;
   }
 #elif defined(ESP32)
   _dcPinMask = digitalPinToBitMask(_dc);
   if (_dc >= 32)
   {
-    _dcPortSet = (PORTreg_t)&GPIO.out1_w1ts.val;
-    _dcPortClr = (PORTreg_t)&GPIO.out1_w1tc.val;
+    _dcPortSet = (PORTreg_t)GPIO_OUT1_W1TS_REG;
+    _dcPortClr = (PORTreg_t)GPIO_OUT1_W1TC_REG;
   }
   else
   {
-    _dcPortSet = (PORTreg_t)&GPIO.out_w1ts;
-    _dcPortClr = (PORTreg_t)&GPIO.out_w1tc;
+    _dcPortSet = (PORTreg_t)GPIO_OUT_W1TS_REG;
+    _dcPortClr = (PORTreg_t)GPIO_OUT_W1TC_REG;
   }
   if (_cs >= 32)
   {
     _csPinMask = digitalPinToBitMask(_cs);
-    _csPortSet = (PORTreg_t)&GPIO.out1_w1ts.val;
-    _csPortClr = (PORTreg_t)&GPIO.out1_w1tc.val;
+    _csPortSet = (PORTreg_t)GPIO_OUT1_W1TS_REG;
+    _csPortClr = (PORTreg_t)GPIO_OUT1_W1TC_REG;
   }
   else if (_cs != GFX_NOT_DEFINED)
   {
     _csPinMask = digitalPinToBitMask(_cs);
-    _csPortSet = (PORTreg_t)&GPIO.out_w1ts;
-    _csPortClr = (PORTreg_t)&GPIO.out_w1tc;
+    _csPortSet = (PORTreg_t)GPIO_OUT_W1TS_REG;
+    _csPortClr = (PORTreg_t)GPIO_OUT_W1TC_REG;
   }
 #elif defined(CORE_TEENSY)
 #if !defined(KINETISK)
@@ -208,6 +218,7 @@ void Arduino_HWSPI::beginWrite()
   if (_is_shared_interface)
   {
     SPI_BEGIN_TRANSACTION();
+    write(0); // send a dummy data
   }
 
   DC_HIGH();
@@ -244,6 +255,18 @@ void Arduino_HWSPI::writeCommand16(uint16_t c)
 #else  // !defined(LITTLE_FOOT_PRINT)
   WRITE16(c);
 #endif // !defined(LITTLE_FOOT_PRINT)
+
+  DC_HIGH();
+}
+
+void Arduino_HWSPI::writeCommandBytes(uint8_t *data, uint32_t len)
+{
+  DC_LOW();
+
+  while (len--)
+  {
+    WRITE(*data++);
+  }
 
   DC_HIGH();
 }
@@ -308,6 +331,18 @@ void Arduino_HWSPI::writeRepeat(uint16_t p, uint32_t len)
 #endif // other arch
 }
 
+void Arduino_HWSPI::writeBytes(uint8_t *data, uint32_t len)
+{
+#if defined(LITTLE_FOOT_PRINT)
+  while (len--)
+  {
+    WRITE(*data++);
+  }
+#else  // !defined(LITTLE_FOOT_PRINT)
+  WRITEBUF(data, len);
+#endif // !defined(LITTLE_FOOT_PRINT)
+}
+
 void Arduino_HWSPI::writePixels(uint16_t *data, uint32_t len)
 {
 #if defined(LITTLE_FOOT_PRINT)
@@ -348,11 +383,6 @@ void Arduino_HWSPI::writePixels(uint16_t *data, uint32_t len)
 }
 
 #if !defined(LITTLE_FOOT_PRINT)
-void Arduino_HWSPI::writeBytes(uint8_t *data, uint32_t len)
-{
-  WRITEBUF(data, len);
-}
-
 void Arduino_HWSPI::writePattern(uint8_t *data, uint8_t len, uint32_t repeat)
 {
 #if defined(ESP8266) || defined(ESP32)

@@ -11,11 +11,8 @@ Arduino_RTLPAR8::Arduino_RTLPAR8(
 {
 }
 
-bool Arduino_RTLPAR8::begin(int32_t speed, int8_t dataMode)
+bool Arduino_RTLPAR8::begin(int32_t, int8_t)
 {
-  UNUSED(speed);
-  UNUSED(dataMode);
-
   pinMode(_dc, OUTPUT);
   digitalWrite(_dc, HIGH); // Data mode
   _dcPort = (PORTreg_t)portOutputRegister(digitalPinToPort(_dc));
@@ -41,15 +38,7 @@ bool Arduino_RTLPAR8::begin(int32_t speed, int8_t dataMode)
   {
     pinMode(_rd, OUTPUT);
     digitalWrite(_rd, HIGH);
-    _rdPort = (PORTreg_t)portOutputRegister(digitalPinToPort(_rd));
-    _rdPinMaskSet = digitalPinToBitMask(_rd);
   }
-  else
-  {
-    _rdPort = _dcPort;
-    _rdPinMaskSet = 0;
-  }
-  _rdPinMaskClr = ~_rdPinMaskSet;
 
   // TODO: check pin in same port
   pinMode(_d0, OUTPUT);
@@ -139,6 +128,18 @@ void Arduino_RTLPAR8::writeCommand16(uint16_t c)
   _data16.value = c;
   WRITE(_data16.msb);
   WRITE(_data16.lsb);
+
+  DC_HIGH();
+}
+
+void Arduino_RTLPAR8::writeCommandBytes(uint8_t *data, uint32_t len)
+{
+  DC_LOW();
+
+  while (len--)
+  {
+    WRITE(*data++);
+  }
 
   DC_HIGH();
 }

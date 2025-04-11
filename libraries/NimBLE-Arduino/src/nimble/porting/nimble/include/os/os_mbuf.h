@@ -1,4 +1,11 @@
 /*
+ * SPDX-FileCopyrightText: 2015-2022 The Apache Software Foundation (ASF)
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * SPDX-FileContributor: 2019-2022 Espressif Systems (Shanghai) CO LTD
+ */
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -133,11 +140,11 @@ struct os_mqueue {
 
 /** Get a packet header pointer given an mbuf pointer */
 #define OS_MBUF_PKTHDR(__om) ((struct os_mbuf_pkthdr *)     \
-    ((uint8_t *)&(__om)->om_data + sizeof(struct os_mbuf)))
+    (void *)((uint8_t *)&(__om)->om_data + sizeof(struct os_mbuf)))
 
 /** Given a mbuf packet header pointer, return a pointer to the mbuf */
 #define OS_MBUF_PKTHDR_TO_MBUF(__hdr)   \
-     (struct os_mbuf *)((uint8_t *)(__hdr) - sizeof(struct os_mbuf))
+     (struct os_mbuf *)(void *)((uint8_t *)(__hdr) - sizeof(struct os_mbuf))
 
 /**
  * Gets the length of an entire mbuf chain.  The specified mbuf must have a
@@ -237,7 +244,7 @@ _os_mbuf_trailingspace(struct os_mbuf *om)
 #define OS_MBUF_TRAILINGSPACE(__om) _os_mbuf_trailingspace(__om)
 
 
-#if SOC_ESP_NIMBLE_CONTROLLER
+#if SOC_ESP_NIMBLE_CONTROLLER && CONFIG_BT_CONTROLLER_ENABLED
 /**
  * Initializes an mqueue.  An mqueue is a queue of mbufs that ties to a
  * particular task's event queue.  Mqueues form a helper API around a common
@@ -483,7 +490,7 @@ int r_os_mbuf_appendfrom(struct os_mbuf *dst, const struct os_mbuf *src,
  *
  * @return 0 on success, -1 on failure
  */
-int os_mbuf_free(struct os_mbuf *mb);
+int r_os_mbuf_free(struct os_mbuf *mb);
 #define os_mbuf_free r_os_mbuf_free
 
 

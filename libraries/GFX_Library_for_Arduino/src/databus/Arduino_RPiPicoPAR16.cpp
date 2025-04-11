@@ -29,11 +29,6 @@ bool Arduino_RPiPicoPAR16::begin(int32_t speed, int8_t dataMode)
   {
     pinMode(_rd, OUTPUT);
     digitalWrite(_rd, HIGH);
-    _rdPinMask = digitalPinToBitMask(_rd);
-  }
-  else
-  {
-    _rdPinMask = 0;
   }
 
   pinMode(0, OUTPUT);
@@ -82,6 +77,18 @@ void Arduino_RPiPicoPAR16::writeCommand16(uint16_t c)
   DC_LOW();
 
   WRITE16(c);
+
+  DC_HIGH();
+}
+
+void Arduino_RPiPicoPAR16::writeCommandBytes(uint8_t *data, uint32_t len)
+{
+  DC_LOW();
+
+  while (len--)
+  {
+    WRITE(*data++);
+  }
 
   DC_HIGH();
 }

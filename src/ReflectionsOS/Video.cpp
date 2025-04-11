@@ -210,6 +210,7 @@ void Video::startVideo( String vname )
   {
     Serial.println( F( "Could not set-up mjpeg") );
     videoStatus = 0;
+    return;
   }
 
   videoStartTime = millis();
@@ -238,46 +239,14 @@ void Video::loop()
 
     while (mjpegFile.available() && mjpeg.readMjpegBuf())
     {
-      // Read video
-      total_read_video += millis() - curr_ms;
-      curr_ms = millis();
-
-      unsigned long dtime = millis();
-
       if ( ! mjpeg.decodeJpg() )
       {
         stopVideo();
         return;
       }
 
-      totalDecodeVideo += millis() - dtime;
-      dtime = millis();
+      gfx->draw16bitBeRGBBitmap(0, 0, mjpeg.getOutputbuf(), 240, 240);
 
-      if (x == -1)
-      {
-        w = mjpeg.getWidth();
-        h = mjpeg.getHeight();
-        x = (w > gfx->width()) ? 0 : ((gfx->width() - w) / 2);
-        y = (h > gfx->height()) ? 0 : ((gfx->height() - h) / 2);
-      }
-
-      String mef = ">";
-      mef += totalFrames;
-      mef += ", ";
-      mef += x;
-      mef += ", ";
-      mef += y;
-      mef += ", ";
-      mef += w;
-      mef += ", ";
-      mef += h;
-      Serial.println( mef );
-
-      gfx->draw16bitBeRGBBitmap(x, y, mjpeg.getOutputbuf(), 240, 240);
-
-      total_show_video += millis() - curr_ms;
-
-      curr_ms = millis();
       totalFrames++;
     }
   }

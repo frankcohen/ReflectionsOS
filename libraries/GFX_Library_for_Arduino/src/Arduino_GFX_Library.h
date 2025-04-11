@@ -3,7 +3,9 @@
 
 #include "Arduino_DataBus.h"
 #include "databus/Arduino_AVRPAR8.h"
+#include "databus/Arduino_UNOPAR8.h"
 #include "databus/Arduino_AVRPAR16.h"
+#include "databus/Arduino_DUEPAR16.h"
 #include "databus/Arduino_ESP32LCD8.h"
 #include "databus/Arduino_ESP32LCD16.h"
 #include "databus/Arduino_ESP32PAR8.h"
@@ -33,7 +35,9 @@
 #include "databus/Arduino_SWPAR8.h"
 #include "databus/Arduino_SWPAR16.h"
 #include "databus/Arduino_SWSPI.h"
+#include "databus/Arduino_Wire.h"
 #include "databus/Arduino_XL9535SWSPI.h"
+#include "databus/Arduino_XCA9554SWSPI.h"
 
 #include "Arduino_GFX.h" // Core graphics library
 #if !defined(LITTLE_FOOT_PRINT)
@@ -44,9 +48,10 @@
 #include "display/Arduino_ILI9488_3bit.h"
 #endif // !defined(LITTLE_FOOT_PRINT)
 
+#include "display/Arduino_AXS15231B.h"
+#include "display/Arduino_GC9A01.h"
 #include "display/Arduino_GC9106.h"
 #include "display/Arduino_GC9107.h"
-#include "display/Arduino_GC9A01.h"
 #include "display/Arduino_HX8347C.h"
 #include "display/Arduino_HX8347D.h"
 #include "display/Arduino_HX8352C.h"
@@ -64,21 +69,26 @@
 #include "display/Arduino_ILI9488_18bit.h"
 #include "display/Arduino_ILI9806.h"
 #include "display/Arduino_JBT6K71.h"
+#include "display/Arduino_JD9613.h"
 #include "display/Arduino_NT35310.h"
 #include "display/Arduino_NT35510.h"
 #include "display/Arduino_NT39125.h"
+#include "display/Arduino_NV3023.h"
 #include "display/Arduino_NV3041A.h"
 #include "display/Arduino_OTM8009A.h"
 #include "display/Arduino_R61529.h"
 #include "display/Arduino_RM67162.h"
 #include "display/Arduino_RGB_Display.h"
 #include "display/Arduino_SEPS525.h"
+#include "display/Arduino_SH1106.h"
 #include "display/Arduino_SSD1283A.h"
+#include "display/Arduino_SSD1306.h"
 #include "display/Arduino_SSD1331.h"
 #include "display/Arduino_SSD1351.h"
 #include "display/Arduino_ST7735.h"
 #include "display/Arduino_ST7789.h"
 #include "display/Arduino_ST7796.h"
+#include "display/Arduino_WEA2012.h"
 
 #if defined(ARDUINO_ARCH_SAMD) && defined(SEEED_GROVE_UI_WIRELESS)
 #define DISPLAY_DEV_KIT

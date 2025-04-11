@@ -92,6 +92,13 @@ void ble_gap_rx_scan_req_rcvd(const struct ble_hci_ev_le_subev_scan_req_rcvd *ev
 #endif
 void ble_gap_rx_adv_report(struct ble_gap_disc_desc *desc);
 void ble_gap_rx_rd_rem_sup_feat_complete(const struct ble_hci_ev_le_subev_rd_rem_used_feat *ev);
+#if MYNEWT_VAL(BLE_CONN_SUBRATING)
+void ble_gap_rx_subrate_change(const struct ble_hci_ev_le_subev_subrate_change *ev);
+#endif
+#if MYNEWT_VAL(BLE_POWER_CONTROL)
+void ble_gap_rx_transmit_power_report(const struct ble_hci_ev_le_subev_transmit_power_report *ev);
+void ble_gap_rx_le_pathloss_threshold(const struct ble_hci_ev_le_subev_path_loss_threshold *ev);
+#endif
 
 struct ble_gap_conn_complete
 {
@@ -130,6 +137,8 @@ void ble_gap_subscribe_event(uint16_t conn_handle, uint16_t attr_handle,
 void ble_gap_mtu_event(uint16_t conn_handle, uint16_t cid, uint16_t mtu);
 void ble_gap_identity_event(uint16_t conn_handle);
 int ble_gap_repeat_pairing_event(const struct ble_gap_repeat_pairing *rp);
+void ble_gap_vs_hci_event(const void *buf, uint8_t len);
+int ble_gap_authorize_event(uint16_t conn_handle, uint16_t attr_handle, int is_read);
 int ble_gap_master_in_progress(void);
 
 void ble_gap_preempt(void);
@@ -147,6 +156,12 @@ void ble_gap_deinit(void);
 #if MYNEWT_VAL(BLE_HS_DEBUG)
 int ble_gap_dbg_update_active(uint16_t conn_handle);
 #endif
+
+#if MYNEWT_VAL(BLE_ENABLE_CONN_REATTEMPT)
+void ble_gap_reattempt_count(uint16_t conn_handle, uint8_t count);
+#endif
+
+void ble_gap_rx_data_len_change(const struct ble_hci_ev_le_subev_data_len_chg *ev);
 
 #ifdef __cplusplus
 }

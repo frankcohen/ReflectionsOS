@@ -22,12 +22,6 @@ bool Arduino_RPiPicoPAR8::begin(int32_t speed, int8_t dataMode)
   digitalWrite(_wr, HIGH); // Set write strobe high (inactive)
   _wrPinMask = digitalPinToBitMask(_wr);
   _dataClrMask = 0xFF | _wrPinMask;
-  if (_rd != GFX_NOT_DEFINED)
-  {
-    pinMode(_rd, OUTPUT);
-    digitalWrite(_rd, HIGH);
-    _rdPinMask = digitalPinToBitMask(_rd);
-  }
 
   pinMode(0, OUTPUT);
   pinMode(1, OUTPUT);
@@ -69,6 +63,18 @@ void Arduino_RPiPicoPAR8::writeCommand16(uint16_t c)
   _data16.value = c;
   WRITE(_data16.msb);
   WRITE(_data16.lsb);
+
+  DC_HIGH();
+}
+
+void Arduino_RPiPicoPAR8::writeCommandBytes(uint8_t *data, uint32_t len)
+{
+  DC_LOW();
+
+  while (len--)
+  {
+    WRITE(*data++);
+  }
 
   DC_HIGH();
 }

@@ -1,5 +1,5 @@
 // ArduinoJson - https://arduinojson.org
-// Copyright © 2014-2023, Benoit BLANCHON
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #include <ArduinoJson.h>
@@ -30,7 +30,7 @@ class CustomWriter {
 };
 
 TEST_CASE("CustomWriter") {
-  DynamicJsonDocument doc(4096);
+  JsonDocument doc;
   JsonArray array = doc.to<JsonArray>();
   array.add(4);
   array.add(2);

@@ -8,6 +8,8 @@
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
 
+ This is a wrapper for the Espresif provided JPEG decoder class.
+
  This code only runs on ESP32-S3 due to its support of SIMD.
 */
 

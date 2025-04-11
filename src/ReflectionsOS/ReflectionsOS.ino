@@ -22,29 +22,25 @@ For convenience, these libraries are in the [https://github.com/frankcohen/Refle
 directory. Copy the contents to your Arduino IDE installation under documents/libraries.
 
 ESP32 board, https://github.com/espressif/arduino-esp32
-esp32FOTA, OTA updates, https://github.com/chrisjoyce911/esp32FOTA
+
 Adafruit DRV2605 Library, haptic controller, https://github.com/adafruit/Adafruit_DRV2605_Library
-Adafruit LIS3DH library, https://github.com/adafruit/Adafruit_LIS3DH
+Adafruit LIS3DH library, accelerometer, https://github.com/adafruit/Adafruit_LIS3DH
 Adafruit MMC56x3, compass, magnetometer, https://github.com/adafruit/Adafruit_MMC56x3
 The Adafruit I2C libraries, like MMC56x3, depend on these
 Adafruit Unified Sensor, https://github.com/adafruit/Adafruit_Sensor
 Adafrruit BusIO, I2C support, https://github.com/adafruit/Adafruit_BusIO
-Adafruit SSD1306, compass support, https://github.com/adafruit/Adafruit_SSD1306
-
-Adafruit seesaw Library, https://github.com/adafruit/Adafruit_Seesaw
+ESP_JPEG decoder, https://github.com/esp-arduino-libs/ESP32_JPEG
 ArduinoJson, https://arduinojson.org/
 ESP32-targz, https://github.com/tobozo/ESP32-targz/
-ESP32_HTTPS_Server, https://github.com/fhessel/esp32_https_server
 ESP8266Audio, https://github.com/earlephilhower/ESP8266Audio
-FastLED, https://github.com/FastLED/FastLED
+HTTPClient, https://github.com/amcewen/HttpClient
 GFX Library for Arduino, https://github.com/moononournation/Arduino_GFX
 ESP32 JPEG Library, https://github.com/bitbank2/JPEGDEC.git
-SparkFun_VL53L5CX_Arduino_Library, https://github.com/sparkfun/SparkFun_VL53L5CX_Arduino_Library
-Time, https://playground.arduino.cc/Code/Time/
-TinyGPSPlus-ESP32, https://github.com/Tinyu-Zhao/TinyGPSPlus-ESP32
-URLEncode, https://github.com/plageoj/urlencode
-AutoConnect by Hieromon, https://github.com/Hieromon/AutoConnect
+SparkFun_VL53L5CX_Arduino_Library, TOF sensor, https://github.com/sparkfun/SparkFun_VL53L5CX_Arduino_Library
+NimBLE stack, https://github.com/h2zero/NimBLE-Arduino
+NTPClient, Network Time Protocol, https://github.com/arduino-libraries/NTPClient
 PNGdec library, https://github.com/bitbank2/PNGdec
+TinyGPSPlus-ESP32, https://github.com/Tinyu-Zhao/TinyGPSPlus-ESP32
 
 Depends on Esspresif ESP32 libraries at
 [https://github.com/espressif/arduino-esp32](https://github.com/espressif/arduino-esp32)
@@ -301,7 +297,6 @@ static void smartdelay(unsigned long ms) {
 
     // Watch experience operations
 
-/*
     unsigned long fellow = millis();
     watchfaceexperiences.loop();
     systemload.logtasktime(millis() - fellow, 1, "we");
@@ -311,9 +306,8 @@ static void smartdelay(unsigned long ms) {
     fellow = millis();
     textmessageservice.loop();
     systemload.logtasktime(millis() - fellow, 3, "tm");
-*/
 
-	systemload.loop();
+  	systemload.loop();
 
     /*
     logger.loop();
@@ -330,7 +324,7 @@ static void smartdelay(unsigned long ms) {
     }
 */
 
-    systemload.logtasktime(millis() - tasktime, 0, F(""));
+    systemload.logtasktime( millis() - tasktime, 0, " " );
   } while (millis() - start < ms);
 }
 
@@ -437,7 +431,7 @@ void setup() {
 
   tofstarted = false;
   accelstarted = false;
-/*
+
   // Create a new task for TOF processing, pin it to core 0
   xTaskCreatePinnedToCore(
     Core0Tasks,    // Task function
@@ -448,14 +442,12 @@ void setup() {
     NULL,          // Task handle
     0              // Core where the task should run (core 0)
   );
-*/
+
   // Experience initialization
 
-  /*
   textmessageservice.begin();
   experienceservice.begin();
   watchfaceexperiences.begin();
-  */
 
   // Unused experiences
 

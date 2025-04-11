@@ -9,11 +9,8 @@ Arduino_SWSPI::Arduino_SWSPI(int8_t dc, int8_t cs, int8_t sck, int8_t mosi, int8
 {
 }
 
-bool Arduino_SWSPI::begin(int32_t speed, int8_t dataMode)
+bool Arduino_SWSPI::begin(int32_t, int8_t)
 {
-  UNUSED(speed);
-  UNUSED(dataMode);
-
   if (_dc != GFX_NOT_DEFINED)
   {
     pinMode(_dc, OUTPUT);
@@ -71,6 +68,30 @@ bool Arduino_SWSPI::begin(int32_t speed, int8_t dataMode)
     _misoPinMask = 1UL << pin;
     _misoPort = &reg->IN;
   }
+#elif defined(ARDUINO_UNOR4_MINIMA) || defined(ARDUINO_UNOR4_WIFI)
+  if (_dc != GFX_NOT_DEFINED)
+  {
+    _dcPinMask = digitalPinToBitMask(_dc);
+    _dcPortSet = (PORTreg_t) & (((R_PORT0_Type *)IOPORT_PRV_PORT_ADDRESS(digitalPinToPort(_dc)))->POSR);
+    _dcPortClr = (PORTreg_t) & (((R_PORT0_Type *)IOPORT_PRV_PORT_ADDRESS(digitalPinToPort(_dc)))->PORR);
+  }
+  if (_cs != GFX_NOT_DEFINED)
+  {
+    _csPinMask = digitalPinToBitMask(_cs);
+    _csPortSet = (PORTreg_t) & (((R_PORT0_Type *)IOPORT_PRV_PORT_ADDRESS(digitalPinToPort(_cs)))->POSR);
+    _csPortClr = (PORTreg_t) & (((R_PORT0_Type *)IOPORT_PRV_PORT_ADDRESS(digitalPinToPort(_cs)))->PORR);
+  }
+  _sckPinMask = digitalPinToBitMask(_sck);
+  _sckPortSet = (PORTreg_t) & (((R_PORT0_Type *)IOPORT_PRV_PORT_ADDRESS(digitalPinToPort(_sck)))->POSR);
+  _sckPortClr = (PORTreg_t) & (((R_PORT0_Type *)IOPORT_PRV_PORT_ADDRESS(digitalPinToPort(_sck)))->PORR);
+  _mosiPinMask = digitalPinToBitMask(_mosi);
+  _mosiPortSet = (PORTreg_t) & (((R_PORT0_Type *)IOPORT_PRV_PORT_ADDRESS(digitalPinToPort(_mosi)))->POSR);
+  _mosiPortClr = (PORTreg_t) & (((R_PORT0_Type *)IOPORT_PRV_PORT_ADDRESS(digitalPinToPort(_mosi)))->PORR);
+  if (_miso != GFX_NOT_DEFINED)
+  {
+    _misoPinMask = digitalPinToBitMask(_miso);
+    _misoPort = (PORTreg_t)portInputRegister(digitalPinToPort(_miso));
+  }
 #elif defined(TARGET_RP2040)
   if (_dc != GFX_NOT_DEFINED)
   {
@@ -97,20 +118,20 @@ bool Arduino_SWSPI::begin(int32_t speed, int8_t dataMode)
   }
 #elif defined(ESP32) && (CONFIG_IDF_TARGET_ESP32C3)
   _dcPinMask = digitalPinToBitMask(_dc);
-  _dcPortSet = (PORTreg_t)&GPIO.out_w1ts;
-  _dcPortClr = (PORTreg_t)&GPIO.out_w1tc;
+  _dcPortSet = (PORTreg_t)GPIO_OUT_W1TS_REG;
+  _dcPortClr = (PORTreg_t)GPIO_OUT_W1TC_REG;
   if (_cs != GFX_NOT_DEFINED)
   {
     _csPinMask = digitalPinToBitMask(_cs);
-    _csPortSet = (PORTreg_t)&GPIO.out_w1ts;
-    _csPortClr = (PORTreg_t)&GPIO.out_w1tc;
+    _csPortSet = (PORTreg_t)GPIO_OUT_W1TS_REG;
+    _csPortClr = (PORTreg_t)GPIO_OUT_W1TC_REG;
   }
   _sckPinMask = digitalPinToBitMask(_sck);
-  _sckPortSet = (PORTreg_t)&GPIO.out_w1ts;
-  _sckPortClr = (PORTreg_t)&GPIO.out_w1tc;
+  _sckPortSet = (PORTreg_t)GPIO_OUT_W1TS_REG;
+  _sckPortClr = (PORTreg_t)GPIO_OUT_W1TC_REG;
   _mosiPinMask = digitalPinToBitMask(_mosi);
-  _mosiPortSet = (PORTreg_t)&GPIO.out_w1ts;
-  _mosiPortClr = (PORTreg_t)&GPIO.out_w1tc;
+  _mosiPortSet = (PORTreg_t)GPIO_OUT_W1TS_REG;
+  _mosiPortClr = (PORTreg_t)GPIO_OUT_W1TC_REG;
   if (_miso != GFX_NOT_DEFINED)
   {
     _misoPinMask = digitalPinToBitMask(_miso);
@@ -120,47 +141,47 @@ bool Arduino_SWSPI::begin(int32_t speed, int8_t dataMode)
   _dcPinMask = digitalPinToBitMask(_dc);
   if (_dc >= 32)
   {
-    _dcPortSet = (PORTreg_t)&GPIO.out1_w1ts.val;
-    _dcPortClr = (PORTreg_t)&GPIO.out1_w1tc.val;
+    _dcPortSet = (PORTreg_t)GPIO_OUT1_W1TS_REG;
+    _dcPortClr = (PORTreg_t)GPIO_OUT1_W1TC_REG;
   }
   else if (_dc != GFX_NOT_DEFINED)
   {
-    _dcPortSet = (PORTreg_t)&GPIO.out_w1ts;
-    _dcPortClr = (PORTreg_t)&GPIO.out_w1tc;
+    _dcPortSet = (PORTreg_t)GPIO_OUT_W1TS_REG;
+    _dcPortClr = (PORTreg_t)GPIO_OUT_W1TC_REG;
   }
   if (_cs >= 32)
   {
     _csPinMask = digitalPinToBitMask(_cs);
-    _csPortSet = (PORTreg_t)&GPIO.out1_w1ts.val;
-    _csPortClr = (PORTreg_t)&GPIO.out1_w1tc.val;
+    _csPortSet = (PORTreg_t)GPIO_OUT1_W1TS_REG;
+    _csPortClr = (PORTreg_t)GPIO_OUT1_W1TC_REG;
   }
   else if (_cs != GFX_NOT_DEFINED)
   {
     _csPinMask = digitalPinToBitMask(_cs);
-    _csPortSet = (PORTreg_t)&GPIO.out_w1ts;
-    _csPortClr = (PORTreg_t)&GPIO.out_w1tc;
+    _csPortSet = (PORTreg_t)GPIO_OUT_W1TS_REG;
+    _csPortClr = (PORTreg_t)GPIO_OUT_W1TC_REG;
   }
   _sckPinMask = digitalPinToBitMask(_sck);
   _mosiPinMask = digitalPinToBitMask(_mosi);
   if (_sck >= 32)
   {
-    _sckPortSet = (PORTreg_t)&GPIO.out1_w1ts.val;
-    _sckPortClr = (PORTreg_t)&GPIO.out1_w1tc.val;
+    _sckPortSet = (PORTreg_t)GPIO_OUT1_W1TS_REG;
+    _sckPortClr = (PORTreg_t)GPIO_OUT1_W1TC_REG;
   }
   else
   {
-    _sckPortSet = (PORTreg_t)&GPIO.out_w1ts;
-    _sckPortClr = (PORTreg_t)&GPIO.out_w1tc;
+    _sckPortSet = (PORTreg_t)GPIO_OUT_W1TS_REG;
+    _sckPortClr = (PORTreg_t)GPIO_OUT_W1TC_REG;
   }
   if (_mosi >= 32)
   {
-    _mosiPortSet = (PORTreg_t)&GPIO.out1_w1ts.val;
-    _mosiPortClr = (PORTreg_t)&GPIO.out1_w1tc.val;
+    _mosiPortSet = (PORTreg_t)GPIO_OUT1_W1TS_REG;
+    _mosiPortClr = (PORTreg_t)GPIO_OUT1_W1TC_REG;
   }
   else
   {
-    _mosiPortSet = (PORTreg_t)&GPIO.out_w1ts;
-    _mosiPortClr = (PORTreg_t)&GPIO.out_w1tc;
+    _mosiPortSet = (PORTreg_t)GPIO_OUT_W1TS_REG;
+    _mosiPortClr = (PORTreg_t)GPIO_OUT_W1TC_REG;
   }
   if (_miso != GFX_NOT_DEFINED)
   {
@@ -296,6 +317,26 @@ void Arduino_SWSPI::writeCommand16(uint16_t c)
   {
     DC_LOW();
     WRITE16(c);
+    DC_HIGH();
+  }
+}
+
+void Arduino_SWSPI::writeCommandBytes(uint8_t *data, uint32_t len)
+{
+  if (_dc == GFX_NOT_DEFINED) // 9-bit SPI
+  {
+    while (len--)
+    {
+      WRITE9BITCOMMAND(*data++);
+    }
+  }
+  else
+  {
+    DC_LOW();
+    while (len--)
+    {
+      WRITE(*data++);
+    }
     DC_HIGH();
   }
 }

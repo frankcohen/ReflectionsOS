@@ -77,15 +77,29 @@ esp_err_t esp_nimble_disable(void)
     return ESP_OK;
 }
 
-// Compatibility wrappers for new functions
-void nimble_port_freertos_init(TaskFunction_t host_task_fn) {
-    esp_nimble_enable((void*)host_task_fn);
+
+/**
+ * @brief nimble_port_freertos_init - Adapt to native nimble api
+ *
+ * @param host_task_fn
+ */
+void
+nimble_port_freertos_init(TaskFunction_t host_task_fn)
+{
+    esp_nimble_enable(host_task_fn);
 }
-void nimble_port_freertos_deinit(void) {
+
+/**
+ * @brief nimble_port_freertos_deinit - Adapt to native nimble api
+ *
+ */
+void
+nimble_port_freertos_deinit(void)
+{
     esp_nimble_disable();
 }
 
-#else // ESP_PLATFORM
+#else // !ESP_PLATFORM
 
 void
 nimble_port_freertos_init(TaskFunction_t host_task_fn)
@@ -121,14 +135,16 @@ nimble_port_freertos_deinit(void)
 UBaseType_t
 nimble_port_freertos_get_ll_hwm(void)
 {
+    if (ll_task_h == NULL)
+        return 0;
     return uxTaskGetStackHighWaterMark(ll_task_h);
 }
 #endif
+#endif // !ESP_PLATFORM
 
 UBaseType_t
-nimble_port_freertos_get_hs_hwm(void)
-{
+nimble_port_freertos_get_hs_hwm(void) {
+    if (host_task_h == NULL)
+        return 0;
     return uxTaskGetStackHighWaterMark(host_task_h);
 }
-
-#endif //ESP_PLATFORM

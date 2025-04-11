@@ -65,6 +65,28 @@ static struct conf_handler ble_store_config_conf_handler = {
 #define BLE_STORE_CONFIG_CCCD_SET_ENCODE_SZ \
     (MYNEWT_VAL(BLE_STORE_MAX_CCCDS) * BLE_STORE_CONFIG_CCCD_ENCODE_SZ + 1)
 
+#if MYNEWT_VAL(ENC_ADV_DATA)
+#define BLE_STORE_CONFIG_EAD_ENCODE_SZ     \
+    BASE64_ENCODE_SIZE(sizeof (struct ble_store_value_ead))
+
+#define BLE_STORE_CONFIG_EAD_SET_ENCODE_SZ \
+    (MYNEWT_VAL(BLE_STORE_MAX_EADS) * BLE_STORE_CONFIG_EAD_ENCODE_SZ + 1)
+#endif
+
+#define BLE_STORE_CONFIG_RPA_REC_ENCODE_SZ \
+    BASE64_ENCODE_SIZE(sizeof (struct ble_store_value_rpa_rec))
+
+#define BLE_STORE_CONFIG_RPA_REC_SET_ENCODE_SZ \
+    (MYNEWT_VAL(BLE_STORE_MAX_BONDS) * BLE_STORE_CONFIG_RPA_REC_ENCODE_SZ + 1)
+
+#define BLE_STORE_CONFIG_IRK_ENCODE_SZ     \
+    BASE64_ENCODE_SIZE(sizeof (struct ble_store_value_local_irk))
+
+#define BLE_STORE_CONFIG_IRK_SET_ENCODE_SZ \
+    (MYNEWT_VAL(BLE_STORE_MAX_BONDS) * BLE_STORE_CONFIG_IRK_ENCODE_SZ + 1)
+
+static const uint32_t our_irk  = 0x6b72696f; /* oirk */
+
 static void
 ble_store_config_serialize_arr(const void *arr, int obj_sz, int num_objs,
                                char *out_buf, int buf_sz)
@@ -125,6 +147,24 @@ ble_store_config_conf_set(int argc, char **argv, char *val)
             printf("\nloading: %s %s rc=%d\n", *argv, val, rc);
             return rc;
         }
+#if MYNEWT_VAL(ENC_ADV_DATA)
+        else if (strcmp(argv[0], "ead") == 0) {
+            rc = ble_store_config_deserialize_arr(
+                    val,
+                    ble_store_config_eads,
+                    sizeof *ble_store_config_eads,
+                    &ble_store_config_num_eads);
+            return rc;
+        }
+#endif
+        else if (strcmp(argv[0],"rpa_rec") == 0){
+            rc = ble_store_config_deserialize_arr(
+                    val,
+                    ble_store_config_rpa_recs,
+                    sizeof *ble_store_config_rpa_recs,
+                    &ble_store_config_num_rpa_recs);
+            return rc;
+        }
     }
     return OS_ENOENT;
 }
@@ -136,6 +176,7 @@ ble_store_config_conf_export(void (*func)(char *name, char *val),
     union {
         char sec[BLE_STORE_CONFIG_SEC_SET_ENCODE_SZ];
         char cccd[BLE_STORE_CONFIG_CCCD_SET_ENCODE_SZ];
+        char rpa_rec[BLE_STORE_CONFIG_RPA_REC_SET_ENCODE_SZ];
     } buf;
 
     ble_store_config_serialize_arr(ble_store_config_our_secs,
@@ -159,6 +200,19 @@ ble_store_config_conf_export(void (*func)(char *name, char *val),
                                    sizeof buf.cccd);
     func("ble_hs/cccd", buf.cccd);
 
+#if MYNEWT_VAL(ENC_ADV_DATA)
+    ble_store_config_serialize_arr(ble_store_config_eads,
+                                   sizeof *ble_store_config_eads,
+                                   ble_store_config_num_eads,
+                                   buf.ead,
+                                   sizeof buf.ead);
+    func("ble_hs/ead", buf.ead);
+#endif
+    ble_store_config_serialize_arr(ble_store_config_rpa_recs,
+                                   sizeof *ble_store_config_rpa_recs,
+                                   ble_store_config_num_rpa_recs,
+                                   buf.rpa_rec,
+                                   sizeof buf.rpa_rec);
     return 0;
 }
 */
@@ -231,6 +285,63 @@ ble_store_config_persist_cccds(void)
     return 0;
 }
 
+#if MYNEWT_VAL(ENC_ADV_DATA)
+int
+ble_store_config_persist_eads(void)
+{
+    char buf[BLE_STORE_CONFIG_CCCD_SET_ENCODE_SZ];
+    int rc;
+    ble_store_config_serialize_arr(ble_store_config_eads,
+                                   sizeof *ble_store_config_eads,
+                                   ble_store_config_num_eads,
+                                   buf,
+                                   sizeof buf);
+    rc = conf_save_one("ble_hs/ead", buf);
+    if (rc != 0) {
+        return BLE_HS_ESTORE_FAIL;
+    }
+    return 0;
+}
+#endif
+
+int
+ble_store_config_persist_rpa_recs(void)
+{
+#if 0
+    char buf[BLE_STORE_CONFIG_RPA_REC_SET_ENCODE_SZ];
+    int rc;
+    ble_store_config_serialize_arr(ble_store_config_rpa_recs,
+                                   sizeof *ble_store_config_rpa_recs,
+                                   ble_store_config_num_rpa_recs,
+                                   buf,
+                                   sizeof buf);
+    rc = conf_save_one("ble_hs/rpa_rec", buf);
+    if (rc != 0) {
+        return BLE_HS_ESTORE_FAIL;
+    }
+    return 0;
+#endif
+    return BLE_HS_ESTORE_FAIL;
+}
+
+int
+ble_store_config_persist_local_irk(void) {
+    char buf[BLE_STORE_CONFIG_IRK_SET_ENCODE_SZ];
+    int rc;
+
+    ble_store_config_serialize_arr(ble_store_config_local_irks,
+                                   sizeof *ble_store_config_local_irks,
+                                   ble_store_config_num_local_irks,
+                                   buf, sizeof buf);
+
+    rc = ble_bond_nvs_save_entry(our_irk, buf);
+    if (rc != 0) {
+        return BLE_HS_ESTORE_FAIL;
+    }
+
+    return 0;
+}
+
 void
 ble_store_config_conf_init(void)
 {
@@ -281,6 +392,19 @@ ble_store_config_conf_init(void)
                  BLE_HS_LOG(ERROR, "cccd restore error rc=%d\n", rc);
                 return;
             }
+        }
+    }
+
+    rc = ble_bond_nvs_get_entry(our_irk, &val_addr);
+    if (rc == 0) {
+        rc = ble_store_config_deserialize_arr(
+                (char*)val_addr,
+                ble_store_config_local_irks,
+                sizeof *ble_store_config_local_irks,
+                &ble_store_config_num_local_irks);
+        if (rc != 0) {
+             BLE_HS_LOG(ERROR, "irk restore error rc=%d\n", rc);
+            return;
         }
     }
 

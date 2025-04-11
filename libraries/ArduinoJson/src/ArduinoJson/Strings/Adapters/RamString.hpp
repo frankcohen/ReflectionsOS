@@ -1,5 +1,5 @@
 // ArduinoJson - https://arduinojson.org
-// Copyright © 2014-2023, Benoit BLANCHON
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #pragma once
@@ -8,7 +8,7 @@
 #include <string.h>  // strcmp
 
 #include <ArduinoJson/Polyfills/assert.hpp>
-#include <ArduinoJson/Strings/StoragePolicy.hpp>
+#include <ArduinoJson/Polyfills/attributes.hpp>
 #include <ArduinoJson/Strings/StringAdapter.hpp>
 
 ARDUINOJSON_BEGIN_PRIVATE_NAMESPACE
@@ -27,7 +27,7 @@ class ZeroTerminatedRamString {
     return !str_;
   }
 
-  size_t size() const {
+  FORCE_INLINE size_t size() const {
     return str_ ? ::strlen(str_) : 0;
   }
 
@@ -53,8 +53,8 @@ class ZeroTerminatedRamString {
     return stringCompare(a, b) == 0;
   }
 
-  StringStoragePolicy::Copy storagePolicy() const {
-    return StringStoragePolicy::Copy();
+  bool isLinked() const {
+    return false;
   }
 
  protected:
@@ -62,7 +62,7 @@ class ZeroTerminatedRamString {
 };
 
 template <typename TChar>
-struct StringAdapter<TChar*, typename enable_if<IsChar<TChar>::value>::type> {
+struct StringAdapter<TChar*, enable_if_t<IsChar<TChar>::value>> {
   typedef ZeroTerminatedRamString AdaptedString;
 
   static AdaptedString adapt(const TChar* p) {
@@ -71,7 +71,7 @@ struct StringAdapter<TChar*, typename enable_if<IsChar<TChar>::value>::type> {
 };
 
 template <typename TChar, size_t N>
-struct StringAdapter<TChar[N], typename enable_if<IsChar<TChar>::value>::type> {
+struct StringAdapter<TChar[N], enable_if_t<IsChar<TChar>::value>> {
   typedef ZeroTerminatedRamString AdaptedString;
 
   static AdaptedString adapt(const TChar* p) {
@@ -83,8 +83,8 @@ class StaticStringAdapter : public ZeroTerminatedRamString {
  public:
   StaticStringAdapter(const char* str) : ZeroTerminatedRamString(str) {}
 
-  StringStoragePolicy::Link storagePolicy() const {
-    return StringStoragePolicy::Link();
+  bool isLinked() const {
+    return true;
   }
 };
 
@@ -121,8 +121,8 @@ class SizedRamString {
     return str_;
   }
 
-  StringStoragePolicy::Copy storagePolicy() const {
-    return StringStoragePolicy::Copy();
+  bool isLinked() const {
+    return false;
   }
 
  protected:
@@ -131,8 +131,7 @@ class SizedRamString {
 };
 
 template <typename TChar>
-struct SizedStringAdapter<TChar*,
-                          typename enable_if<IsChar<TChar>::value>::type> {
+struct SizedStringAdapter<TChar*, enable_if_t<IsChar<TChar>::value>> {
   typedef SizedRamString AdaptedString;
 
   static AdaptedString adapt(const TChar* p, size_t n) {

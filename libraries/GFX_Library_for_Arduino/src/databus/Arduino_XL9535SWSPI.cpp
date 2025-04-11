@@ -5,16 +5,13 @@ Arduino_XL9535SWSPI::Arduino_XL9535SWSPI(int8_t sda, int8_t scl, int8_t pwd, int
 {
 }
 
-bool Arduino_XL9535SWSPI::begin(int32_t speed, int8_t dataMode)
+bool Arduino_XL9535SWSPI::begin(int32_t, int8_t)
 {
-  UNUSED(speed);
-  UNUSED(dataMode);
-
   _address = XL9535_IIC_ADDRESS;
   _wire->beginTransmission(_address);
   if (!_wire->endTransmission())
   {
-    Serial.println("Found xl9535");
+    // println("Found xl9535");
     is_found = true;
     this->pinMode8(0, 0xFF, OUTPUT);
     if (_pwd != GFX_NOT_DEFINED)
@@ -31,7 +28,7 @@ bool Arduino_XL9535SWSPI::begin(int32_t speed, int8_t dataMode)
   }
   else
   {
-    Serial.println("xl9535 not found");
+    // println("xl9535 not found");
     is_found = false;
   }
 
@@ -76,6 +73,10 @@ void Arduino_XL9535SWSPI::writeCommand16(uint16_t)
 {
 }
 
+void Arduino_XL9535SWSPI::writeCommandBytes(uint8_t *data, uint32_t len)
+{
+}
+
 void Arduino_XL9535SWSPI::write(uint8_t d)
 {
   // D/C bit, data
@@ -105,22 +106,20 @@ void Arduino_XL9535SWSPI::write16(uint16_t)
   // not implemented
 }
 
-void Arduino_XL9535SWSPI::writeRepeat(uint16_t p, uint32_t len)
+void Arduino_XL9535SWSPI::writeRepeat(uint16_t, uint32_t)
 {
   // not implemented
 }
 
-void Arduino_XL9535SWSPI::writePixels(uint16_t *data, uint32_t len)
+void Arduino_XL9535SWSPI::writeBytes(uint8_t *, uint32_t)
 {
   // not implemented
 }
 
-#if !defined(LITTLE_FOOT_PRINT)
-void Arduino_XL9535SWSPI::writeBytes(uint8_t *data, uint32_t len)
+void Arduino_XL9535SWSPI::writePixels(uint16_t *, uint32_t)
 {
   // not implemented
 }
-#endif // !defined(LITTLE_FOOT_PRINT)
 
 void Arduino_XL9535SWSPI::writeRegister(uint8_t reg, uint8_t *data, size_t len)
 {
@@ -179,7 +178,7 @@ void Arduino_XL9535SWSPI::pinMode(uint8_t pin, uint8_t mode)
   }
   else
   {
-    Serial.println("xl9535 not found");
+    // println("xl9535 not found");
   }
 }
 void Arduino_XL9535SWSPI::pinMode8(uint8_t port, uint8_t pin, uint8_t mode)
@@ -198,7 +197,7 @@ void Arduino_XL9535SWSPI::pinMode8(uint8_t port, uint8_t pin, uint8_t mode)
   }
   else
   {
-    Serial.println("xl9535 not found");
+    // println("xl9535 not found");
   }
 }
 
@@ -225,7 +224,7 @@ void Arduino_XL9535SWSPI::digitalWrite(uint8_t pin, uint8_t val)
   }
   else
   {
-    Serial.println("xl9535 not found");
+    // println("xl9535 not found");
   }
 }
 
@@ -249,7 +248,7 @@ int Arduino_XL9535SWSPI::digitalRead(uint8_t pin)
   }
   else
   {
-    Serial.println("xl9535 not found");
+    // println("xl9535 not found");
   }
   return 0;
 }

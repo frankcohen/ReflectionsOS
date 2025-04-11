@@ -1,9 +1,5 @@
-#if !defined(LITTLE_FOOT_PRINT)
-
 #ifndef _ARDUINO_G_H_
 #define _ARDUINO_G_H_
-
-#include <Arduino.h>
 
 #include "Arduino_DataBus.h"
 
@@ -46,5 +42,3 @@ bool gfx_draw_bitmap_to_framebuffer_rotate_2(
 bool gfx_draw_bitmap_to_framebuffer_rotate_3(
     uint16_t *from_bitmap, int16_t bitmap_w, int16_t bitmap_h,
     uint16_t *framebuffer, int16_t x, int16_t y, int16_t framebuffer_w, int16_t framebuffer_h);
-
-#endif // !defined(LITTLE_FOOT_PRINT)

@@ -21,11 +21,10 @@
 #include "RealTimeClock.h"
 
 // Additional fonts at https://github.com/moononournation/ArduinoFreeFontFile/tree/master/Fonts
-
 #include "SomeTimeLater20pt7b.h"
+#include "SomeTimeLater12pt7b.h"
 #include "Minya16pt7b.h"
 #include "ScienceFair14pt7b.h"
-#include "SomeTimeLater12pt7b.h"
 #include "Minya_Nouvelle_Rg30pt7b.h"
 
 extern LOGGER logger;

@@ -5,8 +5,12 @@
 #if defined(ESP32)
 #include <driver/spi_master.h>
 
-#define SPI_MAX_PIXELS_AT_ONCE 1024
-#define DMA_CHANNEL SPI_DMA_CH_AUTO
+#ifndef ESP32SPIDMA_MAX_PIXELS_AT_ONCE
+#define ESP32SPIDMA_MAX_PIXELS_AT_ONCE 1024
+#endif
+#ifndef ESP32SPIDMA_DMA_CHANNEL
+#define ESP32SPIDMA_DMA_CHANNEL SPI_DMA_CH_AUTO
+#endif
 
 class Arduino_ESP32SPIDMA : public Arduino_DataBus
 {
@@ -24,6 +28,7 @@ public:
   void endWrite() override;
   void writeCommand(uint8_t) override;
   void writeCommand16(uint16_t) override;
+  void writeCommandBytes(uint8_t *data, uint32_t len) override;
   void write(uint8_t) override;
   void write16(uint16_t) override;
 
@@ -38,6 +43,7 @@ public:
 
   void writeIndexedPixels(uint8_t *data, uint16_t *idx, uint32_t len) override;
   void writeIndexedPixelsDouble(uint8_t *data, uint16_t *idx, uint32_t len) override;
+  void writeYCbCrPixels(uint8_t *yData, uint8_t *cbData, uint8_t *crData, uint16_t w, uint16_t h) override;
 
 protected:
   void flush_data_buf();
@@ -67,12 +73,21 @@ private:
   spi_device_handle_t _handle;
   spi_transaction_t _spi_tran;
   uint8_t _bitOrder = SPI_MSBFIRST;
+
   union
   {
-    uint8_t _buffer[SPI_MAX_PIXELS_AT_ONCE * 2] = {0};
-    uint16_t _buffer16[SPI_MAX_PIXELS_AT_ONCE];
-    uint32_t _buffer32[SPI_MAX_PIXELS_AT_ONCE / 2];
+    uint8_t *_buffer;
+    uint16_t *_buffer16;
+    uint32_t *_buffer32;
   };
+
+  union
+  {
+    uint8_t *_2nd_buffer;
+    uint16_t *_2nd_buffer16;
+    uint32_t *_2nd_buffer32;
+  };
+
   uint16_t _data_buf_bit_idx = 0;
 };
 

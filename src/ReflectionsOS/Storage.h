@@ -33,6 +33,7 @@ get TAR over Wifi, Bluetooth, mostly SD utils like print to, eventually send mes
 #include "SD.h"
 
 #include <WiFi.h>
+#include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 
 #include "Minya_Nouvelle_Rg30pt7b.h"

@@ -260,7 +260,7 @@ ble_sm_alg_log_buf(const char *name, const uint8_t *buf, int len)
  */
 
 #if MYNEWT_VAL(BLE_CRYPTO_STACK_MBEDTLS)
-static int
+int
 ble_sm_alg_aes_cmac(const uint8_t *key, const uint8_t *in, size_t len,
                     uint8_t *out)
 {
@@ -298,7 +298,7 @@ exit:
 }
 
 #else
-static int
+int
 ble_sm_alg_aes_cmac(const uint8_t *key, const uint8_t *in, size_t len,
                     uint8_t *out)
 {
@@ -510,7 +510,7 @@ ble_sm_alg_g2(const uint8_t *u, const uint8_t *v, const uint8_t *x,
     ble_sm_alg_log_buf("res", xs, 16);
 
     *passkey = get_be32(xs + 12) % 1000000;
-    BLE_HS_LOG(DEBUG, "    passkey=%u\n", *passkey);
+    BLE_HS_LOG(DEBUG, "    passkey=%" PRIu32"\n", *passkey);
 
     return 0;
 }

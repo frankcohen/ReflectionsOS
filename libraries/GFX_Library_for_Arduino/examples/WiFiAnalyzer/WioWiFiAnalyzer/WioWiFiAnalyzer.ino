@@ -86,6 +86,11 @@ uint16_t channelIdx(int channel)
 
 void setup()
 {
+  Serial.begin(115200);
+  // Serial.setDebugOutput(true);
+  // while(!Serial);
+  Serial.println("Arduino_GFX Wio Terminal WiFi Analyzer example");
+
   // Set WiFi to station mode and disconnect from an AP if it was previously connected
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
@@ -206,7 +211,7 @@ void loop()
       // gfx->drawLine(offset, graph_baseline - height, offset - signal_width, graph_baseline + 1, color);
       // gfx->drawLine(offset, graph_baseline - height, offset + signal_width, graph_baseline + 1, color);
       gfx->startWrite();
-      gfx->drawEllipseHelper(offset, graph_baseline + 1, signal_width, height, 0b0011, color);
+      gfx->writeEllipseHelper(offset, graph_baseline + 1, signal_width, height, 0b0011, color);
       gfx->endWrite();
 
       if (i == peak_id_list[idx])

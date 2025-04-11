@@ -1,5 +1,5 @@
 // ArduinoJson - https://arduinojson.org
-// Copyright © 2014-2023, Benoit BLANCHON
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #pragma once
@@ -16,5 +16,8 @@ template <typename T>
 struct enable_if<true, T> {
   typedef T type;
 };
+
+template <bool Condition, typename T = void>
+using enable_if_t = typename enable_if<Condition, T>::type;
 
 ARDUINOJSON_END_PRIVATE_NAMESPACE

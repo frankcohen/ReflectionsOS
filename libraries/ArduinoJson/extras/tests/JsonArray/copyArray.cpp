@@ -1,13 +1,16 @@
 // ArduinoJson - https://arduinojson.org
-// Copyright © 2014-2023, Benoit BLANCHON
+// Copyright © 2014-2024, Benoit BLANCHON
 // MIT License
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
 
+#include "Allocators.hpp"
+#include "Literals.hpp"
+
 TEST_CASE("copyArray()") {
   SECTION("int[] -> JsonArray") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     char json[32];
     int source[] = {1, 2, 3};
@@ -16,11 +19,11 @@ TEST_CASE("copyArray()") {
     CHECK(ok);
 
     serializeJson(array, json);
-    CHECK(std::string("[1,2,3]") == json);
+    CHECK("[1,2,3]"_s == json);
   }
 
   SECTION("std::string[] -> JsonArray") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     char json[32];
     std::string source[] = {"a", "b", "c"};
@@ -29,11 +32,11 @@ TEST_CASE("copyArray()") {
     CHECK(ok);
 
     serializeJson(array, json);
-    CHECK(std::string("[\"a\",\"b\",\"c\"]") == json);
+    CHECK("[\"a\",\"b\",\"c\"]"_s == json);
   }
 
   SECTION("const char*[] -> JsonArray") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     char json[32];
     const char* source[] = {"a", "b", "c"};
@@ -42,11 +45,11 @@ TEST_CASE("copyArray()") {
     CHECK(ok);
 
     serializeJson(array, json);
-    CHECK(std::string("[\"a\",\"b\",\"c\"]") == json);
+    CHECK("[\"a\",\"b\",\"c\"]"_s == json);
   }
 
   SECTION("const char[][] -> JsonArray") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     char json[32];
     char source[][2] = {"a", "b", "c"};
@@ -55,11 +58,11 @@ TEST_CASE("copyArray()") {
     CHECK(ok);
 
     serializeJson(array, json);
-    CHECK(std::string("[\"a\",\"b\",\"c\"]") == json);
+    CHECK("[\"a\",\"b\",\"c\"]"_s == json);
   }
 
   SECTION("const char[][] -> JsonDocument") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[32];
     char source[][2] = {"a", "b", "c"};
 
@@ -67,11 +70,11 @@ TEST_CASE("copyArray()") {
     CHECK(ok);
 
     serializeJson(doc, json);
-    CHECK(std::string("[\"a\",\"b\",\"c\"]") == json);
+    CHECK("[\"a\",\"b\",\"c\"]"_s == json);
   }
 
   SECTION("const char[][] -> MemberProxy") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[32];
     char source[][2] = {"a", "b", "c"};
 
@@ -79,11 +82,11 @@ TEST_CASE("copyArray()") {
     CHECK(ok);
 
     serializeJson(doc, json);
-    CHECK(std::string("{\"data\":[\"a\",\"b\",\"c\"]}") == json);
+    CHECK("{\"data\":[\"a\",\"b\",\"c\"]}"_s == json);
   }
 
   SECTION("int[] -> JsonDocument") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[32];
     int source[] = {1, 2, 3};
 
@@ -91,11 +94,11 @@ TEST_CASE("copyArray()") {
     CHECK(ok);
 
     serializeJson(doc, json);
-    CHECK(std::string("[1,2,3]") == json);
+    CHECK("[1,2,3]"_s == json);
   }
 
   SECTION("int[] -> MemberProxy") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[32];
     int source[] = {1, 2, 3};
 
@@ -103,25 +106,20 @@ TEST_CASE("copyArray()") {
     CHECK(ok);
 
     serializeJson(doc, json);
-    CHECK(std::string("{\"data\":[1,2,3]}") == json);
+    CHECK("{\"data\":[1,2,3]}"_s == json);
   }
 
   SECTION("int[] -> JsonArray, but not enough memory") {
-    const size_t SIZE = JSON_ARRAY_SIZE(2);
-    StaticJsonDocument<SIZE> doc;
+    JsonDocument doc(FailingAllocator::instance());
     JsonArray array = doc.to<JsonArray>();
-    char json[32];
     int source[] = {1, 2, 3};
 
     bool ok = copyArray(source, array);
     REQUIRE_FALSE(ok);
-
-    serializeJson(array, json);
-    CHECK(std::string("[1,2]") == json);
   }
 
   SECTION("int[][] -> JsonArray") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     JsonArray array = doc.to<JsonArray>();
     char json[32];
     int source[][3] = {{1, 2, 3}, {4, 5, 6}};
@@ -130,11 +128,11 @@ TEST_CASE("copyArray()") {
     CHECK(ok);
 
     serializeJson(array, json);
-    CHECK(std::string("[[1,2,3],[4,5,6]]") == json);
+    CHECK("[[1,2,3],[4,5,6]]"_s == json);
   }
 
   SECTION("int[][] -> MemberProxy") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[32];
     int source[][3] = {{1, 2, 3}, {4, 5, 6}};
 
@@ -142,11 +140,11 @@ TEST_CASE("copyArray()") {
     CHECK(ok);
 
     serializeJson(doc, json);
-    CHECK(std::string("{\"data\":[[1,2,3],[4,5,6]]}") == json);
+    CHECK("{\"data\":[[1,2,3],[4,5,6]]}"_s == json);
   }
 
   SECTION("int[][] -> JsonDocument") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[32];
     int source[][3] = {{1, 2, 3}, {4, 5, 6}};
 
@@ -154,29 +152,20 @@ TEST_CASE("copyArray()") {
     CHECK(ok);
 
     serializeJson(doc, json);
-    CHECK(std::string("[[1,2,3],[4,5,6]]") == json);
+    CHECK("[[1,2,3],[4,5,6]]"_s == json);
   }
 
   SECTION("int[][] -> JsonArray, but not enough memory") {
-    const size_t SIZE =
-        JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(3) + JSON_ARRAY_SIZE(2);
-    StaticJsonDocument<SIZE> doc;
+    JsonDocument doc(FailingAllocator::instance());
     JsonArray array = doc.to<JsonArray>();
-    char json[32] = "";
     int source[][3] = {{1, 2, 3}, {4, 5, 6}};
 
-    CAPTURE(SIZE);
-
     bool ok = copyArray(source, array);
-    CAPTURE(doc.memoryUsage());
-    CHECK_FALSE(ok);
-
-    serializeJson(array, json);
-    CHECK(std::string("[[1,2,3],[4,5]]") == json);
+    REQUIRE(ok == false);
   }
 
   SECTION("JsonArray -> int[], with more space than needed") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[] = "[1,2,3]";
     DeserializationError err = deserializeJson(doc, json);
     CHECK(err == DeserializationError::Ok);
@@ -193,7 +182,7 @@ TEST_CASE("copyArray()") {
   }
 
   SECTION("JsonArray -> int[], without enough space") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[] = "[1,2,3]";
     DeserializationError err = deserializeJson(doc, json);
     CHECK(err == DeserializationError::Ok);
@@ -208,7 +197,7 @@ TEST_CASE("copyArray()") {
   }
 
   SECTION("JsonArray -> std::string[]") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[] = "[\"a\",\"b\",\"c\"]";
     DeserializationError err = deserializeJson(doc, json);
     CHECK(err == DeserializationError::Ok);
@@ -225,7 +214,7 @@ TEST_CASE("copyArray()") {
   }
 
   SECTION("JsonArray -> char[N][]") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[] = "[\"a12345\",\"b123456\",\"c1234567\"]";
     DeserializationError err = deserializeJson(doc, json);
     CHECK(err == DeserializationError::Ok);
@@ -235,14 +224,14 @@ TEST_CASE("copyArray()") {
     size_t result = copyArray(array, destination);
 
     CHECK(3 == result);
-    CHECK(std::string("a12345") == destination[0]);
-    CHECK(std::string("b123456") == destination[1]);
-    CHECK(std::string("c123456") == destination[2]);  // truncated
+    CHECK("a12345"_s == destination[0]);
+    CHECK("b123456"_s == destination[1]);
+    CHECK("c123456"_s == destination[2]);  // truncated
     CHECK(std::string("") == destination[3]);
   }
 
   SECTION("JsonDocument -> int[]") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[] = "[1,2,3]";
     DeserializationError err = deserializeJson(doc, json);
     CHECK(err == DeserializationError::Ok);
@@ -258,7 +247,7 @@ TEST_CASE("copyArray()") {
   }
 
   SECTION("MemberProxy -> int[]") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[] = "{\"data\":[1,2,3]}";
     DeserializationError err = deserializeJson(doc, json);
     CHECK(err == DeserializationError::Ok);
@@ -274,7 +263,7 @@ TEST_CASE("copyArray()") {
   }
 
   SECTION("ElementProxy -> int[]") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[] = "[[1,2,3]]";
     DeserializationError err = deserializeJson(doc, json);
     CHECK(err == DeserializationError::Ok);
@@ -290,7 +279,7 @@ TEST_CASE("copyArray()") {
   }
 
   SECTION("JsonArray -> int[][]") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[] = "[[1,2],[3],[4]]";
 
     DeserializationError err = deserializeJson(doc, json);
@@ -309,7 +298,7 @@ TEST_CASE("copyArray()") {
   }
 
   SECTION("JsonDocument -> int[][]") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[] = "[[1,2],[3],[4]]";
 
     DeserializationError err = deserializeJson(doc, json);
@@ -327,7 +316,7 @@ TEST_CASE("copyArray()") {
   }
 
   SECTION("MemberProxy -> int[][]") {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     char json[] = "{\"data\":[[1,2],[3],[4]]}";
 
     DeserializationError err = deserializeJson(doc, json);

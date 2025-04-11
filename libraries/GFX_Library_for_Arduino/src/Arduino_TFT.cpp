@@ -265,6 +265,14 @@ void Arduino_TFT::writeIndexedPixelsDouble(uint8_t *bitmap, uint16_t *color_inde
   _bus->writeIndexedPixelsDouble(bitmap, color_index, len);
 }
 
+void Arduino_TFT::drawYCbCrBitmap(int16_t x, int16_t y, uint8_t *yData, uint8_t *cbData, uint8_t *crData, int16_t w, int16_t h)
+{
+  startWrite();
+  writeAddrWindow(0, 0, w, h);
+  _bus->writeYCbCrPixels(yData, cbData, crData, w, h);
+  endWrite();
+}
+
 void Arduino_TFT::drawBitmap(
     int16_t x, int16_t y,
     const uint8_t bitmap[], int16_t w, int16_t h, uint16_t color, uint16_t bg)
@@ -384,7 +392,7 @@ void Arduino_TFT::drawGrayscaleBitmap(
     writeAddrWindow(x, y, w, h);
     for (uint32_t i = 0; i < len; i++)
     {
-      v = (uint8_t)pgm_read_byte(&bitmap[i]);
+      v = pgm_read_byte(&bitmap[i]);
       _bus->write16(color565(v, v, v));
     }
     endWrite();
@@ -454,9 +462,12 @@ void Arduino_TFT::drawIndexedBitmap(
   {
     startWrite();
     writeAddrWindow(x, y, w, h);
-    if (x_skip == 0) {
-      _bus->writeIndexedPixels(bitmap, color_index, h*w);
-    } else {
+    if (x_skip == 0)
+    {
+      _bus->writeIndexedPixels(bitmap, color_index, h * w);
+    }
+    else
+    {
       while (h--)
       {
         _bus->writeIndexedPixels(bitmap, color_index, w);
@@ -467,8 +478,8 @@ void Arduino_TFT::drawIndexedBitmap(
   }
 }
 
-void Arduino_TFT::draw16bitRGBBitmap(int16_t x, int16_t y,
-                                     uint16_t *bitmap, uint8_t *mask, int16_t w, int16_t h)
+void Arduino_TFT::draw16bitRGBBitmapWithMask(int16_t x, int16_t y,
+                                             uint16_t *bitmap, uint8_t *mask, int16_t w, int16_t h)
 {
   if (
       ((x + w - 1) < 0) || // Outside left
@@ -486,7 +497,7 @@ void Arduino_TFT::draw16bitRGBBitmap(int16_t x, int16_t y,
       ((y + h - 1) > _max_y)    // Clip bottom
   )
   {
-    Arduino_GFX::draw16bitRGBBitmap(x, y, bitmap, mask, w, h);
+    Arduino_GFX::draw16bitRGBBitmapWithMask(x, y, bitmap, mask, w, h);
   }
   else
   {
@@ -571,28 +582,69 @@ void Arduino_TFT::draw16bitRGBBitmap(
     uint16_t *bitmap, int16_t w, int16_t h)
 {
   if (
-      ((x + w - 1) < 0) || // Outside left
       ((y + h - 1) < 0) || // Outside top
-      (x > _max_x) ||      // Outside right
       (y > _max_y)         // Outside bottom
   )
   {
     return;
   }
+  else if (_isRoundMode)
+  {
+    if (
+        (x > _roundMaxX[y + h - 1]) &&        // top left
+        ((x + w - 1) < _roundMinX[y]) &&      // top right
+        (x > _roundMaxX[y + h - 1]) &&        // bottom left
+        ((x + w - 1) < _roundMinX[y + h - 1]) // bottom right
+    )
+    {
+      return;
+    }
+  }
   else if (
-      (x < 0) ||                // Clip left
-      (y < 0) ||                // Clip top
-      ((x + w - 1) > _max_x) || // Clip right
-      ((y + h - 1) > _max_y)    // Clip bottom
+      ((x + w - 1) < 0) || // Outside left
+      (x > _max_x)         // Outside right
   )
   {
-    Arduino_GFX::draw16bitRGBBitmap(x, y, bitmap, w, h);
+    return;
   }
   else
   {
+    int16_t out_width = w;
+    if ((y + h - 1) > _max_y)
+    {
+      h -= (y + h - 1) - _max_y;
+    }
+    if (y < 0)
+    {
+      bitmap -= y * w;
+      h += y;
+      y = 0;
+    }
+    if ((x + w - 1) > _max_x)
+    {
+      out_width -= (x + w - 1) - _max_x;
+    }
+    if (x < 0)
+    {
+      bitmap -= x;
+      out_width += x;
+      x = 0;
+    }
+
     startWrite();
-    writeAddrWindow(x, y, w, h);
-    _bus->writePixels(bitmap, (uint32_t)w * h);
+    writeAddrWindow(x, y, out_width, h);
+    if (out_width < w)
+    {
+      for (int16_t j = 0; j < h; j++)
+      {
+        _bus->writePixels(bitmap, out_width);
+        bitmap += w;
+      }
+    }
+    else
+    {
+      _bus->writePixels(bitmap, (uint32_t)w * h);
+    }
     endWrite();
   }
 }
@@ -610,20 +662,45 @@ void Arduino_TFT::draw16bitBeRGBBitmap(
   {
     return;
   }
-  else if (
-      (x < 0) ||                // Clip left
-      (y < 0) ||                // Clip top
-      ((x + w - 1) > _max_x) || // Clip right
-      ((y + h - 1) > _max_y)    // Clip bottom
-  )
-  {
-    Arduino_GFX::draw16bitBeRGBBitmap(x, y, bitmap, w, h);
-  }
   else
   {
+    int16_t out_width = w;
+    if ((y + h - 1) > _max_y)
+    {
+      h -= (y + h - 1) - _max_y;
+    }
+    if (y < 0)
+    {
+      bitmap -= y * w;
+      h += y;
+      y = 0;
+    }
+    if ((x + w - 1) > _max_x)
+    {
+      out_width -= (x + w - 1) - _max_x;
+    }
+    if (x < 0)
+    {
+      bitmap -= x;
+      out_width += x;
+      x = 0;
+    }
+
     startWrite();
-    writeAddrWindow(x, y, w, h);
-    _bus->writeBytes((uint8_t *)bitmap, (uint32_t)w * h * 2);
+    writeAddrWindow(x, y, out_width, h);
+    if (out_width < w)
+    {
+      out_width <<= 1;
+      for (int16_t j = 0; j < h; j++)
+      {
+        _bus->writeBytes((uint8_t *)bitmap, out_width);
+        bitmap += w;
+      }
+    }
+    else
+    {
+      _bus->writeBytes((uint8_t *)bitmap, (uint32_t)w * h * 2);
+    }
     endWrite();
   }
 }
@@ -723,8 +800,8 @@ void Arduino_TFT::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color
             xAdvance = pgm_read_byte(&glyph->xAdvance),
             yAdvance = pgm_read_byte(&gfxFont->yAdvance),
             baseline = yAdvance * 2 / 3; // TODO: baseline is an arbitrary currently, may be define in font file
-    int8_t xo = pgm_read_byte(&glyph->xOffset),
-           yo = pgm_read_byte(&glyph->yOffset);
+    int8_t xo = pgm_read_sbyte(&glyph->xOffset),
+           yo = pgm_read_sbyte(&glyph->yOffset);
     // urgly workaround for the character not fit in the box
     if ((bg != color)             // have background color
         && ((xo + w) > xAdvance)) // if character draw outside the box
@@ -744,10 +821,10 @@ void Arduino_TFT::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color
     block_h = yAdvance * textsize_y;
     int16_t x1 = (xo < 0) ? (x + xo) : x;
     if (
-        (x1 < 0) ||                             // Clip left
-        ((y - baseline) < 0) ||                 // Clip top
-        ((x1 + block_w - 1) > _max_x) ||        // Clip right
-        ((y - baseline + block_h - 1) > _max_y) // Clip bottom
+        (x1 < _min_text_x) ||                        // Clip left
+        ((y - baseline) < _min_text_y) ||            // Clip top
+        ((x1 + block_w - 1) > _max_text_x) ||        // Clip right
+        ((y - baseline + block_h - 1) > _max_text_y) // Clip bottom
     )
     {
       // partial draw char by parent class
@@ -881,10 +958,10 @@ void Arduino_TFT::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color
     block_w = 6 * textsize_x;
     block_h = 8 * textsize_y;
     if (
-        (x < 0) ||                      // Clip left
-        (y < 0) ||                      // Clip top
-        ((x + block_w - 1) > _max_x) || // Clip right
-        ((y + block_h - 1) > _max_y)    // Clip bottom
+        (x < _min_text_x) ||                 // Clip left
+        (y < _min_text_y) ||                 // Clip top
+        ((x + block_w - 1) > _max_text_x) || // Clip right
+        ((y + block_h - 1) > _max_text_y)    // Clip bottom
     )
     {
       // partial draw char by parent class

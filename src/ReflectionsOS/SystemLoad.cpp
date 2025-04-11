@@ -41,11 +41,14 @@ void SystemLoad::logtasktime( unsigned long tsktime, int mes,  String mname )
 void SystemLoad::printHeapSpace( String message )
 {
  // Get total free heap available in bytes.
-  uint32_t freeHeap = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+  uint32_t freeHeap = heap_caps_get_free_size( MALLOC_CAP_8BIT );
   // Get the size of the largest contiguous free block.
-  uint32_t largestBlock = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+  uint32_t largestBlock = heap_caps_get_largest_free_block( MALLOC_CAP_8BIT );
   // Compute a rough fragmentation ratio.
   float fragRatio = (float)freeHeap / largestBlock;
+
+  Serial.println( "heap_caps_print_heap_info:" );
+  heap_caps_print_heap_info(MALLOC_CAP_8BIT);
 
   Serial.print( message );
   Serial.print(F(", Heap: "));
@@ -80,7 +83,7 @@ void SystemLoad::loop() {
     Serial.print(F("% "));
     Serial.print( float( accumulatedTaskTime3 ) / float( interval) );
     Serial.print(F("% "));
-    printHeapSpace( F(", memory"));
+    printHeapSpace( ", memory" );
 
     // Reset the accumulated values for the next interval
     accumulatedTaskTime = 0;

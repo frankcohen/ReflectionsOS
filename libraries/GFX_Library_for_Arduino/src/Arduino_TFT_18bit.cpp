@@ -223,7 +223,7 @@ void Arduino_TFT_18bit::drawGrayscaleBitmap(
     {
       for (int16_t i = 0; i < w; i++)
       {
-        v = (uint8_t)pgm_read_byte(&bitmap[j * w + i]);
+        v = pgm_read_byte(&bitmap[j * w + i]);
         _bus->write(v);
         _bus->write(v);
         _bus->write(v);
@@ -350,7 +350,7 @@ void Arduino_TFT_18bit::draw16bitRGBBitmap(
   }
 }
 
-void Arduino_TFT_18bit::draw16bitRGBBitmap(
+void Arduino_TFT_18bit::draw16bitRGBBitmapWithMask(
     int16_t x, int16_t y,
     uint16_t *bitmap, uint8_t *mask, int16_t w, int16_t h)
 {
@@ -370,7 +370,7 @@ void Arduino_TFT_18bit::draw16bitRGBBitmap(
       ((y + h - 1) > _max_y)    // Clip bottom
   )
   {
-    Arduino_GFX::draw16bitRGBBitmap(x, y, bitmap, mask, w, h);
+    Arduino_GFX::draw16bitRGBBitmapWithMask(x, y, bitmap, mask, w, h);
   }
   else
   {
