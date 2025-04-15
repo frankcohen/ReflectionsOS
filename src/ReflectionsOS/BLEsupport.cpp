@@ -86,7 +86,7 @@ void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertise
   }
 
   data.rssi = advertisedDevice->getRSSI();
-  data.pounce = mypounce;  // Set pounce state as needed.
+  data.pounce = false;  // Set pounce state as needed.
   data.latitude = gps.getLat();
   data.longitude = gps.getLng();
 
@@ -126,11 +126,10 @@ BLEsupport::BLEsupport() : scanCallbacks(this) {
   lastServerUpdate = 0;
 }
 
-void BLEsupport::begin() {  
+void BLEsupport::begin() 
+{  
   lastAdvUpdate = 0;
-  mypounce = false;  
-  pnctime = millis();
-
+  
   gps.on();
 
   // Initialize the BLE device using the WiFi device name.
@@ -177,17 +176,6 @@ void BLEsupport::begin() {
   compasstime = millis();
 }
 
-void BLEsupport::setPounce( bool pnc )
-{
-  mypounce = pnc;
-  pnctime = millis();
-}
-
-bool BLEsupport::getPounce()
-{
-  return mypounce;
-}
-
 String BLEsupport::getJsonData()
 {
   StaticJsonDocument<256> doc;
@@ -200,7 +188,7 @@ String BLEsupport::getJsonData()
     doc["heading"] = 0;
   }
 
-  doc["pounce"] = mypounce;
+  doc["pounce"] = false;
   doc["latitude"] = gps.getLat();
   doc["longitude"] = gps.getLng();
   String output;
@@ -212,7 +200,7 @@ int BLEsupport::getRemoteDevicesCount()
 {
   return remoteDevices.size();
 }
-	
+
 bool BLEsupport::isAnyDevicePounceTrue() {
   // Iterate over the remote devices to check if any has a true pounce value
   for (const auto& entry : remoteDevices) {
@@ -300,4 +288,3 @@ void BLEsupport::loop()
   }
 
 }
-

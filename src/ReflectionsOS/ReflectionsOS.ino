@@ -35,10 +35,10 @@ ESP32-targz, https://github.com/tobozo/ESP32-targz/
 ESP8266Audio, https://github.com/earlephilhower/ESP8266Audio
 HTTPClient, https://github.com/amcewen/HttpClient
 GFX Library for Arduino, https://github.com/moononournation/Arduino_GFX
-ESP32 JPEG Library, https://github.com/bitbank2/JPEGDEC.git
 SparkFun_VL53L5CX_Arduino_Library, TOF sensor, https://github.com/sparkfun/SparkFun_VL53L5CX_Arduino_Library
 NimBLE stack, https://github.com/h2zero/NimBLE-Arduino
 NTPClient, Network Time Protocol, https://github.com/arduino-libraries/NTPClient
+ESP32 JPEG Library, https://github.com/bitbank2/JPEGDEC.git
 PNGdec library, https://github.com/bitbank2/PNGdec
 TinyGPSPlus-ESP32, https://github.com/Tinyu-Zhao/TinyGPSPlus-ESP32
 
@@ -86,6 +86,7 @@ cd /Users/frankcohen/Library/Caches/arduino/sketches
 #include "Battery.h"
 #include "Video.h"
 #include "MjpegClass.h"
+#include "secrets.h"
 #include "AccelSensor.h"
 #include "Audio.h"
 #include "Compass.h"
@@ -109,8 +110,6 @@ cd /Users/frankcohen/Library/Caches/arduino/sketches
 #include "SystemLoad.h"
 #include "ScienceFair14pt7b.h"
 
-#include "secrets.h"
-
 Video video;
 Utils utils;
 Storage storage;
@@ -133,7 +132,7 @@ Steps steps;
 TimerService timerservice;
 SystemLoad systemload;
 BLEsupport blesupport;
-MjpegClass mjpeg;
+MjpegClass mjpegclass;
 
 const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
 
@@ -225,7 +224,7 @@ void BoardInitializationUtility()
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
-  printCentered( F( "Initialize" ) );
+  printCentered("Initialize");
 
   // Start Wifi
 
@@ -235,7 +234,7 @@ void BoardInitializationUtility()
 
   if ( ! wifi.begin() )  // Non-blocking, until guest uses it to connect
   {
-    BIUfaled( F( "Wifi failed" ) );
+    BIUfaled( "Wifi failed" );
   }
 
   delay( 1000 );
@@ -251,7 +250,7 @@ void BoardInitializationUtility()
     BIUfaled( F("Replicate failed") );
   }
 
-  Serial.println( F( "After: " ) );
+  Serial.println( "After: ");
   storage.printStats();
 
   /*
@@ -300,7 +299,7 @@ static void smartdelay(unsigned long ms) {
     // Watch experience operations
 
     unsigned long fellow = millis();
-    watchfaceexperiences.loop();
+    //watchfaceexperiences.loop();
     systemload.logtasktime(millis() - fellow, 1, "we");
     fellow = millis();
     experienceservice.loop();
@@ -315,6 +314,7 @@ static void smartdelay(unsigned long ms) {
     /*
     logger.loop();
     audio.loop();
+    led.loop();
     */
 
 /*
@@ -333,7 +333,10 @@ static void smartdelay(unsigned long ms) {
 
 void setup() {
   Serial.begin(115200);
-  delay( 2000 );
+  long time = millis();
+  while (!Serial && (millis() < time + 2000))
+    ;  // wait up to 2 seconds for Arduino Serial Monitor
+  Serial.setDebugOutput(true);
 
   Serial.println(F(" "));
   Serial.println(F("Starting"));
@@ -343,28 +346,24 @@ void setup() {
 
   systemload.begin();  // System load monitor
 
-  systemload.printHeapSpace( F( "Start" ) );
+  systemload.printHeapSpace( "Start" );
 
   hardware.begin();  // Sets all the hardware pins
 
-  systemload.printHeapSpace( F( "Hardware begin" ) );
+  systemload.printHeapSpace( "Hardware begin" );
 
   storage.begin();
   storage.setMounted(hardware.getMounted());
 
-  systemload.printHeapSpace( F( "Storage" ) );
+  systemload.printHeapSpace( "Storage" );
 
   video.begin();
 
-  systemload.printHeapSpace( F( "Video" ) );
-
-  mjpeg.begin();
-
-  systemload.printHeapSpace( F( "Mjpeg" ) );
+  systemload.printHeapSpace( "Video" );
 
   //video.beginBuffer();      // Secondary begin to initiaize the secondary video buffer
 
-  //systemload.printHeapSpace( F( "Video buffer" ) );
+  //systemload.printHeapSpace( "Video buffer" );
 
   //utils.WireScan();   // Shows devices on the I2S bus, including compass, TOF, accelerometeer
 
@@ -399,10 +398,10 @@ void setup() {
 
   // Self-test: NAND, I2C, SPI
 
-  assertI2Cdevice(24, F( "Acclerometer") );
-  assertI2Cdevice(48, F( "Compass") );
-  assertI2Cdevice(90, F( "Haptic") );
-  assertI2Cdevice(41, F( "TOF Accel") );
+  assertI2Cdevice(24, "Acclerometer");
+  assertI2Cdevice(48, "Compass");
+  assertI2Cdevice(90, "Haptic");
+  assertI2Cdevice(41, "TOF Accel");
 
   // Device initialization
 
@@ -423,7 +422,7 @@ void setup() {
   realtimeclock.begin();
   blesupport.begin();
 
-  systemload.printHeapSpace( F( "BLE start" ) );
+  systemload.printHeapSpace( "BLE start" );
 
   // Support service initialization
 
@@ -446,13 +445,23 @@ void setup() {
     0              // Core where the task should run (core 0)
   );
 
+  // Unused services
+
+  //ota.begin();
+  //ota.update();     // Just in case previous use of the host replicated an OTA update file
+
+  //startMSC();     // Calliope mounts as a flash drive, showing NAND contents over USB on your computer
+
   // Experience initialization
 /*
   textmessageservice.begin();
   experienceservice.begin();
   watchfaceexperiences.begin();
 */
+
   // Unused experiences
+
+  //led.begin();
 
   //haptic.playEffect(14);  // 14 Strong Buzz
 
@@ -517,7 +526,6 @@ void loop()
   // Printing accelerometer statistics here because this code runs in Core 1
   // otherwise the stats compete for the Serial monitor
 
-  /*
   if ( millis() - slowman > 500 )
   {
     slowman = millis();
@@ -533,7 +541,6 @@ void loop()
     //bool myx = accel.shaken();
     //if ( myx ) Serial.println( F("Shaken") );
   }
-  */
 
   smartdelay(100);
 }

@@ -25,16 +25,19 @@ ffmpeg -i cat1_parallax.jpg -q:v 2 -vf "format=yuvj420p" cat1_parallax_baseline.
 
 #include "Video.h"
 
-// Defined in ReflectionsOfFrank.ino
-extern LOGGER logger;
-extern TOF tof;
-extern Battery battery;
-extern Wifi wifi;
-extern MjpegClass mjpeg;
-
 static Arduino_DataBus *bus = new Arduino_HWSPI(Display_SPI_DC, Display_SPI_CS, SPI_SCK, SPI_MOSI, SPI_MISO);
 Arduino_GFX *gfx = new Arduino_GC9A01(bus, Display_SPI_RST, 1 /* rotation */, true /* IPS */);
 Arduino_Canvas *bufferCanvas = new Arduino_Canvas(240, 240, gfx);
+
+#define MJPEG_BUFFER_SIZE (240 * 240 * 2 / 10) // memory for a single JPEG frame
+
+/* pixel drawing callback */
+
+static int jpegDrawCallback( JPEGDRAW *pDraw )
+{
+  gfx->draw16bitBeRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);  
+  return 1;
+}
 
 Video::Video() {}
 
@@ -48,10 +51,6 @@ void Video::begin()
   {
     Serial.println(F("gfx->begin() failed. Stopping."));
     while(1);
-  }
-  else
-  {
-    Serial.println(F("gfx->begin() suceeded") );
   }
 
   gfx->fillScreen( BLACK );
@@ -202,8 +201,12 @@ void Video::startVideo( String vname )
     return;
   }
 
-  if ( mjpeg.start( mjpegFile ) )
+  if ( mjpeg.setup(
+    &mjpegFile, mjpeg_buf, jpegDrawCallback, true /* useBigEndian */,
+    0 /* x */, 0 /* y */, gfx->width() /* widthLimit */, gfx->height() /* heightLimit */, firsttime ) )
   {
+    //logger.info( F( "Mjpeg is set-up" ) );
+    firsttime = false;
     videoStatus = 1;
   }
   else
@@ -233,14 +236,19 @@ void Video::loop()
 {
   if ( ( videoStatus == 0 ) || ( paused == 1 ) ) return;
 
-  if ( (millis() - vidtimer ) > 50 ) 
+  if ( mjpegFile.available() )
   {
-    vidtimer = millis();
-
-    while (mjpegFile.available() && mjpeg.readMjpegBuf())
+    if ( (millis() - vidtimer ) > 50 ) 
     {
-      if ( ! mjpeg.decodeJpg() )
+      vidtimer = millis();
+
+      totalFrames++;
+
+      unsigned long dtime = millis();
+
+      if ( ! mjpeg.readMjpegBuf() )
       {
+        //logger.error( F("readMjpegBuf returned false") );
         stopVideo();
         return;
       }
@@ -248,6 +256,10 @@ void Video::loop()
       gfx->draw16bitBeRGBBitmap(0, 0, mjpeg.getOutputbuf(), 240, 240);
 
       totalFrames++;
+
+      mjpeg.drawJpg();
+
+      totalShowVideo += millis() - dtime;
     }
   }
 }

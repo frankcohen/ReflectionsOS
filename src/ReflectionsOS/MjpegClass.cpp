@@ -8,211 +8,301 @@
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
 
- This is a wrapper for the Espresif provided JPEG decoder class.
-
- This code only runs on ESP32-S3 due to its support of SIMD.
+ Depends on JPEGDEC: https://github.com/bitbank2/JPEGDEC.git
 */
 
 #include "MjpegClass.h"
 
 extern Video video;
 
-/*******************************************************************************
- * Mjpeg.cpp
- * ESP32_JPEG Wrapper Class
- ******************************************************************************/
+#define READ_BUFFER_SIZE 1024
+#define MAXOUTPUTSIZE (MAX_BUFFERED_PIXELS / 16 / 16)
 
-#include "MjpegClass.h"
+MjpegClass::MjpegClass() {}
 
-bool MjpegClass::begin()
-{
-  if ( ! firsttime ) return true;
 
-  stime = millis();
-
-  _inputindex = 0;
-
-  _mjpeg_buf = (uint8_t *) malloc( MJPEG_BUFFER_SIZE );
-  if ( ! _mjpeg_buf )
+  mjpeg_buf = (uint8_t *) malloc( MJPEG_BUFFER_SIZE );
+  if ( !mjpeg_buf )
   {
     Serial.println( F("mjpeg_buf malloc failed, stopping" ) );
-    video.stopOnError( "Video buffer", "fail", "", "", "" );
+    stopOnError( "Video buffer", "fail", "", "", "" );
   }
 
-  _output_buf = (uint16_t *) heap_caps_aligned_alloc( 16, MJPEG_OUTPUT_SIZE, MALLOC_CAP_8BIT );
-  if (! _output_buf)
-  {
-    Serial.println(F("output_buf malloc failed"));
-    video.stopOnError( "Video output", "buffer", "fail", "", "" );
-  }
-  _output_buf_size = MJPEG_OUTPUT_SIZE;
 
-  _read_buf = (uint8_t *) malloc( READ_BUFFER_SIZE );
-  if ( !_read_buf )
-  {
-    Serial.println( F("_read_buf malloc failed") );
-    return false;
-  }
 
-  video.addReadTime( millis() - stime );
-
-  _output_buf_size = MJPEG_OUTPUT_SIZE;
-  _mjpeg_buf_offset = 0;
-  _inputindex = 0;
-  _remain = 0;
-  
-  firsttime = false;
-
-  return true;
-}
-
-bool MjpegClass::start( File input )
+bool MjpegClass::setup(
+      Stream *input, uint8_t *mjpeg_buf, JPEG_DRAW_CALLBACK *pfnDraw, bool useBigEndian,
+      int x, int y, int widthLimit, int heightLimit, boolean firsttime )
 {
-  _input = input;
-}
+    _input = input;
+    _mjpeg_buf = mjpeg_buf;
+    _pfnDraw = pfnDraw;
+    _useBigEndian = useBigEndian;
+    _x = x;
+    _y = y;
+    _widthLimit = widthLimit;
+    _heightLimit = heightLimit;
+    _inputindex = 0;
+    _mjpeg_buf_offset = 0;
+    _scale = -1;
+    _remain = 0;
 
-uint16_t * MjpegClass::getOutputbuf()
-{
-  return _output_buf;
+    bigcounter = 0;
+
+    if ( firsttime )
+    {
+      unsigned long stime = millis();
+
+      _read_buf = (uint8_t *) malloc( READ_BUFFER_SIZE + 8 );
+      if ( !_read_buf )
+      {
+        Serial.println( F("_read_buf malloc failed") );
+        while(1);
+      }
+
+      video.addReadTime( millis() - stime );
+    }
+
+    return true;
 }
 
 bool MjpegClass::readMjpegBuf()
 {
-  if (_inputindex == 0)
-  {
-    _buf_read = _input.read(_read_buf, READ_BUFFER_SIZE);
-    _inputindex += _buf_read;
-    video.addReadTime( millis() - stime );
-  }
-
-  _mjpeg_buf_offset = 0;
-  int i = 0;
-  bool found_FFD8 = false;
-
-  while ((_buf_read > 0) && (!found_FFD8))
-  {
-    i = 0;
-    while ((i < _buf_read) && (!found_FFD8))
+    if (_inputindex == 0)
     {
-      if ((_read_buf[i] == 0xFF) && (_read_buf[i + 1] == 0xD8)) // JPEG header
+      unsigned long stime = millis();
+      // Reads the first chunk of the mjpeg file
+      readcount = _input->readBytes(_read_buf, READ_BUFFER_SIZE);
+
+      /*
+      Serial.print( "_input readcount ");
+      Serial.print( readcount );
+      Serial.println( " bytes");
+      */
+
+      _inputindex += readcount;
+      video.addReadTime( millis() - stime );
+    }
+
+    _mjpeg_buf_offset = 0;
+    int i = 0;
+    bool found_FFD8 = false;
+
+    // Keep reading chunks of the mjpeg file until you find one with FFD8 (the start of a jpeg image)  
+
+    while ((readcount > 0) && (!found_FFD8))
+    {
+      i = 0;
+      while ((i < readcount) && (!found_FFD8))
       {
-        found_FFD8 = true;
+        if ((_read_buf[i] == 0xFF) && (_read_buf[i + 1] == 0xD8)) // JPEG header
+        {
+          // Serial.print( F( "Found FFD8 at: " ) );
+          // Serial.print( i );
+          found_FFD8 = true;
+          bigcounter++;
+          //Serial.print( F( " bigcounter = " ) );
+          //Serial.println( bigcounter );
+        }
+        ++i;
       }
-      ++i;
-    }
-    if (found_FFD8)
-    {
-      --i;
-    }
-    else
-    {
-      _buf_read = _input.read(_read_buf, READ_BUFFER_SIZE);
-    }
-  }
-
-  video.addReadTime( millis() - stime );
-
-  uint8_t *_p = _read_buf + i;
-  _buf_read -= i;
-  bool found_FFD9 = false;
-  if (_buf_read > 0)
-  {
-    i = 3;
-    while ((_buf_read > 0) && (!found_FFD9))
-    {
-      if ((_mjpeg_buf_offset > 0) && (_mjpeg_buf[_mjpeg_buf_offset - 1] == 0xFF) && (_p[0] == 0xD9)) // JPEG trailer
+      if (found_FFD8)
       {
-        found_FFD9 = true;
+        --i;
       }
       else
       {
-        while ((i < _buf_read) && (!found_FFD9))
+        unsigned long stime = millis();
+        readcount = _input->readBytes(_read_buf, READ_BUFFER_SIZE);
+
+        /*
+        Serial.print( "found_FFD8 readcount ");
+        Serial.print( readcount );
+        Serial.println( " bytes");
+        */
+
+        video.addReadTime( millis() - stime );
+      }
+    }
+
+    // Now keep reading until finding the end of the jpeg FFD9
+
+    uint8_t *_p = _read_buf + i;
+    readcount -= i;
+    bool found_FFD9 = false;
+    
+    if (readcount > 0)
+    {
+      i = 3;
+      while ((readcount > 0) && (!found_FFD9))
+      {
+        if ((_mjpeg_buf_offset > 0) && (_mjpeg_buf[_mjpeg_buf_offset - 1] == 0xFF) && (_p[0] == 0xD9)) // JPEG trailer
         {
-          if ((_p[i] == 0xFF) && (_p[i + 1] == 0xD9)) // JPEG trailer
+          //Serial.printf("Found FFD9 at: %d.\n", i);
+          found_FFD9 = true;
+        }
+        else
+        {
+          while ((i < readcount) && (!found_FFD9))
           {
-            found_FFD9 = true;
+            if ((_p[i] == 0xFF) && (_p[i + 1] == 0xD9)) // JPEG trailer
+            {
+              found_FFD9 = true;
+              ++i;
+            }
             ++i;
           }
-          ++i;
         }
-      }
 
-      memcpy(_mjpeg_buf + _mjpeg_buf_offset, _p, i);
-      _mjpeg_buf_offset += i;
-      size_t o = _buf_read - i;
-      if (o > 0)
+        /*
+        Serial.print( "i: " );
+        Serial.println( i );
+        Serial.print( "_mjpeg_buf: " );
+        Serial.println( (long) _mjpeg_buf );
+        Serial.print( "_mjpeg_buf_offset: " );
+        Serial.println( (long) _mjpeg_buf_offset );
+        Serial.print( "_p: " );
+        Serial.println( (long) _p );
+        */
+
+        // A special check to avoid crashing on badly formed mjpeg files
+        if ( _mjpeg_buf_offset > 8000 )
+        {
+          Serial.print( "_mjpeg_buf_offset > 8000 " );
+          Serial.println( _mjpeg_buf_offset );
+          return false;
+        }
+
+        if ( _mjpeg_buf == 0 )
+        {
+          return false;
+        }
+
+        memcpy(_mjpeg_buf + _mjpeg_buf_offset, _p, i);
+
+        _mjpeg_buf_offset += i;
+        size_t o = readcount - i;
+
+        if (o > 0)
+        {
+          //Serial.printf("o: %d\n", o);
+          
+          memcpy(_read_buf, _p + i, o);
+
+          unsigned long stime = millis();
+          readcount = _input->readBytes(_read_buf + o, READ_BUFFER_SIZE - o);
+
+          //Serial.print( "o>0 readcount ");
+          //Serial.print( readcount );
+          //Serial.println( " bytes");
+
+          _p = _read_buf;
+          _inputindex += readcount;
+          readcount += o;
+          video.addReadTime( millis() - stime );          
+        }
+        else
+        {
+          /*
+          Serial.print( "Diagnose: " );
+          Serial.print( o );
+          Serial.print( " " );
+          Serial.print( readcount );
+          Serial.print( " " );
+          Serial.print( i );
+          Serial.print( " " );
+          Serial.print( (long) _read_buf );
+          Serial.print( " " );
+          Serial.print( (long) _input );
+          Serial.print( " " );
+          Serial.print( READ_BUFFER_SIZE );
+          Serial.print( " " );
+          Serial.print( found_FFD9 );
+          Serial.println( " " );
+          */
+
+          unsigned long stime = millis();
+
+          readcount = _input->readBytes(_read_buf, READ_BUFFER_SIZE);
+
+          /*
+          Serial.print( "Diagnose readcount ");
+          Serial.print( readcount );
+          Serial.println( " bytes");
+          */
+
+          if ( readcount == 0 )
+          {
+            //Serial.println( "readcount = 0");
+            return false;
+          }
+
+          _p = _read_buf;
+          _inputindex += readcount;
+          video.addReadTime( millis() - stime );
+        }
+
+        i = 0;
+      }
+      
+      if (found_FFD9)
       {
-        memcpy(_read_buf, _p + i, o);
-        _buf_read = _input.read(_read_buf + o, READ_BUFFER_SIZE - o);
-        _p = _read_buf;
-        _inputindex += _buf_read;
-        _buf_read += o;
+        //Serial.println("found_FFD9");
+        return true;
+      }
+    }
+
+    Serial.println( F("Returning false"));
+    return false;
+}
+
+bool MjpegClass::drawJpg()
+{
+    _remain = _mjpeg_buf_offset;
+    _jpeg.openRAM(_mjpeg_buf, _remain, _pfnDraw);
+    if (_scale == -1)
+    {
+      // scale to fit height
+      int iMaxMCUs;
+      int w = _jpeg.getWidth();
+      int h = _jpeg.getHeight();
+      float ratio = (float)h / _heightLimit;
+      if (ratio <= 1)
+      {
+        _scale = 0;
+        iMaxMCUs = _widthLimit / 16;
+      }
+      else if (ratio <= 2)
+      {
+        _scale = JPEG_SCALE_HALF;
+        iMaxMCUs = _widthLimit / 8;
+        w /= 2;
+        h /= 2;
+      }
+      else if (ratio <= 4)
+      {
+        _scale = JPEG_SCALE_QUARTER;
+        iMaxMCUs = _widthLimit / 4;
+        w /= 4;
+        h /= 4;
       }
       else
       {
-        _buf_read = _input.read(_read_buf, READ_BUFFER_SIZE);
-        _p = _read_buf;
-        _inputindex += _buf_read;
+        _scale = JPEG_SCALE_EIGHTH;
+        iMaxMCUs = _widthLimit / 2;
+        w /= 8;
+        h /= 8;
       }
-      i = 0;
+      _jpeg.setMaxOutputSize(iMaxMCUs);
+      _x = (w > _widthLimit) ? 0 : ((_widthLimit - w) / 2);
+      _y = (_heightLimit - h) / 2;
     }
-    if (found_FFD9)
+    if (_useBigEndian)
     {
-      return true;
+      _jpeg.setPixelType(RGB565_BIG_ENDIAN);
     }
-  }
+    _jpeg.decode(_x, _y, _scale);
+    _jpeg.close();
 
-  video.addReadTime( millis() - stime );
-
-  return false;
+    return true;
 }
-
-bool MjpegClass::decodeJpg()
-{
-  _remain = _mjpeg_buf_offset;
-
-  jpeg_dec_config_t config = {
-      .output_type = JPEG_RAW_TYPE_RGB565_BE,
-      .rotate = JPEG_ROTATE_0D,
-  };
-
-  _jpeg_dec = jpeg_dec_open(&config);
-
-  _jpeg_io = (jpeg_dec_io_t *)calloc(1, sizeof(jpeg_dec_io_t));
-
-  _out_info = (jpeg_dec_header_info_t *)calloc(1, sizeof(jpeg_dec_header_info_t));
-
-  _jpeg_io->inbuf = _mjpeg_buf;
-  _jpeg_io->inbuf_len = _remain;
-
-  jpeg_dec_parse_header(_jpeg_dec, _jpeg_io, _out_info);
-
-  _w = _out_info->width;
-  _h = _out_info->height;
-
-  if ((_w * _h * 2) > _output_buf_size)
-  {
-    return false;
-  }
-
-  _jpeg_io->outbuf = (unsigned char *) _output_buf;
-
-  jpeg_dec_process(_jpeg_dec, _jpeg_io);
-  jpeg_dec_close(_jpeg_dec);
-
-  free(_jpeg_io);
-  free(_out_info);
-
-  return true;
-}
-
-int16_t MjpegClass::getWidth()
-{
-  return _w;
-}
-
-int16_t MjpegClass::getHeight()
-{
-  return _h;
-}
-

@@ -64,7 +64,7 @@ void WatchFaceMain::begin()
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
   panel = STARTUP;
-  video.startVideo( WatchFaceOpener_video );
+  //video.startVideo( WatchFaceOpener_video );
 }
 
 /* Returns true when watch face is ok with the processor being put to sleep, to save battery life */

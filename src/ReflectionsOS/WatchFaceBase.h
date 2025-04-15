@@ -19,8 +19,8 @@
 
 #include <Arduino_GFX_Library.h>
 #include <PNGdec.h>
-#include <ESP32_JPEG_Library.h>
 #include "MjpegClass.h"
+#include <JPEGDEC.h>
 
 // #include <sys/unistd.h>
 
@@ -28,6 +28,8 @@ extern Arduino_GFX *gfx;
 extern Arduino_Canvas *bufferCanvas;
 extern MjpegClass mjpeg;
 
+// Declare functions and variables
+static int WatchFaceJPEGDraw(JPEGDRAW *pDraw);
 void *myOpen(const char* filename, int32_t *size);
 void myClose(void *handle);
 int32_t myRead(PNGFILE *handle, uint8_t *buffer, int32_t length);

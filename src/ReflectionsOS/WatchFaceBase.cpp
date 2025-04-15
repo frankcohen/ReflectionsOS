@@ -52,6 +52,33 @@ typedef struct my_private_struct
   int xoff, yoff; // corner offset
 } PRIVATE;
 
+// Optimized JPEGDEC callback function to draw raw byte data onto the canvas buffer
+
+static int WatchFaceJPEGDraw(JPEGDRAW *pDraw)
+{
+  bufferCanvas->draw16bitBeRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);
+
+  /* This is the way to draw JPEG images with transparent pixels. However, it operates
+     much slower than the above draw16bitBeRGBBitmap() method.
+
+  uint16_t color;
+  
+  for (int32_t y = 0; y < pDraw->iHeight; y++) {
+      for (int32_t x = 0; x < pDraw->iWidth; x++) {
+        // Read the pixel color
+        color = pDraw->pPixels[ ( y * pDraw->iWidth ) + x];
+
+          // Skip pixels with value 0xFFE0
+          if ( color != TRANSPARENT_COLOR ) {
+              gfx->drawPixel(pDraw->x + x, pDraw->y + y, color); // Draw the pixel on the display
+          }
+      }
+  }
+  */
+
+  return 1;
+}
+
 // Function to draw pixels to the display
 void WatchFacePNGDraw(PNGDRAW *pDraw)
 {
@@ -87,11 +114,25 @@ void myClose(void *handle)
     imgFile.close();
 }
 
+int32_t myReadJpeg( JPEGFILE *pFile, uint8_t *buffer, int32_t length )
+{
+  if (!imgFile)
+    return 0;
+  return imgFile.read(buffer, length);
+}
+
 int32_t myReadPng( PNGFILE *handle, uint8_t *buffer, int32_t length )
 {
   if (!imgFile)
     return 0;
   return imgFile.read(buffer, length);
+}
+
+int32_t mySeekJpeg( JPEGFILE *pFile, int32_t position)
+{
+  if (!imgFile)
+    return 0;
+  return imgFile.seek(position);
 }
 
 int32_t mySeekPng(PNGFILE *handle, int32_t position)
@@ -142,37 +183,13 @@ void WatchFaceBase::drawImageFromFile( String filename, bool embellishfilename, 
 
   if ( filename.endsWith( F(".jpg")))
   {
-    File mjpegFile = SD.open( filename, "r");
-    {
-      Serial.print("Jpeg open failed: ");
-      Serial.println( filename );
-      return;
-    }
+    jpg.open(filename.c_str(), myOpen, myClose, myReadJpeg, mySeekJpeg, WatchFaceJPEGDraw);
 
-    if ( ! mjpeg.start( mjpegFile ) )
-    {
-      Serial.print("Jpeg setup failed: ");
-      Serial.println( filename );
-      return;
-    }
+    jpg.setPixelType( RGB565_BIG_ENDIAN );
 
-    while (mjpegFile.available() && mjpeg.readMjpegBuf() )
-    {
-      mjpeg.decodeJpg();
-      total_decode_video += millis() - curr_ms;
-      curr_ms = millis();
-
-      if (x == -1)
-      {
-        w = mjpeg.getWidth();
-        h = mjpeg.getHeight();
-        x = (w > gfx->width()) ? 0 : ((gfx->width() - w) / 2);
-        y = (h > gfx->height()) ? 0 : ((gfx->height() - h) / 2);
-      }
-      gfx->draw16bitBeRGBBitmap(x, y, mjpeg.getOutputbuf(), w, h);
-    }
-
-    mjpegFile.close();
+    // Decode and draw the JPEG
+    jpg.decode( 0, 0, 0 );   // x, y, scale  
+    file.close();
   }
 
   if ( filename.endsWith( ".png"))
