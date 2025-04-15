@@ -66,3 +66,8 @@ void LOGGER::setEchoToServer( bool echo )
 {
   echoServer = echo;
 }
+
+void LOGGER::loop()
+{
+}
+

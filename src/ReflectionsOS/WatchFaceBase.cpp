@@ -1,4 +1,3 @@
-#include <sys/unistd.h>
 /*
  Reflections, mobile connected entertainment device
 
@@ -107,13 +106,18 @@ WatchFaceBase::WatchFaceBase()
 
 void WatchFaceBase::start() 
 {
-  bufferCanvas->fillScreen( BLACK ); // Clear the buffer to prepare for new drawings
+  if ( bufferCanvas != nullptr )
+  {
+    bufferCanvas->fillScreen( BLACK ); // Clear the buffer to prepare for new drawings
+  }
 }
 
 void WatchFaceBase::show() 
 {
-  bufferCanvas->flush();
-  //bufferCanvas->fillScreen( BLACK ); // Clear the buffer to prepare for new drawings
+  if ( bufferCanvas != nullptr )
+  {
+    bufferCanvas->flush();
+  }
 }
 
 /* Uses file extension for image type, .png, .jpg */

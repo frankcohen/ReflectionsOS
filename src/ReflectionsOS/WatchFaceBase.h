@@ -22,6 +22,8 @@
 #include <ESP32_JPEG_Library.h>
 #include "MjpegClass.h"
 
+// #include <sys/unistd.h>
+
 extern Arduino_GFX *gfx;
 extern Arduino_Canvas *bufferCanvas;
 extern MjpegClass mjpeg;
@@ -30,7 +32,7 @@ void *myOpen(const char* filename, int32_t *size);
 void myClose(void *handle);
 int32_t myRead(PNGFILE *handle, uint8_t *buffer, int32_t length);
 int32_t mySeek(PNGFILE *handle, int32_t position);
-void PNGDraw(PNGDRAW *pDraw);
+void PNGDraw( PNGDRAW *pDraw );
 
 class WatchFaceBase 
 {

@@ -47,9 +47,11 @@ void SystemLoad::printHeapSpace( String message )
   // Compute a rough fragmentation ratio.
   float fragRatio = (float)freeHeap / largestBlock;
 
+  /*
   Serial.println( "heap_caps_print_heap_info:" );
   heap_caps_print_heap_info(MALLOC_CAP_8BIT);
-
+  */
+  
   Serial.print( message );
   Serial.print(F(", Heap: "));
   Serial.print( freeHeap );

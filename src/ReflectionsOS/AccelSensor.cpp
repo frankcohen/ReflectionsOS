@@ -74,6 +74,8 @@ AccelSensor::AccelSensor(){}
 
 void AccelSensor::begin()
 { 
+  started = false;
+
   if ( ! lis3dh.begin( accelAddress ) ) 
   {
     Serial.println( F( "Accelerometer did not start, stopping" ) );
@@ -114,27 +116,48 @@ void AccelSensor::begin()
 
   //printSettings();
 
-  delay(2000);
+  started = true;
 
   //printHeader();
 }
 
 float AccelSensor::getXreading() 
 {
-  lis3dh.read();
-  return lis3dh.x; // Raw X value
+  if ( started )
+  {
+    lis3dh.read();
+    return lis3dh.x; // Raw X value
+  }
+  else
+  {
+    return 0;
+  }
 }
 
 float AccelSensor::getYreading() 
 {
-  lis3dh.read();
-  return lis3dh.y; // Raw Y value
+  if ( started )
+  {
+    lis3dh.read();
+    return lis3dh.y; // Raw Y value
+  }
+  else
+  {
+    return 0;
+  }
 }
 
 float AccelSensor::getZreading() 
 {
-  lis3dh.read();
-  return lis3dh.z; // Raw Y value
+  if ( started )
+  {
+    lis3dh.read();
+    return lis3dh.z; // Raw Y value
+  }
+  else
+  {
+    return 0;
+  }
 }
 
 bool AccelSensor::tapped()

@@ -69,12 +69,12 @@ Reflections uses a custom partition scheme to maximize available flash storage.
 See instructions at: https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/Partition%20tables%20and%20optimizing%20memory%20in%20Arduino%20IDE.md
 Arduino IDE 2.x automatically uses partitions.csv in the source code directory
 
-ESP32-S3 memory starts as:
-  Total Size        :   238232 B ( 232.6 KB)
-  Free Bytes        :    98480 B (  96.2 KB)
-  Allocated Bytes   :   132816 B ( 129.7 KB)
-  Minimum Free Bytes:    98376 B (  96.1 KB)
-  Largest Free Block:    86004 B (  84.0 KB)
+Sometimes you may need to clear the ESP32-S3 flash memory, use this command:
+/Users/frankcohen/Library/Arduino15/packages/esp32/tools/esptool_py/4.6/esptool" --chip esp32s3 --port "/dev/cu.usbmodem1101" --baud 921600 erase_flash
+
+same for clearing cached compiler data on MacOS:
+cd /Users/frankcohen/Library/Caches/arduino/sketches
+
 */
 
 #include "Arduino.h"
@@ -282,6 +282,8 @@ static void smartdelay(unsigned long ms) {
 
     // Device operations
 
+/*
+
     video.loop();
     battery.loop();
     storage.loop();
@@ -308,6 +310,7 @@ static void smartdelay(unsigned long ms) {
     systemload.logtasktime(millis() - fellow, 3, "tm");
 
   	systemload.loop();
+*/
 
     /*
     logger.loop();
@@ -444,11 +447,11 @@ void setup() {
   );
 
   // Experience initialization
-
+/*
   textmessageservice.begin();
   experienceservice.begin();
   watchfaceexperiences.begin();
-
+*/
   // Unused experiences
 
   //haptic.playEffect(14);  // 14 Strong Buzz
@@ -490,6 +493,10 @@ unsigned long statstime = millis();
 
 void loop() 
 {
+  Serial.println( rowCount++ );
+  delay(500);
+  return;
+
 
   if ( millis() - statstime > 1500 )
   {

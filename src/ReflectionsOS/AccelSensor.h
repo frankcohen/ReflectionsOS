@@ -133,6 +133,8 @@ class AccelSensor
     float accelThresholdLow; // low value for tap detection
 
     double currentNeutralMeasurement;
+
+    bool started;
 };
 
 #endif // ACCEL_SENSOR_H
