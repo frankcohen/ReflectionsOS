@@ -19,14 +19,13 @@
 
 #include <Arduino_GFX_Library.h>
 #include <PNGdec.h>
-#include "MjpegClass.h"
 #include <JPEGDEC.h>
 
-// #include <sys/unistd.h>
+#include "MjpegRunner.h" // Ensure this is included first
+extern MjpegRunner mjpegrunner; // Declare the external instance
 
 extern Arduino_GFX *gfx;
 extern Arduino_Canvas *bufferCanvas;
-extern MjpegClass mjpeg;
 
 // Declare functions and variables
 static int WatchFaceJPEGDraw(JPEGDRAW *pDraw);
@@ -54,6 +53,7 @@ class WatchFaceBase
     unsigned long total_decode_video;
     unsigned long curr_ms;
     int x, y, w, h;
+    JPEGDEC jpg;
 
 };
 

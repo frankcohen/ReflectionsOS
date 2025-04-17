@@ -37,7 +37,9 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 #include <ArduinoJson.h>
 #include <Arduino_GFX_Library.h>
 
-#include "MjpegClass.h"
+#include "MjpegRunner.h"        // Ensure this is included first
+extern MjpegRunner mjpegrunner; // Declare the external instance
+
 #include "Logger.h"
 #include "TOF.h"
 #include "Battery.h"
@@ -47,7 +49,6 @@ extern LOGGER logger;
 extern TOF tof;
 extern Battery battery;
 extern Wifi wifi;
-extern MjpegClass mjpegclass;
 
 // Additional fonts at https://github.com/moononournation/ArduinoFreeFontFile/tree/master/Fonts
 

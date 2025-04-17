@@ -29,7 +29,6 @@ Adafruit MMC56x3, compass, magnetometer, https://github.com/adafruit/Adafruit_MM
 The Adafruit I2C libraries, like MMC56x3, depend on these
 Adafruit Unified Sensor, https://github.com/adafruit/Adafruit_Sensor
 Adafrruit BusIO, I2C support, https://github.com/adafruit/Adafruit_BusIO
-ESP_JPEG decoder, https://github.com/esp-arduino-libs/ESP32_JPEG
 ArduinoJson, https://arduinojson.org/
 ESP32-targz, https://github.com/tobozo/ESP32-targz/
 ESP8266Audio, https://github.com/earlephilhower/ESP8266Audio
@@ -58,8 +57,8 @@ Flash Size: 8 MB (64MB)
 JTAG Adapter: Integrated USB JTAG
 Arduino Runs On: Core 1
 USB Firmware MSC On Boot: Disabled
-Partition Scheme: Custom, Reflections App (8MB OTA No SPIFFS)    See below
-PSRAM: Disabled
+Partition Scheme: Custom, Reflections App (8MB, No OTA No SPIFFS)    See below
+PSRAM: Disabled ( ESP32-S3-MINI-1-N8 has no PSRAM )
 Upload Mode: UART0/Hardware CDC
 Upload Speed 921600
 USB Mode: Hardware CDC and JTAG
@@ -75,6 +74,10 @@ Sometimes you may need to clear the ESP32-S3 flash memory, use this command:
 same for clearing cached compiler data on MacOS:
 cd /Users/frankcohen/Library/Caches/arduino/sketches
 
+Reflections reuses the ESP32S3 Dev Module board definition provided by Espressif:
+~/Library/Arduino15/packages/esp32/hardware/esp32/3.2.0/boards.txt
+in this section: esp32s3.name=ESP32S3 Dev Module
+
 */
 
 #include "Arduino.h"
@@ -84,8 +87,8 @@ cd /Users/frankcohen/Library/Caches/arduino/sketches
 #include "Storage.h"
 #include "Logger.h"
 #include "Battery.h"
+#include "MjpegRunner.h"
 #include "Video.h"
-#include "MjpegClass.h"
 #include "secrets.h"
 #include "AccelSensor.h"
 #include "Audio.h"
@@ -110,6 +113,7 @@ cd /Users/frankcohen/Library/Caches/arduino/sketches
 #include "SystemLoad.h"
 #include "ScienceFair14pt7b.h"
 
+MjpegRunner mjpegrunner;
 Video video;
 Utils utils;
 Storage storage;
@@ -132,7 +136,6 @@ Steps steps;
 TimerService timerservice;
 SystemLoad systemload;
 BLEsupport blesupport;
-MjpegClass mjpegclass;
 
 const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
 
@@ -281,8 +284,6 @@ static void smartdelay(unsigned long ms) {
 
     // Device operations
 
-/*
-
     video.loop();
     battery.loop();
     storage.loop();
@@ -295,11 +296,12 @@ static void smartdelay(unsigned long ms) {
     gps.loop();
     steps.loop();
     timerservice.loop();
+    audio.loop();
 
     // Watch experience operations
-
+/*
     unsigned long fellow = millis();
-    //watchfaceexperiences.loop();
+    watchfaceexperiences.loop();
     systemload.logtasktime(millis() - fellow, 1, "we");
     fellow = millis();
     experienceservice.loop();
@@ -307,15 +309,8 @@ static void smartdelay(unsigned long ms) {
     fellow = millis();
     textmessageservice.loop();
     systemload.logtasktime(millis() - fellow, 3, "tm");
-
-  	systemload.loop();
 */
-
-    /*
-    logger.loop();
-    audio.loop();
-    led.loop();
-    */
+  	systemload.loop();
 
 /*
     if ( watchfaceexperiences.okToSleep() )
@@ -348,6 +343,12 @@ void setup() {
 
   systemload.printHeapSpace( "Start" );
 
+  video.begin();
+  systemload.printHeapSpace( "Video" );
+
+  mjpegrunner.begin();
+  systemload.printHeapSpace( "MjpegRunner" );
+
   hardware.begin();  // Sets all the hardware pins
 
   systemload.printHeapSpace( "Hardware begin" );
@@ -356,10 +357,6 @@ void setup() {
   storage.setMounted(hardware.getMounted());
 
   systemload.printHeapSpace( "Storage" );
-
-  video.begin();
-
-  systemload.printHeapSpace( "Video" );
 
   //video.beginBuffer();      // Secondary begin to initiaize the secondary video buffer
 

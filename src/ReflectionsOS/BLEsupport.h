@@ -109,6 +109,7 @@ class BLEsupport
     unsigned long lastAdvUpdate;
     unsigned long lastPrintTime;  // Timer for printing devices' data
     unsigned long pnctime;
+    bool mypounce;
 
     bool connectToServer();
 

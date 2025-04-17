@@ -29,16 +29,6 @@ static Arduino_DataBus *bus = new Arduino_HWSPI(Display_SPI_DC, Display_SPI_CS, 
 Arduino_GFX *gfx = new Arduino_GC9A01(bus, Display_SPI_RST, 1 /* rotation */, true /* IPS */);
 Arduino_Canvas *bufferCanvas = new Arduino_Canvas(240, 240, gfx);
 
-#define MJPEG_BUFFER_SIZE (240 * 240 * 2 / 10) // memory for a single JPEG frame
-
-/* pixel drawing callback */
-
-static int jpegDrawCallback( JPEGDRAW *pDraw )
-{
-  gfx->draw16bitBeRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);  
-  return 1;
-}
-
 Video::Video() {}
 
 void Video::begin()
@@ -201,17 +191,13 @@ void Video::startVideo( String vname )
     return;
   }
 
-  if ( mjpeg.setup(
-    &mjpegFile, mjpeg_buf, jpegDrawCallback, true /* useBigEndian */,
-    0 /* x */, 0 /* y */, gfx->width() /* widthLimit */, gfx->height() /* heightLimit */, firsttime ) )
+  if ( mjpegrunner.start( &mjpegFile ) )
   {
-    //logger.info( F( "Mjpeg is set-up" ) );
-    firsttime = false;
     videoStatus = 1;
   }
   else
   {
-    Serial.println( F( "Could not set-up mjpeg") );
+    Serial.println( F( "MjpegRunner did not start") );
     videoStatus = 0;
     return;
   }
@@ -246,18 +232,15 @@ void Video::loop()
 
       unsigned long dtime = millis();
 
-      if ( ! mjpeg.readMjpegBuf() )
+      if ( ! mjpegrunner.readMjpegBuf() )
       {
-        //logger.error( F("readMjpegBuf returned false") );
         stopVideo();
         return;
       }
 
-      gfx->draw16bitBeRGBBitmap(0, 0, mjpeg.getOutputbuf(), 240, 240);
-
       totalFrames++;
 
-      mjpeg.drawJpg();
+      mjpegrunner.drawJpg();
 
       totalShowVideo += millis() - dtime;
     }

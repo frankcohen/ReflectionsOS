@@ -21,9 +21,7 @@ void Experience_CatsPlay::init()
   teardownComplete = false;
   stopped = false;
   idle = false;
-
   setupVidplayed = false;
-
 } 
 
 /*
@@ -100,14 +98,7 @@ void Experience_CatsPlay::run()
   if ( accel.tapped() )
   {
     Serial.println( "CatsPlay start pounce to remote devices" );
-    blesupport.setPounce( true );
-
-    /*
-    haptic.playEffect( 12 );  //  12 − Triple Click - 100%
-    haptic.playEffect( 13 );  //  13 − Soft Fuzz - 60%
-    haptic.playEffect( 25 );  //  25 − Sharp Tick 2 - 80%
-    haptic.playEffect( 71 );  //  71 − Transition Ramp Down Long Smooth 2 – 100 to 0%
-    */
+    blesupport.setPounce( true );    
   }
 
   // Play time done?
@@ -124,8 +115,6 @@ void Experience_CatsPlay::run()
 
   Serial.print( mygs );
   Serial.println( F(" sending pounce"));
-
-  //bleClient.sendPounce();
 
   Serial.println( F("Asked client to send pounce"));
 }

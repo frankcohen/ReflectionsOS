@@ -245,6 +245,17 @@ void BLEsupport::printRemoteDevices()
 
 }
 
+void BLEsupport::setPounce( bool pnc )
+{
+  mypounce = pnc;
+  pnctime = millis();
+}
+
+bool BLEsupport::getPounce()
+{
+  return mypounce;
+}
+
 void BLEsupport::loop()
 {
   unsigned long currentMillis = millis();

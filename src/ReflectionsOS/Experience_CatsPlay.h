@@ -16,12 +16,9 @@
 
 #include "Experience.h"
 #include "Haptic.h"
-
 #include "BLEsupport.h"
 #include "Compass.h"
 #include "AccelSensor.h"
-#include "BLEsupport.h"
-
 #include "Logger.h"
 #include "Video.h"
 
@@ -49,7 +46,6 @@ class Experience_CatsPlay : public Experience {
 
     float lastHeading;               // stores last compass heading value
     unsigned long lastHeadingChangeTime; // timestamp when heading last changed
-
 };
 
 #endif // Experience_CatsPlay

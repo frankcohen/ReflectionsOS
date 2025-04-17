@@ -8,6 +8,10 @@
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
 
+ Wrapper class for JPEGDEC to stream video to the display
+
+ Buffers: 1) GFX primary and gfxbuffer, 2) JPEGDEC
+
  Depends on:
  JPEGDEC: https://github.com/bitbank2/JPEGDEC.git
  
@@ -15,8 +19,8 @@
  https://github.com/esp-arduino-libs/ESP32_JPEG
  It works. However, it is also not open-source from Espressif. And, memory
  allocation happens within the pre-compiled library. Then I had a phone call
- with Larry Bank (@bitbank2). He is an amazing person and engineer. He added
- support for SIMD to JPEGDEC. I switched back to JPEGDEC.
+ with Larry Bank (@bitbank2) of the JPEGDEC project. He is an amazing person 
+ and engineer. He added support for SIMD to JPEGDEC. I switched back to JPEGDEC.
 
  SIMD is Single Instruction, Multiple Data. They are a type of processor 
  instruction that allow a single instruction to operate on multiple data 
@@ -26,46 +30,46 @@
  Only ESP32-S3 has SIMD instructions at the time of this writing.
 */
 
-#ifndef _MJPEGCLASS_H_
-#define _MJPEGCLASS_H_
+#ifndef _MJPEGRUNNER_H_
+#define _MJPEGRUNNER_H_
 
 #include "Arduino.h"
 #include "config.h"
 #include <JPEGDEC.h>
-#include "Video.h"
+#include <Arduino_GFX_Library.h>
 
 #define READ_BUFFER_SIZE 1024
 #define MAXOUTPUTSIZE (MAX_BUFFERED_PIXELS / 16 / 16)
+#define MJPEG_OUTPUT_SIZE (240 * 240 * 2)      // memory for a output image frame
+#define MJPEG_BUFFER_SIZE ( ( 240 * 240 * 2 ) / 20) // memory for a single JPEG frame
 
-class MjpegClass
+extern Arduino_GFX *gfx;
+
+class MjpegRunner
 {
   public:
-    bool begin();
-    bool start( File input );
+    MjpegRunner();
+
+    void begin();
+    bool start( Stream *input );
     bool readMjpegBuf();
     bool drawJpg();
 
   private:
-    Stream *_input;
-    uint8_t *_mjpeg_buf;
-    JPEG_DRAW_CALLBACK *_pfnDraw;
-    bool _useBigEndian;
-    int _x;
-    int _y;
-    int _widthLimit;
-    int _heightLimit;
+    Stream * _input;
 
-    uint8_t *_read_buf;
+    uint16_t * _output_buf;
+    size_t _output_buf_size;
+    
+    uint8_t * _read_buf;
     int32_t _mjpeg_buf_offset;
-
-    JPEGDEC _jpeg;
-    int _scale;
-
     int32_t _inputindex;
-    int32_t readcount;
+    int32_t _readcount;
     int32_t _remain;
 
-    int32_t bigcounter;
+    uint8_t * _mjpeg_buf; 
+
+    JPEGDEC _jpeg;
 };
 
-#endif // _MJPEGCLASS_H_
+#endif // _MJPEGRUNNER_H_
