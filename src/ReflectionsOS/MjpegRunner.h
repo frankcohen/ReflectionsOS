@@ -41,7 +41,7 @@
 #define READ_BUFFER_SIZE 1024
 #define MAXOUTPUTSIZE (MAX_BUFFERED_PIXELS / 16 / 16)
 #define MJPEG_OUTPUT_SIZE (240 * 240 * 2)      // memory for a output image frame
-#define MJPEG_BUFFER_SIZE ( ( 240 * 240 * 2 ) / 20) // memory for a single JPEG frame
+#define MJPEG_BUFFER_SIZE ( ( 240 * 240 * 2 ) / 10) // memory for a single JPEG frame
 
 extern Arduino_GFX *gfx;
 

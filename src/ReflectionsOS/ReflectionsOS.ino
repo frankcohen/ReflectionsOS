@@ -283,7 +283,6 @@ static void smartdelay(unsigned long ms) {
     tasktime = millis();
 
     // Device operations
-
     video.loop();
     battery.loop();
     storage.loop();
@@ -326,11 +325,10 @@ static void smartdelay(unsigned long ms) {
   } while (millis() - start < ms);
 }
 
-void setup() {
+void setup() 
+{
   Serial.begin(115200);
-  long time = millis();
-  while (!Serial && (millis() < time + 2000))
-    ;  // wait up to 2 seconds for Arduino Serial Monitor
+  delay(2000);
   Serial.setDebugOutput(true);
 
   Serial.println(F(" "));
@@ -340,8 +338,10 @@ void setup() {
   // Core 1 services
 
   systemload.begin();  // System load monitor
-
   systemload.printHeapSpace( "Start" );
+
+  hardware.begin();  // Sets all the hardware pins
+  systemload.printHeapSpace( "Hardware begin" );
 
   video.begin();
   systemload.printHeapSpace( "Video" );
@@ -349,17 +349,12 @@ void setup() {
   mjpegrunner.begin();
   systemload.printHeapSpace( "MjpegRunner" );
 
-  hardware.begin();  // Sets all the hardware pins
-
-  systemload.printHeapSpace( "Hardware begin" );
-
   storage.begin();
   storage.setMounted(hardware.getMounted());
 
   systemload.printHeapSpace( "Storage" );
 
   //video.beginBuffer();      // Secondary begin to initiaize the secondary video buffer
-
   //systemload.printHeapSpace( "Video buffer" );
 
   //utils.WireScan();   // Shows devices on the I2S bus, including compass, TOF, accelerometeer
@@ -387,7 +382,6 @@ void setup() {
   systemload.printHeapSpace( F("Logger") );
 
   String hostinfo = F("Host: ");
-
   hostinfo += wifi.getDeviceName().c_str();
   hostinfo += F(", ");
   hostinfo += wifi.getMACAddress();
@@ -464,9 +458,6 @@ void setup() {
 
   //experienceservice.startExperience( ExperienceService::MysticCat );
 
-  // For debug
-  video.startVideo( OutOfTheBox_video );
-
   logger.info(F("Setup complete"));
 }
 
@@ -499,11 +490,6 @@ unsigned long statstime = millis();
 
 void loop() 
 {
-  Serial.println( rowCount++ );
-  delay(500);
-  return;
-
-
   if ( millis() - statstime > 1500 )
   {
     statstime = millis();

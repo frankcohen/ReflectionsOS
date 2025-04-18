@@ -42,8 +42,7 @@ void Video::begin()
     Serial.println(F("gfx->begin() failed. Stopping."));
     while(1);
   }
-
-  gfx->fillScreen( BLACK );
+  gfx->fillScreen( BLUE );
 
   videoStatus = 0;   // idle
   vidtimer = millis();
@@ -51,6 +50,8 @@ void Video::begin()
 
   curr_ms = millis();
   videoStartTime = millis();
+
+  Serial.println( "Video started" );
 }
 
 // Initializes video buffer
@@ -209,7 +210,10 @@ void Video::startVideo( String vname )
 
 void Video::stopVideo()
 {
-  mjpegFile.close();
+  if (mjpegFile && mjpegFile.available()) 
+  {
+    mjpegFile.close();
+  }
   videoStatus = 0;
 }
 
@@ -228,8 +232,6 @@ void Video::loop()
     {
       vidtimer = millis();
 
-      totalFrames++;
-
       unsigned long dtime = millis();
 
       if ( ! mjpegrunner.readMjpegBuf() )
@@ -239,6 +241,8 @@ void Video::loop()
       }
 
       totalFrames++;
+
+      Serial.println( totalFrames );
 
       mjpegrunner.drawJpg();
 

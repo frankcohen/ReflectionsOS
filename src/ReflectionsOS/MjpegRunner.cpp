@@ -174,7 +174,7 @@ bool MjpegRunner::drawJpg()
     _remain = _mjpeg_buf_offset;
     _jpeg.openRAM( _mjpeg_buf, _remain, mjpegDrawCallback );
     _jpeg.setPixelType(RGB565_BIG_ENDIAN);
-    _jpeg.decode( 0, 0, 0);
+    _jpeg.decode( 0, 0, 0);     // int x, int y, int iOptions
     _jpeg.close();
 
     return true;
