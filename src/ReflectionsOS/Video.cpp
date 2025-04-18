@@ -27,7 +27,6 @@ ffmpeg -i cat1_parallax.jpg -q:v 2 -vf "format=yuvj420p" cat1_parallax_baseline.
 
 static Arduino_DataBus *bus = new Arduino_HWSPI(Display_SPI_DC, Display_SPI_CS, SPI_SCK, SPI_MOSI, SPI_MISO);
 Arduino_GFX *gfx = new Arduino_GC9A01(bus, Display_SPI_RST, 1 /* rotation */, true /* IPS */);
-Arduino_Canvas *bufferCanvas = new Arduino_Canvas(240, 240, gfx);
 
 Video::Video() {}
 
@@ -54,23 +53,6 @@ void Video::begin()
   Serial.println( "Video started" );
 }
 
-// Initializes video buffer
-
-void Video::beginBuffer()
-{
-  if ( ! bufferCanvas->begin() )
-  {
-    Serial.println( F( "bufferCanvas->begin() failed. Stopping." ) );
-    while(1);
-  }
-  else
-  {
-    //Serial.println( F( "bufferCanvas->begin() suceeded" ) );
-  }
-  bufferCanvas->invertDisplay(true);
-  bufferCanvas->fillScreen( BLUE );
-}
-
 void Video::addReadTime( unsigned long rtime )
 {
   totalReadVideo += rtime;
@@ -80,8 +62,7 @@ void Video::addReadTime( unsigned long rtime )
 
 void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, String msg5 )
 {
-  bufferCanvas->begin();
-  bufferCanvas->fillScreen( COLOR_BACKGROUND );
+  gfx->fillScreen( COLOR_BACKGROUND );
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
@@ -105,42 +86,40 @@ void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, Str
     int16_t x = random( 40, 200 );
     int16_t y = random( 40, 200 );
 
-    bufferCanvas -> drawCircle( x, y, diam, COLOR_BACKGROUND);
-    bufferCanvas -> drawCircle( x, y, diam - 1, COLOR_BACKGROUND);
-    bufferCanvas -> drawCircle( x, y, diam - 2, COLOR_LEADING);
+    gfx -> drawCircle( x, y, diam, COLOR_BACKGROUND);
+    gfx -> drawCircle( x, y, diam - 1, COLOR_BACKGROUND);
+    gfx -> drawCircle( x, y, diam - 2, COLOR_LEADING);
 
-    bufferCanvas -> drawCircle( x, y, diam - 3, COLOR_RING);
-    bufferCanvas -> drawCircle( x, y, diam - 4, COLOR_TRAILING);
+    gfx -> drawCircle( x, y, diam - 3, COLOR_RING);
+    gfx -> drawCircle( x, y, diam - 4, COLOR_TRAILING);
 
-    bufferCanvas -> fillRect( 40, 40, 160, 160, COLOR_TEXT_BACKGROUND );
-    bufferCanvas -> drawRect( 39, 39, 162, 162, COLOR_TEXT_BORDER );
-    bufferCanvas -> drawRect( 40, 40, 160, 160, COLOR_TEXT_BORDER );
+    gfx -> fillRect( 40, 40, 160, 160, COLOR_TEXT_BACKGROUND );
+    gfx -> drawRect( 39, 39, 162, 162, COLOR_TEXT_BORDER );
+    gfx -> drawRect( 40, 40, 160, 160, COLOR_TEXT_BORDER );
 
-    bufferCanvas->setFont(&ScienceFair14pt7b);
-    bufferCanvas->setTextColor( COLOR_LEADING );
-    bufferCanvas->setCursor( leftmargin, topmargin - 5 );
-    bufferCanvas->println(F("REFLECTIONS"));
+    gfx->setFont(&ScienceFair14pt7b);
+    gfx->setTextColor( COLOR_LEADING );
+    gfx->setCursor( leftmargin, topmargin - 5 );
+    gfx->println(F("REFLECTIONS"));
 
-    bufferCanvas->setCursor( leftmargin, topmargin + ( 1 * linespacing ) );
-    bufferCanvas->setFont(&ScienceFair14pt7b);
-    bufferCanvas->setTextColor( COLOR_TEXT );
-    bufferCanvas->println( msg1 );
+    gfx->setCursor( leftmargin, topmargin + ( 1 * linespacing ) );
+    gfx->setFont(&ScienceFair14pt7b);
+    gfx->setTextColor( COLOR_TEXT );
+    gfx->println( msg1 );
 
-    bufferCanvas->setCursor( leftmargin, topmargin + ( 2 * linespacing ) );
-    bufferCanvas->setTextColor( COLOR_TEXT );
-    bufferCanvas->println( msg2 );
+    gfx->setCursor( leftmargin, topmargin + ( 2 * linespacing ) );
+    gfx->setTextColor( COLOR_TEXT );
+    gfx->println( msg2 );
 
-    bufferCanvas->setCursor( leftmargin, topmargin + ( 3 * linespacing ) );
-    bufferCanvas->println( msg3 );
+    gfx->setCursor( leftmargin, topmargin + ( 3 * linespacing ) );
+    gfx->println( msg3 );
 
-    bufferCanvas->setCursor( leftmargin, topmargin + ( 4 * linespacing ) );
-    bufferCanvas->println( msg4 );
+    gfx->setCursor( leftmargin, topmargin + ( 4 * linespacing ) );
+    gfx->println( msg4 );
 
-    bufferCanvas->setCursor( leftmargin, topmargin + ( 5 * linespacing ) );
-    bufferCanvas->println( msg5 );
-
-    bufferCanvas -> flush();
-
+    gfx->setCursor( leftmargin, topmargin + ( 5 * linespacing ) );
+    gfx->println( msg5 );
+    
     delay(500);
   }
 }

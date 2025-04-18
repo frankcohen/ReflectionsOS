@@ -298,7 +298,7 @@ static void smartdelay(unsigned long ms) {
     audio.loop();
 
     // Watch experience operations
-/*
+
     unsigned long fellow = millis();
     watchfaceexperiences.loop();
     systemload.logtasktime(millis() - fellow, 1, "we");
@@ -308,7 +308,7 @@ static void smartdelay(unsigned long ms) {
     fellow = millis();
     textmessageservice.loop();
     systemload.logtasktime(millis() - fellow, 3, "tm");
-*/
+
   	systemload.loop();
 
 /*
@@ -353,9 +353,6 @@ void setup()
   storage.setMounted(hardware.getMounted());
 
   systemload.printHeapSpace( "Storage" );
-
-  //video.beginBuffer();      // Secondary begin to initiaize the secondary video buffer
-  //systemload.printHeapSpace( "Video buffer" );
 
   //utils.WireScan();   // Shows devices on the I2S bus, including compass, TOF, accelerometeer
 
@@ -436,27 +433,11 @@ void setup()
     0              // Core where the task should run (core 0)
   );
 
-  // Unused services
-
-  //ota.begin();
-  //ota.update();     // Just in case previous use of the host replicated an OTA update file
-
-  //startMSC();     // Calliope mounts as a flash drive, showing NAND contents over USB on your computer
-
   // Experience initialization
-/*
+
   textmessageservice.begin();
   experienceservice.begin();
   watchfaceexperiences.begin();
-*/
-
-  // Unused experiences
-
-  //led.begin();
-
-  //haptic.playEffect(14);  // 14 Strong Buzz
-
-  //experienceservice.startExperience( ExperienceService::MysticCat );
 
   logger.info(F("Setup complete"));
 }

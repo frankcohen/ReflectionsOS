@@ -25,7 +25,6 @@
 extern MjpegRunner mjpegrunner; // Declare the external instance
 
 extern Arduino_GFX *gfx;
-extern Arduino_Canvas *bufferCanvas;
 
 // Declare functions and variables
 static int WatchFaceJPEGDraw(JPEGDRAW *pDraw);

@@ -56,7 +56,7 @@ typedef struct my_private_struct
 
 static int WatchFaceJPEGDraw(JPEGDRAW *pDraw)
 {
-  bufferCanvas->draw16bitBeRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);
+  gfx->draw16bitBeRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);
 
   /* This is the way to draw JPEG images with transparent pixels. However, it operates
      much slower than the above draw16bitBeRGBBitmap() method.
@@ -87,7 +87,7 @@ void WatchFacePNGDraw(PNGDRAW *pDraw)
 
   png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_LITTLE_ENDIAN, 0x00000000);
   png.getAlphaMask(pDraw, usMask, 1);
-  bufferCanvas->draw16bitRGBBitmapWithMask(0, pDraw->y, usPixels, usMask, pDraw->iWidth, 1);
+  gfx->draw16bitRGBBitmapWithMask(0, pDraw->y, usPixels, usMask, pDraw->iWidth, 1);
 }
 
 void *myOpen( const char* filename, int32_t *size )
@@ -147,18 +147,14 @@ WatchFaceBase::WatchFaceBase()
 
 void WatchFaceBase::start() 
 {
-  if ( bufferCanvas != nullptr )
+  if ( gfx != nullptr )
   {
-    bufferCanvas->fillScreen( BLACK ); // Clear the buffer to prepare for new drawings
+    gfx->fillScreen( BLACK ); // Clear the buffer to prepare for new drawings
   }
 }
 
 void WatchFaceBase::show() 
 {
-  if ( bufferCanvas != nullptr )
-  {
-    bufferCanvas->flush();
-  }
 }
 
 /* Uses file extension for image type, .png, .jpg */

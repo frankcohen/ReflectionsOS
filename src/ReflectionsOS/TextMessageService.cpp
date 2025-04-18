@@ -258,19 +258,18 @@ void TextMessageService::runDigitalTime()
 
 void TextMessageService::drawCenteredMesssage( String msg, String msg2 )
 {
-  bufferCanvas->setFont( &ScienceFair14pt7b );
+  gfx->setFont( &ScienceFair14pt7b );
   y = 115;
-  bufferCanvas->getTextBounds( msg.c_str(), 0, 0, &x, &y, &w, &h);
-  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 115 );
-  bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
-  bufferCanvas->println( msg );
+  gfx->getTextBounds( msg.c_str(), 0, 0, &x, &y, &w, &h);
+  gfx->setCursor( (gfx->width() - w) / 2, 115 );
+  gfx->setTextColor( COLOR_TEXT_YELLOW );
+  gfx->println( msg );
 
   y = 140;
-  bufferCanvas->getTextBounds( msg2.c_str(), 0, 0, &x, &y, &w, &h);
-  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 140 );
-  bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
-  bufferCanvas->println( msg2 );
-  bufferCanvas->flush();
+  gfx->getTextBounds( msg2.c_str(), 0, 0, &x, &y, &w, &h);
+  gfx->setCursor( (gfx->width() - w) / 2, 140 );
+  gfx->setTextColor( COLOR_TEXT_YELLOW );
+  gfx->println( msg2 );
 }
 
 // Redraws current time for wfMain
@@ -278,26 +277,24 @@ void TextMessageService::drawCenteredMesssage( String msg, String msg2 )
 void TextMessageService::updateTime()
 {
   theTime = getRTCtime();
-  bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
+  gfx->setFont( &Minya_Nouvelle_Rg30pt7b );
   y = 135;
-  bufferCanvas->getTextBounds( theTime.c_str(), 0, 0, &x, &y, &w, &h);
-  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 127 );
-  bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
-  bufferCanvas->println( theTime );
-  bufferCanvas->flush();
+  gfx->getTextBounds( theTime.c_str(), 0, 0, &x, &y, &w, &h);
+  gfx->setCursor( (gfx->width() - w) / 2, 127 );
+  gfx->setTextColor( COLOR_TEXT_YELLOW );
+  gfx->println( theTime );
 }
 
 // Draws current time for wfMain set time panel
 
 void TextMessageService::updateTempTime( String tempTime )
 {
-  bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
+  gfx->setFont( &Minya_Nouvelle_Rg30pt7b );
   y = 135;
-  bufferCanvas->getTextBounds( tempTime.c_str(), 0, 0, &x, &y, &w, &h);
-  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
-  bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
-  bufferCanvas->println( tempTime );
-  bufferCanvas->flush();
+  gfx->getTextBounds( tempTime.c_str(), 0, 0, &x, &y, &w, &h);
+  gfx->setCursor( (gfx->width() - w) / 2, 135 );
+  gfx->setTextColor( COLOR_TEXT_YELLOW );
+  gfx->println( tempTime );
 }
 
 String TextMessageService::formatWithCommas(int value)
@@ -326,38 +323,34 @@ String TextMessageService::formatWithCommas(int value)
 
 void TextMessageService::updateHealth( int smallsteps )
 {
-  bufferCanvas->setFont( &Some_Time_Later20pt7b );
+  gfx->setFont( &Some_Time_Later20pt7b );
   y = 100;
   String mef = F("Steps");
-  bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
-  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 100 );
-  bufferCanvas->setTextColor( COLOR_STRIPE_PINK );
-  bufferCanvas->println( mef );
+  gfx->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
+  gfx->setCursor( (gfx->width() - w) / 2, 100 );
+  gfx->setTextColor( COLOR_STRIPE_PINK );
+  gfx->println( mef );
 
-  bufferCanvas->setFont( &Minya16pt7b );
+  gfx->setFont( &Minya16pt7b );
   y = 135;
   mef = formatWithCommas( smallsteps );
-  bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
-  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
-  bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
-  bufferCanvas->println( mef );
-
-  bufferCanvas->flush();
+  gfx->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
+  gfx->setCursor( (gfx->width() - w) / 2, 135 );
+  gfx->setTextColor( COLOR_TEXT_YELLOW );
+  gfx->println( mef );
 }
 
 // Draws current time for wfMain Timer
 
 void TextMessageService::updateTimer( int minutesleft )
 {
-  bufferCanvas->setFont( &Minya_Nouvelle_Rg30pt7b );
+  gfx->setFont( &Minya_Nouvelle_Rg30pt7b );
   y = 135;
   String mef = (String) minutesleft;
-  bufferCanvas->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
-  bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, 135 );
-  bufferCanvas->setTextColor( COLOR_TEXT_YELLOW );
-  bufferCanvas->println( minutesleft );
-
-  bufferCanvas->flush();
+  gfx->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
+  gfx->setCursor( (gfx->width() - w) / 2, 135 );
+  gfx->setTextColor( COLOR_TEXT_YELLOW );
+  gfx->println( minutesleft );
 }
 
 void TextMessageService::start()
@@ -409,8 +402,8 @@ boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t
     fadeset = 0;
     if ( buffertag )
     {
-      bufferCanvas->setFont( font );
-      bufferCanvas->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
+      gfx->setFont( font );
+      gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
     }
     else
     {
@@ -437,10 +430,9 @@ boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t
 
     if ( buffertag )
     {
-      bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, y );
-      bufferCanvas->setTextColor( textColor );
-      bufferCanvas->println( text );
-      bufferCanvas->flush();
+      gfx->setCursor( (gfx->width() - w) / 2, y );
+      gfx->setTextColor( textColor );
+      gfx->println( text );
     }
     else
     {
@@ -461,8 +453,8 @@ boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_
 
     if ( buffertag )
     {
-      bufferCanvas->setFont( font );
-      bufferCanvas->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);   
+      gfx->setFont( font );
+      gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);   
     }
     else
     {
@@ -490,11 +482,10 @@ boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_
 
     if ( buffertag )
     {
-      bufferCanvas->setFont( font );
-      bufferCanvas->setCursor( (bufferCanvas->width() - w) / 2, y );
-      bufferCanvas->setTextColor( textColor );
-      bufferCanvas->println( text );
-      bufferCanvas->flush();
+      gfx->setFont( font );
+      gfx->setCursor( (gfx->width() - w) / 2, y );
+      gfx->setTextColor( textColor );
+      gfx->println( text );
     }
     else
     {

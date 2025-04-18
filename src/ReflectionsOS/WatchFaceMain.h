@@ -37,7 +37,6 @@ extern Battery battery;
 extern RealTimeClock realtimeclock;
 extern AccelSensor accel;
 extern Video video;
-extern Arduino_Canvas *bufferCanvas;
 extern Haptic haptic;
 extern TextMessageService textmessageservice;
 extern ExperienceService experienceservice;
