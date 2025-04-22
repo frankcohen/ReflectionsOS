@@ -212,6 +212,8 @@ void ExperienceService::startExperience( int exper )
   currentState = SETUP;
 
   noopFlag = true;
+
+  watchfacemain.setRunning( false );
 }
 
 void ExperienceService::setCurrentState( State state )
@@ -310,6 +312,8 @@ void ExperienceService::loop()
 
   if ( millis() - afterTimer < 4000 ) return;
 
+  if ( ! watchfacemain.okToExperience() ) return;
+
   if ( millis() - gestureTimer > 500 )
   {
     gestureTimer = millis();
@@ -379,7 +383,6 @@ void ExperienceService::loop()
     
 
     // Swipe - Shake
-
 
 
 

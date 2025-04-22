@@ -41,7 +41,7 @@ static const char* const affirmative[][2] =
 static const char* const noncommital[][2] = 
 {
   //12345678901234567    123456789012344567
-  {"Proper order?",     "It's a mystery to me"},
+  {"Proper order?",     "It's a mystery"},
   {"Haste makes waste", "Try again"},
   {"Not crazy",         "Don't see it yet"},
   {"Adventures require", "a first step"},
@@ -80,7 +80,6 @@ class Experience_MysticCat : public Experience {
     String theMsg2;
     bool vidflag;
     bool timeflag;
-    bool tearflag;
     
 };
 

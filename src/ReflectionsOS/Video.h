@@ -73,7 +73,7 @@ class Video
     void resetStats();
     void startVideo( String vname );
     void stopVideo();
-    int getStatus();
+    bool getStatus();
     void setPaused( bool p );
     unsigned long getVideoTime();
 
@@ -82,7 +82,7 @@ class Video
   private:
     File mjpegFile;
     long ringtimer;
-    int videoStatus;
+    bool videoStatus;
     unsigned long vidtimer;
     unsigned long videoStartTime;
     bool paused;

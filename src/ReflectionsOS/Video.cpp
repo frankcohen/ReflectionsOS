@@ -41,11 +41,10 @@ void Video::begin()
     Serial.println(F("gfx->begin() failed. Stopping."));
     while(1);
   }
-  gfx->fillScreen( BLUE );
+  gfx->fillScreen( BLACK );
 
-  videoStatus = 0;   // idle
+  videoStatus = false;   // idle
   vidtimer = millis();
-  paused = false;
 
   curr_ms = millis();
   videoStartTime = millis();
@@ -140,7 +139,7 @@ void Video::resetStats()
   startMs = millis();
 }
 
-int Video::getStatus()
+bool Video::getStatus()
 {
   return videoStatus;
 }
@@ -164,7 +163,7 @@ void Video::startVideo( String vname )
   mjpegFile = SD.open( mef );
   if ( ! mjpegFile )
   {
-    videoStatus = 0;
+    videoStatus = false;
     String msg = F("startVideo failed to open ");
     msg += mef;
     logger.error( msg );
@@ -173,12 +172,12 @@ void Video::startVideo( String vname )
 
   if ( mjpegrunner.start( &mjpegFile ) )
   {
-    videoStatus = 1;
+    videoStatus = true;
   }
   else
   {
     Serial.println( F( "MjpegRunner did not start") );
-    videoStatus = 0;
+    videoStatus = false;
     return;
   }
 
@@ -193,7 +192,7 @@ void Video::stopVideo()
   {
     mjpegFile.close();
   }
-  videoStatus = 0;
+  videoStatus = false;
 }
 
 void Video::setPaused( bool p )
@@ -203,11 +202,11 @@ void Video::setPaused( bool p )
 
 void Video::loop()
 {
-  if ( ( videoStatus == 0 ) || ( paused == 1 ) ) return;
+  if ( ( ! videoStatus ) || paused ) return;
 
-  if ( mjpegFile.available() )
+  if ( (millis() - vidtimer ) > 50 ) 
   {
-    if ( (millis() - vidtimer ) > 50 ) 
+    if ( mjpegFile.available() )
     {
       vidtimer = millis();
 
@@ -221,11 +220,13 @@ void Video::loop()
 
       totalFrames++;
 
-      Serial.println( totalFrames );
-
       mjpegrunner.drawJpg();
 
       totalShowVideo += millis() - dtime;
+    }
+    else
+    {
+      stopVideo();
     }
   }
 }

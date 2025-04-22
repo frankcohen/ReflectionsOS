@@ -21,7 +21,7 @@
 #include "TextMessageService.h"
 #include "RealTimeClock.h"
 #include "AccelSensor.h"
-#include "ExperienceService.h"
+#include "TOF.h"
 #include "Steps.h"
 #include "TimerService.h"
 #include "esp_sleep.h"
@@ -36,10 +36,10 @@ extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Battery battery;
 extern RealTimeClock realtimeclock;
 extern AccelSensor accel;
+extern TOF tof;
 extern Video video;
 extern Haptic haptic;
 extern TextMessageService textmessageservice;
-extern ExperienceService experienceservice;
 extern Steps steps;
 extern TimerService timerservice;
 extern GPS gps;
@@ -57,6 +57,7 @@ class WatchFaceMain : public WatchFaceBase
     void begin() override;
     void loop() override;    
     bool okToSleep();
+    bool okToExperience();
 
     enum Panel { 
       STARTUP, MAIN, 
@@ -77,6 +78,7 @@ class WatchFaceMain : public WatchFaceBase
     void changetime();
     void clearsteps();
     void starttimer();
+    void resetOnces();
 
     void showDisplayMain();
 
@@ -103,6 +105,9 @@ class WatchFaceMain : public WatchFaceBase
     int currentHour, currentHour2, currentMinute, currentMinute2;
     int oldHour, oldMinute, oldBattery, oldBlink;
 
+    bool onceDigitalTime;
+    bool onceHealth;
+
     unsigned long battimer;
     int batcount;
     int batlev;
@@ -113,8 +118,11 @@ class WatchFaceMain : public WatchFaceBase
     int catFaceIndex;
     bool catFaceDirection;
 
+    bool drawFace;
     bool drawitall;
     bool needssetup;
+
+    unsigned long enoughTimePassedtimer;
 
     unsigned long noMovementTime;
 
@@ -140,7 +148,6 @@ class WatchFaceMain : public WatchFaceBase
     bool gpsflag;
     int gpsx;
     int gpsy;
-
 };
 
 #endif // WATCHFACE_H

@@ -25,6 +25,7 @@ void WatchFaceMain::begin()
   maintimer = millis();
 
   drawitall = true;
+  drawFace = false;
 
   catFaceIndex = 1;
   catFaceTimer = millis();
@@ -64,10 +65,28 @@ void WatchFaceMain::begin()
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
   panel = STARTUP;
-  //video.startVideo( WatchFaceOpener_video );
+  video.startVideo( WatchFaceOpener_video );
+
+  resetOnces();
+
+  _runmode = true;
 }
 
-/* Returns true when watch face is ok with the processor being put to sleep, to save battery life */
+void WatchFaceMain::resetOnces()
+{
+  onceDigitalTime = true;
+  onceHealth = true;
+}
+
+/* Returns true enough time has passed to start another experience */
+
+bool WatchFaceMain::okToExperience()
+{
+  if ( ( ( panel == STARTUP ) || ( panel == MAIN ) ) && ( millis() - enoughTimePassedtimer > 5000 ) ) return true;
+  return false;
+}
+
+/* Helps cat to know when it's ok to sleep */
 
 bool WatchFaceMain::okToSleep()
 {  
@@ -138,7 +157,7 @@ void WatchFaceMain::updateHoursAndMinutes()
   {
     currentHour = currentHour2;
     displayUpdateable = true;
-    drawitall = true;
+    drawFace = true;
   }
 
   int currentMinute2 = realtimeclock.getMinute();
@@ -149,9 +168,8 @@ void WatchFaceMain::updateHoursAndMinutes()
   {
     currentMinute = currentMinute2;
     displayUpdateable = true;
-    drawitall = true;
+    drawFace = true;
   }
-
 }
 
 // Cat blinks eyes
@@ -187,26 +205,22 @@ void WatchFaceMain::updateBlink()
   
       if ( catFaceIndex < 1 )
       {
-        // Generate a random number between 5000 and 10000
         catFaceDirection = true;       
         catFaceIndex = 1;
         blinking = false;
         catFaceTimer = millis();
         catFaceWait = rand() % 30000;
-        drawitall = true;
       }
     }
   }
 }
 
-// Draw the elements to the buffer
+// Draw the elements to the display
 
 void WatchFaceMain::showDisplayMain()
 {
   if ( ! displayUpdateable ) return;
   displayUpdateable = false;
-
-  if ( drawitall ) start();    // Clear frame buffer
 
   if ( drawitall ) drawImageFromFile( wfMainBackground, true, 0, 0 );
 
@@ -262,9 +276,10 @@ void WatchFaceMain::showDisplayMain()
 
   // Cat face in the middle, and he blinks randomly
 
-  if ( ( catFaceIndex != oldBlink ) || drawitall )
+  if ( ( catFaceIndex != oldBlink ) || drawitall || drawFace )
   {
     oldBlink = catFaceIndex;
+    drawFace = false;
 
     mef = wfMainFace;
     mef += catFaceIndex;
@@ -325,15 +340,33 @@ bool WatchFaceMain::updateTimeLeft()
 
 void WatchFaceMain::loop()
 {
-  if ( video.getStatus() )
+  if ( video.getStatus() || textmessageservice.active() ) 
   {
+    /*
+    String mef = "WatchFaceMain ";
+    
+    if ( video.getStatus() )
+    {
+      mef += "1 ";
+    }
+    else
+    {
+      mef += "0 ";
+    }
+
+    if ( video.getStatus() )
+    {
+      mef += "1";
+    }
+    else
+    {
+      mef += "0";
+    }
+    
+    Serial.println( mef );
+    */
     return;
   }
-
-  if ( textmessageservice.active() )
-  {
-    return;
-  } 
   
   switch ( panel ) 
   {
@@ -399,8 +432,10 @@ void WatchFaceMain::main()
     needssetup = false;
     accel.tapped();       // Clears any taps
     accel.doubletapped();
+    tof.getGesture();     // Clears sensor gestures
     drawitall = true;
     blinking = false;
+    resetOnces();
     return;
   }
 
@@ -412,6 +447,7 @@ void WatchFaceMain::main()
     needssetup = true;
     noMovementTime = millis();
     textmessageservice.stop();
+    enoughTimePassedtimer = millis();
     return;
   }
 
@@ -436,33 +472,42 @@ void WatchFaceMain::displayingdigitaltime()
     needssetup = false;
     noMovementTime = millis();
 
-    int index = random(0, 37);
-    textmessageservice.startShow( TextMessageExperiences::DigitalTime, F(""), F("") );
+    drawImageFromFile( wfMain_Time_Background, true, 0, 0 );
+    textmessageservice.startShow( TextMessageExperiences::DigitalTime, "", "" );
     return;
   }
 
   if ( accel.doubletapped() )
   {
+    Serial.println( F( "displayingdigitaltime double tapped" ) );
+
     panel = SETTING_DIGITAL_TIME;
     needssetup = true;
     textmessageservice.stop();
     noMovementTime = millis();
+    enoughTimePassedtimer = millis();
     return;
   }
 
   if ( accel.tapped() )
   {
+    Serial.println( F( "displayingdigitaltime tapped" ) );
+
     panel = DISPLAYING_HEALTH_STATISTICS;
     //haptic.playEffect(14);  // 14 Strong Buzz
     video.startVideo( WatchFaceFlip2_video );
     needssetup = true;
     textmessageservice.stop();
     noMovementTime = millis();
+    enoughTimePassedtimer = millis();
     return;
   }
 
-  drawImageFromFile( wfMain_Time_Background, true, 0, 0 );
-  textmessageservice.updateTime();
+  if ( onceDigitalTime )
+  {
+    onceDigitalTime = false;
+    textmessageservice.updateTime();
+  }
 }
 
 void WatchFaceMain::settingdigitaltime()
@@ -481,7 +526,7 @@ void WatchFaceMain::settingdigitaltime()
     currentNeutralMeasurementY = accel.getYreading() + 15000; // Current Y-axis tilt value
     currentNeutralMeasurementX = accel.getXreading() + 15000; // Current Y-axis tilt value
 
-    drawImageFromFile( wfMain_SetTime_Background_Hour, true, 0, 0 );
+    //drawImageFromFile( wfMain_SetTime_Background_Hour, true, 0, 0 );
     drawHourMinute( currentHour, currentMinute, hourschanging );
     return;
   }
@@ -493,6 +538,7 @@ void WatchFaceMain::settingdigitaltime()
     //haptic.playEffect(14);  // 14 Strong Buzz
     needssetup = true;
     noMovementTime = millis();
+    enoughTimePassedtimer = millis();
     textmessageservice.stop();
     drawitall = true;
     return;
@@ -505,6 +551,7 @@ void WatchFaceMain::settingdigitaltime()
     video.startVideo( WatchFaceFlip3_video );
     needssetup = true;
     noMovementTime = millis();
+    enoughTimePassedtimer = millis();
     textmessageservice.stop();
     drawitall = true;
     return;
@@ -625,6 +672,7 @@ void WatchFaceMain::changetime()
     needssetup = true;
     noMovementTime = millis();
     textmessageservice.stop();
+    enoughTimePassedtimer = millis();
     realtimeclock.setTime( currentHour, currentMinute, 0 );
     return;
   }
@@ -640,7 +688,7 @@ void WatchFaceMain::changetime()
     return;
   }
 
-  drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
+  //drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
   textmessageservice.drawCenteredMesssage( F("Tap To Set"), F("New Time") );
 }
 
@@ -673,12 +721,13 @@ void WatchFaceMain::clearsteps()
     video.startVideo( WatchFaceFlip3_video );
     textmessageservice.stop();
     noMovementTime = millis();
+    enoughTimePassedtimer = millis();
     needssetup = true;
     steps.resetStepCount();
     return;
   }
 
-  drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
+  //drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
   textmessageservice.drawCenteredMesssage( F("Tap To"), F("Clear Steps") );
 }
 
@@ -711,11 +760,12 @@ void WatchFaceMain::starttimer()
     video.startVideo( WatchFaceFlip3_video );
     textmessageservice.stop();
     needssetup = true;
+    enoughTimePassedtimer = millis();
     timerservice.start();
     return;
   }
 
-  drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
+  //drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
   textmessageservice.drawCenteredMesssage( F("Tap To"), F("Start Timer") );
 }
 
@@ -727,6 +777,7 @@ void WatchFaceMain::displayinghealthstatistics()
     needssetup = false;
     drawImageFromFile( wfMain_Health_Background, true, 0, 0 );
     noMovementTime = millis();
+    enoughTimePassedtimer = millis();
     return;
   }
 
@@ -735,6 +786,7 @@ void WatchFaceMain::displayinghealthstatistics()
     panel = CONFIRM_CLEAR_STEPS;
     needssetup = true;
     noMovementTime = millis();
+    enoughTimePassedtimer = millis();
     return;
   }
 
@@ -745,12 +797,17 @@ void WatchFaceMain::displayinghealthstatistics()
     //haptic.playEffect(14);  // 14 Strong Buzz
     needssetup = true;
     noMovementTime = millis();
+    enoughTimePassedtimer = millis();
     textmessageservice.stop();
     return;
   }
 
-  drawImageFromFile( wfMain_Health_Background, true, 0, 0 );
-  textmessageservice.updateHealth( steps.howManySteps() );
+  if ( onceHealth )
+  {
+    onceHealth = false;
+    drawImageFromFile( wfMain_Health_Background, true, 0, 0 );
+    textmessageservice.updateHealth( steps.howManySteps() );
+  }
 }
 
 void WatchFaceMain::displayingtimer()
@@ -761,6 +818,7 @@ void WatchFaceMain::displayingtimer()
     needssetup = false;
     drawImageFromFile( wfMain_Timer_Background, true, 0, 0 );
     noMovementTime = millis();
+    enoughTimePassedtimer = millis();
     return;
   }
 
@@ -771,6 +829,7 @@ void WatchFaceMain::displayingtimer()
     noMovementTime = millis();
     textmessageservice.stop();
     referenceY = accel.getYreading() + 15000; // Current Y-axis tilt value
+    enoughTimePassedtimer = millis();
     return;
   }
 
@@ -782,10 +841,11 @@ void WatchFaceMain::displayingtimer()
     video.startVideo( WatchFaceFlip3_video );
     //haptic.playEffect(14);  // 14 Strong Buzz
     noMovementTime = millis();
+    enoughTimePassedtimer = millis();
     return;
   }
 
-  drawImageFromFile( wfMain_Timer_Background, true, 0, 0 );
+  //drawImageFromFile( wfMain_Timer_Background, true, 0, 0 );
   textmessageservice.updateTimer( timerservice.getTime() );
 }
 
@@ -800,6 +860,7 @@ void WatchFaceMain::settingtimer()
     currentHour = timerservice.getTime();
     tilttimer = millis();
     waitForNextReference = false;
+    enoughTimePassedtimer = millis();
     return;
   }
 
@@ -807,15 +868,15 @@ void WatchFaceMain::settingtimer()
   {
     needssetup = true;
     panel = CONFIRM_START_TIMER;
-    //video.startVideo( WatchFaceFlip2_video );
+    video.startVideo( WatchFaceFlip2_video );
     //haptic.playEffect(14);  // 14 Strong Buzz
     noMovementTime = millis();
     textmessageservice.stop();
     timerservice.start();
+    enoughTimePassedtimer = millis();
     return;
   }
 
-  /*
   if ( accel.tapped() && ( noMovementTime > 5000 ) )
   {
     panel = MAIN;
@@ -823,9 +884,9 @@ void WatchFaceMain::settingtimer()
     video.startVideo( WatchFaceFlip3_video );
     //haptic.playEffect(14);  // 14 Strong Buzz
     textmessageservice.stop();
+    enoughTimePassedtimer = millis();
     return;
   }
-  */
 
   if ( millis() - tilttimer > 500 )
   {
@@ -860,7 +921,7 @@ void WatchFaceMain::settingtimer()
     }
 
     String met = String( currentHour );
-    drawImageFromFile( wfMain_SetTimer_Background_Shortie, true, 0, 0 );
+    //drawImageFromFile( wfMain_SetTimer_Background_Shortie, true, 0, 0 );
     textmessageservice.updateTempTime( met );
   }
 }

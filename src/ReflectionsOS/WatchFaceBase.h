@@ -45,6 +45,9 @@ class WatchFaceBase
     virtual void start(); // Method to clear the buffer
     virtual void show();
 
+    bool isRunning();     // True when Watch Face Main is on the display
+    void setRunning( bool _run );
+
     void drawImageFromFile( String filename, bool embellishfilename, int16_t x, int16_t y);
 
   protected:
@@ -53,6 +56,7 @@ class WatchFaceBase
     unsigned long curr_ms;
     int x, y, w, h;
     JPEGDEC jpg;
+    bool _runmode;
 
 };
 

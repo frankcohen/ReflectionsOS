@@ -142,20 +142,24 @@ int32_t mySeekPng(PNGFILE *handle, int32_t position)
   return imgFile.seek(position);
 }
 
+bool WatchFaceBase::isRunning()
+{
+  return _runmode;
+}
+
+void WatchFaceBase::setRunning( bool _run )
+{
+  _runmode = _run;
+}
+
 WatchFaceBase::WatchFaceBase() 
 {}
 
 void WatchFaceBase::start() 
-{
-  if ( gfx != nullptr )
-  {
-    gfx->fillScreen( BLACK ); // Clear the buffer to prepare for new drawings
-  }
-}
+{}
 
 void WatchFaceBase::show() 
-{
-}
+{}
 
 /* Uses file extension for image type, .png, .jpg */
 

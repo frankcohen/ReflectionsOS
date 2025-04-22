@@ -51,7 +51,7 @@ void TextMessageService::runMysticShow()
 
   if ( showStep == 1 )
   {
-    if ( fadeInCenteredText( theMsg1, 80, 10, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later12pt7b, false ) )
+    if ( fadeInCenteredText( theMsg1, 80, 10, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later12pt7b ) )
     {
       showStep = 2;
       fadeset = 1;
@@ -64,7 +64,7 @@ void TextMessageService::runMysticShow()
 
   if ( showStep == 2 )
   {
-   if ( fadeInCenteredText( theMsg2, 110, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b, false ) )
+   if ( fadeInCenteredText( theMsg2, 110, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b ) )
     {
       showStep = 4;
       fadeset = 1;
@@ -77,7 +77,7 @@ void TextMessageService::runMysticShow()
 
   if ( showStep == 3 )
   {
-   if ( fadeOutCenteredText( theMsg2, 110, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b, false ) )
+   if ( fadeOutCenteredText( theMsg2, 110, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b ) )
     {
       showStep = 5;
       fadeset = 1;
@@ -90,7 +90,7 @@ void TextMessageService::runMysticShow()
 
   if ( showStep == 4 )
   {
-    if ( fadeOutCenteredText( theMsg1, 80, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later12pt7b, false ) )
+    if ( fadeOutCenteredText( theMsg1, 80, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later12pt7b ) )
     {
       activated = false;
       showStep = 0;
@@ -135,7 +135,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
   if ( showStep == 1 )
   {
-    if ( fadeInCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b, false ) )
+    if ( fadeInCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b ) )
     {
       showStep = 2;
       fadeset = 1;
@@ -148,7 +148,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
   if ( showStep == 2 )
   {
-    if ( fadeInCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b, false ) )
+    if ( fadeInCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b ) )
     {
       showStep = 3;
       fadeset = 1;
@@ -161,7 +161,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
   if ( showStep == 3 )
   {
-   if ( fadeInCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b, false ) )
+   if ( fadeInCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b ) )
     {
       showStep = 4;
       fadeset = 1;
@@ -174,7 +174,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
   if ( showStep == 4 )
   {
-   if ( fadeOutCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b, false ) )
+   if ( fadeOutCenteredText( theMsg2, 170, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b ) )
     {
       showStep = 5;
       fadeset = 1;
@@ -187,7 +187,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
   if ( showStep == 5 )
   {
-    if ( fadeOutCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b, false ) )
+    if ( fadeOutCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b ) )
     {
       showStep = 6;
       fadeset = 1;
@@ -200,7 +200,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
 
   if ( showStep == 6 )
   {
-    if ( fadeOutCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b, false ) )
+    if ( fadeOutCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b ) )
     {
       activated = false;
       showStep = 0;
@@ -229,27 +229,12 @@ void TextMessageService::runDigitalTime()
 
   if ( showStep == 1 )
   {
-    if ( fadeInCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b, true ) )
+    if ( fadeInCenteredText( theTime, 127, 30, COLOR_TEXT_YELLOW, wfMain_BackgroundBlue, &Minya_Nouvelle_Rg30pt7b ) )
     {
-      showStep = 2;
+      activated = false;
+      showStep = 0;
       fadeset = 1;
-    }
-    else
-    {
-      return;
-    }
-  }
-
-  if ( showStep == 2 )
-  {
-    if ( fadeOutCenteredText( theTime, 130, 50, COLOR_STRIPE_MEDIUM_GRAY, COLOR_BLACK, &Minya16pt7b, true ) )
-    {
-      showStep = 3;
-      fadeset = 1;
-    }
-    else
-    {
-      return;
+      ShowTimeWaitTime = millis();
     }
   }
 }
@@ -280,6 +265,9 @@ void TextMessageService::updateTime()
   gfx->setFont( &Minya_Nouvelle_Rg30pt7b );
   y = 135;
   gfx->getTextBounds( theTime.c_str(), 0, 0, &x, &y, &w, &h);
+
+  gfx->fillRect( x, y, w, h, wfMain_BackgroundBlue); // Clear to background
+
   gfx->setCursor( (gfx->width() - w) / 2, 127 );
   gfx->setTextColor( COLOR_TEXT_YELLOW );
   gfx->println( theTime );
@@ -291,7 +279,14 @@ void TextMessageService::updateTempTime( String tempTime )
 {
   gfx->setFont( &Minya_Nouvelle_Rg30pt7b );
   y = 135;
-  gfx->getTextBounds( tempTime.c_str(), 0, 0, &x, &y, &w, &h);
+
+  int16_t x1 = 0;
+  int16_t y1 = 0;
+  uint16_t w = 0;
+  uint16_t h = 0;
+
+  gfx->getTextBounds( tempTime.c_str(), 0, 0, &x1, &y1, &w, &h);
+  gfx->fillRect( (gfx->width() - w) / 2, 106, w, h, wfMain_BackgroundBlue ); // Clear to background
   gfx->setCursor( (gfx->width() - w) / 2, 135 );
   gfx->setTextColor( COLOR_TEXT_YELLOW );
   gfx->println( tempTime );
@@ -335,6 +330,9 @@ void TextMessageService::updateHealth( int smallsteps )
   y = 135;
   mef = formatWithCommas( smallsteps );
   gfx->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
+
+  gfx->fillRect( x, y, w, h, wfMain_BackgroundBlue); // Clear to background
+
   gfx->setCursor( (gfx->width() - w) / 2, 135 );
   gfx->setTextColor( COLOR_TEXT_YELLOW );
   gfx->println( mef );
@@ -348,6 +346,9 @@ void TextMessageService::updateTimer( int minutesleft )
   y = 135;
   String mef = (String) minutesleft;
   gfx->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
+
+  gfx->fillRect( x, y, w, h, wfMain_BackgroundBlue); // Clear to background
+
   gfx->setCursor( (gfx->width() - w) / 2, 135 );
   gfx->setTextColor( COLOR_TEXT_YELLOW );
   gfx->println( minutesleft );
@@ -395,21 +396,13 @@ String TextMessageService::getRTCtime()
   return timeStr;
 }
 
-boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font, bool buffertag)
+boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font )
 {
   if ( fadeset )
   {
     fadeset = 0;
-    if ( buffertag )
-    {
-      gfx->setFont( font );
-      gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
-    }
-    else
-    {
-      gfx->setFont( font );
-      gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
-    }
+    gfx->setFont( font );
+    gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
 
     fadestep = 1;
     steps = 128; // One step per color intensity value
@@ -428,39 +421,22 @@ boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t
 
     uint16_t textColor = (r << 11) | (g << 5) | b;
 
-    if ( buffertag )
-    {
-      gfx->setCursor( (gfx->width() - w) / 2, y );
-      gfx->setTextColor( textColor );
-      gfx->println( text );
-    }
-    else
-    {
-      gfx->setCursor( ( gfx->width() - w) / 2, y );
-      gfx->setTextColor( textColor );
-      gfx->println( text );
-    }
+    gfx->setCursor( (gfx->width() - w) / 2, y );
+    gfx->setTextColor( textColor );
+    gfx->println( text );
   }
 
   return false;
 }
 
-boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font, bool buffertag )
+boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font )
 {
   if ( fadeset )
   {
     fadeset = 0;
 
-    if ( buffertag )
-    {
-      gfx->setFont( font );
-      gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);   
-    }
-    else
-    {
-      gfx->setFont( font );
-      gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h );   
-    } 
+    gfx->setFont( font );
+    gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);   
 
     fadestep = 128;
     steps = 128;
@@ -480,21 +456,12 @@ boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_
 
     uint16_t textColor = (r << 11) | (g << 5) | b;
 
-    if ( buffertag )
-    {
-      gfx->setFont( font );
-      gfx->setCursor( (gfx->width() - w) / 2, y );
-      gfx->setTextColor( textColor );
-      gfx->println( text );
-    }
-    else
-    {
-      gfx->setFont( font );
-      gfx->setCursor( (gfx->width() - w) / 2, y );
-      gfx->setTextColor( textColor );
-      gfx->println( text );
-    }
+    gfx->setFont( font );
+    gfx->setCursor( (gfx->width() - w) / 2, y );
+    gfx->setTextColor( textColor );
+    gfx->println( text );
   }
+
   return false;
 }
 

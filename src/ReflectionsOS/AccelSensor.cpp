@@ -118,6 +118,8 @@ void AccelSensor::begin()
 
   started = true;
 
+  reporttimer = millis();
+
   //printHeader();
 }
 
@@ -329,5 +331,21 @@ void AccelSensor::SimpleRangeFiltering()
 void AccelSensor::loop()
 {
   SimpleRangeFiltering();
+
+  if ( millis() - reporttimer > 2000 )
+  {
+    reporttimer = millis();
+
+    String mef = "Accel: tap ";
+    mef += tapdet;
+    mef += ", double ";
+    mef += doubletapdet;
+    mef += ", triple ";
+    mef += trippledet;
+    mef += ", fabs(jerk) ";
+    mef += fabs( jerk );
+    Serial.println( mef );
+  }
+
 }
 

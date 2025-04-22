@@ -12,6 +12,9 @@
 #ifndef EXPERIENCE_H
 #define EXPERIENCE_H
 
+#include "WatchFaceMain.h"
+extern WatchFaceMain watchfacemain;
+
 class Experience 
 {
   public:
@@ -51,6 +54,7 @@ class Experience
 
     void setTeardownComplete(bool complete) {
       teardownComplete = complete;
+      watchfacemain.begin();
     }
 
     void setStopped( bool stop )
@@ -69,6 +73,7 @@ class Experience
     bool teardownComplete = false;
     bool stopped = false;
     bool idle = false;
+    bool tearflag;
 };
 
 #endif // EXPERIENCE_H

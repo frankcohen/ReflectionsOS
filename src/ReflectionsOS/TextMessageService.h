@@ -28,7 +28,6 @@
 #include "Minya_Nouvelle_Rg30pt7b.h"
 
 extern LOGGER logger;
-extern Arduino_Canvas *bufferCanvas;
 extern Arduino_GFX *gfx;
 extern RealTimeClock realtimeclock;
 
@@ -59,8 +58,8 @@ class TextMessageService
     void begin();
     void loop();
 
-    boolean fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font, bool buffertag );
-    boolean fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font, bool buffertag);
+    boolean fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font );
+    boolean fadeOutCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font );
     void startShow( int shownum, String msg1, String msg2 );
 
     bool active();

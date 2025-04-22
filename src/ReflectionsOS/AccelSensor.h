@@ -135,6 +135,8 @@ class AccelSensor
     double currentNeutralMeasurement;
 
     bool started;
+
+    unsigned long reporttimer;
 };
 
 #endif // ACCEL_SENSOR_H

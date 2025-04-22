@@ -94,6 +94,7 @@ Read the license in the license.txt file that comes with this code.
 #define wfMain_Face_Main_TimerNotice F("Face_Main_TimerNotice.png")
 #define wfMain_Face_BlueDot_Background F("Face_Main_Blue_Dot_Background.jpg")
 #define wfMain_GPSmarker F("GPSmarker.png")
+#define wfMain_BackgroundBlue RGB565( 55, 160, 223 )
 
 #define TRANSPARENT_COLOR 0xFFE0
 #define TRANSPARENT_COLOR_PNG 0x00000000

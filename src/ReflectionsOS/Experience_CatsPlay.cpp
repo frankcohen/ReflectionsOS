@@ -87,43 +87,29 @@ void Experience_CatsPlay::run()
     Serial.println( head );
   }
 
-  // Pounce gesture made? Send pounce message
-
-    /*
-    tapped();
-    doubletapped();
-    shaken();
-    */
-
   if ( accel.tapped() )
   {
     Serial.println( "CatsPlay start pounce to remote devices" );
     blesupport.setPounce( true );    
   }
 
+  if ( ! video.getStatus() ) return;
+
   // Play time done?
 
   if ( millis() - overallTimer > 30000 )
   {
     setRunComplete(true);  // Signal run complete
+
+    video.startVideo( Getting_Sleepy_video );
   }
-
-  // User gestured a pounce to the connected cat
-
-  int mygs = tof.getGesture();
-  if ( mygs == TOF::None ) return;
-
-  Serial.print( mygs );
-  Serial.println( F(" sending pounce"));
-
-  Serial.println( F("Asked client to send pounce"));
 }
 
 void Experience_CatsPlay::teardown() 
 {
-  if ( video.getStatus() == 0 )
-  {
-    video.startVideo( Sleep_video );
-    setTeardownComplete( true );  // Signal teardown complete
-  }
+  if ( video.getStatus() ) return;
+
+  Serial.print( catsplayname );
+  Serial.println( F("TEARDOWN") );
+  setTeardownComplete( true );  // Signal teardown complete
 }

@@ -30,7 +30,6 @@ extern LOGGER logger;
 extern AccelSensor accel;
 extern TOF tof;
 extern BLEsupport blesupport;
-
 extern Video video;
 extern TextMessageService textmessageservice;
 

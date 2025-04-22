@@ -344,6 +344,7 @@ void setup()
   systemload.printHeapSpace( "Hardware begin" );
 
   video.begin();
+  video.setPaused( true );
   systemload.printHeapSpace( "Video" );
 
   mjpegrunner.begin();
@@ -438,6 +439,12 @@ void setup()
   textmessageservice.begin();
   experienceservice.begin();
   watchfaceexperiences.begin();
+
+  while ( ! tofstarted )
+  {
+    smartdelay(1000);
+  }
+  video.setPaused( false );
 
   logger.info(F("Setup complete"));
 }

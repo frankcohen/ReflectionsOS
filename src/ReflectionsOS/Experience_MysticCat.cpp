@@ -82,26 +82,11 @@ void Experience_MysticCat::run()
       return;
     }
   }
-
-  if ( video.getStatus() == 0 )
-  {
-    setRunComplete(true);  // Signal run complete
-    return;
-  }
 }
 
 void Experience_MysticCat::teardown() 
 {
-  if ( tearflag )
-  {
-    tearflag = false;
-    Serial.print( mysticname );
-    Serial.println( F("TEARDOWN") );
-  }
+  if ( video.getStatus() ) return;
 
-  if ( video.getStatus() == 0 )
-  {
-    timeflag = true;
-    setTeardownComplete( true );  // Signal teardown complete
-  }
+  setTeardownComplete(true);
 }

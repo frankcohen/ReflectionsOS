@@ -31,6 +31,8 @@ extern Haptic haptic;
 extern AccelSensor accel;
 extern BLEsupport blesupport;
 
+#define catsplayname F("Catsplay ")
+
 class Experience_CatsPlay : public Experience {
   public:
     void setup() override;
