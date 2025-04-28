@@ -18,21 +18,11 @@ TextMessageService::TextMessageService(){}
 
 void TextMessageService::begin()
 { 
-  ShowTimeWaitTime = millis();
+  waitTime = millis();
   activated = false;
-  timeValid = false;
   theTime = F("0 o'clock");
-  timeShowing = false;
-  dialActivated = false;
-  stTime = millis();
 
   stepDelay = 100;
-
-  carrotAngle = 0.0;
-  lastMoveTime = millis();
-  moving = false;
-  prior = false;
-  String pastTimeStr = F(" ");
 }
 
 /*
@@ -45,7 +35,6 @@ void TextMessageService::runMysticShow()
   {    
     showStep = 1;
     fadeset = 1;
-
     return;
   }
 
@@ -66,7 +55,7 @@ void TextMessageService::runMysticShow()
   {
    if ( fadeInCenteredText( theMsg2, 110, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b ) )
     {
-      showStep = 4;
+      showStep = 3;
       fadeset = 1;
     }
     else
@@ -79,7 +68,7 @@ void TextMessageService::runMysticShow()
   {
    if ( fadeOutCenteredText( theMsg2, 110, 10, COLOR_STRIPE_PINK, COLOR_BLACK, &ScienceFair14pt7b ) )
     {
-      showStep = 5;
+      showStep = 4;
       fadeset = 1;
     }
     else
@@ -92,10 +81,7 @@ void TextMessageService::runMysticShow()
   {
     if ( fadeOutCenteredText( theMsg1, 80, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later12pt7b ) )
     {
-      activated = false;
-      showStep = 0;
-      fadeset = 1;
-      ShowTimeWaitTime = millis();
+      deactivate();
     }
     else
     {
@@ -109,10 +95,19 @@ void TextMessageService::startShow( int shownum, String msg1, String msg2 )
   showNum = shownum;
   showStep = 0;
   activated = true;
-  ShowTimeWaitTime = millis();
+  waitTime = millis();
   stepDelay = 100;
   theMsg1 = msg1;
   theMsg2 = msg2;
+}
+
+void TextMessageService::deactivate()
+{
+  activated = false;
+  waitTime = millis();
+  showStep = 0;
+  stepDelay = 100;
+  fadeset = 1;
 }
 
 bool TextMessageService::isTimeSet()
@@ -202,10 +197,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
   {
     if ( fadeOutCenteredText( theMsg1, 90, 100, COLOR_TEXT_YELLOW, COLOR_BLACK, &Some_Time_Later20pt7b ) )
     {
-      activated = false;
-      showStep = 0;
-      fadeset = 1;
-      ShowTimeWaitTime = millis();
+      deactivate();
     }
     else
     {
@@ -231,10 +223,7 @@ void TextMessageService::runDigitalTime()
   {
     if ( fadeInCenteredText( theTime, 127, 30, COLOR_TEXT_YELLOW, wfMain_BackgroundBlue, &Minya_Nouvelle_Rg30pt7b ) )
     {
-      activated = false;
-      showStep = 0;
-      fadeset = 1;
-      ShowTimeWaitTime = millis();
+      deactivate();
     }
   }
 }
@@ -473,9 +462,9 @@ void TextMessageService::loop()
 
   if ( activated )
   {    
-    if ( ( millis() - ShowTimeWaitTime ) > stepDelay )
+    if ( ( millis() - waitTime ) > stepDelay )
     {
-      ShowTimeWaitTime = millis();
+      waitTime = millis();
 
       switch ( showNum ) 
       {

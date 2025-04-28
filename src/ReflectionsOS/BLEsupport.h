@@ -7,6 +7,13 @@
  Licensed under GPL v3 Open Source Software
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
+
+ ChatGPT says RSSI values:
+ -30 dBm to -50 dBm: Very strong signal; the devices are very close (within a few centimeters to about 1 meter).
+ -50 dBm to -70 dBm: Strong signal; the devices are likely within 1 to 5 meters.
+ -70 dBm to -90 dBm: Moderate signal; the devices might be within 5 to 10 meters.
+ -90 dBm and below: Weak signal; the devices are likely farther apart or there are significant obstacles/interference.
+
 */
 
 #ifndef BLE_SUPPORT_H

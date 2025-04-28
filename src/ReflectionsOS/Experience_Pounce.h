@@ -18,9 +18,11 @@
 
 #include "Logger.h"
 #include "Video.h"
+#include "Haptic.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
+extern Haptic haptic;
 
 class Experience_Pounce : public Experience {
   public:

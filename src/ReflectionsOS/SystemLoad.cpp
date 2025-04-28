@@ -14,7 +14,7 @@ SystemLoad::SystemLoad() {}
 
 void SystemLoad::begin()
 {
-  interval = 15 * 1000;
+  interval = 30 * 1000;
   previousMillis = 0;
 
   // Initialize accumulated values

@@ -142,10 +142,6 @@ ExperienceService::ExperienceService() : currentExperience( nullptr ), currentSt
     while(1);
   }
   experiences.push_back( makeExp );
-
-  beingpounced = true;
-  pnctimer = millis();
-
 }
 
 String ExperienceService::experienceNameToString( int experience ) 
@@ -186,6 +182,8 @@ void ExperienceService::begin()
   afterCatsPlay = millis();
   afterPounce = millis();
 
+  temptimer = millis();
+
   //startExperience( ExperienceService::Awake );   // Sleep experience
 }
 
@@ -194,9 +192,30 @@ void ExperienceService::resetAfterTimer()
   afterTimer = millis();
 }
 
+unsigned long ExperienceService::getAfterTimer()
+{
+  return afterTimer;
+}
+
 void ExperienceService::startExperience( int exper )
 {
-  currentExperience = experiences[ exper ];
+  if (exper >= 0 && exper < experiences.size()) 
+  {
+    currentExperience = experiences[exper];
+  }
+  else 
+  {
+    Serial.print( "Invalid experience index: " );
+    Serial.println(exper);
+    return;
+  }
+
+  if ( currentExperience == nullptr ) 
+  {
+    Serial.print( "ExperienceService null pointer on starting experience " );
+    Serial.println(exper);
+    return;
+  }
   
   if ( currentExperience == nullptr )
   {
@@ -208,12 +227,12 @@ void ExperienceService::startExperience( int exper )
   Serial.print( F("startExperience ") );
   Serial.println( experienceNameToString( exper ) );
 
+  experiencestats.record( experienceNameToString( exper ) );
+
   currentExperience->init();
   currentState = SETUP;
 
   noopFlag = true;
-
-  watchfacemain.setRunning( false );
 }
 
 void ExperienceService::setCurrentState( State state )
@@ -242,8 +261,6 @@ void ExperienceService::operateExperience()
       {
         currentState = RUN;
       }
-
-      tof.stopGestureSensing();
 
       break;
 
@@ -294,97 +311,6 @@ bool ExperienceService::active()
 void ExperienceService::loop()
 {
   operateExperience();      // Run the current experience, if any
-
-  // Pounce gesture message received, overrides exepriences
-  if ( blesupport.isAnyDevicePounceTrue() && ( millis() - pnctimer > 60000 ))
-  {
-    Serial.println( "Pounce from an other device" );
-    video.stopVideo();
-    beingpounced = true;
-    pnctimer = millis();
-    startExperience( ExperienceService::Pounce );
-    return;
-  }
-
-  if ( getCurrentState() != STOPPED ) return;
-
-  if ( video.getStatus() != 0 ) return;
-
-  if ( millis() - afterTimer < 4000 ) return;
-
-  if ( ! watchfacemain.okToExperience() ) return;
-
-  if ( millis() - gestureTimer > 500 )
-  {
-    gestureTimer = millis();
-
-    // Start a new experience from the TOF sensor
-
-    tof.startGestureSensing();
-
-    TOF::TOFGesture recentGesture = tof.getGesture();
-
-    switch ( recentGesture )
-    {
-      case TOF::TOFGesture::None:
-        break;
-
-      case TOF::TOFGesture::Left:
-        //startExperience( ExperienceService::Chastise );
-        break;
-
-      case TOF::TOFGesture::Circular:
-        startExperience( ExperienceService::MysticCat );
-        break;
-
-      case TOF::TOFGesture::Sleep:
-        //startExperience( ExperienceService::Sleep );
-        break;
-
-      case TOF::TOFGesture::Right:
-        // ShowTime with fun messages
-        //startExperience( ExperienceService::ShowTime );
-        break;
-
-      case TOF::TOFGesture::Up:
-        // Parallax cat
-        //startExperience( ExperienceService::ParallaxCat );
-        break;
-
-      case TOF::TOFGesture::Hover:
-        // Finger hovers in one spot
-        //startExperience( ExperienceService::Hover );
-        break;
-
-      case TOF::TOFGesture::Down:
-        //startExperience( ExperienceService::EyesFollowFinger );
-        break;
-
-      default:
-        Serial.print( F("Unknown TOF experience "));
-        Serial.println( recentGesture );
-        break;
-    }
-
-    // Shake experience
-
-    if ( accel.shaken() )
-    {
-      startExperience( ExperienceService::Shaken );
-    }
-
-    if ( ( blesupport.getRemoteDevicesCount() > 0 ) && ( ( millis() - afterCatsPlay) > ( 60 * 1000 ) ) ) 
-    {
-      afterCatsPlay = millis();
-      startExperience( ExperienceService::CatsPlay );
-    }
-
-    // GettingSleepy
-    
-
-    // Swipe - Shake
-
-
-
-  }
+  experiencestats.update();
+  
 }

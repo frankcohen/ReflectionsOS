@@ -18,7 +18,6 @@ WatchFaceExperiences::WatchFaceExperiences() {}
 
 void WatchFaceExperiences::begin() 
 {
-  watchfacemain.begin();
   currentface = MAIN;
 }
 

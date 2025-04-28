@@ -65,6 +65,7 @@ class TextMessageService
     bool active();
     void stop();
     void start();
+    void deactivate();
 
     String getTimeStringFromAngle( float angle );
 
@@ -92,29 +93,15 @@ class TextMessageService
     uint16_t stepDelay;
     int showNum;
     bool activated;
-    long ShowTimeWaitTime;
+    long waitTime;
     bool fadeset;
     int showStep;
     
     String theMsg1;
     String theMsg2;
 
-    bool timeValid;
     struct tm timeinfo;
     String theTime;
-    String theDate;
-
-    float carrotAngle;
-    unsigned long lastMoveTime;
-    bool moving;
-    bool prior;
-
-    bool dialActivated;
-
-    unsigned long stTime;
-    bool timeShowing;
-
-    String pastTimeStr;
 };
 
 #endif // _TEXTMESSAGESERVICE_

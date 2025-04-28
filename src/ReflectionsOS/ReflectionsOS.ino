@@ -102,7 +102,6 @@ in this section: esp32s3.name=ESP32S3 Dev Module
 #include "Hardware.h"
 #include "Wire.h"
 #include "TextMessageService.h"
-#include "ExperienceService.h"
 #include <Arduino_GFX_Library.h>
 #include "WatchFaceExperiences.h"
 #include "WatchFaceMain.h"
@@ -112,6 +111,8 @@ in this section: esp32s3.name=ESP32S3 Dev Module
 #include "TimerService.h"
 #include "SystemLoad.h"
 #include "ScienceFair14pt7b.h"
+#include "ExperienceStats.h"
+#include "ExperienceService.h"
 
 MjpegRunner mjpegrunner;
 Video video;
@@ -121,7 +122,6 @@ Haptic haptic;
 Audio audio;
 TOF tof;
 TextMessageService textmessageservice;
-ExperienceService experienceservice;
 GPS gps;
 Wifi wifi;
 Compass compass;
@@ -136,6 +136,17 @@ Steps steps;
 TimerService timerservice;
 SystemLoad systemload;
 BLEsupport blesupport;
+ExperienceStats experiencestats(60000UL); // Create a global tracker with a 60 000 ms (1 min) reporting interval
+ExperienceService experienceservice;
+
+int rowCount = 0;
+unsigned long slowman = millis();
+unsigned long statstime = millis();
+unsigned long pnctimer = millis();
+unsigned long watchdog = millis();
+unsigned long afterTimer = millis();
+unsigned long gestureTimer = millis();
+unsigned long afterCatsPlay = millis();
 
 const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
 
@@ -299,15 +310,18 @@ static void smartdelay(unsigned long ms) {
 
     // Watch experience operations
 
-    unsigned long fellow = millis();
-    watchfaceexperiences.loop();
-    systemload.logtasktime(millis() - fellow, 1, "we");
-    fellow = millis();
-    experienceservice.loop();
-    systemload.logtasktime(millis() - fellow, 2, F("ex"));
-    fellow = millis();
-    textmessageservice.loop();
-    systemload.logtasktime(millis() - fellow, 3, "tm");
+    if ( ! video.getStatus() )
+    {
+      unsigned long fellow = millis();
+      watchfaceexperiences.loop();
+      systemload.logtasktime(millis() - fellow, 1, "we");
+      fellow = millis();
+      experienceservice.loop();
+      systemload.logtasktime(millis() - fellow, 2, F("ex"));
+      fellow = millis();
+      textmessageservice.loop();
+      systemload.logtasktime(millis() - fellow, 3, "tm");
+    }
 
   	systemload.loop();
 
@@ -336,8 +350,9 @@ void setup()
   Serial.println(F("ReflectionsOS"));
 
   // Core 1 services
-
+  
   systemload.begin();  // System load monitor
+  experiencestats.begin();
   systemload.printHeapSpace( "Start" );
 
   hardware.begin();  // Sets all the hardware pins
@@ -439,7 +454,8 @@ void setup()
   textmessageservice.begin();
   experienceservice.begin();
   watchfaceexperiences.begin();
-
+  watchfacemain.begin();
+  
   while ( ! tofstarted )
   {
     smartdelay(1000);
@@ -472,11 +488,7 @@ void Core0Tasks(void *pvParameters) {
   }
 }
 
-unsigned long slowman = millis();
-int rowCount = 0;
-unsigned long statstime = millis();
-
-void loop() 
+void printMessages()
 {
   if ( millis() - statstime > 1500 )
   {
@@ -508,10 +520,136 @@ void loop()
       rowCount = 0;  // Reset the counter
       // Serial.println( accel.printHeader() );  // Reprint the header
     }
+  }  
+}
 
-    //bool myx = accel.shaken();
-    //if ( myx ) Serial.println( F("Shaken") );
+/*
+reset all
+    accel.tapped();       // Clears any taps
+    accel.doubletapped();
+    tof.getGesture();     // Clears sensor gestures
+    textmessageservice.deactivate();
+*/
+
+
+void loop() 
+{
+  String mets = accel.getTapStats();
+  if ( mets != "" ) Serial.println( mets );
+
+  smartdelay(100);
+}
+
+void loop2()
+{
+
+
+
+
+
+  // Watchdog resets everything when no gestures are found and the watch face is unchanging
+
+  if  ( ( experienceservice.getCurrentState() != ExperienceService::STOPPED ) 
+      && ( ! watchfacemain.okToExperience() )
+      && ( millis() - watchdog > ( 3 * 60000 ) ) )
+  {
+    video.stopVideo();
+
+    accel.tapped();         // Resets accel
+    accel.doubletapped();
+    accel.shaken();
+
+    tof.getGesture();       // Resets TOF
+
+    experienceservice.setCurrentState( ExperienceService::STOPPED );
+    textmessageservice.deactivate();
+
+    watchfacemain.begin();  // Start watch face
   }
 
+  // Finish the current experience first
+
+  if ( experienceservice.getCurrentState() != ExperienceService::STOPPED )
+  {
+    tof.startGestureSensing();
+    return;
+  }
+
+  // Pounce gesture message received, overrides exepriences and main watch face
+
+  if ( blesupport.isAnyDevicePounceTrue() && ( millis() - pnctimer > 60000 ))
+  {
+    Serial.println( "Pounce from an other device" );
+    video.stopVideo();
+    pnctimer = millis();
+    watchdog = millis();
+    experienceservice.startExperience( ExperienceService::Pounce );
+    return;
+  }
+
+  if ( millis() - afterTimer < 4000 ) return;
+  afterTimer = experienceservice.getAfterTimer();
+  tof.startGestureSensing();
+
+  if ( millis() - gestureTimer < 500 ) return;
+  gestureTimer = millis();
+
+  // Start a new experience from the TOF sensor
+
+  TOF::TOFGesture recentGesture = tof.getGesture();
+
+  switch ( recentGesture )
+  {
+    case TOF::TOFGesture::None:
+      break;
+
+    case TOF::TOFGesture::Left:
+      experienceservice.startExperience( ExperienceService::Chastise );
+      break;
+
+    case TOF::TOFGesture::Circular:
+      experienceservice.startExperience( ExperienceService::MysticCat );
+      break;
+
+    case TOF::TOFGesture::Sleep:
+      experienceservice.startExperience( ExperienceService::Sleep );
+      break;
+
+    case TOF::TOFGesture::Right:
+      experienceservice.startExperience( ExperienceService::ShowTime );
+      break;
+
+    case TOF::TOFGesture::Up:
+      experienceservice.startExperience( ExperienceService::ParallaxCat );
+      break;
+
+    case TOF::TOFGesture::Hover:
+      // Finger hovers in one spot
+      experienceservice.startExperience( ExperienceService::Hover );
+      break;
+
+    case TOF::TOFGesture::Down:
+      experienceservice.startExperience( ExperienceService::EyesFollowFinger );
+      break;
+
+    default:
+      Serial.print( F("Unknown TOF experience "));
+      Serial.println( recentGesture );
+      break;
+  }
+
+  // Shake experience
+
+  if ( accel.shaken() )
+  {
+    experienceservice.startExperience( ExperienceService::Shaken );
+  }
+
+  if ( ( blesupport.getRemoteDevicesCount() > 0 ) && ( ( millis() - afterCatsPlay) > ( 60 * 1000 ) ) ) 
+  {
+    afterCatsPlay = millis();
+    experienceservice.startExperience( ExperienceService::CatsPlay );
+  }
+  
   smartdelay(100);
 }

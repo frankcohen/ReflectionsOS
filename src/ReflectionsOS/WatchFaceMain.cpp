@@ -43,7 +43,7 @@ void WatchFaceMain::begin()
   oldHour = 0;
   oldMinute = 0;
   oldBattery = 5;
-  oldBlink = 0;
+  oldBlink = 1;
 
   gpsflag = false;
   gpsx = 0;
@@ -67,7 +67,11 @@ void WatchFaceMain::begin()
   panel = STARTUP;
   video.startVideo( WatchFaceOpener_video );
 
+  textmessageservice.deactivate();
+
   resetOnces();
+
+  temptimer = millis();
 
   _runmode = true;
 }
@@ -78,11 +82,11 @@ void WatchFaceMain::resetOnces()
   onceHealth = true;
 }
 
-/* Returns true enough time has passed to start another experience */
+/* Returns true when enough time has passed to start another experience */
 
 bool WatchFaceMain::okToExperience()
 {
-  if ( ( ( panel == STARTUP ) || ( panel == MAIN ) ) && ( millis() - enoughTimePassedtimer > 5000 ) ) return true;
+  if ( ( ( panel == STARTUP ) || ( panel == MAIN ) ) && ( millis() - enoughTimePassedtimer > 15000 ) ) return true;
   return false;
 }
 
@@ -338,11 +342,12 @@ bool WatchFaceMain::updateTimeLeft()
   return false;
 }
 
-void WatchFaceMain::loop()
+void WatchFaceMain::printStatus()
 {
-  if ( video.getStatus() || textmessageservice.active() ) 
+  if ( millis() - temptimer > 2000 )
   {
-    /*
+    temptimer = millis();
+
     String mef = "WatchFaceMain ";
     
     if ( video.getStatus() )
@@ -354,20 +359,23 @@ void WatchFaceMain::loop()
       mef += "0 ";
     }
 
-    if ( video.getStatus() )
+    if ( textmessageservice.active() )
     {
-      mef += "1";
+      mef += "1 ";
     }
     else
     {
-      mef += "0";
+      mef += "0 ";
     }
     
     Serial.println( mef );
-    */
-    return;
   }
-  
+
+  return;
+}
+
+void WatchFaceMain::loop()
+{
   switch ( panel ) 
   {
     case STARTUP:
@@ -402,7 +410,8 @@ void WatchFaceMain::loop()
       break;  
   }
 
-  //  Every panel with no change, timeout to the main panel
+  //  Timeout any panel - except for the main - with no change in 20 seconds
+
   if ( ( ( millis() - noMovementTime ) > 20000 ) && ( panel != MAIN ) )
   {
     panel = MAIN;
@@ -419,9 +428,8 @@ void WatchFaceMain::startup()
 {
   panel = MAIN;
   needssetup = true;
-  maintimer = millis();
-  //haptic.playEffect(14);  // 14 Strong Buzz
   blinking = false;
+  textmessageservice.deactivate();
 }
 
 void WatchFaceMain::main()
@@ -430,9 +438,6 @@ void WatchFaceMain::main()
   {
     Serial.println( F("MAIN") );
     needssetup = false;
-    accel.tapped();       // Clears any taps
-    accel.doubletapped();
-    tof.getGesture();     // Clears sensor gestures
     drawitall = true;
     blinking = false;
     resetOnces();
@@ -749,6 +754,7 @@ void WatchFaceMain::starttimer()
     video.startVideo( WatchFaceFlip3_video );
     needssetup = true;
     noMovementTime = millis();
+    enoughTimePassedtimer = millis();
     textmessageservice.stop();
     return;
   }

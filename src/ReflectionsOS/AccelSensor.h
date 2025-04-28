@@ -86,6 +86,8 @@ class AccelSensor
 
     void resetLIS3DH();
 
+    void enableWakeOnMotion();
+
     bool tapped();
     bool doubletapped();
     bool shaken();
@@ -99,6 +101,10 @@ class AccelSensor
     void readSensor();               // Reads the sensor
     void detectPeaks();
   
+    String getRecentMessage();
+    String getRecentMessage2();
+    String getTapStats();
+
   private:
     lis3dh_range_t range;
     lis3dh_mode_t powermode;
@@ -137,6 +143,9 @@ class AccelSensor
     bool started;
 
     unsigned long reporttimer;
+    
+    String myMef;
+    String myMef2;
 };
 
 #endif // ACCEL_SENSOR_H

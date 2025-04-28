@@ -79,7 +79,8 @@ class WatchFaceMain : public WatchFaceBase
     void clearsteps();
     void starttimer();
     void resetOnces();
-
+    void printStatus();
+    
     void showDisplayMain();
 
     void updateBlink();
@@ -148,6 +149,8 @@ class WatchFaceMain : public WatchFaceBase
     bool gpsflag;
     int gpsx;
     int gpsy;
+
+    unsigned long temptimer;
 };
 
 #endif // WATCHFACE_H

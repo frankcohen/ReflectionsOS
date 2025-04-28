@@ -118,6 +118,8 @@ void AccelSensor::begin()
 
   started = true;
 
+  enableWakeOnMotion();
+
   reporttimer = millis();
 
   //printHeader();
@@ -217,9 +219,181 @@ void AccelSensor::resetLIS3DH()
   delay(10);
 }
 
-/* getEvent()  gets the raw sensor data then convert
-   into acceleration values in m/s². These are the values that represent
-   how the sensor is moving in 3D space. */
+// Helpers to read/write a single LIS3DH register over I²C
+static uint8_t lis3dh_read8(uint8_t addr, uint8_t reg) {
+  Wire.beginTransmission(addr);
+  Wire.write(reg);
+  Wire.endTransmission(false);
+  Wire.requestFrom(addr, (uint8_t)1);
+  return Wire.read();
+}
+
+static void lis3dh_write8(uint8_t addr, uint8_t reg, uint8_t val) {
+  Wire.beginTransmission(addr);
+  Wire.write(reg);
+  Wire.write(val);
+  Wire.endTransmission();
+}
+
+// Configure to wake from deep sleep on movement
+
+void AccelSensor::enableWakeOnMotion() 
+{
+  // 0) make sure Wire is up (lis3dh.begin() usually calls Wire.begin())
+  //    and that accelAddress matches your I2C address (0x18 or 0x19)
+
+  // 1) Enable the high-pass filter on CTRL_REG2 (e.g. FDS bit)
+  uint8_t ctrl2 = lis3dh_read8(accelAddress, LIS3DH_REG_CTRL2);
+  ctrl2 |= 0x08;  // same mask you had: bit-3 = filtered-data-selection
+  lis3dh_write8(accelAddress, LIS3DH_REG_CTRL2, ctrl2);
+
+  // 2) Build INT1_CFG for “wake on motion” (ZH, YH and XH high)
+  //    [AOI=0, 6D=0, ZHIE=1, ZLIE=0, YHIE=1, YLIE=0, XHIE=1, XLIE=0]
+  uint8_t int1cfg = (1<<5) | (1<<3) | (1<<1);
+  lis3dh_write8(accelAddress, LIS3DH_REG_INT1CFG, int1cfg);
+
+  // 3) Set the threshold (1–127) and duration (1–127) on INT1
+  lis3dh_write8(accelAddress, LIS3DH_REG_INT1THS, 16);
+  lis3dh_write8(accelAddress, LIS3DH_REG_INT1DUR, 10);
+
+  // 4) Latch the interrupt on INT1 (so it stays asserted until you clear it)
+  uint8_t ctrl5 = lis3dh_read8(accelAddress, LIS3DH_REG_CTRL5);
+  ctrl5 |= (1<<3); // LIR_INT1 = bit-3 in CTRL_REG5
+  lis3dh_write8(accelAddress, LIS3DH_REG_CTRL5, ctrl5);
+
+  // 5) Finally, tell the ESP32 “any high on GPIO_NUM_14 (your INT1 pin)
+  //    will wake me from deep sleep”
+  esp_sleep_enable_ext1_wakeup(
+    BIT(GPIO_NUM_14),
+    ESP_EXT1_WAKEUP_ANY_HIGH
+  );
+}
+
+
+
+/* Enabled wake on movement using SparkFunLIS3DH library
+
+  uint8_t ctrlReg2;
+  lis3dh.readRegister(&ctrlReg2, LIS3DH_CTRL_REG2);
+  ctrlReg2 |= 0x08; // Enable high-pass filter
+  lis3dh.writeRegister(LIS3DH_CTRL_REG2, ctrlReg2);
+
+  lis3dh.writeRegister(LIS3DH_INT1_THS, 16 );        // threshold is 1 - 127
+  lis3dh.writeRegister(LIS3DH_INT1_DURATION, 10 );   // interrupt duration 1 - 127 (increase to make it less sensitive)
+
+  uint8_t dataToWrite = 0;
+
+  //LIS3DH_INT1_CFG   
+  //dataToWrite |= 0x80;//AOI, 0 = OR 1 = AND
+  //dataToWrite |= 0x40;//6D, 0 = interrupt source, 1 = 6 direction source
+  //Set these to enable individual axes of generation source (or direction)
+  // -- high and low are used generically
+  dataToWrite |= 0x20;//Z high
+  //dataToWrite |= 0x10;//Z low
+  dataToWrite |= 0x08;//Y high
+  //dataToWrite |= 0x04;//Y low
+  dataToWrite |= 0x02;//X high
+  //dataToWrite |= 0x01;//X low
+  lis3dh.writeRegister(LIS3DH_INT2_CFG, dataToWrite);
+  
+  //LIS3DH_INT1_THS   
+  dataToWrite = 0;
+  //Provide 7 bit value, 0x7F always equals max range by accelRange setting
+  dataToWrite |= 0x10; // 1/8 range
+  lis3dh.writeRegister(LIS3DH_INT2_THS, dataToWrite);
+  
+  //LIS3DH_INT1_DURATION  
+  dataToWrite = 1;
+  //minimum duration of the interrupt
+  //LSB equals 1/(sample rate)
+  dataToWrite |= 0x01; // 1 * 1/50 s = 20ms
+  lis3dh.writeRegister(LIS3DH_INT2_DURATION, dataToWrite);
+  
+  //LIS3DH_CLICK_CFG   
+  dataToWrite = 0;
+  //Set these to enable individual axes of generation source (or direction)
+  // -- set = 1 to enable
+  //dataToWrite |= 0x20;//Z double-click
+  dataToWrite |= 0x10;//Z click
+  //dataToWrite |= 0x08;//Y double-click 
+  dataToWrite |= 0x04;//Y click
+  //dataToWrite |= 0x02;//X double-click
+  dataToWrite |= 0x01;//X click
+  lis3dh.writeRegister(LIS3DH_CLICK_CFG, dataToWrite);
+  
+  //LIS3DH_CLICK_SRC
+  dataToWrite = 0;
+  //Set these to enable click behaviors (also read to check status)
+  // -- set = 1 to enable
+  //dataToWrite |= 0x20;//Enable double clicks
+  dataToWrite |= 0x04;//Enable single clicks
+  //dataToWrite |= 0x08;//sine (0 is positive, 1 is negative)
+  dataToWrite |= 0x04;//Z click detect enabled
+  dataToWrite |= 0x02;//Y click detect enabled
+  dataToWrite |= 0x01;//X click detect enabled
+  lis3dh.writeRegister(LIS3DH_CLICK_SRC, dataToWrite);
+  
+  //LIS3DH_CLICK_THS   
+  dataToWrite = 0;
+  //This sets the threshold where the click detection process is activated.
+  //Provide 7 bit value, 0x7F always equals max range by accelRange setting
+  dataToWrite |= 0x0A; // ~1/16 range
+  lis3dh.writeRegister(LIS3DH_CLICK_THS, dataToWrite);
+  
+  //LIS3DH_TIME_LIMIT  
+  dataToWrite = 0;
+  //Time acceleration has to fall below threshold for a valid click.
+  //LSB equals 1/(sample rate)
+  dataToWrite |= 0x08; // 8 * 1/50 s = 160ms
+  lis3dh.writeRegister(LIS3DH_TIME_LIMIT, dataToWrite);
+  
+  //LIS3DH_TIME_LATENCY
+  dataToWrite = 0;
+  //hold-off time before allowing detection after click event
+  //LSB equals 1/(sample rate)
+  dataToWrite |= 0x08; // 4 * 1/50 s = 160ms
+  lis3dh.writeRegister(LIS3DH_TIME_LATENCY, dataToWrite);
+  
+  //LIS3DH_TIME_WINDOW 
+  dataToWrite = 0;
+  //hold-off time before allowing detection after click event
+  //LSB equals 1/(sample rate)
+  dataToWrite |= 0x10; // 16 * 1/50 s = 320ms
+  lis3dh.writeRegister(LIS3DH_TIME_WINDOW, dataToWrite);
+
+  //LIS3DH_CTRL_REG5
+  //Int1 latch interrupt and 4D on  int1 (preserve fifo en)
+  lis3dh.readRegister(&dataToWrite, LIS3DH_CTRL_REG5);
+  dataToWrite &= 0xF3; //Clear bits of interest
+  dataToWrite |= 0x08; //Latch interrupt (Cleared by reading int1_src)
+  //dataToWrite |= 0x04; //Pipe 4D detection from 6D recognition to int1?
+  lis3dh.writeRegister(LIS3DH_CTRL_REG5, dataToWrite);
+
+  //LIS3DH_CTRL_REG3
+  //Choose source for pin 1
+  dataToWrite = 0;
+  dataToWrite |= 0x80; //Click detect on pin 1
+  //dataToWrite |= 0x40; //AOI1 event (Generator 1 interrupt on pin 1)
+  //dataToWrite |= 0x20; //AOI2 event ()
+  //dataToWrite |= 0x10; //Data ready
+  //dataToWrite |= 0x04; //FIFO watermark
+  //dataToWrite |= 0x02; //FIFO overrun
+  lis3dh.writeRegister(LIS3DH_CTRL_REG3, dataToWrite);
+
+  //LIS3DH_CTRL_REG6
+  //Choose source for pin 2 and both pin output inversion state
+  dataToWrite = 0;
+  dataToWrite |= 0x80; //Click int on pin 2
+  //dataToWrite |= 0x40; //Generator 1 interrupt on pin 2
+  //dataToWrite |= 0x10; //boot status on pin 2
+  //dataToWrite |= 0x02; //invert both outputs
+  lis3dh.writeRegister(LIS3DH_CTRL_REG6, dataToWrite);
+
+  // Enable ESP32 to wake up on INT2 (GPIO13) high level
+  esp_sleep_enable_ext1_wakeup(BIT(GPIO_NUM_14), ESP_EXT1_WAKEUP_ANY_HIGH);
+*/
+
+/* getEvent() gets the raw sensor data */
 
 void AccelSensor::readSensor()
 {
@@ -328,24 +502,52 @@ void AccelSensor::SimpleRangeFiltering()
 
 }
 
-void AccelSensor::loop()
-{
-  SimpleRangeFiltering();
+/* Used to send debug information to the Serial Monitor
+   TOF operates in Core 0 in parallel to the Arduino code
+   running the Serial Monitor in Core 1. Using Serial.println( F("hi") )
+   will often be clipped or ignored when run in Core 0. The main
+   loop() in ReflectionsOS.ino calls TOF::getMef() and prints to
+   Serial Monitor from there. */
 
+String AccelSensor::getRecentMessage()
+{
+  String myMefa = myMef;
+  myMef = F("");
+  return myMefa;
+}
+
+String AccelSensor::getRecentMessage2()
+{
+  String myMefa = myMef2;
+  myMef2 = F("");
+  return myMefa;
+}
+
+String AccelSensor::getTapStats()
+{
   if ( millis() - reporttimer > 2000 )
   {
     reporttimer = millis();
 
-    String mef = "Accel: tap ";
+    String mef = F( "Accel: tap " );
     mef += tapdet;
-    mef += ", double ";
+    mef += F( ", double " );
     mef += doubletapdet;
-    mef += ", triple ";
+    mef += F( ", triple " ) ;
     mef += trippledet;
-    mef += ", fabs(jerk) ";
+    mef += F( ", fabs(jerk) " );
     mef += fabs( jerk );
-    Serial.println( mef );
+    return mef;
+  } 
+  else
+  {
+    return "";
   }
 
+}
+
+void AccelSensor::loop()
+{
+  SimpleRangeFiltering();
 }
 

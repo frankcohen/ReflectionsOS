@@ -9,11 +9,8 @@
  Read the license in the license.txt file that comes with this code.
 */
 
-#ifndef EXPERIENCE_H
-#define EXPERIENCE_H
-
-#include "WatchFaceMain.h"
-extern WatchFaceMain watchfacemain;
+#ifndef _EXPERIENCE_H
+#define _EXPERIENCE_H
 
 class Experience 
 {
@@ -52,9 +49,9 @@ class Experience
       runComplete = complete;
     }
 
-    void setTeardownComplete(bool complete) {
+    void setTeardownComplete(bool complete) 
+    {
       teardownComplete = complete;
-      watchfacemain.begin();
     }
 
     void setStopped( bool stop )
@@ -76,4 +73,4 @@ class Experience
     bool tearflag;
 };
 
-#endif // EXPERIENCE_H
+#endif // _EXPERIENCE_H

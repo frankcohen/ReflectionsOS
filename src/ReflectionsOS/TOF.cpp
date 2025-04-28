@@ -478,7 +478,7 @@ String TOF::getRawMeasurements()
 }
 
 /* Used to send debug information to the Serial Monitor
-   TOF operates in Core 0 in paralell to the Arduino code
+   TOF operates in Core 0 in parallel to the Arduino code
    running the Serial Monitor in Core 1. Using Serial.println( F("hi") )
    will often be clipped or ignored when run in Core 0. The main
    loop() in ReflectionsOS.ino calls TOF::getMef() and prints to
@@ -682,6 +682,59 @@ void TOF::acquireDataToBuffer()
 
 }
 
+void TOF::detectHover()
+{
+  unsigned long currentTime = millis();
+
+  if ( currentTime - lastSampleTime < HOVER_SAMPLE_INTERVAL_MS ) return;
+  lastSampleTime = currentTime;
+        
+  // If the finger tip is detected:
+  if ( ! fingerTipInRange ) return;
+
+  // If this is the first sample of a possible hover, record the baseline.
+  if ( hoverStartTime == 0 ) 
+  {
+    hoverStartTime = currentTime;
+    baselineRow = fingerPosRow;
+    baselineCol = fingerPosCol;
+    baselineDist = fingerDist;
+  }
+  
+  // Check if the current reading is within ±15% of the baseline.
+  bool stable = true;
+  if (fabs(fingerPosRow - baselineRow) > 0.15 * fabs(baselineRow))
+    stable = false;
+  if (fabs(fingerPosCol - baselineCol) > 0.15 * fabs(baselineCol))
+    stable = false;
+  if (fabs(fingerDist - baselineDist) > 0.15 * fabs(baselineDist))
+    stable = false;
+  
+  // If the reading deviates too much, reset the baseline and timer.
+  if ( ! stable ) 
+  {
+    hoverStartTime = currentTime;
+    baselineRow = fingerPosRow;
+    baselineCol = fingerPosCol;
+    baselineDist = fingerDist;
+  }
+
+  // If the reading has been stable for at least 4 seconds, trigger the gesture.
+  else if (currentTime - hoverStartTime >= HOVER_DURATION_MS) 
+  {
+    Serial.println(F("Hover gesture detected for 4 seconds"));
+    recentGesture = TOFGesture::Hover;
+    hoverStartTime = currentTime;  // or set to 0 if you want to start fresh next time
+    return;
+  } 
+
+  // If no finger is detected, reset the hover timer.
+  else 
+  {
+    hoverStartTime = 0;
+  }
+}
+
 void TOF::loop()
 {
   if ( ! started ) return;
@@ -699,68 +752,9 @@ void TOF::loop()
 
   if ( recentGesture != TOFGesture::None ) return;    // One gesture at a time
 
-  /*
-  if ( detectSleepGesture() )
-  {
-    sleepCount++;
-    recentGesture = TOFGesture::Sleep;
-    paused = true;
-    return;
-  }
-  */
-
   detectFab5Gestures();
 
-  if ( recentGesture != TOFGesture::None ) return;    // One gesture at a time
+  detectHover();
 
-  unsigned long currentTime = millis();
-
-  if ( currentTime - lastSampleTime >= HOVER_SAMPLE_INTERVAL_MS ) 
-  {
-    lastSampleTime = currentTime;
-          
-    // If the finger tip is detected:
-    if ( fingerTipInRange ) 
-    {
-      // If this is the first sample of a possible hover, record the baseline.
-      if ( hoverStartTime == 0 ) 
-      {
-        hoverStartTime = currentTime;
-        baselineRow = fingerPosRow;
-        baselineCol = fingerPosCol;
-        baselineDist = fingerDist;
-      }
-      
-      // Check if the current reading is within ±15% of the baseline.
-      bool stable = true;
-      if (fabs(fingerPosRow - baselineRow) > 0.15 * fabs(baselineRow))
-        stable = false;
-      if (fabs(fingerPosCol - baselineCol) > 0.15 * fabs(baselineCol))
-        stable = false;
-      if (fabs(fingerDist - baselineDist) > 0.15 * fabs(baselineDist))
-        stable = false;
-      
-      // If the reading deviates too much, reset the baseline and timer.
-      if (!stable) {
-        hoverStartTime = currentTime;
-        baselineRow = fingerPosRow;
-        baselineCol = fingerPosCol;
-        baselineDist = fingerDist;
-      }
-
-      // If the reading has been stable for at least 4 seconds, trigger the gesture.
-      else if (currentTime - hoverStartTime >= HOVER_DURATION_MS) 
-      {
-        Serial.println(F("Hover gesture detected for 4 seconds"));
-        recentGesture = TOFGesture::Hover;
-
-        hoverStartTime = currentTime;  // or set to 0 if you want to start fresh next time
-      }
-    } 
-
-    // If no finger is detected, reset the hover timer.
-    else {
-      hoverStartTime = 0;
-    }
-  }
+  detectSleepGesture();
 }

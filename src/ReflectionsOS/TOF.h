@@ -107,10 +107,13 @@ class TOF
     int getFingerPosCol();
     float getFingerDist();
 
+    bool detectSleepGesture();
+
   private:
+    void detectHover();
+
     // Helper methods for gesture detection
     bool detectFingerTip( int setnum );
-    bool detectSleepGesture();
     bool detectFab5Gestures();
 
     bool checkBuffer();
