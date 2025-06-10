@@ -15,7 +15,6 @@
 #include <Arduino.h>
 
 #include "Experience.h"
-
 #include "Logger.h"
 #include "Video.h"
 #include "WatchFaceMain.h"
@@ -28,11 +27,6 @@ extern AccelSensor accel;
 
 #define parallaxname F("Parallax ")
 
-#define accxleft 0.62
-#define accxright 1.54
-#define accpositions 5
-#define stepvalue 0.184
-
 class Experience_Parallax : public Experience {
   public:
     void setup() override;
@@ -41,17 +35,22 @@ class Experience_Parallax : public Experience {
     void init() override;
 
   private:
-    unsigned long timer;
-    bool tearflag;
-    bool timeflag;
-    bool vidflag;
+    bool tearflag     = false;
+    bool vidflag      = false;
+    unsigned long dur       = 0;
+    unsigned long parallaxWaitTime = 0;
+    unsigned long paralaxDuration  = 0;
 
-    unsigned long eyestime;
-    unsigned long dur;
+    // motion‐based parallax state
+    float prevX       = 0.0f;
+    float prevY       = 0.0f;
+    float motionX     = 0.0f;
+    float motionY     = 0.0f;
+    const float motionAlpha = 0.2f;        // EMA smoothing for deltas
 
-    int pictureNum;
-    unsigned long parallaxWaitTime;
-    unsigned long paralaxDuration;
+    int currentFrame          = 5;         // start center
+    unsigned long lastMotionTime = 0;
+    static const unsigned long decayDelay = 150;  // ms between decay steps
 };
 
 #endif // Experience_Parallax_H

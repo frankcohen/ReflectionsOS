@@ -49,8 +49,6 @@ void Hardware::begin()
   pinMode( TOFPower, OUTPUT);    // Power control for TOF sensor
   digitalWrite( TOFPower, LOW);
 
-  // For heat study, keep these off at start
-
   // Turns the speaker amp on
   pinMode(AudioPower, OUTPUT);
   digitalWrite(AudioPower, LOW);    // HIGH is on
@@ -69,6 +67,7 @@ void Hardware::begin()
   //SPISettings spiSettings(SPI_SPEED, MSBFIRST, SPI_MODE0);
 
   Wire.begin(I2CSDA, I2CSCL);  // Initialize I2C bus
+  Wire.setClock(400000);
 
   if ( ! SD.begin( NAND_SPI_CS, SPI, SPI_SPEED) )
   {

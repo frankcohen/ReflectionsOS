@@ -43,7 +43,6 @@ class Experience_Eyes : public Experience {
     unsigned long eyestime;
     unsigned long dur;
 
-    int prevFingerPosRow;
     int prevFingerPosCol;
     float prevFingerDist;
 

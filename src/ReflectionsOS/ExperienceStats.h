@@ -46,6 +46,7 @@ private:
     unsigned long intervalMs_;
     unsigned long lastReportMs_;
     unsigned long totalCalls_;
+
     std::vector<String> names_;
     std::vector<unsigned long> counts_;
 };

@@ -35,7 +35,7 @@ extern LOGGER logger;
 // Default settings
 
 // R - Range default, 2, 4, 8, 16
-#define range1 LIS3DH_RANGE_8_G
+#define range LIS3DH_RANGE_8_G
 
 // Data rate
 // Low-speed movements (walking): 10–50 Hz.
@@ -43,39 +43,11 @@ extern LOGGER logger;
 // High-speed movements (vibrations, impacts): 200–400 Hz.
 #define datarate LIS3DH_DATARATE_100_HZ
 
-// G - Lag, the number of most recent added values considered.
-//     Short taps the value is small should be low. Longer movements should use larger values
-#define peaklag1 5
-
-// H - Threshhold is how much of a clip upwards or  down to be a peak
-// For example, 2 means peaks are 2 times the standard deviation
-#define peakthres1 2
-
-// I - Influence boosts the data upwards, it's like a giant sensitivity dail
-// Set this between 0.20 and 1.0. Little changes like 0.72 and 0.74 can make
-// a big difference
-#define peakinfluence1 0.50
-
-// C - Sets the hardware click/tap sensitivity within the R range
-#define threshold1 30
-
-// S - Shake threashold
-#define shakeThreshold1 9.0
-
 // J - Jerk threashold using range filtering
-#define accelThreshold1 2000
+#define accelThreshold 2000
 
 // L - Jerk low threadshold using range filtering
-#define accelThresholdLow1 1000
-
-// T - restingThreshold  for ignoring small accelerations (e.g., sensor resting)
-#define restingThreshold1 0.2
-
-// Sets the power mode, LIS3DH_MODE_NORMAL, LIS3DH_MODE_LOW_POWER, LIS3DH_MODE_HIGH_RESOLUTION
-#define powermode1 LIS3DH_MODE_NORMAL
-
-// Sets tap/click to 1 for single click or 2 for double click
-#define clickPin1 1
+#define accelThresholdLow 600
 
 class AccelSensor
 {
@@ -88,61 +60,86 @@ class AccelSensor
 
     void enableWakeOnMotion();
 
-    bool tapped();
-    bool doubletapped();
-    bool shaken();
+    void reset();
 
+    void setStatus( bool running );
+    bool getStatus();
+
+    /**
+     * Returns true once when a confirmed single tap is detected.
+     * Confirmation occurs after the double-tap window elapses without a second tap.
+     */
+    bool getSingleTap();
+
+    /**
+     * Returns true once when a confirmed double tap is detected.
+     * Confirmation occurs after the triple-tap window elapses without a third tap.
+     */
+    bool getDoubleTap();
+
+    /**
+     * Returns true once when a triple tap is detected.
+     * Detection occurs after three taps are registered within the triple-tap window.
+     */
+    bool getTripleTap();
+    
     float getXreading();
     float getYreading();
     float getZreading();
-
-    void SimpleRangeFiltering();
-    void recognizeHardwareClicks();  // Tap/click detection using LIS3DH hardware detection
-    void readSensor();               // Reads the sensor
-    void detectPeaks();
   
     String getRecentMessage();
     String getRecentMessage2();
-    String getTapStats();
 
   private:
-    lis3dh_range_t range;
-    lis3dh_mode_t powermode;
+    void dynamicTapDetection();
 
-    // Acceleration readings
-    float accelerationX;
-    float accelerationY;
-    float accelerationZ;
+    void handleTap(unsigned long now);
 
-    // Position readings
-    float rawX, rawY, rawZ;
+    float magnitude(const sensors_event_t &e);
 
-    bool tapdet;
-    bool doubletapdet;
-    bool trippledet;
+    // EMA & threshold parameters
+    const float _alpha          = 0.01f;
+    const float _thresholdFactor= 4.0f;
 
-    unsigned long debounceTapTime;
-    unsigned long debounceDoubleTap;
-    unsigned long magtimer;
+    // Tap timing windows
+    const unsigned long _minTapInterval = 20;    // ms bounce filter
+    const unsigned long _doubleWindow   = 1200;  // ms for 2 taps
+    const unsigned long _tripleWindow   = 2400;  // ms for 3 taps
 
-    int shaketotal;
-    int shakecount;
-    unsigned long shaketimer;
+    // Reset & summary timing
+    const unsigned long _resetInterval   = 5000; // ms
+    const unsigned long _summaryInterval = 1000; // ms
 
-    float jerk;
+    // Running statistics
+    float emaMean;
+    float emaVar;
+    bool  aboveThreshold;
+    unsigned long lastDetectedTime;
 
-    float accelMagnitude;
-    float prevAccel;
-    int clickThreshold;
-    int clickPin;
-    float accelThreshold;    // high value for tap detection 
-    float accelThresholdLow; // low value for tap detection
+    // Tap history timestamps
+    unsigned long tapHist[3];
 
-    double currentNeutralMeasurement;
+    bool          _pendingSingle;
+    bool          _pendingDouble;
+    bool          _pendingTriple;
+    unsigned long _singleTime;
+    unsigned long _doubleTime;
+    unsigned long _tripleTime;
+
+    // Counters & timers
+    unsigned long singleCount;
+    unsigned long doubleCount;
+    unsigned long tripleCount;
+    unsigned long lastResetTime;
+    unsigned long lastSummaryTime;
+
+    // Debug stats
+    float lastMag;
+    float lastStdDev;
+    float lastThreshold;
 
     bool started;
-
-    unsigned long reporttimer;
+    bool runflag;
     
     String myMef;
     String myMef2;

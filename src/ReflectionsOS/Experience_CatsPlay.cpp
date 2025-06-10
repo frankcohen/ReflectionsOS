@@ -87,7 +87,7 @@ void Experience_CatsPlay::run()
     Serial.println( head );
   }
 
-  if ( accel.tapped() )
+  if ( accel.getSingleTap() )
   {
     Serial.println( "CatsPlay start pounce to remote devices" );
     blesupport.setPounce( true );    

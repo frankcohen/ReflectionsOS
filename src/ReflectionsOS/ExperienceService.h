@@ -20,10 +20,12 @@
 #include "ExperienceStats.h"
 #include "Logger.h"
 #include "Battery.h"
+#include "WatchFaceMain.h"
 
 extern Battery battery;  // External Battery class
 extern LOGGER logger;
 extern ExperienceStats experiencestats;
+extern WatchFaceMain watchfacemain;
 
 class ExperienceService
 {
@@ -35,8 +37,10 @@ class ExperienceService
     void begin();  // Initialization method
     void loop();  // Method called repeatedly in the main loop
     void startExperience( int exper );
+    int getExperNum();
     int getCurrentState();
     void setCurrentState( State state );
+    int getExperience();
     bool active();
     void resetAfterTimer();
     unsigned long getAfterTimer();
@@ -70,6 +74,8 @@ class ExperienceService
     void operateExperience();
 
     int experienceIndex;  // used for testing
+
+    int expernum;
 
     unsigned long catsplayTimer;
     unsigned long catsplayTimer2;

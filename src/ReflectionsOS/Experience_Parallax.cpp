@@ -25,16 +25,20 @@ Future expansion should incorporate the Y and Z axis.
 
 void Experience_Parallax::init()
 {
-  vidflag = true;  
-  setupComplete = false;
-  runComplete = false;
+  vidflag    = true;
+  setupComplete    = false;
+  runComplete      = false;
   teardownComplete = false;
-  stopped = false;
-  idle = false;
+  stopped    = false;
+  idle       = false;
 
-  pictureNum = 6;
-  parallaxWaitTime = millis();
-  paralaxDuration = millis();
+  parallaxWaitTime   = millis();
+  paralaxDuration    = millis();
+
+  // initialize motion state
+  prevX = prevY = motionX = motionY = 0.0f;
+  currentFrame     = 5;
+  lastMotionTime   = millis();
 } 
 
 void Experience_Parallax::setup() 
@@ -46,14 +50,12 @@ void Experience_Parallax::setup()
 
     video.startVideo( ParallaxCat_video );
 
-    timeflag = true;
     vidflag = false;
     tearflag = true;
   }
 
   if ( video.getVideoTime() > 2600 )
   {
-    eyestime = millis();
     dur = random( 1, 5 );
 
     paralaxDuration = millis();
@@ -65,39 +67,82 @@ void Experience_Parallax::setup()
   }
 }
 
-void Experience_Parallax::run() 
-{
-  if ( millis() - paralaxDuration < ( 20000 + ( dur * 250 ) ) )
-  { 
-    if ( ( millis() - parallaxWaitTime ) < 1000 ) return;
+void Experience_Parallax::run() {
+  // 1) still in initial pause period?
+  if (millis() - paralaxDuration < (20000 + dur * 250)) {
+    if (millis() - parallaxWaitTime < 500) return;
     parallaxWaitTime = millis();
 
-    float nx = accel.getXreading() + 1;
+    // 2) read & clamp accel to g
+    float x = accel.getXreading() * 0.004f;     // raw → g
+    float y = accel.getYreading() * 0.004f;
+    x = constrain(x, -8.0f, 8.0f);
+    y = constrain(y, -8.0f, 8.0f);
 
-    Serial.println( nx );
+    // 3) compute and smooth deltas
+    float dx = x - prevX, dy = y - prevY;
+    prevX = x;  prevY = y;
+    motionX = motionAlpha * dx + (1 - motionAlpha) * motionX;
+    motionY = motionAlpha * dy + (1 - motionAlpha) * motionY;
 
-    int mapped = map( nx, -1500, 1500, 1, 9);
+    // 4) detect motion above threshold
+    const float threshold = 0.01f;
+    bool hasMotion = (fabs(motionX) > threshold || fabs(motionY) > threshold);
+    if (hasMotion) lastMotionTime = millis();
 
-    String mef = F("cat");
-    mef += String( mapped );
-    mef += F("_parallax_baseline.jpg");
-
-    //Serial.println( mef );
-
-    watchfacemain.drawImageFromFile( mef, true, 0, 0 ); 
-    watchfacemain.show();
-  }
-  else
-  {
-    video.setPaused( false );
-
-    if ( video.getStatus() == 0 )
-    {
-      setRunComplete(true);  // Signal run complete
+    // 5) decide single-step direction
+    int deltaCol = 0, deltaRow = 0;
+    if (hasMotion) {
+      // pick dominant axis only
+      if (fabs(motionX) > fabs(motionY)) {
+        if (motionX < -threshold) deltaCol = -1;
+        else if (motionX > threshold) deltaCol = +1;
+      } else {
+        if (motionY < -threshold) deltaRow = -1;
+        else if (motionY > threshold) deltaRow = +1;
+      }
+    } else {
+      // 6) after 3 s of no motion, start decaying to center
+      if (millis() - lastMotionTime >= 3000) {
+        int r = (currentFrame - 1)/3 + 1;
+        int c = (currentFrame - 1)%3 + 1;
+        if (r < 2)      deltaRow = +1;
+        else if (r > 2) deltaRow = -1;
+        if (c < 2)      deltaCol = +1;
+        else if (c > 2) deltaCol = -1;
+      }
     }
-  }  
 
+    // 7) apply one-step move within [1..3]×[1..3]
+    int curRow = (currentFrame - 1)/3 + 1;
+    int curCol = (currentFrame - 1)%3 + 1;
+    int newRow = constrain(curRow + deltaRow, 1, 3);
+    int newCol = constrain(curCol + deltaCol, 1, 3);
+
+    int targetFrame = (newRow - 1)*3 + newCol;  // 1..9
+    targetFrame = constrain(targetFrame, 1, 9);
+
+    // 8) update & display
+    if (targetFrame != currentFrame) {
+      currentFrame = targetFrame;
+      String mef = "cat" + String(currentFrame) + "_parallax_baseline.jpg";
+      watchfacemain.drawImageFromFile(mef, true, 0, 0);
+      watchfacemain.show();
+      Serial.printf(
+        "motionX:%.3f motionY:%.3f → frame %d\n",
+        motionX, motionY, currentFrame
+      );
+    }
+  }
+  else {
+    // after the main period, resume video
+    video.setPaused(false);
+    if (video.getStatus() == 0) {
+      setRunComplete(true);
+    }
+  }
 }
+
 
 void Experience_Parallax::teardown() 
 {
@@ -110,7 +155,6 @@ void Experience_Parallax::teardown()
 
   if ( video.getStatus() == 0 )
   {
-    timeflag = true;
     setTeardownComplete( true );  // Signal teardown complete
   }
 }

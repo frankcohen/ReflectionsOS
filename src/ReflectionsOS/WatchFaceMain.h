@@ -58,6 +58,7 @@ class WatchFaceMain : public WatchFaceBase
     void loop() override;    
     bool okToSleep();
     bool okToExperience();
+    void setDrawItAll();
 
     enum Panel { 
       STARTUP, MAIN, 
@@ -151,6 +152,8 @@ class WatchFaceMain : public WatchFaceBase
     int gpsy;
 
     unsigned long temptimer;
+
+    unsigned long minuteRedrawtimer;
 };
 
 #endif // WATCHFACE_H

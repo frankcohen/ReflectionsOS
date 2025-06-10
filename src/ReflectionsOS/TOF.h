@@ -1,176 +1,131 @@
 /*
- Reflections, mobile connected entertainment device
+  TOF Sensor Gesture Detection
 
- Repository is at https://github.com/frankcohen/ReflectionsOS
- Includes board wiring directions, server side components, examples, support 
- 
- Licensed under GPL v3 Open Source Software
- (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
- Read the license in the license.txt file that comes with this code.
+  Repository is at https://github.com/frankcohen/ReflectionsOS
+  Includes board wiring directions, server side components, examples, support
+
+  Licensed under GPL v3 Open Source Software
+  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
+  Read the license in the license.txt file that comes with this code.
+
+  Depends on https://github.com/sparkfun/SparkFun_VL53L5CX_Arduino_Library
+
+  Reflections board uses a Time Of Flight (TOF) VL53L5CX sensor to
+  identify user gestures with their fingers and hand. Gestures control
+  operating the Experiences.
+
+  Datasheet comes with this source code, see: vl53l5cx-2886943_.pdf
 */
 
-#ifndef _TOF_
-#define _TOF_
+#ifndef TOF_H
+#define TOF_H
 
-#include "Arduino.h"
-
-#include "config.h"
-#include "secrets.h"
-#include "Logger.h"
-
+#include <Arduino.h>
 #include <Wire.h>
 #include <SparkFun_VL53L5CX_Library.h>
-#include <Arduino_GFX_Library.h>
 
-#include <cmath>
+// ——— CONFIGURATION ———
+#define SDA_PIN               3
+#define SCL_PIN               4
+#define TOF_POWER_PIN        26
 
-extern Arduino_GFX *gfx;
+#define FRAME_RATE            8                   // Hz
+#define FRAME_INTERVAL_MS    (1000/FRAME_RATE)    // ms between valid frames
 
-#define GRID_ROWS 8
-#define GRID_COLS 8
-#define SET_SIZE 64      // Each block has these many readings
-#define NUM_SETS 50     // Saves the most recent 50 blocks
+#define MIN_DISTANCE          5                   // mm
+#define MAX_DISTANCE        130                   // mm
+#define VALID_PIXEL_COUNT    50                   // pixels needed to consider a frame “valid”
 
-#define FRAMES_TO_ANALYZE 10  // Use the most recent 10 frames for analysis
+#define CIRCULAR_TIME       500                   // ms to wait after swipe before declaring “circular”
 
-// Filter results to this range
-#define closefilter 5
-#define farfilter 60
+// Sleep detection thresholds
+#define SLEEP_MIN_DISTANCE    5                   // mm
+#define SLEEP_MAX_DISTANCE   18                   // mm
+#define SLEEP_COVERAGE_COUNT 40                   // # pixels in [5,18] → “covered”
+#define SLEEP_HOLD_MS      3000UL                 // ms of coverage to declare Sleep
 
-// Definitions for Bubles
-#define tofdiam 17
-#define xdistance 26
-#define ydistance 26
-#define xspace 26
-#define yspace 26
-#define tofmaxdist 100
+// Finger-tip detection thresholds
+#define TIP_MIN_DISTANCE      5                   // mm
+#define TIP_MAX_DISTANCE    130                   // mm
 
-// Definitions for Sleep gesture
-#define sleepLowFilter 5
-#define sleepHighFilter 18
-#define sleepPercentage 0.85
+// Frame dimensions
+#define WIDTH                 8
+#define HEIGHT                8
 
-// Definitions for fingerTip dected gesture
-#define fingerDetectionThresholdLow 18
-#define fingerDetectionThresholdHigh 40
+// Gesture codes
+#define GESTURE_NONE 0
+#define GESTURE_RIGHT 1
+#define GESTURE_UP_RIGHT 2
+#define GESTURE_UP 3
+#define GESTURE_UP_LEFT 4
+#define GESTURE_LEFT 5
+#define GESTURE_DOWN_LEFT 6
+#define GESTURE_DOWN 7
+#define GESTURE_DOWN_RIGHT 8
+#define GESTURE_CIRCULAR 10
+#define GESTURE_SLEEP 11
 
-// Hover gesture
-#define HOVER_SAMPLE_INTERVAL_MS 250  // Sample every 250 milliseconds (4 times per second)
-#define HOVER_DURATION_MS 4000  // 4 seconds
+class TOF {
+public:
+  TOF();
 
-// Horizontal, vertical, circular movement detection
-#define movementLow 30
-#define movementHigh 70
-#define movementFrames 5
-#define circularCountLow 20
+  // Initialize the VL53L5CX sensor and internal state
+  void begin();
 
-// Bubble range
-#define bubbleLow 10
-#define bubbleHigh 70
+  // Call periodically from Arduino loop(); performs gesture detection
+  void loop();
 
-class TOF
-{
-  public:
-    TOF();
+  // Returns the last detected gesture code (see GESTURE_ defs). 0 if none.
+  int  getGesture();
 
-    enum TOFGesture
-    {
-      None,
-      Sleep,
-      Circular,
-      Right,
-      Left,
-      Up,
-      Down,
-      Hover
-    };
+  // Enable or disable gesture detection (loop() will exit immediately if status is false)
+  void setStatus(bool running);
 
-    void begin();
-    void loop();
-    bool test();
+  // Retrieve current running status
+  bool getStatus();
 
-    bool tofStatus();
-    void setStatus( TOFGesture status );
-    bool getPaused();
-    void startGestureSensing();
-    void stopGestureSensing();
+  // Get the most recent finger-column position (0 if none)
+  int getFingerPos();
+  float getFingerDist();  
 
-    String getRawMeasurements();
+  String getRecentMessage();
+  String getRecentMessage2();
 
-    TOFGesture getGesture();
-    String getGestureName();
+private:
+  // Internal methods
+  void resetGesture();
+  void computeOpticalFlow(const float frameA[HEIGHT][WIDTH],
+                          const float frameB[HEIGHT][WIDTH],
+                          float &u, float &v);
 
-    String getRecentMessage();
-    String getRecentMessage2();
+  // Sensor object
+  SparkFun_VL53L5CX tof;
 
-    int getFingerPosRow();
-    int getFingerPosCol();
-    float getFingerDist();
+  // Timing & state variables
+  unsigned long lastRead;
+  unsigned long captTime;
+  unsigned long timeLimit;
+  unsigned long pendingTimer;
+  static unsigned long sleepStart;
 
-    bool detectSleepGesture();
+  bool pendingDirection;
+  bool prevValid;
+  bool isRunning;
 
-  private:
-    void detectHover();
+  // Frame buffers
+  float frame1[HEIGHT][WIDTH];
+  float frame2[HEIGHT][WIDTH];
 
-    // Helper methods for gesture detection
-    bool detectFingerTip( int setnum );
-    bool detectFab5Gestures();
+  // Gesture storage
+  int direction;         // GESTURE_ code of last detected event
+  String directionWay;   // human‐readable label (e.g. "→  (Right)")
 
-    bool checkBuffer();
+  // Finger tip column (1..7) or 0 if none
+  int tipPos;
+  float tipDist;  
 
-    void resetBuffer();
-
-    void flipAndRotateArray( int16_t* dest, int width, int height );
-
-    bool started;
-    bool paused;
-    TOFGesture recentGesture;
-
-    SparkFun_VL53L5CX sensor;
-
-    int16_t* tofbuffer;          // Wrap around buffer stores most recent measurements
-    int currentSetIndex;
-
-    int previousHorizPositions[ 8 ];
-    int previousVertPositions[ 8 ];
-    
-    unsigned long gestureTime;
-    
-    int sleepCount;
-
-    bool fingerTipInRange;
-    int fingerPosRow;
-    int fingerPosCol;
-    float fingerDist;
-
-    unsigned long lastSampleTime;
-    unsigned long hoverStartTime;
-    int baselineRow;
-    int baselineCol;
-    float baselineDist;
-
-    bool bombaccumulator[ 8 ];
-    bool flyaccumulator[ 8 ];
-
-    unsigned long lastPollTime;    
-    unsigned long previousMillis;
-    
-    unsigned long debouncetime;
-
-    void acquireDataToBuffer();
-
-    String myMef;
-    String myMef2;
-
-    void determineMovementBetweenFrames( int16_t * olderFrame, int16_t * newerFrame, int &best_dx, int &best_dy);
-    float computeCorrelation( int16_t * frame1, int16_t * frame2, int dx, int dy);
-
-    String rawMeasurements;
-
-    VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
-    // I suspect that sometimes the sensor library is overwrighting the measurementData,
-    // so I put bufferbuffer here just in case. C/C++ must die.
-    int bufferbuffer[ 200 ];
+  String mymessage;
+  String mymessage2;
 };
 
-#endif // _TOF_
+#endif // TOF_H

@@ -199,6 +199,8 @@ unsigned long ExperienceService::getAfterTimer()
 
 void ExperienceService::startExperience( int exper )
 {
+  expernum = exper;
+
   if (exper >= 0 && exper < experiences.size()) 
   {
     currentExperience = experiences[exper];
@@ -206,13 +208,6 @@ void ExperienceService::startExperience( int exper )
   else 
   {
     Serial.print( "Invalid experience index: " );
-    Serial.println(exper);
-    return;
-  }
-
-  if ( currentExperience == nullptr ) 
-  {
-    Serial.print( "ExperienceService null pointer on starting experience " );
     Serial.println(exper);
     return;
   }
@@ -233,6 +228,11 @@ void ExperienceService::startExperience( int exper )
   currentState = SETUP;
 
   noopFlag = true;
+}
+
+int ExperienceService::getExperNum()
+{
+  return expernum;
 }
 
 void ExperienceService::setCurrentState( State state )
@@ -292,8 +292,7 @@ void ExperienceService::operateExperience()
       {
         currentState = STOPPED;
 
-        tof.startGestureSensing();
-        resetAfterTimer();        
+        watchfacemain.setDrawItAll();
       }
       break;
 

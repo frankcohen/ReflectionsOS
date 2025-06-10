@@ -75,6 +75,21 @@ AccelSensor::AccelSensor(){}
 void AccelSensor::begin()
 { 
   started = false;
+  runflag = false;
+
+  aboveThreshold = false;
+  lastDetectedTime = 0;
+  singleCount = 0;
+  doubleCount = 0;
+  tripleCount = 0;
+  lastResetTime = 0;
+  lastSummaryTime = 0;
+  lastMag = 0;
+  lastStdDev = 0;
+  lastThreshold = 0;
+  tapHist[0] = 0;
+  tapHist[1] = 0;
+  tapHist[2] = 0;
 
   if ( ! lis3dh.begin( accelAddress ) ) 
   {
@@ -82,47 +97,24 @@ void AccelSensor::begin()
     while (1) yield();
   }
 
-  prevAccel = 15000;
-
-  tapdet = false;
-  doubletapdet = false;
-  trippledet = false;
-
-  float jerk;
-  magtimer = millis();
-  debounceDoubleTap = millis();
-
-  range = range1;
-  clickThreshold = threshold1;
-  powermode = powermode1;
-  clickPin = clickPin1;
-
-  shaketotal = 0;
-  shakecount = 0;
-  shaketimer = millis();
-
-  debounceTapTime = millis();
-
-  accelThreshold = accelThreshold1;       // for tap detection
-  accelThresholdLow = accelThresholdLow1; // for tap detection
-
   // Set shake detection parameters
   lis3dh.setRange( range );   // 2, 4, 8 or 16 G!
 
   lis3dh.setDataRate( datarate ); // Set ODR to 100 Hz
 
-  // Set tap detection parameters
-  lis3dh.setClick( clickPin1, clickThreshold );  // single click, threshold
+  // bootstrap the EMA with one reading
+  sensors_event_t evt;
+  lis3dh.getEvent(&evt);
+  float m = magnitude(evt);
+  emaMean = m;
+  emaVar  = 1.0f;
 
-  //printSettings();
-
-  started = true;
+  lastResetTime   = millis();
+  lastSummaryTime = millis();
 
   enableWakeOnMotion();
 
-  reporttimer = millis();
-
-  //printHeader();
+  started = true;
 }
 
 float AccelSensor::getXreading() 
@@ -162,34 +154,6 @@ float AccelSensor::getZreading()
   {
     return 0;
   }
-}
-
-bool AccelSensor::tapped()
-{
-  if ( millis() - debounceDoubleTap > 500 )
-  {
-    bool result = tapdet;
-    tapdet = false;
-    return result;
-  }
-  else
-  {
-    return false;
-  }
-}
-
-bool AccelSensor::doubletapped()
-{
-  bool result = doubletapdet;
-  doubletapdet = false;
-  return result;
-}
-
-bool AccelSensor::shaken()
-{
-  bool shake = trippledet;
-  trippledet = false;
-  return shake;
 }
 
 // Resets the sensor
@@ -268,8 +232,6 @@ void AccelSensor::enableWakeOnMotion()
     ESP_EXT1_WAKEUP_ANY_HIGH
   );
 }
-
-
 
 /* Enabled wake on movement using SparkFunLIS3DH library
 
@@ -393,113 +355,166 @@ void AccelSensor::enableWakeOnMotion()
   esp_sleep_enable_ext1_wakeup(BIT(GPIO_NUM_14), ESP_EXT1_WAKEUP_ANY_HIGH);
 */
 
-/* getEvent() gets the raw sensor data */
+/**
+ * Computes the acceleration magnitude and maintains a running mean and variance via an exponential moving average.
+ * Sets a dynamic threshold at (mean + thresholdFactor·σ) and detects taps as rising‐edge spikes above that threshold.
+ * Classifies single, double, and triple taps by checking if tap timestamps fall within configurable timing windows.
+ */
 
-void AccelSensor::readSensor()
+void AccelSensor::dynamicTapDetection()
 {
-  lis3dh.read();
-  rawX = lis3dh.x;
-  rawY = lis3dh.y;
-  rawZ = lis3dh.z;
-}
+  if ( ! runflag ) return;
 
-void AccelSensor::SimpleRangeFiltering()
-{
-  if ( millis() - debounceTapTime > 100 )
-  {
-    readSensor();
+  unsigned long now = millis();
 
-    // Calculate the magnitude of the acceleration in all directions
-    accelMagnitude = sqrt( ( rawX * rawX ) + ( rawY * rawY ) + ( rawZ * rawZ ) );
+  // Read & compute magnitude
 
-    if ( millis() - magtimer < 10 ) return;
-    magtimer = millis();
+  sensors_event_t evt;
+  lis3dh.getEvent(&evt);
+  float mag = magnitude(evt);
 
-    // Calculate the jerk (rate of change of acceleration)
-    jerk = accelMagnitude - prevAccel;
-    prevAccel = accelMagnitude;
+  // Dynamic threshold
+  
+  float stdDev    = sqrtf(emaVar);
+  float threshold = emaMean + _thresholdFactor * stdDev;
 
-    // Detect shaking
+  // Store debug stats
 
-    shaketotal += jerk;
-    shakecount++;
+  lastMag       = mag;
+  lastStdDev    = stdDev;
+  lastThreshold = threshold;
 
-    if ( millis() - shaketimer > 200 )
-    {
-      shaketimer = millis();
+  // Rising-edge with debounce
 
-      if ( ( shaketotal / shakecount ) > 200 )
-      {
-        trippledet = true;
-      }
-
-      shaketotal = 0;
-      shakecount = 0;
-    }
-
-    // Detect single tap
-
-    if ( millis() - debounceTapTime > 700 )
-    {
-      if ( ( fabs( jerk ) <= accelThreshold ) && ( fabs( jerk ) > accelThresholdLow ) )
-      {
-        /*
-        String mef = F(" > ");
-        mef += fabs( jerk );
-        mef += F(", ");
-        mef += ( millis() - debounceTapTime );
-        Serial.println( mef );
-        */
-
-        tapdet = true;
-        trippledet = false;
-        debounceTapTime = millis();
-        debounceDoubleTap = millis();
-        return;
-      }
-    }
-    else
-    {
-      if ( ( millis() - debounceTapTime > 250 ) && ( millis() - debounceTapTime < 500 ) && tapdet )
-      {
-        //Serial.print( "    " );
-        //Serial.println( fabs( jerk ) );
-
-        if ( ( fabs( jerk ) <= accelThreshold ) && ( fabs( jerk ) > accelThresholdLow ) )
-        {
-          doubletapdet = true;
-          tapdet = false;
-          trippledet = false;
-          debounceTapTime = millis();
-          return;
-
-          /*
-          String mef = F(" >>");
-          mef += fabs( jerk );
-          mef += F(", ");
-          mef += ( millis() - mostrecentdoubletaptime );
-          Serial.println( mef );
-          */
-        }
-      }
-      else
-      {
-        if ( ( millis() - debounceTapTime > 500 ) && ( millis() - debounceTapTime < 700 ) && tapdet )
-
-        // Tripple tap is a shake gesture
-
-        if ( ( fabs( jerk ) <= accelThreshold ) && ( fabs( jerk ) > accelThresholdLow ) )
-        {
-          doubletapdet = false;
-          tapdet = false;
-          trippledet = true;
-          debounceTapTime = millis();
-          return;
-        }
-      }
-    }
+  if (mag > threshold
+      && !aboveThreshold
+      && (now - lastDetectedTime > _minTapInterval)) {
+      aboveThreshold   = true;
+      lastDetectedTime = now;
+      handleTap(now);
+  } else if (mag <= threshold) {
+      aboveThreshold = false;
+      // Update EMA
+      float prevMean = emaMean;
+      emaMean = _alpha * mag + (1 - _alpha) * emaMean;
+      emaVar  = _alpha * (mag - prevMean)*(mag - prevMean) + (1 - _alpha) * emaVar;
   }
 
+  // Reset counts periodically
+
+    if (now - lastResetTime >= _resetInterval) 
+    {
+        singleCount = doubleCount = tripleCount = 0;
+        _pendingSingle = _pendingDouble = _pendingTriple = false;
+        _singleTime = _doubleTime = _tripleTime = 0;
+        lastResetTime = now;
+    }
+
+/*
+    if (now - lastSummaryTime >= _summaryInterval) {
+        Serial.print("Singles: "); Serial.print(singleCount);
+        Serial.print("  Doubles: "); Serial.print(doubleCount);
+        Serial.print("  Triples: "); Serial.print(tripleCount);
+        Serial.print("  Mag:");    Serial.print(lastMag, 2);
+        Serial.print("  Mean:");   Serial.print(emaMean, 2);
+        Serial.print("  σ:");      Serial.print(lastStdDev, 2);
+        Serial.print("  Thr:");    Serial.println(lastThreshold, 2);
+        lastSummaryTime = now;
+    }
+*/
+
+}
+
+void AccelSensor::handleTap(unsigned long now) 
+{
+  // Shift history
+  tapHist[2] = tapHist[1];
+  tapHist[1] = tapHist[0];
+  tapHist[0] = now;
+
+  // Debug timestamps
+  Serial.print("Hist: [");
+  Serial.print(tapHist[2]); Serial.print(", ");
+  Serial.print(tapHist[1]); Serial.print(", ");
+  Serial.print(tapHist[0]); Serial.print("]  Δ1:");
+  Serial.print(tapHist[0] - tapHist[1]);
+  Serial.print("  Δ2:"); Serial.println(tapHist[1] - tapHist[2]);
+
+// Triple tap
+  if (tapHist[2] != 0 && (tapHist[0] - tapHist[2] <= _tripleWindow)) 
+  {
+    tripleCount++;
+    Serial.println(">>> Triple tap!");
+    _pendingTriple = true;
+    _tripleTime   = now;
+    _pendingDouble = _pendingSingle = false;
+  }
+  // Double tap
+  else if (tapHist[1] != 0 && (tapHist[0] - tapHist[1] <= _doubleWindow)) 
+  {
+    doubleCount++;
+    Serial.println(">> Double tap!");
+    _pendingDouble = true;
+    _doubleTime    = now;
+    _pendingSingle = false;
+  }
+  // Single tap
+  else 
+  {
+    singleCount++;
+    Serial.println("> Single tap");
+    _pendingSingle = true;
+    _singleTime    = now;
+  }
+}
+
+void AccelSensor::reset()
+{
+  _pendingSingle = false;
+  _pendingDouble = false;
+  _pendingTriple = false;
+}
+
+bool AccelSensor::getSingleTap() 
+{
+  // Fires after the double-window elapses
+  if (_pendingSingle && (millis() - _singleTime >= _doubleWindow)) 
+  {
+    _pendingSingle = false;
+    return true;
+  }
+  return false;
+}
+
+bool AccelSensor::getDoubleTap() 
+{
+  // Fires after the triple-window elapses
+  if (_pendingDouble && (millis() - _doubleTime >= _tripleWindow)) 
+  {
+    _pendingDouble = false;
+    return true;
+  }
+  return false;
+}
+
+bool AccelSensor::getTripleTap() 
+{
+  // Fires immediately upon triple detection
+  if (_pendingTriple) 
+  {
+    _pendingTriple = false;
+    return true;
+  }
+  return false;
+}
+
+float AccelSensor::magnitude(const sensors_event_t &e) 
+{
+  return sqrtf(
+      e.acceleration.x*e.acceleration.x +
+      e.acceleration.y*e.acceleration.y +
+      e.acceleration.z*e.acceleration.z
+  );
 }
 
 /* Used to send debug information to the Serial Monitor
@@ -512,42 +527,30 @@ void AccelSensor::SimpleRangeFiltering()
 String AccelSensor::getRecentMessage()
 {
   String myMefa = myMef;
-  myMef = F("");
+  myMef = "";
   return myMefa;
 }
 
 String AccelSensor::getRecentMessage2()
 {
   String myMefa = myMef2;
-  myMef2 = F("");
+  myMef2 = "";
   return myMefa;
 }
 
-String AccelSensor::getTapStats()
+void AccelSensor::setStatus( bool run )
 {
-  if ( millis() - reporttimer > 2000 )
-  {
-    reporttimer = millis();
-
-    String mef = F( "Accel: tap " );
-    mef += tapdet;
-    mef += F( ", double " );
-    mef += doubletapdet;
-    mef += F( ", triple " ) ;
-    mef += trippledet;
-    mef += F( ", fabs(jerk) " );
-    mef += fabs( jerk );
-    return mef;
-  } 
-  else
-  {
-    return "";
-  }
-
+  runflag = run;
 }
+
+bool AccelSensor::getStatus()
+{
+  return runflag;
+}
+
 
 void AccelSensor::loop()
 {
-  SimpleRangeFiltering();
+  dynamicTapDetection();
 }
 

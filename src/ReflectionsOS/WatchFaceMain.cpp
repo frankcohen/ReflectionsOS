@@ -73,6 +73,8 @@ void WatchFaceMain::begin()
 
   temptimer = millis();
 
+  minuteRedrawtimer = millis();
+
   _runmode = true;
 }
 
@@ -422,6 +424,13 @@ void WatchFaceMain::loop()
     noMovementTime = millis();
     return;
   }
+
+  if ( millis() - minuteRedrawtimer > 2 * ( 60 * 1000 ) )
+  {
+    setDrawItAll();
+    showDisplayMain();
+    minuteRedrawtimer = millis();
+  }
 }
 
 void WatchFaceMain::startup()
@@ -444,7 +453,7 @@ void WatchFaceMain::main()
     return;
   }
 
-  if ( accel.tapped() )
+  if ( accel.getSingleTap() )
   {
     panel = DISPLAYING_DIGITAL_TIME;   // DISPLAYING_DIGITAL_TIME;
     //haptic.playEffect(14);  // 14 Strong Buzz
@@ -456,7 +465,7 @@ void WatchFaceMain::main()
     return;
   }
 
-  if ( millis() - maintimer > 50 )
+  if ( millis() - maintimer > 50 && ! video.getStatus() )
   {
     maintimer = millis();
 
@@ -482,7 +491,7 @@ void WatchFaceMain::displayingdigitaltime()
     return;
   }
 
-  if ( accel.doubletapped() )
+  if ( accel.getDoubleTap() )
   {
     Serial.println( F( "displayingdigitaltime double tapped" ) );
 
@@ -494,7 +503,7 @@ void WatchFaceMain::displayingdigitaltime()
     return;
   }
 
-  if ( accel.tapped() )
+  if ( accel.getSingleTap() )
   {
     Serial.println( F( "displayingdigitaltime tapped" ) );
 
@@ -513,6 +522,11 @@ void WatchFaceMain::displayingdigitaltime()
     onceDigitalTime = false;
     textmessageservice.updateTime();
   }
+}
+
+void WatchFaceMain::setDrawItAll()
+{
+  drawitall = true;
 }
 
 void WatchFaceMain::settingdigitaltime()
@@ -536,7 +550,7 @@ void WatchFaceMain::settingdigitaltime()
     return;
   }
 
-  if ( accel.tapped() )
+  if ( accel.getSingleTap() )
   {
     panel = MAIN;
     video.startVideo( WatchFaceFlip3_video );
@@ -669,7 +683,7 @@ void WatchFaceMain::changetime()
     return;
   }
 
-  if ( accel.tapped() )
+  if ( accel.getSingleTap() )
   {
     panel = MAIN;
     //haptic.playEffect(14);  // 14 Strong Buzz
@@ -719,7 +733,7 @@ void WatchFaceMain::clearsteps()
     return;
   }
 
-  if ( accel.tapped() )
+  if ( accel.getSingleTap() )
   {
     panel = MAIN;
     //haptic.playEffect(14);  // 14 Strong Buzz
@@ -759,7 +773,7 @@ void WatchFaceMain::starttimer()
     return;
   }
 
-  if ( accel.tapped() && ( noMovementTime > 5000 ) )
+  if ( accel.getSingleTap() && ( noMovementTime > 5000 ) )
   {
     panel = MAIN;
     //haptic.playEffect(14);  // 14 Strong Buzz
@@ -787,7 +801,7 @@ void WatchFaceMain::displayinghealthstatistics()
     return;
   }
 
-  if ( accel.doubletapped() )
+  if ( accel.getDoubleTap() )
   {
     panel = CONFIRM_CLEAR_STEPS;
     needssetup = true;
@@ -796,7 +810,7 @@ void WatchFaceMain::displayinghealthstatistics()
     return;
   }
 
-  if ( accel.tapped() )
+  if ( accel.getSingleTap() )
   {
     panel = DISPLAYING_TIMER;
     video.startVideo( WatchFaceFlip2_video );
@@ -828,7 +842,7 @@ void WatchFaceMain::displayingtimer()
     return;
   }
 
-  if ( accel.doubletapped() )
+  if ( accel.getDoubleTap() )
   {
     panel = SETTING_TIMER;
     needssetup = true;
@@ -839,7 +853,7 @@ void WatchFaceMain::displayingtimer()
     return;
   }
 
-  if ( accel.tapped() )
+  if ( accel.getSingleTap() )
   {
     needssetup = true;
     panel = MAIN;
@@ -883,7 +897,7 @@ void WatchFaceMain::settingtimer()
     return;
   }
 
-  if ( accel.tapped() && ( noMovementTime > 5000 ) )
+  if ( accel.getSingleTap() && ( noMovementTime > 5000 ) )
   {
     panel = MAIN;
     needssetup = true;

@@ -140,7 +140,6 @@ ExperienceStats experiencestats(60000UL); // Create a global tracker with a 60â€
 ExperienceService experienceservice;
 
 int rowCount = 0;
-unsigned long slowman = millis();
 unsigned long statstime = millis();
 unsigned long pnctimer = millis();
 unsigned long watchdog = millis();
@@ -308,20 +307,25 @@ static void smartdelay(unsigned long ms) {
     timerservice.loop();
     audio.loop();
 
-    // Watch experience operations
+    // Experience operations
 
-    if ( ! video.getStatus() )
-    {
-      unsigned long fellow = millis();
+    unsigned long fellow = millis();
+
+    if ( experienceservice.getCurrentState() == ExperienceService::STOPPED )
+    {  
       watchfaceexperiences.loop();
       systemload.logtasktime(millis() - fellow, 1, "we");
+    }
+    else
+    {
       fellow = millis();
       experienceservice.loop();
       systemload.logtasktime(millis() - fellow, 2, F("ex"));
-      fellow = millis();
-      textmessageservice.loop();
-      systemload.logtasktime(millis() - fellow, 3, "tm");
     }
+
+    fellow = millis();
+    textmessageservice.loop();
+    systemload.logtasktime(millis() - fellow, 3, "tm");
 
   	systemload.loop();
 
@@ -356,7 +360,7 @@ void setup()
   systemload.printHeapSpace( "Start" );
 
   hardware.begin();  // Sets all the hardware pins
-  systemload.printHeapSpace( "Hardware begin" );
+  systemload.printHeapSpace( "Hardware" );
 
   video.begin();
   video.setPaused( true );
@@ -413,7 +417,6 @@ void setup()
   battery.begin();
   audio.begin();
   gps.begin();
-  accel.begin();
   compass.begin();
   utils.begin();
 
@@ -421,12 +424,12 @@ void setup()
 
   BoardInitializationUtility();   // Installs needed video and other files
 
-  systemload.printHeapSpace( F("Board util") );
+  systemload.printHeapSpace( F("Board-init") );
 
   realtimeclock.begin();
   blesupport.begin();
 
-  systemload.printHeapSpace( "BLE start" );
+  systemload.printHeapSpace( "BLE" );
 
   // Support service initialization
 
@@ -460,7 +463,10 @@ void setup()
   {
     smartdelay(1000);
   }
+
   video.setPaused( false );
+  tof.setStatus( true );
+  // accel.setStatus( true );
 
   logger.info(F("Setup complete"));
 }
@@ -488,7 +494,10 @@ void Core0Tasks(void *pvParameters) {
   }
 }
 
-void printMessages()
+// Printing accelerometer and TOF messages here because this 
+// code runs in Core 1 otherwise the messages compete for the Serial monitor
+
+void printCore0TasksMessages()
 {
   if ( millis() - statstime > 1500 )
   {
@@ -503,79 +512,59 @@ void printMessages()
       Serial.println( mf2 );
     }
 
-    // Serial.println( tof.getGestureName() );     // Gets a String without clearing the gesture
-  }
+    mf = accel.getRecentMessage();
+    mf2 = accel.getRecentMessage2();
 
-  // Printing accelerometer statistics here because this code runs in Core 1
-  // otherwise the stats compete for the Serial monitor
-
-  if ( millis() - slowman > 500 )
-  {
-    slowman = millis();
-
-     rowCount++;
-    // Every 10 rows, reprint the header
-    if (rowCount >= 10) 
+    if ( mf != "" ) 
     {
-      rowCount = 0;  // Reset the counter
-      // Serial.println( accel.printHeader() );  // Reprint the header
+      Serial.println( mf );
+      Serial.println( mf2 );
     }
-  }  
+  }
 }
 
-/*
-reset all
-    accel.tapped();       // Clears any taps
-    accel.doubletapped();
-    tof.getGesture();     // Clears sensor gestures
-    textmessageservice.deactivate();
-*/
+// Resett video, sensors, experiences
+void resetAll()
+{
+  video.stopVideo();
 
+  tof.getGesture();       // Resets TOF
+  accel.reset();
+
+  experienceservice.setCurrentState( ExperienceService::STOPPED );
+  textmessageservice.deactivate();
+}
 
 void loop() 
 {
-  String mets = accel.getTapStats();
-  if ( mets != "" ) Serial.println( mets );
+  printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services
+  
+  if ( experienceservice.getCurrentState() != ExperienceService::STOPPED )
+  {
+    smartdelay(10);
+    return;
+  }
 
-  smartdelay(100);
-}
-
-void loop2()
-{
-
-
-
-
-
+/*
   // Watchdog resets everything when no gestures are found and the watch face is unchanging
-
   if  ( ( experienceservice.getCurrentState() != ExperienceService::STOPPED ) 
       && ( ! watchfacemain.okToExperience() )
       && ( millis() - watchdog > ( 3 * 60000 ) ) )
   {
-    video.stopVideo();
-
-    accel.tapped();         // Resets accel
-    accel.doubletapped();
-    accel.shaken();
-
-    tof.getGesture();       // Resets TOF
-
-    experienceservice.setCurrentState( ExperienceService::STOPPED );
-    textmessageservice.deactivate();
-
+    resetAll();
     watchfacemain.begin();  // Start watch face
   }
+*/
 
-  // Finish the current experience first
-
-  if ( experienceservice.getCurrentState() != ExperienceService::STOPPED )
+/*
+  // When running the EyesFollowFinger experience keep the TOF running to detect the fingertip position
+  if ( experienceservice.getExperNum() == ExperienceService::EyesFollowFinger 
+    && experienceservice.getCurrentState() != ExperienceService::STOPPED )
   {
-    tof.startGestureSensing();
-    return;
+    tof.setStatus( true );
   }
-
-  // Pounce gesture message received, overrides exepriences and main watch face
+  
+  // Pounce message received, overrides exepriences and main watch face
 
   if ( blesupport.isAnyDevicePounceTrue() && ( millis() - pnctimer > 60000 ))
   {
@@ -586,70 +575,92 @@ void loop2()
     experienceservice.startExperience( ExperienceService::Pounce );
     return;
   }
+*/
 
-  if ( millis() - afterTimer < 4000 ) return;
-  afterTimer = experienceservice.getAfterTimer();
-  tof.startGestureSensing();
+  // Wait 4 seconds after an experience before doing another experienxce
 
-  if ( millis() - gestureTimer < 500 ) return;
-  gestureTimer = millis();
-
-  // Start a new experience from the TOF sensor
-
-  TOF::TOFGesture recentGesture = tof.getGesture();
-
-  switch ( recentGesture )
+  if ( millis() - afterTimer < 4000 ) 
   {
-    case TOF::TOFGesture::None:
-      break;
-
-    case TOF::TOFGesture::Left:
-      experienceservice.startExperience( ExperienceService::Chastise );
-      break;
-
-    case TOF::TOFGesture::Circular:
-      experienceservice.startExperience( ExperienceService::MysticCat );
-      break;
-
-    case TOF::TOFGesture::Sleep:
-      experienceservice.startExperience( ExperienceService::Sleep );
-      break;
-
-    case TOF::TOFGesture::Right:
-      experienceservice.startExperience( ExperienceService::ShowTime );
-      break;
-
-    case TOF::TOFGesture::Up:
-      experienceservice.startExperience( ExperienceService::ParallaxCat );
-      break;
-
-    case TOF::TOFGesture::Hover:
-      // Finger hovers in one spot
-      experienceservice.startExperience( ExperienceService::Hover );
-      break;
-
-    case TOF::TOFGesture::Down:
-      experienceservice.startExperience( ExperienceService::EyesFollowFinger );
-      break;
-
-    default:
-      Serial.print( F("Unknown TOF experience "));
-      Serial.println( recentGesture );
-      break;
+    Serial.println( "After experience timer" );
+    return;
   }
 
+/*
   // Shake experience
 
-  if ( accel.shaken() )
+  if ( accel.getTripleTap() )
   {
     experienceservice.startExperience( ExperienceService::Shaken );
+    smartdelay(10);
+    return;
   }
+
+  // Wait 60 seconds after a CatsPlay experience before another CatsPlay
 
   if ( ( blesupport.getRemoteDevicesCount() > 0 ) && ( ( millis() - afterCatsPlay) > ( 60 * 1000 ) ) ) 
   {
     afterCatsPlay = millis();
     experienceservice.startExperience( ExperienceService::CatsPlay );
+    smartdelay(10);
+    return;
+  }
+*/
+
+  int recentGesture = tof.getGesture();
+
+  if ( recentGesture == GESTURE_NONE )
+  {
+    smartdelay(10);
+    return;
+  }
+
+  Serial.print( "recentGesture " );
+  Serial.print( recentGesture );
+  Serial.print( " " );
+  Serial.print( GESTURE_DOWN );
+  Serial.print( " " );
+  Serial.println( GESTURE_CIRCULAR );
+  
+
+  if ( recentGesture == GESTURE_CIRCULAR )
+  {
+    if ( random(0, 2) == 0 )
+    {
+      experienceservice.startExperience( ExperienceService::MysticCat );
+    }
+    else
+    {
+      experienceservice.startExperience( ExperienceService::Hover );
+    }
+  }
+
+// Available:
+// GESTURE_DOWN
+
+  if ( recentGesture == GESTURE_DOWN_LEFT || recentGesture == GESTURE_DOWN_RIGHT )
+  {
+    experienceservice.startExperience( ExperienceService::EyesFollowFinger );
   }
   
-  smartdelay(100);
+  if ( recentGesture == GESTURE_LEFT )
+  {
+    experienceservice.startExperience( ExperienceService::Chastise );
+  }
+
+  if ( recentGesture == GESTURE_RIGHT )
+  {
+    experienceservice.startExperience( ExperienceService::ShowTime );
+  };
+
+  if ( recentGesture == GESTURE_SLEEP )
+  {
+    experienceservice.startExperience( ExperienceService::Sleep );
+  }
+
+  if ( recentGesture == GESTURE_UP || recentGesture == GESTURE_UP_RIGHT || recentGesture == GESTURE_UP_LEFT )
+  {
+    experienceservice.startExperience( ExperienceService::ParallaxCat );
+  } 
+
+  smartdelay(10);
 }
