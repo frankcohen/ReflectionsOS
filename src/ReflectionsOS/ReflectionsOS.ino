@@ -466,7 +466,7 @@ void setup()
 
   video.setPaused( false );
   tof.setStatus( true );
-  // accel.setStatus( true );
+  accel.setStatus( true );
 
   logger.info(F("Setup complete"));
 }
@@ -614,13 +614,14 @@ void loop()
     return;
   }
 
+  /*
   Serial.print( "recentGesture " );
   Serial.print( recentGesture );
   Serial.print( " " );
   Serial.print( GESTURE_DOWN );
   Serial.print( " " );
   Serial.println( GESTURE_CIRCULAR );
-  
+  */
 
   if ( recentGesture == GESTURE_CIRCULAR )
   {
@@ -630,12 +631,13 @@ void loop()
     }
     else
     {
-      experienceservice.startExperience( ExperienceService::Hover );
     }
   }
 
-// Available:
-// GESTURE_DOWN
+  if ( recentGesture == GESTURE_DOWN )
+  {
+      experienceservice.startExperience( ExperienceService::Hover );
+  }
 
   if ( recentGesture == GESTURE_DOWN_LEFT || recentGesture == GESTURE_DOWN_RIGHT )
   {
@@ -652,10 +654,12 @@ void loop()
     experienceservice.startExperience( ExperienceService::ShowTime );
   };
 
+/*
   if ( recentGesture == GESTURE_SLEEP )
   {
     experienceservice.startExperience( ExperienceService::Sleep );
   }
+*/
 
   if ( recentGesture == GESTURE_UP || recentGesture == GESTURE_UP_RIGHT || recentGesture == GESTURE_UP_LEFT )
   {

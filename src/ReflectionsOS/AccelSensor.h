@@ -12,42 +12,27 @@
 #ifndef ACCEL_SENSOR_H
 #define ACCEL_SENSOR_H
 
+#include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_LIS3DH.h>
+#include <math.h>
+#include <string.h>
+
 #include "config.h"
 #include "secrets.h"
 
-#include "Haptic.h"
 #include "Utils.h"
 #include "Logger.h"
 
-#include <Adafruit_LIS3DH.h>
-#include <Adafruit_Sensor.h>
-
-#include <Wire.h>
-#include "SD.h"
-#include "SPI.h"
-
-#include "Print.h"
-
-extern Haptic haptic;
 extern Utils utils;
 extern LOGGER logger;
 
-// Default settings
+#define AccelCalN 59
 
-// R - Range default, 2, 4, 8, 16
-#define range LIS3DH_RANGE_8_G
-
-// Data rate
-// Low-speed movements (walking): 10–50 Hz.
-// Medium-speed movements (hand gestures): 50–100 Hz.
-// High-speed movements (vibrations, impacts): 200–400 Hz.
-#define datarate LIS3DH_DATARATE_100_HZ
-
-// J - Jerk threashold using range filtering
-#define accelThreshold 2000
-
-// L - Jerk low threadshold using range filtering
-#define accelThresholdLow 600
+#define SAMPLE_RATE   50       // Sample every x milliseconds
+#define LOOKAHEAD_MAX 10
+#define SKIP_AFTER    7
 
 class AccelSensor
 {
@@ -73,15 +58,8 @@ class AccelSensor
 
     /**
      * Returns true once when a confirmed double tap is detected.
-     * Confirmation occurs after the triple-tap window elapses without a third tap.
      */
     bool getDoubleTap();
-
-    /**
-     * Returns true once when a triple tap is detected.
-     * Detection occurs after three taps are registered within the triple-tap window.
-     */
-    bool getTripleTap();
     
     float getXreading();
     float getYreading();
@@ -91,58 +69,32 @@ class AccelSensor
     String getRecentMessage2();
 
   private:
-    void dynamicTapDetection();
+    void computeThreshold(const double *vals, int n, double &outMedian, double &outMad);
+    void runSimulation();
+    void fillValues();
 
-    void handleTap(unsigned long now);
+    Adafruit_LIS3DH lis;
 
-    float magnitude(const sensors_event_t &e);
+    double aValues[ AccelCalN ];  // Lives in SRAM, initialized at runtime
 
-    // EMA & threshold parameters
-    const float _alpha          = 0.01f;
-    const float _thresholdFactor= 4.0f;
-
-    // Tap timing windows
-    const unsigned long _minTapInterval = 20;    // ms bounce filter
-    const unsigned long _doubleWindow   = 1200;  // ms for 2 taps
-    const unsigned long _tripleWindow   = 2400;  // ms for 3 taps
-
-    // Reset & summary timing
-    const unsigned long _resetInterval   = 5000; // ms
-    const unsigned long _summaryInterval = 1000; // ms
-
-    // Running statistics
-    float emaMean;
-    float emaVar;
-    bool  aboveThreshold;
-    unsigned long lastDetectedTime;
-
-    // Tap history timestamps
-    unsigned long tapHist[3];
+    int      skipCount;
+    int      lookaheadCount;
+    int      firstIdx;
+    double   firstMag;
+    double   threshold;
+    unsigned long sampleIndex;
+    unsigned long last;
+    int      state;
 
     bool          _pendingSingle;
     bool          _pendingDouble;
-    bool          _pendingTriple;
-    unsigned long _singleTime;
-    unsigned long _doubleTime;
-    unsigned long _tripleTime;
-
-    // Counters & timers
-    unsigned long singleCount;
-    unsigned long doubleCount;
-    unsigned long tripleCount;
-    unsigned long lastResetTime;
-    unsigned long lastSummaryTime;
-
-    // Debug stats
-    float lastMag;
-    float lastStdDev;
-    float lastThreshold;
 
     bool started;
     bool runflag;
     
     String myMef;
     String myMef2;
+
 };
 
 #endif // ACCEL_SENSOR_H

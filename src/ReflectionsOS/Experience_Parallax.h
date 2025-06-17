@@ -25,7 +25,7 @@ extern Video video;
 extern WatchFaceMain watchfacemain;   // Uses WatchFaceBase::drawImageFromFile to draw images to the display
 extern AccelSensor accel;
 
-#define parallaxname F("Parallax ")
+#define parallaxname F("ParallaxCat ")
 
 class Experience_Parallax : public Experience {
   public:

@@ -26,6 +26,7 @@
 #include "TimerService.h"
 #include "esp_sleep.h"
 #include "GPS.h"
+#include "Haptic.h"
 
 #include <PNGdec.h>
 #include <Arduino_GFX_Library.h>

@@ -7,165 +7,287 @@
   Licensed under GPL v3 Open Source Software
   (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
   Read the license in the license.txt file that comes with this code.
-
-  Reflections board usees an (LIS3DHTR 3-Axis Accelerometer) to
-  identify user gestures with their wrists and to wake the
-  processor from sleep.
-
-  Recognizes gestures by moving the Reflections board
-
-  See https://github.com/frankcohen/ReflectionsOS/Experiments/AccelerometerLab/ReadMe.md
-
-  Repository is at https://github.com/frankcohen/ReflectionsOS
-  Includes board wiring directions, server side components, examples, support
-
-  Depends on these libraries:
+ 
+  This module performs real-time detection of single and double tap gestures 
+  using the LIS3DH accelerometer. It includes two distinct phases:
+ 
+  1. Calibration and Validation Phase (begin):
+     • Processes a static array of predefined acceleration values.
+     • Calibrates an EMA-based (Exponential Moving Average) baseline and threshold.
+     • Validates the detection logic by running a state machine over sample data, 
+       outputting "single" and "double" tap events for confirmation.
+ 
+  2. Live Detection Phase (loop):
+     • Continuously reads acceleration values from the LIS3DH sensor in m/s².
+     • Applies the same EMA threshold logic used in begin.
+     • Runs a state machine to detect live single and double tap gestures based on:
+          - Dynamic deltas above an adaptive threshold
+          - Time intervals between candidate taps
+          - Suppression of noise using temporal and amplitude filters
+  
+  Design Goals:
+   • Accurate single and double tap recognition in real-world usage
+   • Noise tolerance via EMA and temporal filtering
+   • Portable to other ReflectionsOS gesture-driven applications
+  
+  Dependencies:
   Adafruit LIS3DH library, https://github.com/adafruit/Adafruit_LIS3DH
   Adafruit Unified Sensor, https://github.com/adafruit/Adafruit_Sensor
   Adafrruit BusIO, I2C support, https://github.com/adafruit/Adafruit_BusIO
-  PeakDetection, peak and valley detection, https://github.com/leandcesar/PeakDetection
-
+  
   Datasheet comes with this source code, see:
   1811031937_STMicroelectronics-LIS3DHTR_C15134 Accelerometer.pdf
 
-Sensor and support library details:
+  Author: Frank Cohen <fcohen@starlingwatch.com>
+  License: GPL v3 (See license.txt)
+  Project: ReflectionsOS – Mobile Connected Entertainment Platform
 
-getClick() bit definitions:
-Bit	Name	   Description
-6	  IA	     Interrupt Active: Set to 1 when a click event is detected.
-5	  DCLICK	 Double Click: Set to 1 if a double click event is detected.
-4	  SCLICK	 Single Click: Set to 1 if a single click event is detected.
-3	  Sign	   Sign of Acceleration: Indicates the direction of the click event.
-2	  Z	Z-Axis Contribution: Set to 1 if the Z-axis contributed to the click.
-1	  Y	Y-Axis Contribution: Set to 1 if the Y-axis contributed to the click.
-0	  X	X-Axis Contribution: Set to 1 if the X-axis contributed to the click.
+  Notes on working with the LIS3DH sensor:
 
-Scaling factor for different ranges:
-For LIS3DH_RANGE_2_G (±2g), the scaling factor is 0.001 g per count.
-For LIS3DH_RANGE_4_G (±4g), the scaling factor is 0.002 g per count.
-For LIS3DH_RANGE_8_G (±8g), the scaling factor is 0.004 g per count.
-For LIS3DH_RANGE_16_G (±16g), the scaling factor is 0.008 g per count.
+  getClick() bit definitions:
+  Bit	Name	   Description
+  6	  IA	     Interrupt Active: Set to 1 when a click event is detected.
+  5	  DCLICK	 Double Click: Set to 1 if a double click event is detected.
+  4	  SCLICK	 Single Click: Set to 1 if a single click event is detected.
+  3	  Sign	   Sign of Acceleration: Indicates the direction of the click event.
+  2	  Z	Z-Axis Contribution: Set to 1 if the Z-axis contributed to the click.
+  1	  Y	Y-Axis Contribution: Set to 1 if the Y-axis contributed to the click.
+  0	  X	X-Axis Contribution: Set to 1 if the X-axis contributed to the click.
 
-Data rate for different applications:
-Low-speed movements (walking): 10–50 Hz., 100 ms delay between reads
-Medium-speed movements (hand gestures): 50–100 Hz., 10 ms delay between reads
-High-speed movements (vibrations, impacts): 200–400 Hz., 5 ms or less between reads
+  Scaling factor for different ranges:
+  For LIS3DH_RANGE_2_G (±2g), the scaling factor is 0.001 g per count.
+  For LIS3DH_RANGE_4_G (±4g), the scaling factor is 0.002 g per count.
+  For LIS3DH_RANGE_8_G (±8g), the scaling factor is 0.004 g per count.
+  For LIS3DH_RANGE_16_G (±16g), the scaling factor is 0.008 g per count.
 
-getClick() bit definitions:
-Bit	Name	   Description
-6	  IA	     Interrupt Active: Set to 1 when a click event is detected.
-5	  DCLICK	 Double Click: Set to 1 if a double click event is detected.
-4	  SCLICK	 Single Click: Set to 1 if a single click event is detected.
-3	  Sign	   Sign of Acceleration: Indicates the direction of the click event.
-2	  Z	Z-Axis Contribution: Set to 1 if the Z-axis contributed to the click.
-1	  Y	Y-Axis Contribution: Set to 1 if the Y-axis contributed to the click.
-0	  X	X-Axis Contribution: Set to 1 if the X-axis contributed to the click.
+  Data rate for different applications:
+  Low-speed movements (walking): 10–50 Hz., 100 ms delay between reads
+  Medium-speed movements (hand gestures): 50–100 Hz., 10 ms delay between reads
+  High-speed movements (vibrations, impacts): 200–400 Hz., 5 ms or less between reads
 
-Learn how to wake an ESP32-S3 from deep sleep with interrupt movement sensing at 
-https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Deep%20Sleep/Deep_Sleep.md
+  getClick() bit definitions:
+  Bit	Name	   Description
+  6	  IA	     Interrupt Active: Set to 1 when a click event is detected.
+  5	  DCLICK	 Double Click: Set to 1 if a double click event is detected.
+  4	  SCLICK	 Single Click: Set to 1 if a single click event is detected.
+  3	  Sign	   Sign of Acceleration: Indicates the direction of the click event.
+  2	  Z	Z-Axis Contribution: Set to 1 if the Z-axis contributed to the click.
+  1	  Y	Y-Axis Contribution: Set to 1 if the Y-axis contributed to the click.
+  0	  X	X-Axis Contribution: Set to 1 if the X-axis contributed to the click.
+
+  Learn how to wake an ESP32-S3 from deep sleep with interrupt movement sensing at 
+  https://github.com/frankcohen/ReflectionsOS/blob/main/Experiments/Deep%20Sleep/Deep_Sleep.md
 
 */
 
 #include "AccelSensor.h"
 
-Adafruit_LIS3DH lis3dh = Adafruit_LIS3DH();
+AccelSensor::AccelSensor() {}
 
-AccelSensor::AccelSensor(){}
-
-void AccelSensor::begin()
-{ 
+void AccelSensor::begin() {
   started = false;
   runflag = false;
 
-  aboveThreshold = false;
-  lastDetectedTime = 0;
-  singleCount = 0;
-  doubleCount = 0;
-  tripleCount = 0;
-  lastResetTime = 0;
-  lastSummaryTime = 0;
-  lastMag = 0;
-  lastStdDev = 0;
-  lastThreshold = 0;
-  tapHist[0] = 0;
-  tapHist[1] = 0;
-  tapHist[2] = 0;
+  lis = Adafruit_LIS3DH();
 
-  if ( ! lis3dh.begin( accelAddress ) ) 
-  {
-    Serial.println( F( "Accelerometer did not start, stopping" ) );
+  if (!lis.begin(accelAddress)) {
+    Serial.println(F("Accelerometer did not start, stopping"));
     while (1) yield();
   }
 
   // Set shake detection parameters
-  lis3dh.setRange( range );   // 2, 4, 8 or 16 G!
+  lis.setRange(LIS3DH_RANGE_8_G);  // 2, 4, 8 or 16 G!
 
-  lis3dh.setDataRate( datarate ); // Set ODR to 100 Hz
+  lis.setDataRate(LIS3DH_DATARATE_400_HZ);  // Set ODR to 100 Hz
 
-  // bootstrap the EMA with one reading
-  sensors_event_t evt;
-  lis3dh.getEvent(&evt);
-  float m = magnitude(evt);
-  emaMean = m;
-  emaVar  = 1.0f;
+  fillValues();  // initializes SRAM-resident values[]
 
-  lastResetTime   = millis();
-  lastSummaryTime = millis();
+  // Compute threshold from the provided static array
+  double median, mad;
+  computeThreshold( aValues, AccelCalN, median, mad);
+  threshold = median - mad;
 
-  enableWakeOnMotion();
+  // Run the simulation test on aValues[N]
+  runSimulation();
+
+  state = 1;
+  skipCount = 0;
+  lookaheadCount = 0;
+  sampleIndex = 0;
+  last = millis();
 
   started = true;
 }
 
-float AccelSensor::getXreading() 
-{
-  if ( started )
-  {
-    lis3dh.read();
-    return lis3dh.x; // Raw X value
+/*
+Values used to calibrate the median and MAD for the sensor.
+The sensor is noisy. I wasn't satisfied with the built-in
+click detection. This helps detect single and double taps.
+
+These values are me doing a double tap, single tap, double tap,
+single tap, over 59 scans
+*/
+
+void AccelSensor::fillValues() {
+  double temp[AccelCalN] = {
+    12.1078280463508, 9.33203621938964, 10.1310512781251, 8.7236059058167,
+    5.80487725968431, 9.57146801697629, 15.352641466536, 15.0080311833365,
+    8.41240155960235, 9.1309473769155, 10.6754344173902, 8.17425225938128,
+    8.91654641663464, 11.1541247975805, 10.8324974036461, 7.17878819857502,
+    6.67956585415549, 14.1428321067599, 11.9598118714301, 10.1949840608017,
+    11.6949647284633, 10.0960437796198, 9.97769512462673, 10.0360300916249,
+    7.79964742792903, 7.6232407806654, 15.5585378490397, 12.153312305705,
+    9.44136642652958, 10.1342685971904, 9.08789854696893, 9.51874466513311,
+    8.6300579372331, 7.77512700860893, 10.8916527671424, 5.0360798246255,
+    9.1321081903359, 5.78180767580521, 10.2642778606193, 12.3416084851206,
+    10.8678102670225, 8.84833317636717, 9.31919524422576, 9.48536240741491,
+    8.86901347388761, 9.50015263035284, 8.42765091825711, 8.16214432609471,
+    6.78552135064064, 9.91885578078439, 9.55362234966403, 9.4088575289458,
+    10.5058126767994, 11.1372303558829, 9.25156203027359, 10.5181129486234,
+    10.103331133839, 9.87751993164276, 9.87634547795894
+  };
+
+  memcpy( aValues, temp, sizeof(temp));  // Copy into SRAM
+}
+
+// Compute median and MAD on an array of length N
+
+void AccelSensor::computeThreshold(const double *vals, int n, double &outMedian, double &outMad) {
+  static double sorted[AccelCalN];
+  memcpy(sorted, vals, n * sizeof(double));
+  for (int i = 1; i < n; ++i) {
+    double key = sorted[i];
+    int j = i - 1;
+    while (j >= 0 && sorted[j] > key) {
+      sorted[j + 1] = sorted[j];
+      --j;
+    }
+    sorted[j + 1] = key;
   }
-  else
-  {
+  // median
+  outMedian = (n & 1)
+                ? sorted[n / 2]
+                : 0.5 * (sorted[n / 2 - 1] + sorted[n / 2]);
+  // MAD
+  double devs[AccelCalN];
+  for (int i = 0; i < n; ++i) {
+    devs[i] = fabs(vals[i] - outMedian);
+  }
+  for (int i = 1; i < n; ++i) {
+    double key = devs[i];
+    int j = i - 1;
+    while (j >= 0 && devs[j] > key) {
+      devs[j + 1] = devs[j];
+      --j;
+    }
+    devs[j + 1] = key;
+  }
+  outMad = (n & 1)
+             ? devs[n / 2]
+             : 0.5 * (devs[n / 2 - 1] + devs[n / 2]);
+}
+
+void AccelSensor::runSimulation() {
+  Serial.print(F("Threshold = median - MAD = "));
+  Serial.println(threshold, 6);
+  Serial.println(F("Starting tap simulation..."));
+
+  state = 1;
+  skipCount = 0;
+  lookaheadCount = 0;
+  firstIdx = -1;
+
+  int i = 0;
+  while (i < AccelCalN) {
+    if (skipCount > 0) {
+      --skipCount;
+      ++i;
+      continue;
+    }
+    double v = aValues[i];
+
+    if (state == 1) {
+      if (v < threshold) {
+        // immediate next sample dip → SINGLE
+        if (i + 1 < AccelCalN && aValues[i + 1] < threshold) {
+          Serial.print(F("Single click at idx "));
+          Serial.println(i);
+          skipCount = SKIP_AFTER;
+          ++i;
+          continue;
+        }
+        state = 2;
+        lookaheadCount = 0;
+        firstIdx = i;
+        firstMag = v;
+      }
+      ++i;
+    } else {  // WAIT_SECOND
+      ++lookaheadCount;
+      if (v < threshold) {
+        _pendingDouble = true;
+        _pendingSingle = false;
+        Serial.print(F("Double click at idx "));
+        Serial.println(i);
+        state = 1;
+        skipCount = SKIP_AFTER;
+        ++i;
+      } else if (lookaheadCount >= LOOKAHEAD_MAX) {
+        Serial.print(F("Single click at idx "));
+        Serial.println(firstIdx);
+        _pendingSingle = true;
+        _pendingDouble = false;
+        state = 1;
+        skipCount = SKIP_AFTER;
+        ++i;
+      } else {
+        ++i;
+      }
+    }
+  }
+
+  Serial.println();
+}
+
+float AccelSensor::getXreading() {
+  if (started) {
+    sensors_event_t evt;
+    lis.getEvent(&evt);
+    return evt.acceleration.x;
+  } else {
     return 0;
   }
 }
 
-float AccelSensor::getYreading() 
-{
-  if ( started )
-  {
-    lis3dh.read();
-    return lis3dh.y; // Raw Y value
-  }
-  else
-  {
+float AccelSensor::getYreading() {
+  if (started) {
+    sensors_event_t evt;
+    lis.getEvent(&evt);
+    return evt.acceleration.y;
+  } else {
     return 0;
   }
 }
 
-float AccelSensor::getZreading() 
-{
-  if ( started )
-  {
-    lis3dh.read();
-    return lis3dh.z; // Raw Y value
-  }
-  else
-  {
+float AccelSensor::getZreading() {
+  if (started) {
+    sensors_event_t evt;
+    lis.getEvent(&evt);
+    return evt.acceleration.z;
+  } else {
     return 0;
   }
 }
 
 // Resets the sensor
 
-void AccelSensor::resetLIS3DH() 
-{
+void AccelSensor::resetLIS3DH() {
   // Read the current value of CTRL_REG5 (0x24)
   uint8_t ctrlReg5Value = 0;
   Wire.beginTransmission(0x18);  // Start communication with LIS3DH (I2C address)
-  Wire.write(0x24);  // Register address for CTRL_REG5
-  Wire.endTransmission(false);  // Keep the connection active
-  Wire.requestFrom(0x18, 1);  // Request 1 byte of data
+  Wire.write(0x24);              // Register address for CTRL_REG5
+  Wire.endTransmission(false);   // Keep the connection active
+  Wire.requestFrom(0x18, 1);     // Request 1 byte of data
   if (Wire.available()) {
     ctrlReg5Value = Wire.read();  // Read the current value from CTRL_REG5
   }
@@ -175,9 +297,9 @@ void AccelSensor::resetLIS3DH()
 
   // Write the new value back to CTRL_REG5 to reboot the sensor
   Wire.beginTransmission(0x18);  // Start communication again
-  Wire.write(0x24);  // CTRL_REG5 register address
-  Wire.write(ctrlReg5Value);  // Write the updated value
-  Wire.endTransmission();  // End transmission
+  Wire.write(0x24);              // CTRL_REG5 register address
+  Wire.write(ctrlReg5Value);     // Write the updated value
+  Wire.endTransmission();        // End transmission
 
   // Wait for the reset to take effect
   delay(10);
@@ -201,8 +323,7 @@ static void lis3dh_write8(uint8_t addr, uint8_t reg, uint8_t val) {
 
 // Configure to wake from deep sleep on movement
 
-void AccelSensor::enableWakeOnMotion() 
-{
+void AccelSensor::enableWakeOnMotion() {
   // 0) make sure Wire is up (lis3dh.begin() usually calls Wire.begin())
   //    and that accelAddress matches your I2C address (0x18 or 0x19)
 
@@ -213,7 +334,7 @@ void AccelSensor::enableWakeOnMotion()
 
   // 2) Build INT1_CFG for “wake on motion” (ZH, YH and XH high)
   //    [AOI=0, 6D=0, ZHIE=1, ZLIE=0, YHIE=1, YLIE=0, XHIE=1, XLIE=0]
-  uint8_t int1cfg = (1<<5) | (1<<3) | (1<<1);
+  uint8_t int1cfg = (1 << 5) | (1 << 3) | (1 << 1);
   lis3dh_write8(accelAddress, LIS3DH_REG_INT1CFG, int1cfg);
 
   // 3) Set the threshold (1–127) and duration (1–127) on INT1
@@ -222,15 +343,14 @@ void AccelSensor::enableWakeOnMotion()
 
   // 4) Latch the interrupt on INT1 (so it stays asserted until you clear it)
   uint8_t ctrl5 = lis3dh_read8(accelAddress, LIS3DH_REG_CTRL5);
-  ctrl5 |= (1<<3); // LIR_INT1 = bit-3 in CTRL_REG5
+  ctrl5 |= (1 << 3);  // LIR_INT1 = bit-3 in CTRL_REG5
   lis3dh_write8(accelAddress, LIS3DH_REG_CTRL5, ctrl5);
 
   // 5) Finally, tell the ESP32 “any high on GPIO_NUM_14 (your INT1 pin)
   //    will wake me from deep sleep”
   esp_sleep_enable_ext1_wakeup(
     BIT(GPIO_NUM_14),
-    ESP_EXT1_WAKEUP_ANY_HIGH
-  );
+    ESP_EXT1_WAKEUP_ANY_HIGH);
 }
 
 /* Enabled wake on movement using SparkFunLIS3DH library
@@ -355,166 +475,21 @@ void AccelSensor::enableWakeOnMotion()
   esp_sleep_enable_ext1_wakeup(BIT(GPIO_NUM_14), ESP_EXT1_WAKEUP_ANY_HIGH);
 */
 
-/**
- * Computes the acceleration magnitude and maintains a running mean and variance via an exponential moving average.
- * Sets a dynamic threshold at (mean + thresholdFactor·σ) and detects taps as rising‐edge spikes above that threshold.
- * Classifies single, double, and triple taps by checking if tap timestamps fall within configurable timing windows.
- */
-
-void AccelSensor::dynamicTapDetection()
-{
-  if ( ! runflag ) return;
-
-  unsigned long now = millis();
-
-  // Read & compute magnitude
-
-  sensors_event_t evt;
-  lis3dh.getEvent(&evt);
-  float mag = magnitude(evt);
-
-  // Dynamic threshold
-  
-  float stdDev    = sqrtf(emaVar);
-  float threshold = emaMean + _thresholdFactor * stdDev;
-
-  // Store debug stats
-
-  lastMag       = mag;
-  lastStdDev    = stdDev;
-  lastThreshold = threshold;
-
-  // Rising-edge with debounce
-
-  if (mag > threshold
-      && !aboveThreshold
-      && (now - lastDetectedTime > _minTapInterval)) {
-      aboveThreshold   = true;
-      lastDetectedTime = now;
-      handleTap(now);
-  } else if (mag <= threshold) {
-      aboveThreshold = false;
-      // Update EMA
-      float prevMean = emaMean;
-      emaMean = _alpha * mag + (1 - _alpha) * emaMean;
-      emaVar  = _alpha * (mag - prevMean)*(mag - prevMean) + (1 - _alpha) * emaVar;
-  }
-
-  // Reset counts periodically
-
-    if (now - lastResetTime >= _resetInterval) 
-    {
-        singleCount = doubleCount = tripleCount = 0;
-        _pendingSingle = _pendingDouble = _pendingTriple = false;
-        _singleTime = _doubleTime = _tripleTime = 0;
-        lastResetTime = now;
-    }
-
-/*
-    if (now - lastSummaryTime >= _summaryInterval) {
-        Serial.print("Singles: "); Serial.print(singleCount);
-        Serial.print("  Doubles: "); Serial.print(doubleCount);
-        Serial.print("  Triples: "); Serial.print(tripleCount);
-        Serial.print("  Mag:");    Serial.print(lastMag, 2);
-        Serial.print("  Mean:");   Serial.print(emaMean, 2);
-        Serial.print("  σ:");      Serial.print(lastStdDev, 2);
-        Serial.print("  Thr:");    Serial.println(lastThreshold, 2);
-        lastSummaryTime = now;
-    }
-*/
-
-}
-
-void AccelSensor::handleTap(unsigned long now) 
-{
-  // Shift history
-  tapHist[2] = tapHist[1];
-  tapHist[1] = tapHist[0];
-  tapHist[0] = now;
-
-  // Debug timestamps
-  Serial.print("Hist: [");
-  Serial.print(tapHist[2]); Serial.print(", ");
-  Serial.print(tapHist[1]); Serial.print(", ");
-  Serial.print(tapHist[0]); Serial.print("]  Δ1:");
-  Serial.print(tapHist[0] - tapHist[1]);
-  Serial.print("  Δ2:"); Serial.println(tapHist[1] - tapHist[2]);
-
-// Triple tap
-  if (tapHist[2] != 0 && (tapHist[0] - tapHist[2] <= _tripleWindow)) 
-  {
-    tripleCount++;
-    Serial.println(">>> Triple tap!");
-    _pendingTriple = true;
-    _tripleTime   = now;
-    _pendingDouble = _pendingSingle = false;
-  }
-  // Double tap
-  else if (tapHist[1] != 0 && (tapHist[0] - tapHist[1] <= _doubleWindow)) 
-  {
-    doubleCount++;
-    Serial.println(">> Double tap!");
-    _pendingDouble = true;
-    _doubleTime    = now;
-    _pendingSingle = false;
-  }
-  // Single tap
-  else 
-  {
-    singleCount++;
-    Serial.println("> Single tap");
-    _pendingSingle = true;
-    _singleTime    = now;
-  }
-}
-
-void AccelSensor::reset()
-{
+void AccelSensor::reset() {
   _pendingSingle = false;
   _pendingDouble = false;
-  _pendingTriple = false;
 }
 
-bool AccelSensor::getSingleTap() 
-{
-  // Fires after the double-window elapses
-  if (_pendingSingle && (millis() - _singleTime >= _doubleWindow)) 
-  {
-    _pendingSingle = false;
-    return true;
-  }
-  return false;
+bool AccelSensor::getSingleTap() {
+  bool ts = _pendingSingle;
+  _pendingSingle = false;
+  return ts;
 }
 
-bool AccelSensor::getDoubleTap() 
-{
-  // Fires after the triple-window elapses
-  if (_pendingDouble && (millis() - _doubleTime >= _tripleWindow)) 
-  {
-    _pendingDouble = false;
-    return true;
-  }
-  return false;
-}
-
-bool AccelSensor::getTripleTap() 
-{
-  // Fires immediately upon triple detection
-  if (_pendingTriple) 
-  {
-    _pendingTriple = false;
-    return true;
-  }
-  return false;
-}
-
-float AccelSensor::magnitude(const sensors_event_t &e) 
-{
-  return sqrtf(
-      e.acceleration.x*e.acceleration.x +
-      e.acceleration.y*e.acceleration.y +
-      e.acceleration.z*e.acceleration.z
-  );
+bool AccelSensor::getDoubleTap() {
+  bool ts = _pendingDouble;
+  _pendingDouble = false;
+  return ts;
 }
 
 /* Used to send debug information to the Serial Monitor
@@ -524,33 +499,71 @@ float AccelSensor::magnitude(const sensors_event_t &e)
    loop() in ReflectionsOS.ino calls TOF::getMef() and prints to
    Serial Monitor from there. */
 
-String AccelSensor::getRecentMessage()
-{
+String AccelSensor::getRecentMessage() {
   String myMefa = myMef;
   myMef = "";
   return myMefa;
 }
 
-String AccelSensor::getRecentMessage2()
-{
+String AccelSensor::getRecentMessage2() {
   String myMefa = myMef2;
   myMef2 = "";
   return myMefa;
 }
 
-void AccelSensor::setStatus( bool run )
-{
+void AccelSensor::setStatus(bool run) {
   runflag = run;
 }
 
-bool AccelSensor::getStatus()
-{
+bool AccelSensor::getStatus() {
   return runflag;
 }
 
+void AccelSensor::loop() {
+  unsigned long now = millis();
 
-void AccelSensor::loop()
-{
-  dynamicTapDetection();
+  if (millis() - last < SAMPLE_RATE) return;
+  last = now;
+
+  ++sampleIndex;
+
+  // Get live magnitude in m/s²
+  sensors_event_t evt;
+  lis.getEvent(&evt);
+  double mag = sqrt(
+    evt.acceleration.x * evt.acceleration.x + evt.acceleration.y * evt.acceleration.y + evt.acceleration.z * evt.acceleration.z);
+
+  if (skipCount > 0) {
+    --skipCount;
+    return;
+  }
+
+  if (state == 1) {
+    if (mag < threshold) {
+      state = 2;
+      lookaheadCount = 0;
+      firstIdx = sampleIndex;
+      firstMag = mag;
+      skipCount = 2;
+      Serial.println("*");
+      return;
+    }
+  } else {  // WAIT_SECOND
+    ++lookaheadCount;
+    if (mag < threshold) {
+      _pendingDouble = true;
+      _pendingSingle = false;
+      Serial.print(F("Double click @ sample "));
+      Serial.println(sampleIndex);
+      state = 1;
+      skipCount = SKIP_AFTER;
+    } else if (lookaheadCount >= LOOKAHEAD_MAX) {
+      _pendingSingle = true;
+      _pendingDouble = false;
+      Serial.print(F("Single click @ sample "));
+      Serial.println(firstIdx);
+      state = 1;
+      skipCount = SKIP_AFTER;
+    }
+  }
 }
-

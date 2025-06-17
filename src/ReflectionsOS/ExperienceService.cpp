@@ -218,9 +218,11 @@ void ExperienceService::startExperience( int exper )
     Serial.println( exper );
     return;
   }
-
+  
+  /*
   Serial.print( F("startExperience ") );
   Serial.println( experienceNameToString( exper ) );
+  */
 
   experiencestats.record( experienceNameToString( exper ) );
 

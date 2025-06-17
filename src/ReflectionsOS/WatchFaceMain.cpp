@@ -378,6 +378,8 @@ void WatchFaceMain::printStatus()
 
 void WatchFaceMain::loop()
 {
+  if ( video.getStatus() ) return;
+
   switch ( panel ) 
   {
     case STARTUP:
@@ -520,7 +522,7 @@ void WatchFaceMain::displayingdigitaltime()
   if ( onceDigitalTime )
   {
     onceDigitalTime = false;
-    textmessageservice.updateTime();
+    //textmessageservice.updateTime();
   }
 }
 
