@@ -13,7 +13,7 @@ Reflections goes beyond the wearable device to deliver server side architecture.
 
 ![Reflections Server Side Architecture](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/ReflectionsServerSide.jpg)
 
-I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry pocket watches with Disney Imagineer and Mupeteer [Terri Hardin](https://terrihardin.com/). We are working on a new experience powered by Reflections. Announcement coming in Spring 2025.
+I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry pocket watches with Disney Imagineer and Muppeteer [Terri Hardin](https://terrihardin.com/). We are working on a new experience powered by Reflections. Announcement coming in Summer 2025.
 
 I love working with a group of creative makers and the Arduino community. Please feel free to let me know your feedback and ideas.
 
@@ -59,6 +59,10 @@ I used the [EleksTube IPS clock](https://elekstube.com/) for experimentation. It
 I made an air-guitar project to learn about streaming music over Bluetooth Clasic, and why it won't work yet on BLE: [https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar](https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments/AirGuitar)
 
 -Frank
+
+## Update as of June 16, 2025
+
+Nearing the end of coding. The Time of Flight (TOF) sensor and LIS3DH accelerometer sensor code is complete and integrated into the code. Next steps are optimizations to extend battery life, use deep sleep, BLE capabilities, and GPS capabilities.
 
 ## Update as of January 18, 2025
 
