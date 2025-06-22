@@ -41,7 +41,7 @@
 // Sleep detection thresholds
 #define SLEEP_MIN_DISTANCE    5                   // mm
 #define SLEEP_MAX_DISTANCE   18                   // mm
-#define SLEEP_COVERAGE_COUNT 40                   // # pixels in [5,18] → “covered”
+#define SLEEP_COVERAGE_COUNT 59                   // # pixels in [5,18] → “covered”
 #define SLEEP_HOLD_MS      3000UL                 // ms of coverage to declare Sleep
 
 // Finger-tip detection thresholds

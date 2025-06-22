@@ -33,6 +33,7 @@ extern LOGGER logger;
 #define SAMPLE_RATE   50       // Sample every x milliseconds
 #define LOOKAHEAD_MAX 10
 #define SKIP_AFTER    7
+#define WAIT_TIME     3000
 
 class AccelSensor
 {
@@ -85,6 +86,7 @@ class AccelSensor
     unsigned long sampleIndex;
     unsigned long last;
     int      state;
+    unsigned long waittime;
 
     bool          _pendingSingle;
     bool          _pendingDouble;

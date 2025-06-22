@@ -45,7 +45,7 @@ void Steps::loop()
     */
         
     // Detect steps based on threshold and timing
-    if ( magnitude > accelThreshold ) 
+    if ( magnitude >= accelThreshold ) 
     {
       stepCount++;
     }

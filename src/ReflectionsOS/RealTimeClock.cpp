@@ -130,7 +130,7 @@ int RealTimeClock::getHour()
   else 
   {
     Serial.println(F("Failed to get local time from RTC."));
-    return -1;  // Return -1 if time cannot be obtained
+    return 10;  // Return 10 if time cannot be obtained
   }
 }
 
@@ -146,7 +146,7 @@ int RealTimeClock::getMinute()
   else 
   {
     Serial.println(F("Failed to get local time from RTC."));
-    return -1;  // Return -1 if time cannot be obtained
+    return 50;  // Return 50 if time cannot be obtained
   }
 }
 

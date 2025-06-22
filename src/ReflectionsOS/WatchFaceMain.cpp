@@ -33,8 +33,8 @@ void WatchFaceMain::begin()
   catFaceWait = rand() % 30000;
 
   tilttimer = millis();
-  currentNeutralMeasurementY = accel.getYreading() + 15000;
-  currentNeutralMeasurementX = accel.getXreading() + 15000;
+  baselineY = accel.getYreading();
+  baselineX = accel.getXreading();
 
   battimer = millis();
   batcount = 0;
@@ -49,15 +49,6 @@ void WatchFaceMain::begin()
   gpsx = 0;
   gpsy = 0;
 
-  referenceY = accel.getYreading() + 15000;   // Current Y-axis tilt value
-  waitForNextReference = false;               // Delay reference update after hour change
-  lastChangeTime = 0;                         // Timestamp of the last hour change
-
-  referenceX = accel.getXreading() + 15000;   // Current Y-axis tilt value
-  waitForNextReferenceX = false;              // Delay reference update after hour change
-  lastChangeTimeX = 0;                        // Timestamp of the last hour change
-
-  timertimer = millis();
   notificationflag = false;
 
   slowman = millis();
@@ -154,25 +145,25 @@ void WatchFaceMain::updateBattery()
 
 void WatchFaceMain::updateHoursAndMinutes()
 {
-  int currentHour2 = realtimeclock.getHour();
+  int hour2 = realtimeclock.getHour();
 
-  if ( currentHour2 == -1 ) currentHour2 = 2;
-  if ( currentHour2 > 12 ) currentHour2 = currentHour2 - 12;
+  if ( hour2 == -1 ) hour2 = 2;
+  if ( hour2 > 12 ) hour2 = hour2 - 12;
   
-  if ( currentHour2 != currentHour )
+  if ( hour2 != hour )
   {
-    currentHour = currentHour2;
+    hour = hour2;
     displayUpdateable = true;
     drawFace = true;
   }
 
-  int currentMinute2 = realtimeclock.getMinute();
+  int minute2 = realtimeclock.getMinute();
 
-  if ( currentMinute2 == -1 ) currentMinute2 = 15;
+  if ( minute2 == -1 ) minute2 = 15;
 
-  if ( currentMinute2 != currentMinute )
+  if ( minute2 != minute )
   {
-    currentMinute = currentMinute2;
+    minute = minute2;
     displayUpdateable = true;
     drawFace = true;
   }
@@ -234,25 +225,25 @@ void WatchFaceMain::showDisplayMain()
 
   // Draw hour image
 
-  if ( ( currentHour != oldHour ) || drawitall )
+  if ( ( hour != oldHour ) || drawitall )
   {
-    oldHour = currentHour;
+    oldHour = hour;
 
-    if ( currentHour > 20 ) currentHour = 20;
+    if ( hour > 20 ) hour = 20;
 
     mef = wfMainHours;
-    mef += currentHour;
+    mef += hour;
     mef += wfMainHours2;
     drawImageFromFile( mef, true, 0, 0 );
   } 
 
-  int minute = map( currentMinute, 1, 60, 1, 20) + 1;
+  int minute = map( minute, 1, 60, 1, 20) + 1;
   if ( minute > 20 ) minute == 20;
 
   // Draw minutes image
-  if ( ( currentMinute != oldMinute ) || drawitall )
+  if ( ( minute != oldMinute ) || drawitall )
   {
-    oldMinute = currentMinute;
+    oldMinute = minute;
 
     mef = wfMainMinutes;
     mef += minute ;
@@ -313,22 +304,22 @@ bool WatchFaceMain::updateTimeLeft()
 
   int index = 1;
 
-  if ( ( millis() - noMovementTime ) > 3000 )
+  if ( ( millis() - noMovementTime ) > ( nomov * 1 ) )
   {
     index = 2;
   }
 
-  if ( ( millis() - noMovementTime ) > 6000 )
+  if ( ( millis() - noMovementTime ) > ( nomov * 2 ) )
   {
     index = 3;
   }
 
-  if ( ( millis() - noMovementTime ) > 9000 )
+  if ( ( millis() - noMovementTime ) > ( nomov * 3 ) )
   {
     index = 4;
   }
 
-  if ( ( millis() - noMovementTime ) > 12000 )
+  if ( ( millis() - noMovementTime ) > ( nomov * 4 ) )
   {
     return true;
   }
@@ -531,6 +522,18 @@ void WatchFaceMain::setDrawItAll()
   drawitall = true;
 }
 
+// Check if the current reading is outside the neutral zone
+bool WatchFaceMain::isOutsideNeutralZone(float value, float baseline, float neutralFactor) 
+{
+  return (value < (baseline - baseline * neutralFactor) || value > (baseline + baseline * neutralFactor));
+}
+
+// Adjust the baseline by moving it towards the new position slowly (smooth transition)
+float WatchFaceMain::adjustBaseline(float baseline, float currentReading, float factor) 
+{
+  return baseline + factor * (currentReading - baseline);
+}
+
 void WatchFaceMain::settingdigitaltime()
 {
   if ( needssetup )
@@ -539,16 +542,16 @@ void WatchFaceMain::settingdigitaltime()
     needssetup = false;
     noMovementTime = millis();
     tilttimer = millis();
-    currentHour = realtimeclock.getHour();
-    if ( currentHour > 12 ) currentHour = currentHour - 12;
-    currentMinute = realtimeclock.getMinute();
+    hour = realtimeclock.getHour();
+    if ( hour > 12 ) hour = hour - 12;
+    minute = realtimeclock.getMinute();
     hourschanging = true;
 
-    currentNeutralMeasurementY = accel.getYreading() + 15000; // Current Y-axis tilt value
-    currentNeutralMeasurementX = accel.getXreading() + 15000; // Current Y-axis tilt value
+    baselineY = accel.getYreading(); // Current Y-axis tilt value
+    baselineX = accel.getXreading(); // Current Y-axis tilt value
 
     //drawImageFromFile( wfMain_SetTime_Background_Hour, true, 0, 0 );
-    drawHourMinute( currentHour, currentMinute, hourschanging );
+    drawHourMinute( hour, minute, hourschanging );
     return;
   }
 
@@ -567,7 +570,7 @@ void WatchFaceMain::settingdigitaltime()
 
   if ( updateTimeLeft() )
   {
-    realtimeclock.setTime( currentHour, currentMinute, 0 );    // Set new time
+    realtimeclock.setTime( hour, minute, 0 );    // Set new time
     panel = MAIN;
     video.startVideo( WatchFaceFlip3_video );
     needssetup = true;
@@ -580,88 +583,51 @@ void WatchFaceMain::settingdigitaltime()
 
   // Change time by tilting left-right for minutes and up-down for hours
 
-  if ( millis() - tilttimer > 500 )
-  {
-    tilttimer = millis();
+  if ( millis() - tilttimer < tiltspeed ) return;
+  
+  tilttimer = millis();
 
-    int measurementY = accel.getYreading() + 15000;
+  float xFiltered = accel.getXreading();
+  float yFiltered = accel.getYreading();
 
-    // Calculate Neutral Zone boundaries based on the currentNeutralMeasurement
-    int lowerBoundY = currentNeutralMeasurementY - ( currentNeutralMeasurementY * .10 );
-    int upperBoundY = currentNeutralMeasurementY + ( currentNeutralMeasurementY * .10 );
-
-    // Neutral Zone: No change in Time value
-    if ( ! ( ( measurementY >= lowerBoundY ) && ( measurementY <= upperBoundY ) ) )
-    {
-      // Increase Zone: Below the Neutral Zone
-      if ( measurementY < lowerBoundY ) 
-      {
-        currentHour = (currentHour == 12) ? 1 : currentHour + 1;
-        //currentNeutralMeasurementY = currentNeutralMeasurementY - 100;
-        hourschanging = true;
-        noMovementTime = millis();
-        drawHourMinute( currentHour, currentMinute, hourschanging );
-        return;
-      }
-      
-      // Decrease Zone: Above the Neutral Zone
-      if ( measurementY > upperBoundY ) 
-      {
-        currentHour = (currentHour == 1) ? 12 : currentHour - 1; 
-        //currentNeutralMeasurementY = currentNeutralMeasurementY + 100;
-        hourschanging = true;
-        noMovementTime = millis();
-        drawHourMinute( currentHour, currentMinute, hourschanging );
-        return;
-      }
+  // Detect horizontal movement (X axis) outside the neutral zone
+  if (isOutsideNeutralZone(xFiltered, baselineX, neutralZoneFactor)) {
+    if (abs(xFiltered - baselineX) > xThreshold) {
+      minute += (xFiltered > baselineX) ? 1 : -1;  // Increase or decrease minute
+      if (minute >= 60) minute = 0; // Wrap around if it exceeds 59 minutes
+      if (minute < 0) minute = 59; // Wrap around if it goes below 0
+      noMovementTime = millis();  // Reset inactivity timer
+      hourschanging = false;
+      baselineX = adjustBaseline(baselineX, xFiltered, factorLevel);  // Move baseline towards the new X position      
+      drawHourMinute( hour, minute, hourschanging );
+      return;
     }
+  }
 
-    int measurementX = accel.getXreading() + 15000;
-
-    // Calculate Neutral Zone boundaries based on the currentNeutralMeasurement
-    int lowerBoundX = currentNeutralMeasurementX - (currentNeutralMeasurementX * .10);
-    int upperBoundX = currentNeutralMeasurementX + (currentNeutralMeasurementX * .10);
-    
-    // Neutral Zone: No change in Time value
-    if ( ! ( ( measurementX >= lowerBoundX ) && ( measurementX <= upperBoundX ) ) )
-    {
-      // Increase Zone: Below the Neutral Zone
-      if ( measurementX < lowerBoundX ) 
-      {
-        currentMinute++;
-        if ( currentMinute > 59 ) currentMinute = 1;
-
-        hourschanging = false;
-        noMovementTime = millis();
-        drawHourMinute( currentHour, currentMinute, hourschanging );
-        return;
-      }
-      
-      // Decrease Zone: Above the Neutral Zone
-      if ( measurementX > upperBoundX ) 
-      {
-        currentMinute--;
-        if ( currentMinute == 0 ) currentMinute = 59;
-
-        //currentNeutralMeasurementX = currentNeutralMeasurementX + 50;
-        hourschanging = false;
-        noMovementTime = millis();
-        drawHourMinute( currentHour, currentMinute, hourschanging );
-        return;
-      }
+  // Detect vertical movement (Y axis) outside the neutral zone
+  if (isOutsideNeutralZone(yFiltered, baselineY, neutralZoneFactor)) {
+    if (abs(yFiltered - baselineY) > yThreshold) {
+      hour += (yFiltered > baselineY) ? 1 : -1;  // Increase or decrease hour
+      if (hour > 12) hour = 1; // Wrap around if it exceeds 12 hours
+      if (hour < 1) hour = 12; // Wrap around if it goes below 1
+      hourschanging = true;
+      noMovementTime = millis();  // Reset inactivity timer
+      baselineY = adjustBaseline(baselineY, yFiltered, factorLevel);  // Move baseline towards the new Y position
+      drawHourMinute( hour, minute, hourschanging );
+      return;
     }
   }
 }
 
-void WatchFaceMain::drawHourMinute( int currentHour, int currentMinute, bool hourschanging )
+void WatchFaceMain::drawHourMinute( int hourc, int minutec, bool hourschanging )
 {
-  String mef = String( currentHour );
+  String mef = String( hourc );
   mef += F(":");
-  if ( currentMinute < 10 )
+  if ( minutec < 10 )
   {
     mef += F("0");
   }
-  mef += String( currentMinute );
+  mef += String( minutec );
 
   if ( hourschanging )
   {
@@ -694,7 +660,7 @@ void WatchFaceMain::changetime()
     noMovementTime = millis();
     textmessageservice.stop();
     enoughTimePassedtimer = millis();
-    realtimeclock.setTime( currentHour, currentMinute, 0 );
+    realtimeclock.setTime( hour, minute, 0 );
     return;
   }
 
@@ -737,14 +703,13 @@ void WatchFaceMain::clearsteps()
 
   if ( accel.getSingleTap() )
   {
-    panel = MAIN;
+    panel = DISPLAYING_TIMER;
+    video.startVideo( WatchFaceFlip2_video );
     //haptic.playEffect(14);  // 14 Strong Buzz
-    video.startVideo( WatchFaceFlip3_video );
-    textmessageservice.stop();
+    needssetup = true;
     noMovementTime = millis();
     enoughTimePassedtimer = millis();
-    needssetup = true;
-    steps.resetStepCount();
+    textmessageservice.stop();
     return;
   }
 
@@ -850,7 +815,6 @@ void WatchFaceMain::displayingtimer()
     needssetup = true;
     noMovementTime = millis();
     textmessageservice.stop();
-    referenceY = accel.getYreading() + 15000; // Current Y-axis tilt value
     enoughTimePassedtimer = millis();
     return;
   }
@@ -879,9 +843,8 @@ void WatchFaceMain::settingtimer()
     needssetup = false;
     drawImageFromFile( wfMain_SetTimer_Background, true, 0, 0 );
     noMovementTime = millis();
-    currentHour = timerservice.getTime();
+    hour = timerservice.getTime();
     tilttimer = millis();
-    waitForNextReference = false;
     enoughTimePassedtimer = millis();
     return;
   }
@@ -910,40 +873,27 @@ void WatchFaceMain::settingtimer()
     return;
   }
 
-  if ( millis() - tilttimer > 500 )
-  {
-    tilttimer = millis();
+  if ( millis() - tilttimer < 1000 ) return;  
+  tilttimer = millis();
 
-    int measurementY = accel.getYreading() + 15000;
+  float yFiltered = accel.getYreading();
 
-    // Calculate Neutral Zone boundaries based on the currentNeutralMeasurement
-    int lowerBoundY = currentNeutralMeasurementY - ( currentNeutralMeasurementY * .10 );
-    int upperBoundY = currentNeutralMeasurementY + ( currentNeutralMeasurementY * .10 );
-    
-    // Neutral Zone: No change in Time value
-    if ( ! ( ( measurementY >= lowerBoundY ) && ( measurementY <= upperBoundY ) ) )
-    {
-      // Increase Zone: Below the Neutral Zone
-      if ( measurementY < lowerBoundY ) 
-      {
-        currentHour = (currentHour == 60) ? 1 : currentHour + 1;
-        currentNeutralMeasurementY = currentNeutralMeasurementY - 50;
-        hourschanging = true;
-        noMovementTime = millis();
-      }
-      
-      // Decrease Zone: Above the Neutral Zone
-      if ( measurementY > upperBoundY ) 
-      {
-        currentHour = (currentHour == 1) ? 60 : currentHour - 1; 
-        currentNeutralMeasurementY = currentNeutralMeasurementY + 50;
-        hourschanging = true;
-        noMovementTime = millis();
-      }
+  // Detect vertical movement (Y axis) outside the neutral zone
+  // Note: It says hours here when the timer is really working in minutes, should be fixed later
+  if (isOutsideNeutralZone(yFiltered, baselineY, neutralZoneFactor)) {
+    if (abs(yFiltered - baselineY) > yThreshold) {
+      hour += (yFiltered > baselineY) ? 1 : -1;  // Increase or decrease hour
+      if (hour > 30) hour = 1; // Wrap around if it exceeds 30 minutes
+      if (hour < 1) hour = 30; // Wrap around if it goes below 1
+      noMovementTime = millis();  // Reset inactivity timer
+      baselineY = adjustBaseline(baselineY, yFiltered, factorLevel);  // Move baseline towards the new Y position
+
+      String met = String( hour );
+      //drawImageFromFile( wfMain_SetTimer_Background_Shortie, true, 0, 0 );
+      textmessageservice.updateTempTime( met );
+
+      return;
     }
-
-    String met = String( currentHour );
-    //drawImageFromFile( wfMain_SetTimer_Background_Shortie, true, 0, 0 );
-    textmessageservice.updateTempTime( met );
   }
+
 }

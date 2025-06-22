@@ -293,11 +293,14 @@ void TOF::loop() {
   */
 
   // ——— Sleep detection ———
-  if (now - sleepStart > SLEEP_HOLD_MS) {
+  if ( now - sleepStart > SLEEP_HOLD_MS )
+  {
+    sleepStart = now;
+
     int sleepCnt = 0;
     for (uint8_t r = 0; r < 8; ++r) {
       for (uint8_t c = 0; c < 8; ++c) {
-        uint16_t d = rd.distance_mm[r * 8 + c];
+        uint16_t d = rd.distance_mm[ ( r * 8 ) + c];
         if (d >= SLEEP_MIN_DISTANCE && d <= SLEEP_MAX_DISTANCE) {
           sleepCnt++;
         }

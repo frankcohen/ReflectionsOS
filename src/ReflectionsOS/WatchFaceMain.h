@@ -45,10 +45,14 @@ extern Steps steps;
 extern TimerService timerservice;
 extern GPS gps;
 
-#define xmin -700
-#define xmax 1500
-#define ymin -2500
-#define ymax 2500
+// Setting the hours/minutes and timer minutes
+#define factorLevel 0.3         // How fast to move the neutral zone
+#define neutralZoneFactor 0.50  // ±50% of baseline
+#define xThreshold 0.4          // Movement threshold for X (horizontal) axis
+#define yThreshold 0.4          // Movement threshold for Y (vertical) axis
+#define tiltspeed 800           // Speed to chanage
+
+#define nomov 1500    // Hourglass timeout duration
 
 class WatchFaceMain : public WatchFaceBase 
 {
@@ -94,7 +98,7 @@ class WatchFaceMain : public WatchFaceBase
 
     bool changing( bool hourflag );
 
-    void drawHourMinute( int currentHour, int currentMinute, bool hourschanging );
+    void drawHourMinute( int hourc, int minutec, bool hourschanging );
 
     int panel;
 
@@ -105,7 +109,6 @@ class WatchFaceMain : public WatchFaceBase
     
     bool displayUpdateable;
 
-    int currentHour, currentHour2, currentMinute, currentMinute2;
     int oldHour, oldMinute, oldBattery, oldBlink;
 
     bool onceDigitalTime;
@@ -130,22 +133,14 @@ class WatchFaceMain : public WatchFaceBase
     unsigned long noMovementTime;
 
     unsigned long tilttimer;
-    float referenceY;
-    float referenceX;
-    bool waitForNextReference; // Delay reference update after hour change
-    bool waitForNextReferenceX; // Delay reference update after hour change
-
-    unsigned long lastChangeTime; // Timestamp of the last hour change
-    unsigned long lastChangeTimeX; // Timestamp of the last hour change
-    unsigned long lastRepeatTime; // Timestamp of the last auto-repeat
-    unsigned long lastRepeatTimeX; // Timestamp of the last auto-repeat
-
     bool hourschanging;
-    unsigned long switchtime;
-    int currentNeutralMeasurementY = accel.getYreading() + 15000;
-    int currentNeutralMeasurementX = accel.getYreading() + 15000;
+    float baselineY;
+    float baselineX;
+    int hour;
+    int minute;
+    bool isOutsideNeutralZone(float value, float baseline, float neutralFactor);
+    float adjustBaseline(float baseline, float currentReading, float factor = factorLevel );
 
-    unsigned long timertimer;
     bool notificationflag;    
 
     bool gpsflag;

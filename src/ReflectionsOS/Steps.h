@@ -22,7 +22,7 @@
 
 extern AccelSensor accel;
 
-#define accelThreshold 4000
+#define accelThreshold 11
 
 class Steps
 {

@@ -115,6 +115,7 @@ void AccelSensor::begin() {
   lookaheadCount = 0;
   sampleIndex = 0;
   last = millis();
+  waittime = millis();
 
   started = true;
 }
@@ -224,7 +225,8 @@ void AccelSensor::runSimulation() {
       ++i;
     } else {  // WAIT_SECOND
       ++lookaheadCount;
-      if (v < threshold) {
+      if (v < threshold) 
+      {
         _pendingDouble = true;
         _pendingSingle = false;
         Serial.print(F("Double click at idx "));
@@ -522,6 +524,8 @@ bool AccelSensor::getStatus() {
 void AccelSensor::loop() {
   unsigned long now = millis();
 
+  if ( now - waittime < WAIT_TIME ) return;
+
   if (millis() - last < SAMPLE_RATE) return;
   last = now;
 
@@ -539,31 +543,45 @@ void AccelSensor::loop() {
   }
 
   if (state == 1) {
-    if (mag < threshold) {
+    if (mag < threshold) 
+    {
       state = 2;
       lookaheadCount = 0;
       firstIdx = sampleIndex;
       firstMag = mag;
       skipCount = 2;
-      Serial.println("*");
+      //Serial.println("*");
       return;
     }
-  } else {  // WAIT_SECOND
+  } 
+  else 
+  {  // WAIT_SECOND
     ++lookaheadCount;
-    if (mag < threshold) {
+    if (mag < threshold) 
+    {
       _pendingDouble = true;
       _pendingSingle = false;
+
+      String mef = String( sampleIndex );
+      mef += mag;
+      mef += ",";
+      mef += threshold;
       Serial.print(F("Double click @ sample "));
-      Serial.println(sampleIndex);
+      Serial.println( mef );
+
       state = 1;
       skipCount = SKIP_AFTER;
-    } else if (lookaheadCount >= LOOKAHEAD_MAX) {
+      waittime = now;
+    }
+    else if (lookaheadCount >= LOOKAHEAD_MAX) 
+    {
       _pendingSingle = true;
       _pendingDouble = false;
       Serial.print(F("Single click @ sample "));
       Serial.println(firstIdx);
       state = 1;
       skipCount = SKIP_AFTER;
+      waittime = now;
     }
   }
 }
