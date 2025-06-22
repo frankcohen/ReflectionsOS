@@ -45,14 +45,9 @@ extern Steps steps;
 extern TimerService timerservice;
 extern GPS gps;
 
-// Setting the hours/minutes and timer minutes
-#define factorLevel 0.3         // How fast to move the neutral zone
-#define neutralZoneFactor 0.50  // ±50% of baseline
-#define xThreshold 0.4          // Movement threshold for X (horizontal) axis
-#define yThreshold 0.4          // Movement threshold for Y (vertical) axis
-#define tiltspeed 800           // Speed to chanage
-
 #define nomov 1500    // Hourglass timeout duration
+
+#define tiltspeed 1500 // Speed to update set-time values
 
 class WatchFaceMain : public WatchFaceBase 
 {
@@ -132,14 +127,15 @@ class WatchFaceMain : public WatchFaceBase
 
     unsigned long noMovementTime;
 
-    unsigned long tilttimer;
-    bool hourschanging;
-    float baselineY;
-    float baselineX;
     int hour;
     int minute;
-    bool isOutsideNeutralZone(float value, float baseline, float neutralFactor);
-    float adjustBaseline(float baseline, float currentReading, float factor = factorLevel );
+    unsigned long tilttimer;
+    float smallX;
+    float largeX;
+    float smallY;
+    float largeY;
+    bool hourschanging;
+    float mapFloat(float x, float in_min, float in_max, float out_min, float out_max);
 
     bool notificationflag;    
 

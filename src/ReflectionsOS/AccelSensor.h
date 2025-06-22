@@ -30,10 +30,10 @@ extern LOGGER logger;
 
 #define AccelCalN 59
 
-#define SAMPLE_RATE   50       // Sample every x milliseconds
-#define LOOKAHEAD_MAX 10
-#define SKIP_AFTER    7
-#define WAIT_TIME     3000
+#define WAIT_TIME       3000
+#define LOOKAHEAD_MAX   10
+#define SAMPLE_RATE     50       // Sample every x milliseconds
+#define CLICKTHRESHHOLD 30
 
 class AccelSensor
 {

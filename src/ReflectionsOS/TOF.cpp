@@ -36,7 +36,12 @@ void TOF::begin()
   // Configure sensor
   tof.setRangingFrequency(FRAME_RATE);
   tof.setResolution(64);
-  tof.startRanging();
+
+  if (!tof.startRanging()) 
+  {
+    Serial.println("TOF failed to start ranging. Stopping");
+    while (1) delay(10);
+  }
 
   // Initialize timing
   lastRead    = 0;
@@ -205,9 +210,7 @@ void TOF::loop() {
 
   // Fetch new 8×8 frame
   VL53L5CX_ResultsData rd;
-  if (!tof.getRangingData(&rd)) {
-    return;
-  }
+  if ( !tof.getRangingData(&rd) ) return;
 
   // Build raw[64] and count how many pixels lie in [MIN_DISTANCE, MAX_DISTANCE]
   int16_t raw[64];

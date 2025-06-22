@@ -100,155 +100,13 @@ void AccelSensor::begin() {
 
   lis.setDataRate(LIS3DH_DATARATE_400_HZ);  // Set ODR to 100 Hz
 
-  fillValues();  // initializes SRAM-resident values[]
-
-  // Compute threshold from the provided static array
-  double median, mad;
-  computeThreshold( aValues, AccelCalN, median, mad);
-  threshold = median - mad;
-
-  // Run the simulation test on aValues[N]
-  runSimulation();
+  lis.setClick(2, CLICKTHRESHHOLD);
 
   state = 1;
-  skipCount = 0;
-  lookaheadCount = 0;
-  sampleIndex = 0;
   last = millis();
   waittime = millis();
 
   started = true;
-}
-
-/*
-Values used to calibrate the median and MAD for the sensor.
-The sensor is noisy. I wasn't satisfied with the built-in
-click detection. This helps detect single and double taps.
-
-These values are me doing a double tap, single tap, double tap,
-single tap, over 59 scans
-*/
-
-void AccelSensor::fillValues() {
-  double temp[AccelCalN] = {
-    12.1078280463508, 9.33203621938964, 10.1310512781251, 8.7236059058167,
-    5.80487725968431, 9.57146801697629, 15.352641466536, 15.0080311833365,
-    8.41240155960235, 9.1309473769155, 10.6754344173902, 8.17425225938128,
-    8.91654641663464, 11.1541247975805, 10.8324974036461, 7.17878819857502,
-    6.67956585415549, 14.1428321067599, 11.9598118714301, 10.1949840608017,
-    11.6949647284633, 10.0960437796198, 9.97769512462673, 10.0360300916249,
-    7.79964742792903, 7.6232407806654, 15.5585378490397, 12.153312305705,
-    9.44136642652958, 10.1342685971904, 9.08789854696893, 9.51874466513311,
-    8.6300579372331, 7.77512700860893, 10.8916527671424, 5.0360798246255,
-    9.1321081903359, 5.78180767580521, 10.2642778606193, 12.3416084851206,
-    10.8678102670225, 8.84833317636717, 9.31919524422576, 9.48536240741491,
-    8.86901347388761, 9.50015263035284, 8.42765091825711, 8.16214432609471,
-    6.78552135064064, 9.91885578078439, 9.55362234966403, 9.4088575289458,
-    10.5058126767994, 11.1372303558829, 9.25156203027359, 10.5181129486234,
-    10.103331133839, 9.87751993164276, 9.87634547795894
-  };
-
-  memcpy( aValues, temp, sizeof(temp));  // Copy into SRAM
-}
-
-// Compute median and MAD on an array of length N
-
-void AccelSensor::computeThreshold(const double *vals, int n, double &outMedian, double &outMad) {
-  static double sorted[AccelCalN];
-  memcpy(sorted, vals, n * sizeof(double));
-  for (int i = 1; i < n; ++i) {
-    double key = sorted[i];
-    int j = i - 1;
-    while (j >= 0 && sorted[j] > key) {
-      sorted[j + 1] = sorted[j];
-      --j;
-    }
-    sorted[j + 1] = key;
-  }
-  // median
-  outMedian = (n & 1)
-                ? sorted[n / 2]
-                : 0.5 * (sorted[n / 2 - 1] + sorted[n / 2]);
-  // MAD
-  double devs[AccelCalN];
-  for (int i = 0; i < n; ++i) {
-    devs[i] = fabs(vals[i] - outMedian);
-  }
-  for (int i = 1; i < n; ++i) {
-    double key = devs[i];
-    int j = i - 1;
-    while (j >= 0 && devs[j] > key) {
-      devs[j + 1] = devs[j];
-      --j;
-    }
-    devs[j + 1] = key;
-  }
-  outMad = (n & 1)
-             ? devs[n / 2]
-             : 0.5 * (devs[n / 2 - 1] + devs[n / 2]);
-}
-
-void AccelSensor::runSimulation() {
-  Serial.print(F("Threshold = median - MAD = "));
-  Serial.println(threshold, 6);
-  Serial.println(F("Starting tap simulation..."));
-
-  state = 1;
-  skipCount = 0;
-  lookaheadCount = 0;
-  firstIdx = -1;
-
-  int i = 0;
-  while (i < AccelCalN) {
-    if (skipCount > 0) {
-      --skipCount;
-      ++i;
-      continue;
-    }
-    double v = aValues[i];
-
-    if (state == 1) {
-      if (v < threshold) {
-        // immediate next sample dip → SINGLE
-        if (i + 1 < AccelCalN && aValues[i + 1] < threshold) {
-          Serial.print(F("Single click at idx "));
-          Serial.println(i);
-          skipCount = SKIP_AFTER;
-          ++i;
-          continue;
-        }
-        state = 2;
-        lookaheadCount = 0;
-        firstIdx = i;
-        firstMag = v;
-      }
-      ++i;
-    } else {  // WAIT_SECOND
-      ++lookaheadCount;
-      if (v < threshold) 
-      {
-        _pendingDouble = true;
-        _pendingSingle = false;
-        Serial.print(F("Double click at idx "));
-        Serial.println(i);
-        state = 1;
-        skipCount = SKIP_AFTER;
-        ++i;
-      } else if (lookaheadCount >= LOOKAHEAD_MAX) {
-        Serial.print(F("Single click at idx "));
-        Serial.println(firstIdx);
-        _pendingSingle = true;
-        _pendingDouble = false;
-        state = 1;
-        skipCount = SKIP_AFTER;
-        ++i;
-      } else {
-        ++i;
-      }
-    }
-  }
-
-  Serial.println();
 }
 
 float AccelSensor::getXreading() {
@@ -279,32 +137,6 @@ float AccelSensor::getZreading() {
   } else {
     return 0;
   }
-}
-
-// Resets the sensor
-
-void AccelSensor::resetLIS3DH() {
-  // Read the current value of CTRL_REG5 (0x24)
-  uint8_t ctrlReg5Value = 0;
-  Wire.beginTransmission(0x18);  // Start communication with LIS3DH (I2C address)
-  Wire.write(0x24);              // Register address for CTRL_REG5
-  Wire.endTransmission(false);   // Keep the connection active
-  Wire.requestFrom(0x18, 1);     // Request 1 byte of data
-  if (Wire.available()) {
-    ctrlReg5Value = Wire.read();  // Read the current value from CTRL_REG5
-  }
-
-  // Set the REBOOT_MEMORY bit (bit 7) to reset the device
-  ctrlReg5Value |= 0x80;  // Set the most significant bit to 1 (0x80)
-
-  // Write the new value back to CTRL_REG5 to reboot the sensor
-  Wire.beginTransmission(0x18);  // Start communication again
-  Wire.write(0x24);              // CTRL_REG5 register address
-  Wire.write(ctrlReg5Value);     // Write the updated value
-  Wire.endTransmission();        // End transmission
-
-  // Wait for the reset to take effect
-  delay(10);
 }
 
 // Helpers to read/write a single LIS3DH register over I²C
@@ -521,7 +353,8 @@ bool AccelSensor::getStatus() {
   return runflag;
 }
 
-void AccelSensor::loop() {
+void AccelSensor::loop() 
+{
   unsigned long now = millis();
 
   if ( now - waittime < WAIT_TIME ) return;
@@ -529,58 +362,41 @@ void AccelSensor::loop() {
   if (millis() - last < SAMPLE_RATE) return;
   last = now;
 
-  ++sampleIndex;
+  uint8_t click = lis.getClick();
 
-  // Get live magnitude in m/s²
-  sensors_event_t evt;
-  lis.getEvent(&evt);
-  double mag = sqrt(
-    evt.acceleration.x * evt.acceleration.x + evt.acceleration.y * evt.acceleration.y + evt.acceleration.z * evt.acceleration.z);
+  if (state == 1) 
+  {
+    // Serial.print("Click detected (0x"); Serial.print(click, HEX); Serial.print("): ");
 
-  if (skipCount > 0) {
-    --skipCount;
-    return;
-  }
-
-  if (state == 1) {
-    if (mag < threshold) 
+    if ( click & 0x10 )     // Single click
     {
       state = 2;
       lookaheadCount = 0;
-      firstIdx = sampleIndex;
-      firstMag = mag;
-      skipCount = 2;
-      //Serial.println("*");
       return;
     }
   } 
   else 
   {  // WAIT_SECOND
     ++lookaheadCount;
-    if (mag < threshold) 
+
+    if ( click & 0x20 )     // Double click
     {
       _pendingDouble = true;
       _pendingSingle = false;
 
-      String mef = String( sampleIndex );
-      mef += mag;
-      mef += ",";
-      mef += threshold;
-      Serial.print(F("Double click @ sample "));
-      Serial.println( mef );
+      Serial.println( F("Double click") );
 
       state = 1;
-      skipCount = SKIP_AFTER;
       waittime = now;
     }
     else if (lookaheadCount >= LOOKAHEAD_MAX) 
     {
       _pendingSingle = true;
       _pendingDouble = false;
-      Serial.print(F("Single click @ sample "));
-      Serial.println(firstIdx);
+
+      Serial.println( F("Single click") );
+
       state = 1;
-      skipCount = SKIP_AFTER;
       waittime = now;
     }
   }

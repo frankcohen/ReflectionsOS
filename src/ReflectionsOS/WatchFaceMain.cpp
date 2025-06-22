@@ -33,8 +33,11 @@ void WatchFaceMain::begin()
   catFaceWait = rand() % 30000;
 
   tilttimer = millis();
-  baselineY = accel.getYreading();
-  baselineX = accel.getXreading();
+
+  smallX = -6;
+  largeX = 6;
+  smallY = 7;
+  largeY = -7;
 
   battimer = millis();
   batcount = 0;
@@ -522,16 +525,9 @@ void WatchFaceMain::setDrawItAll()
   drawitall = true;
 }
 
-// Check if the current reading is outside the neutral zone
-bool WatchFaceMain::isOutsideNeutralZone(float value, float baseline, float neutralFactor) 
-{
-  return (value < (baseline - baseline * neutralFactor) || value > (baseline + baseline * neutralFactor));
-}
-
-// Adjust the baseline by moving it towards the new position slowly (smooth transition)
-float WatchFaceMain::adjustBaseline(float baseline, float currentReading, float factor) 
-{
-  return baseline + factor * (currentReading - baseline);
+// helper: map float
+float WatchFaceMain::mapFloat(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 void WatchFaceMain::settingdigitaltime()
@@ -546,9 +542,6 @@ void WatchFaceMain::settingdigitaltime()
     if ( hour > 12 ) hour = hour - 12;
     minute = realtimeclock.getMinute();
     hourschanging = true;
-
-    baselineY = accel.getYreading(); // Current Y-axis tilt value
-    baselineX = accel.getXreading(); // Current Y-axis tilt value
 
     //drawImageFromFile( wfMain_SetTime_Background_Hour, true, 0, 0 );
     drawHourMinute( hour, minute, hourschanging );
@@ -584,39 +577,36 @@ void WatchFaceMain::settingdigitaltime()
   // Change time by tilting left-right for minutes and up-down for hours
 
   if ( millis() - tilttimer < tiltspeed ) return;
-  
   tilttimer = millis();
 
-  float xFiltered = accel.getXreading();
-  float yFiltered = accel.getYreading();
+  float xraw = accel.getXreading();
+  float yraw = accel.getYreading();
+  
+  int newMinutes = constrain( round( mapFloat(xraw, smallX, largeX, 1.0f, 59.0f) ), 1, 59 );
+  int newHours   = constrain( round( mapFloat(yraw, largeY, smallY, 1.0f, 12.0f) ), 1, 12 );
 
-  // Detect horizontal movement (X axis) outside the neutral zone
-  if (isOutsideNeutralZone(xFiltered, baselineX, neutralZoneFactor)) {
-    if (abs(xFiltered - baselineX) > xThreshold) {
-      minute += (xFiltered > baselineX) ? 1 : -1;  // Increase or decrease minute
-      if (minute >= 60) minute = 0; // Wrap around if it exceeds 59 minutes
-      if (minute < 0) minute = 59; // Wrap around if it goes below 0
+  if ( minute != newMinutes )
+  {
+    int delta = abs(newMinutes - minute);
+    minute = newMinutes;
+
+    // only reset if the jump was more than 4 minutes
+    if (delta > 4) {
       noMovementTime = millis();  // Reset inactivity timer
-      hourschanging = false;
-      baselineX = adjustBaseline(baselineX, xFiltered, factorLevel);  // Move baseline towards the new X position      
-      drawHourMinute( hour, minute, hourschanging );
-      return;
     }
+
+    hourschanging = false;
+    drawHourMinute( hour, minute, hourschanging );
   }
 
-  // Detect vertical movement (Y axis) outside the neutral zone
-  if (isOutsideNeutralZone(yFiltered, baselineY, neutralZoneFactor)) {
-    if (abs(yFiltered - baselineY) > yThreshold) {
-      hour += (yFiltered > baselineY) ? 1 : -1;  // Increase or decrease hour
-      if (hour > 12) hour = 1; // Wrap around if it exceeds 12 hours
-      if (hour < 1) hour = 12; // Wrap around if it goes below 1
-      hourschanging = true;
-      noMovementTime = millis();  // Reset inactivity timer
-      baselineY = adjustBaseline(baselineY, yFiltered, factorLevel);  // Move baseline towards the new Y position
-      drawHourMinute( hour, minute, hourschanging );
-      return;
-    }
+  if ( hour != newHours )
+  {
+    hour = newHours;
+    noMovementTime = millis();  // Reset inactivity timer
+    hourschanging = true;
+    drawHourMinute( hour, minute, hourschanging );
   }
+
 }
 
 void WatchFaceMain::drawHourMinute( int hourc, int minutec, bool hourschanging )
@@ -629,6 +619,9 @@ void WatchFaceMain::drawHourMinute( int hourc, int minutec, bool hourschanging )
   }
   mef += String( minutec );
 
+  drawImageFromFile( wfMain_SetTime_Background_Hour_Shortie, true, 0, 0 );
+
+  /*
   if ( hourschanging )
   {
     drawImageFromFile( wfMain_SetTime_Background_Hour_Shortie, true, 0, 0 );
@@ -637,6 +630,8 @@ void WatchFaceMain::drawHourMinute( int hourc, int minutec, bool hourschanging )
   {
     drawImageFromFile( wfMain_SetTime_Background_Minute_Shortie, true, 0, 0 );
   }
+  */
+
   textmessageservice.updateTempTime( mef );
 }
 
@@ -714,7 +709,7 @@ void WatchFaceMain::clearsteps()
   }
 
   //drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
-  textmessageservice.drawCenteredMesssage( F("Tap To"), F("Clear Steps") );
+  textmessageservice.drawCenteredMesssage( F("Tap To"), F("Clear Moves") );
 }
 
 void WatchFaceMain::starttimer()
@@ -873,27 +868,26 @@ void WatchFaceMain::settingtimer()
     return;
   }
 
-  if ( millis() - tilttimer < 1000 ) return;  
+  // Change timer time by tilting up-down for minutes
+  
+  if ( millis() - tilttimer < tiltspeed ) return;
   tilttimer = millis();
+  
+  float yraw = accel.getYreading();
+  
+  int newHours = constrain( round( mapFloat(yraw, largeY, smallY, 1.0f, 12.0f) ), 1, 12 );
 
-  float yFiltered = accel.getYreading();
+  if ( hour != newHours )
+  {
+    hour = newHours;
+    noMovementTime = millis();  // Reset inactivity timer
+    hourschanging = false;
 
-  // Detect vertical movement (Y axis) outside the neutral zone
-  // Note: It says hours here when the timer is really working in minutes, should be fixed later
-  if (isOutsideNeutralZone(yFiltered, baselineY, neutralZoneFactor)) {
-    if (abs(yFiltered - baselineY) > yThreshold) {
-      hour += (yFiltered > baselineY) ? 1 : -1;  // Increase or decrease hour
-      if (hour > 30) hour = 1; // Wrap around if it exceeds 30 minutes
-      if (hour < 1) hour = 30; // Wrap around if it goes below 1
-      noMovementTime = millis();  // Reset inactivity timer
-      baselineY = adjustBaseline(baselineY, yFiltered, factorLevel);  // Move baseline towards the new Y position
+    String met = String( hour );
+    drawImageFromFile( wfMain_SetTimer_Background_Shortie, true, 0, 0 );
+    textmessageservice.updateTempTime( met );
 
-      String met = String( hour );
-      //drawImageFromFile( wfMain_SetTimer_Background_Shortie, true, 0, 0 );
-      textmessageservice.updateTempTime( met );
-
-      return;
-    }
+    return;
   }
 
 }
