@@ -18,9 +18,11 @@
 
 #include "Logger.h"
 #include "Video.h"
+#include "Hardware.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
+extern Hardware hardware;
 
 class Experience_Sleep : public Experience {
   public:

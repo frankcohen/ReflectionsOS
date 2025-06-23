@@ -349,9 +349,17 @@ void setup()
   delay(2000);
   Serial.setDebugOutput(true);
 
-  Serial.println(F(" "));
-  Serial.println(F("Starting"));
-  Serial.println(F("ReflectionsOS"));
+  esp_sleep_wakeup_cause_t reason = esp_sleep_get_wakeup_cause();
+  if (reason == ESP_SLEEP_WAKEUP_EXT1) 
+  {
+    Serial.println("Waking from deep sleep");
+  } 
+  else 
+  {
+    Serial.println(F(" "));
+    Serial.println(F("Starting"));
+    Serial.println(F("ReflectionsOS"));
+  }
 
   // Core 1 services
   
@@ -523,7 +531,7 @@ void printCore0TasksMessages()
   }
 }
 
-// Resett video, sensors, experiences
+// Reset video, sensors, experiences
 void resetAll()
 {
   video.stopVideo();
@@ -539,6 +547,44 @@ void loop()
 {
   printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services
   
+  int recentGesture = tof.getGesture();
+
+  if ( recentGesture == GESTURE_NONE )
+  {
+    smartdelay(10);
+    return;
+  }
+
+  if ( recentGesture == GESTURE_SLEEP )
+  {
+    Serial.println("Deep Sleep");
+
+    if ( experienceservice.active() )
+    {
+      Serial.println("Deep Sleep endNow()");
+
+      experienceservice.setCurrentState( ExperienceService::TEARDOWN );
+
+      while ( experienceservice.active() )
+      {
+        Serial.println("Deep Sleep waiting");
+        smartdelay(10);
+      }
+    }
+
+    Serial.println("Deep Sleep sleepit");
+
+    experienceservice.startExperience( ExperienceService::Sleep );
+
+    while ( experienceservice.active() )
+    {
+    Serial.println("Deep Sleep wait 2");
+      smartdelay(10);
+    }
+    Serial.println("Deep Sleep done");
+    return;
+  }
+
   if ( experienceservice.getCurrentState() != ExperienceService::STOPPED )
   {
     smartdelay(10);
@@ -606,23 +652,6 @@ void loop()
   }
 */
 
-  int recentGesture = tof.getGesture();
-
-  if ( recentGesture == GESTURE_NONE )
-  {
-    smartdelay(10);
-    return;
-  }
-
-  /*
-  Serial.print( "recentGesture " );
-  Serial.print( recentGesture );
-  Serial.print( " " );
-  Serial.print( GESTURE_DOWN );
-  Serial.print( " " );
-  Serial.println( GESTURE_CIRCULAR );
-  */
-
   if ( recentGesture == GESTURE_CIRCULAR )
   {
     if ( random(0, 2) == 0 )
@@ -653,13 +682,6 @@ void loop()
   {
     experienceservice.startExperience( ExperienceService::ShowTime );
   };
-
-/*
-  if ( recentGesture == GESTURE_SLEEP )
-  {
-    experienceservice.startExperience( ExperienceService::Sleep );
-  }
-*/
 
   if ( recentGesture == GESTURE_UP || recentGesture == GESTURE_UP_RIGHT || recentGesture == GESTURE_UP_LEFT )
   {

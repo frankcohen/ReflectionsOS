@@ -33,14 +33,14 @@ void Experience_GettingSleepy::setup()
 
 void Experience_GettingSleepy::run() 
 {
-  if ( video.getStatus() == 0 )
-  {
-    setRunComplete(true);  // Signal run complete
-  }
+  setRunComplete(true);  // Signal run complete
 }
 
 void Experience_GettingSleepy::teardown() 
 {
-  Serial.println( F("Getting Sleepy TEARDOWN") );
-  setTeardownComplete( true );  // Signal teardown complete
+  if ( video.getStatus() == 0 )
+  {
+    Serial.println( F("Getting Sleepy TEARDOWN") );
+    setTeardownComplete( true );  // Signal teardown complete
+  }
 }

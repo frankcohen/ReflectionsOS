@@ -93,8 +93,6 @@ void Experience_CatsPlay::run()
     blesupport.setPounce( true );    
   }
 
-  if ( ! video.getStatus() ) return;
-
   // Play time done?
 
   if ( millis() - overallTimer > 30000 )

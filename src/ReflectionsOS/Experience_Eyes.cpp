@@ -64,59 +64,64 @@ void Experience_Eyes::setup()
 
 void Experience_Eyes::run() 
 {
-  if (millis() - eyestime < (20000 + dur * 250)) 
+  if ( millis() - eyestime > ( 20000 + ( dur * 250 ) ) ) 
   {
-    int col = constrain(tof.getFingerPos(), 0, 5);
-    float dist = tof.getFingerDist();
+    setRunComplete(true);  // Signal run complete
+    video.setPaused( false );
+    return;
+  }
 
-    if (col < 0 || dist <= 4 || dist > 130) return;
+  int col = constrain(tof.getFingerPos(), 0, 5);
+  float dist = tof.getFingerDist();
 
-    // Only repaint if finger moved
-    if (col != prevFingerPosCol || fabs(dist - prevFingerDist) > 1.0f) 
+  if (col < 0 || dist <= 4 || dist > 130) return;
+
+  // Only repaint if finger moved
+  if (col != prevFingerPosCol || fabs(dist - prevFingerDist) > 1.0f) 
+  {
+    // Erase previous pupils
+    if (prevLeftPupilX >= 0)
     {
-      // Erase previous pupils
-      if (prevLeftPupilX >= 0)
-      {
-        gfx->fillCircle(prevLeftPupilX, 100, 18, COLOR_EYES_LEFT);
-        gfx->fillCircle(prevRightPupilX, 100, 18, COLOR_EYES_RIGHT);
-        prevFingerPosCol = col;
-        prevFingerDist = dist;
-      }      
+      gfx->fillCircle(prevLeftPupilX, 100, 18, COLOR_EYES_LEFT);
+      gfx->fillCircle(prevRightPupilX, 100, 18, COLOR_EYES_RIGHT);
+      prevFingerPosCol = col;
+      prevFingerDist = dist;
+    }      
 
-      // Map column 0–5 → pixel position for each eye
-      int leftMapped  = map(col, 0, 5, 58, 88);
-      int rightMapped = map(col, 0, 5, 160, 188);
+    // Map column 0–5 → pixel position for each eye
+    int leftMapped  = map(col, 0, 5, 58, 88);
+    int rightMapped = map(col, 0, 5, 160, 188);
 
-      // Clamp dist and map to alpha range
-      dist = constrain(dist, 20.0f, 100.0f);
-      float alpha = (100.0f - dist) / 80.0f;
+    // Clamp dist and map to alpha range
+    dist = constrain(dist, 20.0f, 100.0f);
+    float alpha = (100.0f - dist) / 80.0f;
 
-      int leftTarget  = 88;  // Full convergence position (left eye inward)
-      int rightTarget = 160; // Full convergence position (right eye inward)
+    int leftTarget  = 88;  // Full convergence position (left eye inward)
+    int rightTarget = 160; // Full convergence position (right eye inward)
 
-      int leftPupilX  = leftMapped  + alpha * (leftTarget  - leftMapped);
-      int rightPupilX = rightMapped + alpha * (rightTarget - rightMapped);
+    int leftPupilX  = leftMapped  + alpha * (leftTarget  - leftMapped);
+    int rightPupilX = rightMapped + alpha * (rightTarget - rightMapped);
 
-      prevLeftPupilX = leftPupilX;
-      prevRightPupilX = rightPupilX;
+    prevLeftPupilX = leftPupilX;
+    prevRightPupilX = rightPupilX;
 
-      // Draw new pupils
-      gfx->fillCircle( leftPupilX, 100, 14, COLOR_PUPILS);
-      gfx->fillCircle( rightPupilX, 100, 14, COLOR_PUPILS);
-    }
-  } 
-  else 
-  {
-    video.setPaused(false);
-    if (video.getStatus() == 0) {
-      setRunComplete(true);  // Signal run complete
-    }
+    // Draw new pupils
+    gfx->fillCircle( leftPupilX, 100, 14, COLOR_PUPILS);
+    gfx->fillCircle( rightPupilX, 100, 14, COLOR_PUPILS);
   }
 }
 
-
 void Experience_Eyes::teardown() 
 {
-  Serial.println( F("Eyes TEARDOWN") );
-  setTeardownComplete( true );  // Signal teardown complete
+  if ( tearflag )
+  {
+    tearflag = false;
+    video.setPaused(false);
+  }
+
+  if ( ! video.getStatus() ) 
+  {
+    setTeardownComplete( true );  // Signal teardown complete
+    Serial.println( F("Eyes TEARDOWN") );
+  }
 }

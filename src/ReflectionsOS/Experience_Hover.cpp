@@ -35,14 +35,14 @@ void Experience_Hover::setup()
 
 void Experience_Hover::run() 
 {
-  if ( video.getStatus() == 0 )
-  {
-    setRunComplete(true);  // Signal run complete
-  }
+  setRunComplete(true);  // Signal run complete
 }
 
 void Experience_Hover::teardown() 
 {
-  Serial.println( F("Swipe TEARDOWN") );
-  setTeardownComplete( true );  // Signal teardown complete
+  if ( video.getStatus() == 0 )
+  {
+    Serial.println( F("Swipe TEARDOWN") );
+    setTeardownComplete( true );  // Signal teardown complete
+  }
 }

@@ -16,7 +16,7 @@ extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 Hardware::Hardware(){}
 
 void Hardware::begin()
-{ 
+{
   // Starts SD/NAND storage component
 
   pinMode( NAND_SPI_PWR, OUTPUT);
@@ -27,6 +27,33 @@ void Hardware::begin()
   pinMode(NAND_SPI_CS, OUTPUT);
   digitalWrite(NAND_SPI_CS, HIGH);
 
+  powerUpComponents(); 
+
+  // Create an SPIClass instance
+  SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI, NAND_SPI_CS);
+
+  if ( ! SD.begin( NAND_SPI_CS, SPI, SPI_SPEED) )
+  {
+    Serial.println(F("SD storage failed"));
+    Serial.println(F("Stopping"));
+    NANDMounted = false;
+    while(1);
+  }
+  else
+  {
+    Serial.println(F("SD storage mounted"));
+    NANDMounted = true;
+  }
+
+  // Begin SPI communication with desired settings
+  //SPISettings spiSettings(SPI_SPEED, MSBFIRST, SPI_MODE0);
+
+  Wire.begin(I2CSDA, I2CSCL);  // Initialize I2C bus
+  Wire.setClock(400000);
+}
+
+void Hardware::powerUpComponents()
+{ 
   // Configure display pins
 
   pinMode(Display_SPI_CS, OUTPUT);
@@ -59,29 +86,23 @@ void Hardware::begin()
 
   uint32_t seed = esp_random();
   randomSeed( seed );
+}
 
-  // Create an SPIClass instance
-  SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI, NAND_SPI_CS);
+void Hardware::powerDownComponents()
+{
+  pinMode(Display_SPI_BK, OUTPUT);  // Turns backlight on = low, off = high
+  digitalWrite( Display_SPI_BK, HIGH );
 
-  // Begin SPI communication with desired settings
-  //SPISettings spiSettings(SPI_SPEED, MSBFIRST, SPI_MODE0);
+  pinMode( TOFPower, OUTPUT);       // Power control for TOF sensor
+  digitalWrite( TOFPower, HIGH);     // Low is on
 
-  Wire.begin(I2CSDA, I2CSCL);  // Initialize I2C bus
-  Wire.setClock(400000);
+  // Turns the speaker amp on
+  pinMode(AudioPower, OUTPUT);
+  digitalWrite(AudioPower, LOW);    // HIGH is on
 
-  if ( ! SD.begin( NAND_SPI_CS, SPI, SPI_SPEED) )
-  {
-    Serial.println(F("SD storage failed"));
-    Serial.println(F("Stopping"));
-    NANDMounted = false;
-    while(1);
-  }
-  else
-  {
-    Serial.println(F("SD storage mounted"));
-    NANDMounted = true;
-  }
-
+  // Turn GPS module on
+  pinMode(GPSPower, OUTPUT);
+  digitalWrite(GPSPower, LOW);     // HIGH is on
 }
 
 bool Hardware::getMounted()

@@ -29,6 +29,9 @@ class Hardware
     void loop();
     bool getMounted();
 
+    void powerDownComponents();
+    void powerUpComponents();
+
   private:
     bool NANDMounted;
 

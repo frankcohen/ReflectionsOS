@@ -35,6 +35,8 @@ extern LOGGER logger;
 #define SAMPLE_RATE     50       // Sample every x milliseconds
 #define CLICKTHRESHHOLD 30
 
+#define ACCEL_I2C_ADDR   LIS3DH_DEFAULT_ADDRESS   // 0x18 from Adafruit_LIS3DH
+
 class AccelSensor
 {
   public:
@@ -44,7 +46,7 @@ class AccelSensor
 
     void resetLIS3DH();
 
-    void enableWakeOnMotion();
+    void configureSensorWakeOnMotion();
 
     void reset();
 
@@ -76,9 +78,6 @@ class AccelSensor
 
     Adafruit_LIS3DH lis;
 
-    double aValues[ AccelCalN ];  // Lives in SRAM, initialized at runtime
-
-    int      skipCount;
     int      lookaheadCount;
     int      firstIdx;
     double   firstMag;
@@ -88,8 +87,8 @@ class AccelSensor
     int      state;
     unsigned long waittime;
 
-    bool          _pendingSingle;
-    bool          _pendingDouble;
+    bool     _pendingSingle;
+    bool     _pendingDouble;
 
     bool started;
     bool runflag;

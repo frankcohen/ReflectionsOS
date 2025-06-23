@@ -106,6 +106,8 @@ void AccelSensor::begin() {
   last = millis();
   waittime = millis();
 
+  configureSensorWakeOnMotion();
+
   started = true;
 }
 
@@ -139,6 +141,43 @@ float AccelSensor::getZreading() {
   }
 }
 
+// ——— register names from Adafruit_LIS3DH.h ———
+//  INT1CFG: enable X/Y/Z high-event interrupts on INT1
+//  INT1THS: threshold
+//  INT1DUR: duration
+//  CTRL_REG5: interrupt latch enable
+// ————————————————————————————————
+  
+// raw write to any LIS3DH register over I²C
+static void write8(uint8_t reg, uint8_t value) {
+  Wire.beginTransmission(ACCEL_I2C_ADDR);
+  Wire.write(reg);
+  Wire.write(value);
+  Wire.endTransmission();
+}
+
+// Configure to wake from deep sleep on a click/tap movement
+
+void AccelSensor::configureSensorWakeOnMotion() {
+  // 1) Choose ±4 g (click detection works best at lower ranges)
+  lis.setRange(LIS3DH_RANGE_4_G);
+
+  // 2) Configure “single‐click” on all three axes, threshold=0x10 (tune up for a harder tap)
+  lis.setClick(1, 0x10);  // 1 = single‐click mode, 0x10 ≈ 16 counts ≈ 16×0.002 g = ~0.032 g
+
+  // 3) Route click interrupt to INT1 pin (CTRL_REG3 bit7 = I1_CLICK)
+  write8(LIS3DH_REG_CTRL3, 0x80);
+
+  // 4) Clear any pending click (read the click‐source register)
+  lis.getClick();
+
+  // 5) Arm the ESP32-S3 EXT1 wake on a HIGH at GPIO14 only
+  uint64_t wakeMask = (1ULL << ACCEL_INT1_PIN);
+  esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
+}
+
+/* Legacy code, could be handy for future user
+
 // Helpers to read/write a single LIS3DH register over I²C
 static uint8_t lis3dh_read8(uint8_t addr, uint8_t reg) {
   Wire.beginTransmission(addr);
@@ -154,8 +193,6 @@ static void lis3dh_write8(uint8_t addr, uint8_t reg, uint8_t val) {
   Wire.write(val);
   Wire.endTransmission();
 }
-
-// Configure to wake from deep sleep on movement
 
 void AccelSensor::enableWakeOnMotion() {
   // 0) make sure Wire is up (lis3dh.begin() usually calls Wire.begin())
@@ -185,9 +222,8 @@ void AccelSensor::enableWakeOnMotion() {
   esp_sleep_enable_ext1_wakeup(
     BIT(GPIO_NUM_14),
     ESP_EXT1_WAKEUP_ANY_HIGH);
-}
 
-/* Enabled wake on movement using SparkFunLIS3DH library
+  // Enable wake on movement using SparkFunLIS3DH library
 
   uint8_t ctrlReg2;
   lis3dh.readRegister(&ctrlReg2, LIS3DH_CTRL_REG2);

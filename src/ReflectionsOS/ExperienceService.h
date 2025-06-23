@@ -42,8 +42,6 @@ class ExperienceService
     void setCurrentState( State state );
     int getExperience();
     bool active();
-    void resetAfterTimer();
-    unsigned long getAfterTimer();
 
     // Be certain to update experienceNameToString() when making changes to this structure
     enum ExperienceName
@@ -81,8 +79,6 @@ class ExperienceService
     unsigned long catsplayTimer2;
     unsigned long gestureTimer;
     unsigned long afterTimer;
-    unsigned long noopTimer;
-    bool noopFlag;
 
     unsigned long afterCatsPlay;
     unsigned long afterPounce;

@@ -172,29 +172,12 @@ void ExperienceService::begin()
 
   catsplayTimer = millis();
   catsplayTimer2 = millis();
-  afterTimer = millis();
-
-  noopTimer = millis();
-  noopFlag = false;
 
   experienceIndex = 0;
-
-  afterCatsPlay = millis();
-  afterPounce = millis();
 
   temptimer = millis();
 
   //startExperience( ExperienceService::Awake );   // Sleep experience
-}
-
-void ExperienceService::resetAfterTimer()
-{
-  afterTimer = millis();
-}
-
-unsigned long ExperienceService::getAfterTimer()
-{
-  return afterTimer;
 }
 
 void ExperienceService::startExperience( int exper )
@@ -228,8 +211,6 @@ void ExperienceService::startExperience( int exper )
 
   currentExperience->init();
   currentState = SETUP;
-
-  noopFlag = true;
 }
 
 int ExperienceService::getExperNum()
@@ -305,7 +286,8 @@ void ExperienceService::operateExperience()
 
 bool ExperienceService::active()
 {
-  if (  getCurrentState() != STOPPED ) return true;
+  if ( getCurrentState() != STOPPED )
+  if ( getCurrentState() != STOPPED ) return true;
   return false;
 }
 

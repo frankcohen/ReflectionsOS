@@ -35,8 +35,8 @@ void Experience_Pounce::run()
   setRunComplete(true);  // Signal run complete
 }
 
-void Experience_Pounce::teardown() {
-  // Teardown code for Experience_Awake
+void Experience_Pounce::teardown() 
+{
   if ( video.getStatus() == 0 )
   {
     setTeardownComplete( true );  // Signal teardown complete
