@@ -14,24 +14,70 @@
 ExperienceStats::ExperienceStats(unsigned long reportIntervalMs)
   : intervalMs_(reportIntervalMs), totalCalls_(0), lastReportMs_(0) {}
 
-void ExperienceStats::begin(unsigned long currentMs) {
-    Serial.begin(115200);
-    while (!Serial);
-    lastReportMs_ = currentMs;
+void ExperienceStats::begin(unsigned long currentMs) 
+{
+  lastReportMs_ = currentMs;
+
+  // 1) Open our NVS namespace
+  prefs_.begin("expStats", false);
+
+  // 2) Recover totalCalls
+  totalCalls_ = prefs_.getULong("totalCalls", 0);
+
+  // 3) Recover how many distinct names we stored
+  uint16_t numNames = prefs_.getUShort("numNames", 0);
+  for (uint16_t i = 0; i < numNames; i++) {
+    char keyName[16];
+    sprintf(keyName, "name%u", i);
+    String name = prefs_.getString(keyName, "");
+    
+    sprintf(keyName, "cnt%u", i);
+    unsigned long cnt = prefs_.getULong(keyName, 0);
+
+    names_.push_back(name);
+    counts_.push_back(cnt);
+  }
 }
 
-void ExperienceStats::record(const String& name) {
-    totalCalls_++;
-    // Search existing names
-    for (size_t i = 0; i < names_.size(); ++i) {
-        if (names_[i] == name) {
-            counts_[i]++;
-            return;
-        }
+void ExperienceStats::record(const String& name) 
+{
+  totalCalls_++;
+
+  // find or append
+  for (size_t i = 0; i < names_.size(); ++i) {
+    if (names_[i] == name) {
+      counts_[i]++;
+      
+      // persist this single counter
+      char key[16];
+      sprintf(key, "cnt%u", (unsigned)i);
+      prefs_.putULong(key, counts_[i]);
+      
+      // persist totalCalls
+      prefs_.putULong("totalCalls", totalCalls_);
+      return;
     }
-    // New experience name
-    names_.push_back(name);
-    counts_.push_back(1);
+  }
+
+  // new name: append vectors and persist for ESP32 deep sleep modes
+  
+  size_t idx = names_.size();
+  names_.push_back(name);
+  counts_.push_back(1);
+
+  // save the string and its count
+  char key[16];
+  sprintf(key, "name%u", (unsigned)idx);
+  prefs_.putString(key, name);
+
+  sprintf(key, "cnt%u", (unsigned)idx);
+  prefs_.putULong(key, 1);
+
+  // update number of names
+  prefs_.putUShort("numNames", (uint16_t)names_.size());
+  
+  // persist totalCalls
+  prefs_.putULong("totalCalls", totalCalls_);
 }
 
 void ExperienceStats::update(unsigned long currentMs) {

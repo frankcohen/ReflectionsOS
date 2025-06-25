@@ -155,7 +155,6 @@ bool accelstarted = false;
 /* Test for a device number on the I2C bus, display error when not found */
 
 void assertI2Cdevice(byte deviceNum, String devName) {
-
   for (int i = 0; i < 10; i++) {
     Wire.beginTransmission(deviceNum);
     if (Wire.endTransmission() == 0) {
@@ -340,6 +339,11 @@ static void smartdelay(unsigned long ms) {
 */
 
     systemload.logtasktime( millis() - tasktime, 0, " " );
+
+    // Paint debug details over display
+    //video.paintText( battery.getBatteryStats() );
+    video.paintText( gps.getStats() );
+
   } while (millis() - start < ms);
 }
 
@@ -531,22 +535,27 @@ void printCore0TasksMessages()
   }
 }
 
-// Reset video, sensors, experiences
-void resetAll()
-{
-  video.stopVideo();
-
-  tof.getGesture();       // Resets TOF
-  accel.reset();
-
-  experienceservice.setCurrentState( ExperienceService::STOPPED );
-  textmessageservice.deactivate();
-}
-
 void loop() 
 {
   printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services
   
+  // Watchdog resets everything when no gestures are found and the watch face is unchanging
+  if  ( ( experienceservice.getCurrentState() != ExperienceService::STOPPED ) 
+      && ( ! watchfacemain.okToExperience() )
+      && ( millis() - watchdog > ( 3 * 60000 ) ) )
+  {
+    watchdog = millis();
+
+    // Reset video, sensors, experiences
+    video.stopVideo();
+    tof.getGesture();   // Resets TOF
+    accel.reset();
+    experienceservice.setCurrentState( ExperienceService::STOPPED );
+    textmessageservice.deactivate();
+
+    watchfacemain.begin();  // Start watch face
+  }
+
   int recentGesture = tof.getGesture();
 
   if ( recentGesture == GESTURE_NONE )
@@ -555,33 +564,32 @@ void loop()
     return;
   }
 
-  if ( recentGesture == GESTURE_SLEEP )
+  // Go to sleep when gestured or when the battery is low
+
+  if ( recentGesture == GESTURE_SLEEP || battery.isBatteryLow() )
   {
     Serial.println("Deep Sleep");
 
     if ( experienceservice.active() )
     {
-      Serial.println("Deep Sleep endNow()");
-
       experienceservice.setCurrentState( ExperienceService::TEARDOWN );
 
       while ( experienceservice.active() )
       {
-        Serial.println("Deep Sleep waiting");
         smartdelay(10);
       }
     }
-
-    Serial.println("Deep Sleep sleepit");
 
     experienceservice.startExperience( ExperienceService::Sleep );
 
     while ( experienceservice.active() )
     {
-    Serial.println("Deep Sleep wait 2");
       smartdelay(10);
     }
-    Serial.println("Deep Sleep done");
+ 
+    // Put cat into deep sleep  
+    hardware.powerDownComponents();
+    esp_deep_sleep_start();
     return;
   }
 
@@ -592,24 +600,6 @@ void loop()
   }
 
 /*
-  // Watchdog resets everything when no gestures are found and the watch face is unchanging
-  if  ( ( experienceservice.getCurrentState() != ExperienceService::STOPPED ) 
-      && ( ! watchfacemain.okToExperience() )
-      && ( millis() - watchdog > ( 3 * 60000 ) ) )
-  {
-    resetAll();
-    watchfacemain.begin();  // Start watch face
-  }
-*/
-
-/*
-  // When running the EyesFollowFinger experience keep the TOF running to detect the fingertip position
-  if ( experienceservice.getExperNum() == ExperienceService::EyesFollowFinger 
-    && experienceservice.getCurrentState() != ExperienceService::STOPPED )
-  {
-    tof.setStatus( true );
-  }
-  
   // Pounce message received, overrides exepriences and main watch face
 
   if ( blesupport.isAnyDevicePounceTrue() && ( millis() - pnctimer > 60000 ))
@@ -630,6 +620,26 @@ void loop()
     Serial.println( "After experience timer" );
     return;
   }
+
+  // Sleepy after 6 minutes of WatchFaceMain in MAIN and no activity
+
+  if ( watchfacemain.isSleepy() )
+  {
+    Serial.println("Getting sleepy");
+
+    if ( experienceservice.active() )
+    {
+      experienceservice.setCurrentState( ExperienceService::TEARDOWN );
+
+      while ( experienceservice.active() )
+      {
+        smartdelay(10);
+      }
+    }
+
+    experienceservice.startExperience( ExperienceService::Sleep );
+  }
+
 
 /*
   // Shake experience
@@ -652,15 +662,11 @@ void loop()
   }
 */
 
+  if ( ! watchfacemain.isMain() ) return;   // No gestures unless watchface is on MAIN
+
   if ( recentGesture == GESTURE_CIRCULAR )
   {
-    if ( random(0, 2) == 0 )
-    {
-      experienceservice.startExperience( ExperienceService::MysticCat );
-    }
-    else
-    {
-    }
+    experienceservice.startExperience( ExperienceService::MysticCat );
   }
 
   if ( recentGesture == GESTURE_DOWN )

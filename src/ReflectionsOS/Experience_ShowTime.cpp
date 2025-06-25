@@ -73,7 +73,7 @@ void Experience_ShowTime::teardown() {
     Serial.println( F("TEARDOWN") );
   }
 
-  if ( video.getStatus() == 0 )
+  if ( ! video.getStatus() )
   {
     timeflag = true;
     setTeardownComplete( true );  // Signal teardown complete

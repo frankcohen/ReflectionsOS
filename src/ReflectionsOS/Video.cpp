@@ -130,6 +130,29 @@ unsigned long Video::getVideoTime()
   return millis() - videoStartTime;
 }
 
+void Video::addCRLF(String &s, size_t lineLen) 
+{
+  size_t pos = lineLen;
+  while (pos < s.length()) {
+    // take everything up to pos, add "\r\n", then the rest
+    s = s.substring(0, pos)
+      + "\r\n   "
+      + s.substring(pos);
+    pos += lineLen + 2;   // skip over the chunk we just processed + the CRLF
+  }
+}
+
+// Paint debug info over the display
+
+void Video::paintText( String mef )
+{
+  gfx->setFont(nullptr);           // NULL = default system font (5×7)
+  gfx->setTextSize(2);             // leave at 1 for true 5×7
+  gfx->setCursor( 30, 30 );
+  gfx->setTextColor( WHITE, BLUE );
+  gfx->println( mef );
+}
+
 void Video::resetStats()
 {
   totalFrames = 0;

@@ -11,67 +11,65 @@
 
 #include "Battery.h"
 
-Battery::Battery(){}
+Battery::Battery()
+  : _voltageMv(0)
+{}
 
-void Battery::begin()
-{ 
-  //set the resolution to 12 bits (0-4096)
-  analogReadResolution(12);
-  batteryWaitTime = millis();
+void Battery::begin() 
+{
+  batck = millis();
+  readVoltage_();
 }
 
-bool Battery::test()
+void Battery::loop() 
 {
-  return true;
-}
+  if ( millis() - batck < 10000 ) return;
+  batck = millis();
 
-// 3500 = battery at empty
+  readVoltage_();
 
-String Battery::batLevel( float analogVolts )
-{
-  if ( analogVolts < batterylow ) return F("Low");
-  if ( analogVolts < battermedium ) return F("Medium");
-  if ( analogVolts > batteryhigh ) return F("High");
-  return F(" ");
-}
-
-int Battery::getBatteryLevel()
-{
-  if ( analogVolts < batterylow ) return 1;
-  if ( analogVolts < battermedium ) return 2;
-  if ( analogVolts > batteryhigh ) return 3;
-  return 0;
-}
-
-bool Battery::isBatteryLow()
-{
-  if ( analogVolts < batterylow ) return true;
-  return false;
-}
-
-void Battery::loop()
-{
-  if ( ( millis() - batteryWaitTime ) > ( 60000 * 5 ) )
-  {
-    batteryWaitTime = millis();
-
-    // int analogValue = analogRead( Battery_Sensor );
-
-    analogVolts = analogReadMilliVolts( Battery_Sensor ) * 5.4014;
-    
-    String myl = F("Battery voltage = ");
-    myl += String( analogVolts );
-    myl += F(" ");
-    myl += batLevel( analogVolts );
-
-    logger.info( myl );
-
-    /*
-    // print out the values you read:
-    Serial.print( F( "ADC analog value = " ) );
-    Serial.println( analogValue );
-    Serial.print( F( "ADC millivolts value = " ) );
-    Serial.println( analogVolts );
-    */
+  if (isBatteryLow()) {
+    logger.info("Battery low (< " + String(batterylow) + "mV): signalling to sleep");
   }
 }
+
+void Battery::readVoltage_() {
+  // analogReadMilliVolts returns mV; apply scale if your hardware needs it
+  _voltageMv = analogReadMilliVolts(Battery_Sensor) * 5.4014;
+}
+
+uint16_t Battery::getVoltage() const {
+  return _voltageMv;
+}
+
+bool Battery::isBatteryLow() const {
+  return _voltageMv < batterylow;
+}
+
+float Battery::getBatteryPercent() const {
+  if (_voltageMv <= batterylow) return 0.0f;
+  if (_voltageMv >= batteryfull) return 100.0f;
+  return ( ( _voltageMv - static_cast<float>(batterylow) )
+       / static_cast<float>(batteryfull - batterylow) )
+       * 100.0f;
+}
+
+int Battery::getBatteryLevel() const {
+  float v = static_cast<float>(_voltageMv);
+  if (v < batterylow) return 1;
+  if (v < batterymedium) return 2;
+  return 3;
+}
+
+String Battery::getBatteryStats() const {
+    // Read raw voltage and smooth to nearest 10 mV
+    float rawMv = analogReadMilliVolts(Battery_Sensor) * 5.4014;
+    int v = static_cast<int>(round(rawMv / 10.0f) * 10);  // smooth noise to 10 mV
+
+    // Get and round percentage
+    int pct = static_cast<int>(round(getBatteryPercent()));
+
+    // Return voltage (smoothed) and percentage
+    return "  " + String(v) + "mV, " + String(pct) + "%";
+}
+

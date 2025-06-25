@@ -124,7 +124,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
   {    
     showStep = 1;
     fadeset = 1;
-    theTime = getRTCtime();       // This introduces a 3-5 second delay    
+    theTime = getRTCtime();    
     return;
   }
 
@@ -267,6 +267,8 @@ void TextMessageService::updateTime()
 void TextMessageService::updateTempTime( String tempTime )
 {
   gfx->setFont( &Minya_Nouvelle_Rg30pt7b );
+  gfx->setTextSize( 0 );
+
   y = 135;
 
   int16_t x1 = 0;
@@ -308,8 +310,9 @@ String TextMessageService::formatWithCommas(int value)
 void TextMessageService::updateHealth( int smallsteps )
 {
   gfx->setFont( &Some_Time_Later20pt7b );
+  gfx->setTextSize( 0 );
   y = 100;
-  String mef = F("Steps");
+  String mef = F("Moves");
   gfx->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
   gfx->setCursor( (gfx->width() - w) / 2, 100 );
   gfx->setTextColor( COLOR_STRIPE_PINK );
@@ -363,7 +366,7 @@ String TextMessageService::getRTCtime()
   struct tm timeinfo;
   if ( ! getLocalTime( &timeinfo ) ) 
   {
-    return F("0 o'clock");
+    return F("--");
   }
 
   int hour = timeinfo.tm_hour;
@@ -391,6 +394,7 @@ boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t
   {
     fadeset = 0;
     gfx->setFont( font );
+    gfx->setTextSize(1);
     gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);    
 
     fadestep = 1;
@@ -410,6 +414,8 @@ boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t
 
     uint16_t textColor = (r << 11) | (g << 5) | b;
 
+    gfx->setFont( font );
+    gfx->setTextSize(1);
     gfx->setCursor( (gfx->width() - w) / 2, y );
     gfx->setTextColor( textColor );
     gfx->println( text );
@@ -425,6 +431,7 @@ boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_
     fadeset = 0;
 
     gfx->setFont( font );
+    gfx->setTextSize(1);
     gfx->getTextBounds( text.c_str(), 0, 0, &x, &y, &w, &h);   
 
     fadestep = 128;
@@ -446,6 +453,7 @@ boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_
     uint16_t textColor = (r << 11) | (g << 5) | b;
 
     gfx->setFont( font );
+    gfx->setTextSize(1);
     gfx->setCursor( (gfx->width() - w) / 2, y );
     gfx->setTextColor( textColor );
     gfx->println( text );

@@ -286,7 +286,6 @@ void ExperienceService::operateExperience()
 
 bool ExperienceService::active()
 {
-  if ( getCurrentState() != STOPPED )
   if ( getCurrentState() != STOPPED ) return true;
   return false;
 }

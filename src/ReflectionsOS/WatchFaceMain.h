@@ -59,6 +59,8 @@ class WatchFaceMain : public WatchFaceBase
     bool okToSleep();
     bool okToExperience();
     void setDrawItAll();
+    bool isMain();
+    bool isSleepy();
 
     enum Panel { 
       STARTUP, MAIN, 
@@ -96,6 +98,8 @@ class WatchFaceMain : public WatchFaceBase
     void drawHourMinute( int hourc, int minutec, bool hourschanging );
 
     int panel;
+
+    unsigned long sleepytimer;
 
     unsigned long maintimer;
 
@@ -142,10 +146,13 @@ class WatchFaceMain : public WatchFaceBase
     bool gpsflag;
     int gpsx;
     int gpsy;
+    float gpsdirection;
 
     unsigned long temptimer;
 
     unsigned long minuteRedrawtimer;
+
+
 };
 
 #endif // WATCHFACE_H

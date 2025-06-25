@@ -45,9 +45,5 @@ void Experience_Sleep::teardown()
 
   setTeardownComplete( true );  // Signal teardown complete
 
-  // Put cat to deep sleep  
-  hardware.powerDownComponents();
-  esp_deep_sleep_start();
-
   Serial.println( F("Sleep after sleep") );
 }

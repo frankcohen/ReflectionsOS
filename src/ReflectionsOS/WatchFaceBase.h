@@ -50,6 +50,8 @@ class WatchFaceBase
 
     void drawImageFromFile( String filename, bool embellishfilename, int16_t x, int16_t y);
 
+    void fillDisplay();
+
   protected:
     String mef;
     unsigned long total_decode_video;

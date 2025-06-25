@@ -27,11 +27,13 @@ void GPS::begin()
 void GPS::on()
 {
   digitalWrite(GPSPower, HIGH);   // HIGH is On
+  active = true;
 }
 
 void GPS::off()
 {
   digitalWrite(GPSPower, LOW);   // HIGH is On
+  active = false;
 }
 
 unsigned int GPS::getMonth()
@@ -247,6 +249,33 @@ void GPS::printStr(const char *str, int len)
   int slen = strlen(str);
   for (int i=0; i<len; ++i)
     Serial.print(i<slen ? str[i] : ' ');
+}
+
+// Provides stats for debugging
+
+String GPS::getStats()
+{
+  String mef = " GPS ";
+
+  if ( active )
+  {
+    mef += "1 ";
+  }
+  else
+  {
+    mef += "0 ";
+  }
+
+  mef += gps.charsProcessed();
+  mef += "\n   ";
+
+  mef += gps.satellites.value();
+  mef += " ";
+  mef += getLat();
+  mef += " ";
+  mef += getLng();
+
+  return mef;
 }
 
 void GPS::loop()

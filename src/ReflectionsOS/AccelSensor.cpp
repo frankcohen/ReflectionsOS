@@ -159,11 +159,11 @@ static void write8(uint8_t reg, uint8_t value) {
 // Configure to wake from deep sleep on a click/tap movement
 
 void AccelSensor::configureSensorWakeOnMotion() {
-  // 1) Choose ±4 g (click detection works best at lower ranges)
-  lis.setRange(LIS3DH_RANGE_4_G);
+  // 1) Choose ±8 g (click detection works best at lower ranges)
+  lis.setRange(LIS3DH_RANGE_8_G);
 
   // 2) Configure “single‐click” on all three axes, threshold=0x10 (tune up for a harder tap)
-  lis.setClick(1, 0x10);  // 1 = single‐click mode, 0x10 ≈ 16 counts ≈ 16×0.002 g = ~0.032 g
+  lis.setClick(2, CLICKTHRESHHOLD);
 
   // 3) Route click interrupt to INT1 pin (CTRL_REG3 bit7 = I1_CLICK)
   write8(LIS3DH_REG_CTRL3, 0x80);

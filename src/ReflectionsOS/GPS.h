@@ -58,6 +58,8 @@ class GPS
     void on();
     void off();
 
+    String getStats();
+
   private:
     TinyGPSPlus gps;
     bool active;

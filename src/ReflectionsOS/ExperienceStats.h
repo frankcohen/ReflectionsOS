@@ -14,6 +14,7 @@
 
 #include <Arduino.h>
 #include <vector>
+#include <Preferences.h>
 
 /**
  * @brief Tracks how often each named Experience is started and reports stats to Serial.
@@ -49,6 +50,9 @@ private:
 
     std::vector<String> names_;
     std::vector<unsigned long> counts_;
+
+    Preferences prefs_;     // Retains stats between ESP32 deep sleep modes
+
 };
 
 #endif // EXPERIENCESTATS_H

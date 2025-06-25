@@ -76,10 +76,13 @@ class Video
     bool getStatus();
     void setPaused( bool p );
     unsigned long getVideoTime();
+    void paintText( String mef );
 
     void addReadTime( unsigned long rtime );
 
   private:
+    void addCRLF(String &s, size_t lineLen);
+
     File mjpegFile;
     long ringtimer;
     bool videoStatus;
@@ -100,6 +103,7 @@ class Video
     unsigned long curr_ms;
 
     int x, y, w, h;
+
 };
 
 #endif // _video_

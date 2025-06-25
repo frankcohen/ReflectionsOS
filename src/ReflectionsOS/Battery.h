@@ -12,33 +12,51 @@
 #ifndef _BATTERY_
 #define _BATTERY_
 
-#include "config.h"
-#include "secrets.h"
-
-#include "Arduino.h"
+#include <Arduino.h>
+#include <cfloat>    // for FLT_MAX
+#include <Preferences.h>
 #include "Logger.h"
 
-#define batterylow 3900
-#define battermedium 4000
-#define batteryhigh 4000
+// Thresholds in millivolts
+#define batterylow   2900
+#define batteryfull  4100  // mV at 100% charge
+#define batterymedium ((batterylow + batteryfull)/2)  // midpoint threshold
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
+extern LOGGER logger;
 
-class Battery
-{
-  public:
-    Battery();
-    void begin();
-    void loop();
-    bool test();
-    String batLevel( float analogVolts );
-    bool isBatteryLow();
-    int getBatteryLevel();
+class Battery {
+public:
+  Battery();
 
-  private:
-    long batteryWaitTime;
-    float analogVolts;
-    
+  void begin();
+  void loop();
+
+  /** Returns the last-measured battery voltage in mV */
+  uint16_t getVoltage() const;
+
+  /** Returns true if voltage is below the low threshold */
+  bool isBatteryLow() const;
+
+  /**
+   * Returns estimated battery percentage (0–100%)
+   * based on linear mapping between batterylow and batteryfull.
+   */
+  float getBatteryPercent() const;
+
+  /**
+   * Returns a simple level (1=low, 2=medium, 3=high) based on thresholds
+   */
+  int getBatteryLevel() const;
+
+  String getBatteryStats() const;
+
+private:
+  /** Reads the ADC and updates _voltageMv */
+  void readVoltage_();
+
+  uint16_t _voltageMv;
+  unsigned long batck;
+  
 };
 
 #endif // _BATTERY_

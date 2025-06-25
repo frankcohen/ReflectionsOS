@@ -211,6 +211,11 @@ void WatchFaceBase::drawImageFromFile( String filename, bool embellishfilename, 
   }
 }
 
+void WatchFaceBase::fillDisplay()
+{
+  gfx->fillRect(0, 0, 240, 240, BLACK);
+}
+
 void WatchFaceBase::begin() 
 {
 }

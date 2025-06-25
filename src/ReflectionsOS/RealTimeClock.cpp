@@ -11,174 +11,201 @@
 
 #include "RealTimeClock.h"
 
-extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
+#include <Arduino.h>
+#include <sys/time.h>  // settimeofday()
+#include <time.h>
 
-RealTimeClock::RealTimeClock(){}
+RealTimeClock::RealTimeClock() {}
 
-void RealTimeClock::begin()
-{ 
-  //Serial.println( F("RealTimeClock begin"));
+void RealTimeClock::begin() {
+  // initialize timezone (optional)
+  setenv("TZ", "GMT0", 1);
+  tzset();
 
-  struct tm timeinfo;
+  // start sync state machine
+  _state      = State::CheckRTC;
 
-  if ( ! getLocalTime( &timeinfo ) ) 
-  {
-    struct tm timeinfo = {0};
+  // initialize timer for periodic saves
+  _lastSaveMs = millis();
+}
 
-    timeinfo.tm_year = 2024 - 1900;  // tm_year is years since 1900
-    timeinfo.tm_mon = 4 - 1;     // tm_mon is 0-based (0 = January)
-    timeinfo.tm_mday = 23;          // Day of the month
-    timeinfo.tm_hour = 2;         // Hour
-    timeinfo.tm_min = 50;        // Minute
-    timeinfo.tm_sec = 0;        // Second
+void RealTimeClock::loop() {
+  struct tm tmBuf;
 
-    bool setsup = true;
-    gps.on();
-    unsigned long gpsstartup = millis();
+  // Drive the sync state machine
+  switch (_state) {
+    case State::CheckRTC:
+      if (getLocalTime(&tmBuf) && (tmBuf.tm_year + 1900) >= MIN_VALID_YEAR) {
+        _state = State::Done;
+      } else {
+        Serial.println("RTC invalid—starting GPS sync…");
+        gps.on();
+        _gpsStartMs = millis();
+        _state      = State::GPSWait;
+      }
+      break;
 
-    while ( ( gps.getProcessed() < 1000 ) && ( millis() - gpsstartup < 5000 ) )
-    {
+    case State::GPSWait:
       gps.loop();
-    }
+      if (gps.getProcessed() >= GPS_SENTENCE_THRESHOLD ||
+          (millis() - _gpsStartMs) >= GPS_TIMEOUT_MS) {
+        if (!(gps.getHour() == 0 && gps.getMinute() == 0)) {
+          // Use GPS time
+          tmBuf.tm_year = gps.getYear()  - 1900;
+          tmBuf.tm_mon  = gps.getMonth() - 1;
+          tmBuf.tm_mday = gps.getDay();
+          tmBuf.tm_hour = (gps.getHour() + timeRegionOffset) % 24;
+          tmBuf.tm_min  = gps.getMinute();
+          tmBuf.tm_sec  = 0;
+          Serial.printf("GPS sync OK: %02d:%02d %02d/%02d/%04d\n",
+                        tmBuf.tm_hour, tmBuf.tm_min,
+                        tmBuf.tm_mon + 1, tmBuf.tm_mday,
+                        tmBuf.tm_year + 1900);
+          _candidate = mktime(&tmBuf);
+        } else {
+          // GPS not found: try NVS
+          Serial.println("Getting time from NVS or fallback to 10:10 AM");
+          time_t saved;
+          if (loadFromNVS(saved)) {
+            _candidate = saved;
+            struct tm lt;
+            localtime_r(&saved, &lt);
+            Serial.printf("loadFromNVS: stored epoch %lu → %02d:%02d\n",
+                          (unsigned long)saved, lt.tm_hour, lt.tm_min);
+          } else {
+            Serial.println("No NVS: fallback 10:10");
+            time_t now = time(nullptr);
+            localtime_r(&now, &tmBuf);
+            tmBuf.tm_hour = 10;
+            tmBuf.tm_min  = 10;
+            tmBuf.tm_sec  = 0;
+            _candidate = mktime(&tmBuf);
+          }
+        }
+        gps.off();
+        _state = State::ApplyTime;
+      }
+      break;
 
-    /*
-    Serial.print( F("GPS ") );
-    Serial.print( millis() - gpsstartup );
-    Serial.print( F(" ") );
-    Serial.print( gps.getHour() );
-    Serial.print( F(":") );
-    Serial.print( gps.getMinute() );
-    Serial.print( F(" ") );
-    Serial.print( gps.getMonth() );
-    Serial.print( F("/") );
-    Serial.println( gps.getDay() );
-    */
+    case State::ApplyTime: {
+        applyTimestamp(_candidate, true);
+        Serial.println("RTC set and saved to NVS.");
 
-    if ( ! ( ( gps.getHour() == 0 ) && ( gps.getMinute() == 0 ) ) )
-    {
-      setsup = false;
+        // immediate confirmation
+        time_t t2 = time(nullptr);
+        struct tm cf;
+        localtime_r(&t2, &cf);
+        Serial.printf("RTC now %02d:%02d\n", cf.tm_hour, cf.tm_min);
 
-      unsigned int hour = gps.getHour() + ( timeRegionOffset ) ;    // Set in config.h TODO this must be fixed
-      unsigned int minute = gps.getMinute();
+        _state = State::Done;
+        break;
+      }
 
-      Serial.print( F("RTC using GPS values ") );
-      Serial.print( hour );
-      Serial.print( F(":") );
-      String mymin = F("");
-      if ( minute < 10 ) mymin += F("0"); 
-      mymin += String( minute );
-      Serial.print( mymin );
-
-      if ( hour > 12 ) hour = hour - 12;
-
-      timeinfo.tm_hour = hour;         // Hour
-      timeinfo.tm_min = minute;        // Minute
-      timeinfo.tm_sec = 0;        // Second
-
-      unsigned int month = gps.getMonth();
-      unsigned int day = gps.getDay();
-      unsigned int year = gps.getYear();
-
-      Serial.print( F(", (mm/dd/yyyy) ") );
-      Serial.print( month );
-      Serial.print( F("/") );
-      Serial.print( day );
-      Serial.print( F("/") );
-      Serial.println( year );
-
-      timeinfo.tm_year = year - 1900;  // tm_year is years since 1900
-      timeinfo.tm_mon = month - 1;     // tm_mon is 0-based (0 = January)
-      timeinfo.tm_mday = day;          // Day of the month
-    }
-
-    gps.off();
-
-    if ( setsup )
-    {
-      Serial.println( F("RTC using default values 2 hours, 50 minutes") );
-
-      timeinfo.tm_hour = 2;         // Hour
-      timeinfo.tm_min = 50;        // Minute
-      timeinfo.tm_sec = 0;        // Second
-    }
-
-    time_t t = mktime(&timeinfo);       // Convert struct tm to time_t (seconds since the Unix epoch)
-    struct timeval tv = {t, 0};  // time_t and microseconds
-    settimeofday(&tv, nullptr);  // Set the time on the ESP32
+    case State::Done:
+      // nothing more for sync
+      break;
   }
-  else
-  {
-    Serial.print( F("Real time clock: ") );
-    Serial.print( getHour() );
-    Serial.print( F(":") );
-    String mef = F("");
-    if ( getMinute() < 10 ) mef += F("0");
-    mef += getMinute();
-    Serial.println( mef );
+
+  // Periodically save current RTC to NVS every 2 minutes
+  periodicSave();
+}
+
+void RealTimeClock::applyTimestamp(time_t t, bool saveToNVS) {
+  struct timeval tv = { .tv_sec = t, .tv_usec = 0 };
+  settimeofday(&tv, nullptr);
+  if (saveToNVS) {
+    _prefs.begin(NVS_NAMESPACE, false);
+    _prefs.putULong(NVS_KEY_LAST_TS, (unsigned long)t);
+    _prefs.end();
   }
 }
 
-// Function to get the current hour from the RTC
+bool RealTimeClock::loadFromNVS(time_t &t) {
+  _prefs.begin(NVS_NAMESPACE, true);
+  unsigned long stored = _prefs.getULong(NVS_KEY_LAST_TS, 0);
+  _prefs.end();
+  if (stored > 0) {
+    t = (time_t)stored;
+    return true;
+  }
+  return false;
+}
 
-int RealTimeClock::getHour() 
-{
-  struct tm timeinfo;
-  if (getLocalTime(&timeinfo)) 
-  {
-    return timeinfo.tm_hour;  // Return the current hour from RTC
-  } 
-  else 
-  {
-    Serial.println(F("Failed to get local time from RTC."));
-    return 10;  // Return 10 if time cannot be obtained
+void RealTimeClock::periodicSave() {
+  unsigned long nowMs = millis();
+  if (nowMs - _lastSaveMs >= NVS_SAVE_INTERVAL_MS) {
+    // show stored time before saving
+    _prefs.begin(NVS_NAMESPACE, true);
+    unsigned long before = _prefs.getULong(NVS_KEY_LAST_TS, 0);
+    _prefs.end();
+    {
+      struct tm bt;
+      time_t bt_epoch = before;
+      localtime_r(&bt_epoch, &bt);
+      Serial.printf("Periodic save: before NVS = %02d:%02d (epoch %lu)\n",
+                    bt.tm_hour, bt.tm_min, before);
+    }
+
+    // write current RTC
+    time_t now = time(nullptr);
+    struct tm tmNow;
+    localtime_r(&now, &tmNow);
+    time_t t = mktime(&tmNow);
+    _prefs.begin(NVS_NAMESPACE, false);
+    _prefs.putULong(NVS_KEY_LAST_TS, (unsigned long)t);
+    _prefs.end();
+
+    // show stored time after saving
+    _prefs.begin(NVS_NAMESPACE, true);
+    unsigned long after = _prefs.getULong(NVS_KEY_LAST_TS, 0);
+    _prefs.end();
+    {
+      struct tm at;
+      time_t at_epoch = after;
+      localtime_r(&at_epoch, &at);
+      Serial.printf("Periodic save: after  NVS = %02d:%02d (epoch %lu)\n",
+                    at.tm_hour, at.tm_min, after);
+    }
+
+    _lastSaveMs = nowMs;
   }
 }
 
-// Function to get the current minute from the RTC
+int RealTimeClock::getHour() {
+  time_t now = time(nullptr);
+  struct tm tmNow;
+  localtime_r(&now, &tmNow);
+  return tmNow.tm_hour;
+}
 
-int RealTimeClock::getMinute() 
-{
-  struct tm timeinfo;
-  if (getLocalTime(&timeinfo)) 
-  {
-    return timeinfo.tm_min;  // Return the current minute from RTC
-  } 
-  else 
-  {
-    Serial.println(F("Failed to get local time from RTC."));
-    return 50;  // Return 50 if time cannot be obtained
+int RealTimeClock::getMinute() {
+  time_t now = time(nullptr);
+  struct tm tmNow;
+  localtime_r(&now, &tmNow);
+  return tmNow.tm_min;
+}
+
+void RealTimeClock::setTime(int hour, int minute, int ampm) {
+  time_t now = time(nullptr);
+  struct tm tmBuf;
+  localtime_r(&now, &tmBuf);
+  tmBuf.tm_hour = hour;
+  tmBuf.tm_min  = minute;
+  tmBuf.tm_sec  = 0;
+  time_t t = mktime(&tmBuf);
+  applyTimestamp(t, true);
+}
+
+String RealTimeClock::getTime() {
+  time_t now = time(nullptr);
+  struct tm tmBuf;
+  localtime_r(&now, &tmBuf);
+  if ((tmBuf.tm_year + 1900) >= MIN_VALID_YEAR) {
+    char buf[6];
+    snprintf(buf, sizeof(buf), "%02d:%02d", tmBuf.tm_hour, tmBuf.tm_min);
+    return String(buf);
   }
+  begin();  // re-trigger sync
+  return String("10:10");
 }
 
-void RealTimeClock::setTime( int hour, int minute, int ampm )
-{
-      // Set default date and time (in UTC)
-
-    struct tm timeinfo = {0};
-    if ( getLocalTime(&timeinfo) )
-    {
-      timeinfo.tm_year = 2024 - 1900;  // tm_year is years since 1900
-      timeinfo.tm_mon = 4 - 1;     // tm_mon is 0-based (0 = January)
-      timeinfo.tm_mday = 23;          // Day of the month
-      timeinfo.tm_hour = hour;         // Hour
-      timeinfo.tm_min = minute;        // Minute
-      timeinfo.tm_sec = 0;        // Second
-    }
-    else
-    {
-      timeinfo.tm_year = 2024 - 1900;  // tm_year is years since 1900
-      timeinfo.tm_mon = 4 - 1;     // tm_mon is 0-based (0 = January)
-      timeinfo.tm_mday = 23;          // Day of the month
-      timeinfo.tm_hour = 10;         // Hour
-      timeinfo.tm_min = 10;        // Minute
-      timeinfo.tm_sec = 0;        // Second
-    }
-
-    time_t t = mktime(&timeinfo);       // Convert struct tm to time_t (seconds since the Unix epoch)
-    struct timeval tv = {t, 0};  // time_t and microseconds
-    settimeofday(&tv, nullptr);  // Set the time on the ESP32
-}
-
-void RealTimeClock::loop()
-{
-}

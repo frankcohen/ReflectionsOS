@@ -70,7 +70,7 @@ void Experience_Parallax::setup()
 void Experience_Parallax::run() 
 {
   // 1) still in initial pause period?
-  if (millis() - paralaxDuration < (20000 + dur * 250)) 
+  if ( millis() - paralaxDuration < ( 20000 + ( dur * 500 ) ) ) 
   {
     video.setPaused( false );
     setRunComplete(true);

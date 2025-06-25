@@ -24,6 +24,8 @@ void WatchFaceMain::begin()
 
   maintimer = millis();
 
+  sleepytimer = millis();
+
   drawitall = true;
   drawFace = false;
 
@@ -51,6 +53,7 @@ void WatchFaceMain::begin()
   gpsflag = false;
   gpsx = 0;
   gpsy = 0;
+  gpsdirection = 0;
 
   notificationflag = false;
 
@@ -107,6 +110,8 @@ void WatchFaceMain::updateGPSmarker()
   {
     float gpsCourse = gps.getCourse(); // Course angle in degrees
 
+    if ( gpsdirection > 360 ) gpsdirection = 0;
+
     int imageSize = 24; // Image size (24x24)
     int centerX = 120; // Center of the 240x240 screen
     int centerY = 120;
@@ -131,7 +136,7 @@ void WatchFaceMain::updateTimerNotice()
 
 void WatchFaceMain::updateBattery()
 {
-  if ( ( millis() - battimer ) > 2000 )
+  if ( ( millis() - battimer ) > ( 2 * 60000 ) )
   {
     battimer = millis();
 
@@ -149,9 +154,18 @@ void WatchFaceMain::updateBattery()
 void WatchFaceMain::updateHoursAndMinutes()
 {
   int hour2 = realtimeclock.getHour();
+  int minute2 = realtimeclock.getMinute();
 
-  if ( hour2 == -1 ) hour2 = 2;
-  if ( hour2 > 12 ) hour2 = hour2 - 12;
+  /*
+  Serial.print( "WatchFaceMain " );
+  Serial.print( hour2 );
+  Serial.print( ":" );
+  Serial.print( minute2 );
+  Serial.print( " " );
+  Serial.print( hour );
+  Serial.print( ":" );
+  Serial.println( minute );
+  */
   
   if ( hour2 != hour )
   {
@@ -159,10 +173,6 @@ void WatchFaceMain::updateHoursAndMinutes()
     displayUpdateable = true;
     drawFace = true;
   }
-
-  int minute2 = realtimeclock.getMinute();
-
-  if ( minute2 == -1 ) minute2 = 15;
 
   if ( minute2 != minute )
   {
@@ -232,26 +242,36 @@ void WatchFaceMain::showDisplayMain()
   {
     oldHour = hour;
 
-    if ( hour > 20 ) hour = 20;
+    if ( hour > 12 ) hour = 12;   // Just to be safe
 
     mef = wfMainHours;
     mef += hour;
     mef += wfMainHours2;
     drawImageFromFile( mef, true, 0, 0 );
+
+  Serial.print( "WatchFaceMain1 " );
+  Serial.print( hour );
+  Serial.print( " " );
+  Serial.println( mef );
   } 
 
-  int minute = map( minute, 1, 60, 1, 20) + 1;
-  if ( minute > 20 ) minute == 20;
-
-  // Draw minutes image
   if ( ( minute != oldMinute ) || drawitall )
   {
     oldMinute = minute;
+    int mymin = map( minute, 1, 60, 1, 20);
+    if ( mymin > 20 ) mymin = 20;   // Just to be safe
 
     mef = wfMainMinutes;
-    mef += minute ;
+    mef += mymin ;
     mef += wfMainMinutes2;
     drawImageFromFile( mef, true, 0, 0 );
+
+  Serial.print( "WatchFaceMain2 " );
+  Serial.print( minute );
+  Serial.print( " " );
+  Serial.println( mef );
+
+
   }
 
   // Battery indicator
@@ -370,6 +390,23 @@ void WatchFaceMain::printStatus()
   return;
 }
 
+bool WatchFaceMain::isMain()
+{
+  if ( panel == MAIN ) return true;
+  return false;
+}
+
+/* Returns true when the MAIN panel has been up for more than 3 minutes */
+
+bool WatchFaceMain::isSleepy()
+{
+  if ( ! isMain() ) return false;
+
+  if ( millis() - sleepytimer > ( 3 * 60000 ) ) return true;
+
+  return false;
+}
+
 void WatchFaceMain::loop()
 {
   if ( video.getStatus() ) return;
@@ -417,6 +454,7 @@ void WatchFaceMain::loop()
     video.startVideo( WatchFaceFlip3_video );
     textmessageservice.stop();
     needssetup = true;
+    sleepytimer = millis();
     noMovementTime = millis();
     return;
   }
@@ -451,7 +489,7 @@ void WatchFaceMain::main()
 
   if ( accel.getSingleTap() )
   {
-    panel = DISPLAYING_DIGITAL_TIME;   // DISPLAYING_DIGITAL_TIME;
+    panel = DISPLAYING_DIGITAL_TIME;
     //haptic.playEffect(14);  // 14 Strong Buzz
     video.startVideo( WatchFaceFlip1_video );
     needssetup = true;
@@ -461,7 +499,9 @@ void WatchFaceMain::main()
     return;
   }
 
-  if ( millis() - maintimer > 50 && ! video.getStatus() )
+  updateGPSmarker();        // GPS marker
+
+  if ( ( millis() - maintimer > 50 ) && ( ! video.getStatus() ) )
   {
     maintimer = millis();
 
@@ -469,6 +509,7 @@ void WatchFaceMain::main()
     updateBattery();          // Battery level indicator
     updateHoursAndMinutes();  // Hour and minute hands
     updateTimerNotice();      // Timer notice
+    updateGPSmarker();        // GPS marker
 
     showDisplayMain();
   }

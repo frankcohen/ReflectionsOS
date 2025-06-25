@@ -146,7 +146,7 @@ Read the license in the license.txt file that comes with this code.
 #define GPSPower      21
 
 // Real Time Clock (RTC)
-#define timeRegionOffset -8
+#define timeRegionOffset -1
 
 // Gesture Time Of Flight (TOF)
 #define TOFPower  26
