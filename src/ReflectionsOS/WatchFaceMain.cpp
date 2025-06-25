@@ -104,9 +104,7 @@ bool WatchFaceMain::okToSleep()
 
 void WatchFaceMain::updateGPSmarker()
 {
-  gpsflag = gps.isActive();
-
-  if ( gpsflag )
+  if ( gps.isActive() )
   {
     float gpsCourse = gps.getCourse(); // Course angle in degrees
 
@@ -248,11 +246,6 @@ void WatchFaceMain::showDisplayMain()
     mef += hour;
     mef += wfMainHours2;
     drawImageFromFile( mef, true, 0, 0 );
-
-  Serial.print( "WatchFaceMain1 " );
-  Serial.print( hour );
-  Serial.print( " " );
-  Serial.println( mef );
   } 
 
   if ( ( minute != oldMinute ) || drawitall )
@@ -265,13 +258,6 @@ void WatchFaceMain::showDisplayMain()
     mef += mymin ;
     mef += wfMainMinutes2;
     drawImageFromFile( mef, true, 0, 0 );
-
-  Serial.print( "WatchFaceMain2 " );
-  Serial.print( minute );
-  Serial.print( " " );
-  Serial.println( mef );
-
-
   }
 
   // Battery indicator
@@ -454,7 +440,6 @@ void WatchFaceMain::loop()
     video.startVideo( WatchFaceFlip3_video );
     textmessageservice.stop();
     needssetup = true;
-    sleepytimer = millis();
     noMovementTime = millis();
     return;
   }
@@ -483,6 +468,7 @@ void WatchFaceMain::main()
     needssetup = false;
     drawitall = true;
     blinking = false;
+    sleepytimer = millis();
     resetOnces();
     return;
   }
@@ -498,8 +484,6 @@ void WatchFaceMain::main()
     enoughTimePassedtimer = millis();
     return;
   }
-
-  updateGPSmarker();        // GPS marker
 
   if ( ( millis() - maintimer > 50 ) && ( ! video.getStatus() ) )
   {

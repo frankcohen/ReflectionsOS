@@ -110,12 +110,6 @@ void TextMessageService::deactivate()
   fadeset = 1;
 }
 
-bool TextMessageService::isTimeSet()
-{
-  if ( theTime == "0 o'clock" ) return false;
-  return true;
-}
-
 /* Show the current time with a funny message above and below */
 
 void TextMessageService::runShowDigitalTimeFunMessages()
@@ -124,7 +118,7 @@ void TextMessageService::runShowDigitalTimeFunMessages()
   {    
     showStep = 1;
     fadeset = 1;
-    theTime = getRTCtime();    
+    theTime = realtimeclock.getTime();    
     return;
   }
 
@@ -215,7 +209,7 @@ void TextMessageService::runDigitalTime()
   {    
     showStep = 1;
     fadeset = 1;
-    theTime = getRTCtime();
+    theTime = realtimeclock.getTime();
     return;
   }
 
@@ -233,6 +227,7 @@ void TextMessageService::runDigitalTime()
 void TextMessageService::drawCenteredMesssage( String msg, String msg2 )
 {
   gfx->setFont( &ScienceFair14pt7b );
+  gfx->setTextSize(0);
   y = 115;
   gfx->getTextBounds( msg.c_str(), 0, 0, &x, &y, &w, &h);
   gfx->setCursor( (gfx->width() - w) / 2, 115 );
@@ -250,7 +245,7 @@ void TextMessageService::drawCenteredMesssage( String msg, String msg2 )
 
 void TextMessageService::updateTime()
 {
-  theTime = getRTCtime();
+  theTime = realtimeclock.getTime();
   gfx->setFont( &Minya_Nouvelle_Rg30pt7b );
   y = 135;
   gfx->getTextBounds( theTime.c_str(), 0, 0, &x, &y, &w, &h);
@@ -319,6 +314,7 @@ void TextMessageService::updateHealth( int smallsteps )
   gfx->println( mef );
 
   gfx->setFont( &Minya16pt7b );
+  gfx->setTextSize( 0 );
   y = 135;
   mef = formatWithCommas( smallsteps );
   gfx->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
@@ -335,6 +331,7 @@ void TextMessageService::updateHealth( int smallsteps )
 void TextMessageService::updateTimer( int minutesleft )
 {
   gfx->setFont( &Minya_Nouvelle_Rg30pt7b );
+  gfx->setTextSize( 0 );
   y = 135;
   String mef = (String) minutesleft;
   gfx->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
@@ -359,33 +356,6 @@ void TextMessageService::stop()
 bool TextMessageService::active()
 {
   return activated;
-}
-
-String TextMessageService::getRTCtime()
-{
-  struct tm timeinfo;
-  if ( ! getLocalTime( &timeinfo ) ) 
-  {
-    return F("--");
-  }
-
-  int hour = timeinfo.tm_hour;
-  int minute = timeinfo.tm_min;
-  String period = F("AM");
-
-  if (hour >= 12) {
-    period = F("PM");
-    if (hour > 12) {
-      hour -= 12;
-    }
-  } else if (hour == 0) {
-    hour = 12; // Midnight case
-  }
-
-  String minuteStr = (minute < 10) ? "0" + String(minute) : String(minute);
-  String timeStr = String(hour) + ":" + minuteStr;
-
-  return timeStr;
 }
 
 boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t duration, uint16_t color, uint16_t backcolor, const GFXfont * font )

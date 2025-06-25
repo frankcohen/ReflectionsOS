@@ -142,8 +142,7 @@ void RealTimeClock::periodicSave() {
       struct tm bt;
       time_t bt_epoch = before;
       localtime_r(&bt_epoch, &bt);
-      Serial.printf("Periodic save: before NVS = %02d:%02d (epoch %lu)\n",
-                    bt.tm_hour, bt.tm_min, before);
+      // Serial.printf("Periodic save: before NVS = %02d:%02d (epoch %lu)\n", bt.tm_hour, bt.tm_min, before);
     }
 
     // write current RTC
@@ -197,15 +196,35 @@ void RealTimeClock::setTime(int hour, int minute, int ampm) {
 }
 
 String RealTimeClock::getTime() {
+  // Return current RTC time, or restore/fallback if invalid
   time_t now = time(nullptr);
   struct tm tmBuf;
   localtime_r(&now, &tmBuf);
-  if ((tmBuf.tm_year + 1900) >= MIN_VALID_YEAR) {
-    char buf[6];
-    snprintf(buf, sizeof(buf), "%02d:%02d", tmBuf.tm_hour, tmBuf.tm_min);
-    return String(buf);
+
+  if ((tmBuf.tm_year + 1900) < MIN_VALID_YEAR) {
+    // RTC uninitialized: try NVS
+    time_t saved;
+    if (loadFromNVS(saved)) {
+      applyTimestamp(saved, false);
+      now = saved;
+      localtime_r(&now, &tmBuf);
+    } else {
+      // no stored time: fallback to 10:10 today
+      time_t tday = time(nullptr);
+      localtime_r(&tday, &tmBuf);
+      tmBuf.tm_hour = 10;
+      tmBuf.tm_min  = 10;
+      tmBuf.tm_sec  = 0;
+      time_t fallback = mktime(&tmBuf);
+      applyTimestamp(fallback, true);
+      now = fallback;
+      localtime_r(&now, &tmBuf);
+    }
   }
-  begin();  // re-trigger sync
-  return String("10:10");
+
+  char buf[6];
+  snprintf(buf, sizeof(buf), "%d:%02d", tmBuf.tm_hour, tmBuf.tm_min);
+  return String(buf);
 }
+
 

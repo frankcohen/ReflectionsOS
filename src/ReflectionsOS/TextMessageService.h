@@ -69,9 +69,6 @@ class TextMessageService
 
     String getTimeStringFromAngle( float angle );
 
-    bool isTimeSet();
-    String getRTCtime();
-
     void updateTime();   // Redraws current time for wfMain
     void updateTempTime( String tempTime ); // Draws current time for wfMain set time panel
     void updateHealth( int smallsteps );
