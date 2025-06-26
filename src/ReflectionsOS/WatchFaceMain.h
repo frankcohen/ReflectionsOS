@@ -56,11 +56,12 @@ class WatchFaceMain : public WatchFaceBase
     
     void begin() override;
     void loop() override;    
-    bool okToSleep();
-    bool okToExperience();
     void setDrawItAll();
     bool isMain();
     bool isSleepy();
+
+    bool okToDeepSleep();
+    bool okToLightSleep();
 
     enum Panel { 
       STARTUP, MAIN, 

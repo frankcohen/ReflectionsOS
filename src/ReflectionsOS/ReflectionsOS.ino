@@ -329,7 +329,7 @@ static void smartdelay(unsigned long ms) {
   	systemload.loop();
 
 /*
-    if ( watchfaceexperiences.okToSleep() )
+    if ( watchfaceexperiences.okToLightSleep() )
     {
       Serial.println( F("Light sleep") );
 
@@ -480,6 +480,8 @@ void setup()
   tof.setStatus( true );
   accel.setStatus( true );
 
+  gps.on();
+
   logger.info(F("Setup complete"));
 }
 
@@ -539,21 +541,25 @@ void loop()
 {
   printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services
   
-  // Watchdog resets everything when no gestures are found and the watch face is unchanging
-  if  ( ( experienceservice.getCurrentState() != ExperienceService::STOPPED ) 
-      && ( ! watchfacemain.okToExperience() )
-      && ( millis() - watchdog > ( 3 * 60000 ) ) )
+  // Sleepy after minutes of WatchFaceMain in MAIN and no activity
+
+  if ( watchfacemain.isSleepy() )
   {
-    watchdog = millis();
+    Serial.println("Getting sleepy");
 
-    // Reset video, sensors, experiences
-    video.stopVideo();
-    tof.getGesture();   // Resets TOF
-    accel.reset();
-    experienceservice.setCurrentState( ExperienceService::STOPPED );
-    textmessageservice.deactivate();
+    if ( experienceservice.active() )
+    {
+      experienceservice.setCurrentState( ExperienceService::TEARDOWN );
 
-    watchfacemain.begin();  // Start watch face
+      while ( experienceservice.active() )
+      {
+        smartdelay(10);
+      }
+    }
+
+    experienceservice.startExperience( ExperienceService::Sleep );
+
+    return;
   }
 
   int recentGesture = tof.getGesture();
@@ -566,7 +572,7 @@ void loop()
 
   // Go to sleep when gestured or when the battery is low
 
-  if ( recentGesture == GESTURE_SLEEP || battery.isBatteryLow() )
+  if ( recentGesture == GESTURE_SLEEP || battery.isBatteryLow() && watchfacemain.okToDeepSleep() )
   {
     Serial.println("Deep Sleep");
 
@@ -620,26 +626,6 @@ void loop()
     Serial.println( "After experience timer" );
     return;
   }
-
-  // Sleepy after 6 minutes of WatchFaceMain in MAIN and no activity
-
-  if ( watchfacemain.isSleepy() )
-  {
-    Serial.println("Getting sleepy");
-
-    if ( experienceservice.active() )
-    {
-      experienceservice.setCurrentState( ExperienceService::TEARDOWN );
-
-      while ( experienceservice.active() )
-      {
-        smartdelay(10);
-      }
-    }
-
-    experienceservice.startExperience( ExperienceService::Sleep );
-  }
-
 
 /*
   // Shake experience

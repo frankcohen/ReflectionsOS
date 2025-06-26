@@ -81,23 +81,33 @@ void WatchFaceMain::resetOnces()
   onceHealth = true;
 }
 
-/* Returns true when enough time has passed to start another experience */
-
-bool WatchFaceMain::okToExperience()
-{
-  if ( ( ( panel == STARTUP ) || ( panel == MAIN ) ) && ( millis() - enoughTimePassedtimer > 15000 ) ) return true;
-  return false;
-}
-
 /* Helps cat to know when it's ok to sleep */
 
-bool WatchFaceMain::okToSleep()
+bool WatchFaceMain::okToLightSleep()
 {  
   if ( panel != MAIN ) return false;
   if ( video.getStatus() ) return false;
   if ( textmessageservice.active() ) return false;
 
   return true;
+}
+
+/* Don't allow to deep sleep
+  // panel == SETTING_TIMER:
+  // panel == CONFIRM_TIME:
+  // panel == CONFIRM_CLEAR_STEPS:
+  // panel == CONFIRM_START_TIMER:
+*/
+
+bool WatchFaceMain::okToDeepSleep()
+{  
+  if ( panel == STARTUP || 
+    panel == MAIN ||
+    panel == DISPLAYING_DIGITAL_TIME ||
+    panel == SETTING_DIGITAL_TIME ||
+    panel == DISPLAYING_HEALTH_STATISTICS ) return true;
+
+    return false;
 }
 
 // GPS marker
@@ -382,13 +392,17 @@ bool WatchFaceMain::isMain()
   return false;
 }
 
-/* Returns true when the MAIN panel has been up for more than 3 minutes */
+/* Returns true when the MAIN panel has been up for more than minutes */
 
 bool WatchFaceMain::isSleepy()
 {
   if ( ! isMain() ) return false;
 
-  if ( millis() - sleepytimer > ( 3 * 60000 ) ) return true;
+  if ( millis() - sleepytimer > ( 3 * 60000 ) )
+  {
+    sleepytimer = millis();
+    return true;
+  }
 
   return false;
 }
@@ -893,7 +907,7 @@ void WatchFaceMain::settingtimer()
     return;
   }
 
-  // Change timer time by tilting up-down for minutes
+  // Change timer time by tilting up-down
   
   if ( millis() - tilttimer < tiltspeed ) return;
   tilttimer = millis();
@@ -907,7 +921,7 @@ void WatchFaceMain::settingtimer()
     hour = newHours;
     noMovementTime = millis();  // Reset inactivity timer
     hourschanging = false;
-
+    timerservice.setTime( hour );
     String met = String( hour );
     drawImageFromFile( wfMain_SetTimer_Background_Shortie, true, 0, 0 );
     textmessageservice.updateTempTime( met );

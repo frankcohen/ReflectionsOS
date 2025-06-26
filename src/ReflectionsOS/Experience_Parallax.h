@@ -51,6 +51,9 @@ class Experience_Parallax : public Experience {
     int currentFrame          = 5;         // start center
     unsigned long lastMotionTime = 0;
     static const unsigned long decayDelay = 150;  // ms between decay steps
+
+    float mapFloat(float x, float in_min, float in_max, float out_min, float out_max);
+
 };
 
 #endif // Experience_Parallax_H

@@ -280,19 +280,21 @@ String GPS::getStats()
 
 void GPS::loop()
 {
-  while ( Serial2.available() ) 
+  if ( active )
   {
-    gps.encode( Serial2.read() );
-  }
-
-  if ( ( millis() - gpstime ) > 1000 * 10 )
-  {
-    gpstime = millis();
-
-    if ( gps.satellites.value() > 0 )
+    while ( Serial2.available() ) 
     {
-      Serial.printf(F("Satellites: %d\n"), gps.satellites.value());
+      gps.encode( Serial2.read() );
+    }
+
+    if ( ( millis() - gpstime ) > 1000 * 10 )
+    {
+      gpstime = millis();
+
+      if ( gps.satellites.value() > 0 )
+      {
+        Serial.printf(F("Satellites: %d\n"), gps.satellites.value());
+      }
     }
   }
-
 }

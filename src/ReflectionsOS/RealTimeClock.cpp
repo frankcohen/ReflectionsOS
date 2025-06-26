@@ -33,11 +33,15 @@ void RealTimeClock::loop() {
   struct tm tmBuf;
 
   // Drive the sync state machine
-  switch (_state) {
+  switch (_state) 
+  {
     case State::CheckRTC:
-      if (getLocalTime(&tmBuf) && (tmBuf.tm_year + 1900) >= MIN_VALID_YEAR) {
+      if (getLocalTime(&tmBuf) && (tmBuf.tm_year + 1900) >= MIN_VALID_YEAR) 
+      {
         _state = State::Done;
-      } else {
+      }
+      else 
+      {
         Serial.println("RTC invalid—starting GPS sync…");
         gps.on();
         _gpsStartMs = millis();
@@ -48,8 +52,11 @@ void RealTimeClock::loop() {
     case State::GPSWait:
       gps.loop();
       if (gps.getProcessed() >= GPS_SENTENCE_THRESHOLD ||
-          (millis() - _gpsStartMs) >= GPS_TIMEOUT_MS) {
-        if (!(gps.getHour() == 0 && gps.getMinute() == 0)) {
+          (millis() - _gpsStartMs) >= GPS_TIMEOUT_MS) 
+      {
+
+        if (!(gps.getHour() == 0 && gps.getMinute() == 0)) 
+        {
           // Use GPS time
           tmBuf.tm_year = gps.getYear()  - 1900;
           tmBuf.tm_mon  = gps.getMonth() - 1;
@@ -62,17 +69,22 @@ void RealTimeClock::loop() {
                         tmBuf.tm_mon + 1, tmBuf.tm_mday,
                         tmBuf.tm_year + 1900);
           _candidate = mktime(&tmBuf);
-        } else {
+        } 
+        else 
+        {
           // GPS not found: try NVS
           Serial.println("Getting time from NVS or fallback to 10:10 AM");
           time_t saved;
-          if (loadFromNVS(saved)) {
+          if (loadFromNVS(saved)) 
+          {
             _candidate = saved;
             struct tm lt;
             localtime_r(&saved, &lt);
             Serial.printf("loadFromNVS: stored epoch %lu → %02d:%02d\n",
                           (unsigned long)saved, lt.tm_hour, lt.tm_min);
-          } else {
+          }
+          else 
+          {
             Serial.println("No NVS: fallback 10:10");
             time_t now = time(nullptr);
             localtime_r(&now, &tmBuf);
@@ -204,11 +216,14 @@ String RealTimeClock::getTime() {
   if ((tmBuf.tm_year + 1900) < MIN_VALID_YEAR) {
     // RTC uninitialized: try NVS
     time_t saved;
-    if (loadFromNVS(saved)) {
+    if (loadFromNVS(saved)) 
+    {
       applyTimestamp(saved, false);
       now = saved;
       localtime_r(&now, &tmBuf);
-    } else {
+    } 
+    else 
+    {
       // no stored time: fallback to 10:10 today
       time_t tday = time(nullptr);
       localtime_r(&tday, &tmBuf);

@@ -21,25 +21,6 @@ void WatchFaceExperiences::begin()
   currentface = MAIN;
 }
 
-/* Returns true when watch face is ok with the processor being put to sleep, to save battery life */
-
-bool WatchFaceExperiences::okToSleep() 
-{
-  switch ( currentface ) 
-  {
-    case MAIN:
-      return watchfacemain.okToSleep();
-      break;
-    case MINIMAL:
-      break;
-    case MOON:
-      break;
-    case BLAIR:
-      break;
-  
-  }
-}
-
 void WatchFaceExperiences::loop() 
 {
   switch ( currentface ) 
