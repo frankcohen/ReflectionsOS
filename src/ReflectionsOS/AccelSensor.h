@@ -31,9 +31,9 @@ extern LOGGER logger;
 #define AccelCalN 59
 
 #define WAIT_TIME       3000
-#define LOOKAHEAD_MAX   10
+#define LOOKAHEAD_MAX   8
 #define SAMPLE_RATE     50       // Sample every x milliseconds
-#define CLICKTHRESHHOLD 30
+#define CLICKTHRESHHOLD 25
 
 #define ACCEL_I2C_ADDR   LIS3DH_DEFAULT_ADDRESS   // 0x18 from Adafruit_LIS3DH
 

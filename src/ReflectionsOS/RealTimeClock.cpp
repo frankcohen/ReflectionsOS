@@ -15,35 +15,46 @@
 #include <sys/time.h>
 #include <time.h>
 
-// RealTimeClock.cpp
-#include "RealTimeClock.h"
-#include <Arduino.h>
-#include <sys/time.h>
-#include <time.h>
-
 RealTimeClock::RealTimeClock() {}
 
 void RealTimeClock::begin() {
-  // optional: ensure TZ is set so time APIs work
+  // set timezone so time APIs work
   setenv("TZ", "GMT0", 1);
   tzset();
 
-  // start the sync state machine
+  // if we woke from a deep-sleep timer, restore RTC from NVS
+  esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
+  if (cause == ESP_SLEEP_WAKEUP_TIMER) {
+    time_t saved;
+    if (loadFromNVS(saved)) {
+      applyTimestamp(saved, false);
+      Serial.println("Restored RTC from NVS after deep-sleep wake");
+      _state      = State::Done;
+      _lastSaveMs = millis();
+      return;
+    }
+  }
+
+  // otherwise, proceed with normal sync
   _state      = State::CheckRTC;
   _lastSaveMs = millis();
 }
 
-void RealTimeClock::loop() {
+void RealTimeClock::loop() 
+{
+  // periodic NVS save every 2 minutes
+  periodicSave();
+
   struct tm tmBuf;
 
   switch (_state) {
     case State::CheckRTC: {
-      // after deep-sleep, time() is preserved—use that
       time_t now = time(nullptr);
       struct tm lt;
       localtime_r(&now, &lt);
+      Serial.print("RTC year: ");
+      Serial.println(lt.tm_year + 1900);
       if ((lt.tm_year + 1900) >= MIN_VALID_YEAR) {
-        // RTC already valid
         _state = State::Done;
       } else {
         Serial.println("RTC invalid—starting GPS sync…");
@@ -59,32 +70,30 @@ void RealTimeClock::loop() {
       if (gps.getProcessed() >= GPS_SENTENCE_THRESHOLD ||
           (millis() - _gpsStartMs) >= GPS_TIMEOUT_MS) {
         if (!(gps.getHour() == 0 && gps.getMinute() == 0)) {
-          // got GPS fix
           tmBuf.tm_year = gps.getYear()  - 1900;
           tmBuf.tm_mon  = gps.getMonth() - 1;
           tmBuf.tm_mday = gps.getDay();
           tmBuf.tm_hour = (gps.getHour() + timeRegionOffset) % 24;
           tmBuf.tm_min  = gps.getMinute();
           tmBuf.tm_sec  = 0;
-          Serial.printf("GPS sync OK: %02d:%02d %02d/%02d/%04d\n",
-                        tmBuf.tm_hour, tmBuf.tm_min,
-                        tmBuf.tm_mon + 1, tmBuf.tm_mday,
-                        tmBuf.tm_year + 1900);
+          Serial.printf("GPS sync OK: %02d:%02d\n", tmBuf.tm_hour, tmBuf.tm_min);
           _candidate = mktime(&tmBuf);
         } else {
-          // fallback via NVS or 10:10
           Serial.println("Getting time from NVS or fallback to 10:10 AM");
           time_t saved;
           if (loadFromNVS(saved)) {
             _candidate = saved;
             struct tm lt;
             localtime_r(&saved, &lt);
-            Serial.printf("loadFromNVS: %02d:%02d (epoch %lu)\n",
-                          lt.tm_hour, lt.tm_min, (unsigned long)saved);
+            Serial.printf("Loaded from NVS: %02d:%02d\n", lt.tm_hour, lt.tm_min);
           } else {
             Serial.println("No NVS: fallback 10:10 AM");
-            time_t now = time(nullptr);
-            localtime_r(&now, &tmBuf);
+            time_t today = time(nullptr);
+
+            memset(&tmBuf, 0, sizeof(tmBuf));  // clear everything
+            tmBuf.tm_year = MIN_VALID_YEAR - 1900;  // e.g. 2025 → 125
+            tmBuf.tm_mon  =  0;                   // January (0-based)
+            tmBuf.tm_mday =  1;                   // 1st of the month
             tmBuf.tm_hour = 10;
             tmBuf.tm_min  = 10;
             tmBuf.tm_sec  = 0;
@@ -97,26 +106,19 @@ void RealTimeClock::loop() {
       break;
 
     case State::ApplyTime: {
-        applyTimestamp(_candidate, true);
-        Serial.println("RTC set and saved to NVS.");
-
-        // confirm
-        time_t now2 = time(nullptr);
-        struct tm cf;
-        localtime_r(&now2, &cf);
-        Serial.printf("RTC now %02d:%02d\n", cf.tm_hour, cf.tm_min);
-
-        _state = State::Done;
-        break;
-      }
+      applyTimestamp(_candidate, true);
+      Serial.println("RTC set and saved to NVS.");
+      time_t confirm = time(nullptr);
+      struct tm cf;
+      localtime_r(&confirm, &cf);
+      Serial.printf("RTC now %02d:%02d %04d\n", cf.tm_hour, cf.tm_min, cf.tm_year);
+      _state = State::Done;
+      break;
+    }
 
     case State::Done:
-      // sync finished
       break;
   }
-
-  // save to NVS every 2 minutes
-  periodicSave();
 }
 
 void RealTimeClock::applyTimestamp(time_t t, bool saveToNVS) {
@@ -143,42 +145,74 @@ bool RealTimeClock::loadFromNVS(time_t &t) {
 void RealTimeClock::periodicSave() {
   unsigned long nowMs = millis();
   if (nowMs - _lastSaveMs >= NVS_SAVE_INTERVAL_MS) {
-    // debug before
+    // 1) Read current RTC time
+    time_t now = time(nullptr);
+    struct tm tmNow;
+    localtime_r(&now, &tmNow);
+    Serial.printf(
+      "PeriodicSave: RTC now = %04d-%02d-%02d %02d:%02d (epoch %lu)\n",
+      tmNow.tm_year + 1900,
+      tmNow.tm_mon  + 1,
+      tmNow.tm_mday,
+      tmNow.tm_hour,
+      tmNow.tm_min,
+      (unsigned long)now
+    );
+
+    // 2) Read existing NVS stored time
     _prefs.begin(NVS_NAMESPACE, true);
     unsigned long before = _prefs.getULong(NVS_KEY_LAST_TS, 0);
     _prefs.end();
-    {
-      struct tm bt;
-      time_t be = before;
-      localtime_r(&be, &bt);
-      Serial.printf("Periodic save: before NVS = %02d:%02d (epoch %lu)\n",
-                    bt.tm_hour, bt.tm_min, before);
+    if (before > 0) {
+      time_t bsec = (time_t)before;
+      struct tm tmBefore;
+      localtime_r(&bsec, &tmBefore);
+
+      Serial.printf(
+        "PeriodicSave: NVS before = %04d-%02d-%02d %02d:%02d (epoch %lu)\n",
+        tmBefore.tm_year + 1900,
+        tmBefore.tm_mon  + 1,
+        tmBefore.tm_mday,
+        tmBefore.tm_hour,
+        tmBefore.tm_min,
+        before
+      );
+    } else {
+      Serial.println("PeriodicSave: NVS before = <none>");
     }
 
-    // write current
-    time_t now = time(nullptr);
-    struct tm nm;
-    localtime_r(&now, &nm);
-    time_t t = mktime(&nm);
+    // 3) Write current RTC into NVS
     _prefs.begin(NVS_NAMESPACE, false);
-    _prefs.putULong(NVS_KEY_LAST_TS, (unsigned long)t);
+    _prefs.putULong(NVS_KEY_LAST_TS, (unsigned long)now);
     _prefs.end();
 
-    // debug after
+    // 4) Read back and display new NVS value
     _prefs.begin(NVS_NAMESPACE, true);
     unsigned long after = _prefs.getULong(NVS_KEY_LAST_TS, 0);
     _prefs.end();
-    {
-      struct tm at;
-      time_t ae = after;
-      localtime_r(&ae, &at);
-      Serial.printf("Periodic save: after  NVS = %02d:%02d (epoch %lu)\n",
-                    at.tm_hour, at.tm_min, after);
-    }
+    time_t asec = (time_t)after;
+    struct tm tmAfter;
+    localtime_r(&asec, &tmAfter);
+    Serial.printf(
+      "PeriodicSave: NVS after  = %04d-%02d-%02d %02d:%02d (epoch %lu)\n",
+      tmAfter.tm_year + 1900,
+      tmAfter.tm_mon  + 1,
+      tmAfter.tm_mday,
+      tmAfter.tm_hour,
+      tmAfter.tm_min,
+      after
+    );
 
     _lastSaveMs = nowMs;
   }
 }
+
+
+
+
+
+
+
 
 int RealTimeClock::getHour() {
   time_t now = time(nullptr);
@@ -196,38 +230,35 @@ int RealTimeClock::getMinute() {
 
 void RealTimeClock::setTime(int hour, int minute, int ampm) {
   time_t now = time(nullptr);
-  struct tm tm0;
-  localtime_r(&now, &tm0);
-  tm0.tm_hour = hour;
-  tm0.tm_min  = minute;
-  tm0.tm_sec  = 0;
-  time_t t = mktime(&tm0);
-  applyTimestamp(t, true);
+  struct tm tmBuf;
+  localtime_r(&now, &tmBuf);
+  tmBuf.tm_hour = hour;
+  tmBuf.tm_min  = minute;
+  tmBuf.tm_sec  = 0;
+  applyTimestamp(mktime(&tmBuf), true);
 }
 
 String RealTimeClock::getTime() {
-  // always return the current RTC time (ensuring it's initialized)
   time_t now = time(nullptr);
-  struct tm tm0;
-  localtime_r(&now, &tm0);
-  if ((tm0.tm_year + 1900) < MIN_VALID_YEAR) {
-    // if still uninitialized, fallback to NVS or 10:10
+  struct tm tmBuf;
+  localtime_r(&now, &tmBuf);
+
+  if ((tmBuf.tm_year + 1900) < MIN_VALID_YEAR) {
     time_t saved;
     if (loadFromNVS(saved)) {
       applyTimestamp(saved, false);
-      now = saved;
-      localtime_r(&now, &tm0);
+      localtime_r(&saved, &tmBuf);
     } else {
-      tm0.tm_hour = 10; tm0.tm_min = 10; tm0.tm_sec = 0;
-      time_t fb = mktime(&tm0);
-      applyTimestamp(fb, true);
-      now = fb;
-      localtime_r(&now, &tm0);
+      tmBuf.tm_hour = 10;
+      tmBuf.tm_min  = 10;
+      tmBuf.tm_sec  = 0;
+      applyTimestamp(mktime(&tmBuf), true);
     }
   }
 
   char buf[6];
-  snprintf(buf, sizeof(buf), "%d:%02d", tm0.tm_hour, tm0.tm_min);  // no leading zero on hour
+  snprintf(buf, sizeof(buf), "%d:%02d", tmBuf.tm_hour, tmBuf.tm_min);
   return String(buf);
 }
+
 

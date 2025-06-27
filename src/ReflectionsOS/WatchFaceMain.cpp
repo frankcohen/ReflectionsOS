@@ -25,6 +25,7 @@ void WatchFaceMain::begin()
   maintimer = millis();
 
   sleepytimer = millis();
+  timetosleep = millis();  
 
   drawitall = true;
   drawFace = false;
@@ -62,7 +63,6 @@ void WatchFaceMain::begin()
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
   panel = STARTUP;
-  video.startVideo( WatchFaceOpener_video );
 
   textmessageservice.deactivate();
 
@@ -104,7 +104,6 @@ bool WatchFaceMain::okToDeepSleep()
   if ( panel == STARTUP || 
     panel == MAIN ||
     panel == DISPLAYING_DIGITAL_TIME ||
-    panel == SETTING_DIGITAL_TIME ||
     panel == DISPLAYING_HEALTH_STATISTICS ) return true;
 
     return false;
@@ -392,13 +391,19 @@ bool WatchFaceMain::isMain()
   return false;
 }
 
+bool WatchFaceMain::isSleepNow()
+{
+  if ( panel == MAIN && sleepnow ) return true;
+  return false;
+}
+
 /* Returns true when the MAIN panel has been up for more than minutes */
 
 bool WatchFaceMain::isSleepy()
 {
   if ( ! isMain() ) return false;
 
-  if ( millis() - sleepytimer > ( 3 * 60000 ) )
+  if ( millis() - sleepytimer > ( 5 * 60000 ) )
   {
     sleepytimer = millis();
     return true;
@@ -483,6 +488,8 @@ void WatchFaceMain::main()
     drawitall = true;
     blinking = false;
     sleepytimer = millis();
+    timetosleep = millis();
+    sleepnow = false;
     resetOnces();
     return;
   }
@@ -493,10 +500,18 @@ void WatchFaceMain::main()
     //haptic.playEffect(14);  // 14 Strong Buzz
     video.startVideo( WatchFaceFlip1_video );
     needssetup = true;
+    sleepytimer = millis();
     noMovementTime = millis();
     textmessageservice.stop();
     enoughTimePassedtimer = millis();
     return;
+  }
+
+  if ( millis() - timetosleep > ( 6 * 60000 ) )
+  {
+    timetosleep = millis();
+    sleepnow = true;
+    Serial.println( "WatchFaceMain Timeout Sleep Now" );
   }
 
   if ( ( millis() - maintimer > 50 ) && ( ! video.getStatus() ) )
@@ -510,6 +525,11 @@ void WatchFaceMain::main()
     updateGPSmarker();        // GPS marker
 
     showDisplayMain();
+
+    // To save battery, put the processor into light sleep for 50 ms  
+    // Note: disabled, seems to disable the Wire() settings, accel no longer works  
+    //esp_sleep_enable_timer_wakeup( 50000 );     // 50 ms = 50,000 µs
+    //esp_light_sleep_start();
   }
 }
 
@@ -528,8 +548,6 @@ void WatchFaceMain::displayingdigitaltime()
 
   if ( accel.getDoubleTap() )
   {
-    Serial.println( F( "displayingdigitaltime double tapped" ) );
-
     panel = SETTING_DIGITAL_TIME;
     needssetup = true;
     textmessageservice.stop();
@@ -540,8 +558,6 @@ void WatchFaceMain::displayingdigitaltime()
 
   if ( accel.getSingleTap() )
   {
-    Serial.println( F( "displayingdigitaltime tapped" ) );
-
     panel = DISPLAYING_HEALTH_STATISTICS;
     //haptic.playEffect(14);  // 14 Strong Buzz
     video.startVideo( WatchFaceFlip2_video );

@@ -476,6 +476,16 @@ void setup()
     smartdelay(1000);
   }
 
+
+  if (reason == ESP_SLEEP_WAKEUP_EXT1) 
+  {
+    video.startVideo( WatchFaceOpener_video );
+  } 
+  else 
+  {
+    video.startVideo( OutOfTheBox_video );
+  }
+
   video.setPaused( false );
   tof.setStatus( true );
   accel.setStatus( true );
@@ -566,7 +576,7 @@ void loop()
 
   // Go to sleep when gestured or when the battery is low
 
-  if ( recentGesture == GESTURE_SLEEP || battery.isBatteryLow() && watchfacemain.okToDeepSleep() )
+  if ( ( recentGesture == GESTURE_SLEEP || battery.isBatteryLow() || watchfacemain.isSleepNow() ) && watchfacemain.okToDeepSleep() )
   {
     Serial.println("Deep Sleep");
 

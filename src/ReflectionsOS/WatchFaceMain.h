@@ -62,13 +62,19 @@ class WatchFaceMain : public WatchFaceBase
 
     bool okToDeepSleep();
     bool okToLightSleep();
+    bool isSleepNow();
 
     enum Panel { 
-      STARTUP, MAIN, 
-      DISPLAYING_DIGITAL_TIME, SETTING_DIGITAL_TIME, 
-      DISPLAYING_TIMER, SETTING_TIMER,
+      STARTUP, 
+      MAIN, 
+      DISPLAYING_DIGITAL_TIME, 
+      SETTING_DIGITAL_TIME, 
+      DISPLAYING_TIMER, 
+      SETTING_TIMER,
       DISPLAYING_HEALTH_STATISTICS,
-      CONFIRM_TIME, CONFIRM_CLEAR_STEPS, CONFIRM_START_TIMER      
+      CONFIRM_TIME, 
+      CONFIRM_CLEAR_STEPS, 
+      CONFIRM_START_TIMER      
     };
     
   private:
@@ -101,6 +107,8 @@ class WatchFaceMain : public WatchFaceBase
     int panel;
 
     unsigned long sleepytimer;
+    unsigned long timetosleep;
+    bool sleepnow;
 
     unsigned long maintimer;
 
