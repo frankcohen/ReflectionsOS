@@ -71,7 +71,7 @@ float Experience_Parallax::mapFloat(float x, float in_min, float in_max, float o
 void Experience_Parallax::run() 
 {
   // 1) still in initial pause period?
-  if ( millis() - paralaxDuration > ( 30000 + ( dur * 2000 ) ) ) 
+  if ( millis() - paralaxDuration > ( 20000 + ( dur * 1500 ) ) ) 
   {
     video.setPaused( false );
     setRunComplete(true);
@@ -91,10 +91,8 @@ void Experience_Parallax::run()
     String mef = "cat" + String(currentFrame) + "_parallax_baseline.jpg";
     watchfacemain.drawImageFromFile(mef, true, 0, 0);
     watchfacemain.show();
-    Serial.printf(
-      "motionX:%.3f motionY:%.3f → frame %d\n",
-      motionX, motionY, currentFrame
-    );
+
+    //Serial.printf( "motionX:%.3f motionY:%.3f → frame %d\n", motionX, motionY, currentFrame );
   }
 }
 
@@ -102,6 +100,7 @@ void Experience_Parallax::teardown()
 {
   if ( tearflag )
   {
+    video.setPaused( false );
     tearflag = false;
     Serial.print( parallaxname );
     Serial.println( F("TEARDOWN") );

@@ -32,20 +32,20 @@
 #define FRAME_RATE            8                   // Hz
 #define FRAME_INTERVAL_MS    (1000/FRAME_RATE)    // ms between valid frames
 
-#define MIN_DISTANCE          5                   // mm
+#define MIN_DISTANCE         15                   // mm
 #define MAX_DISTANCE        130                   // mm
 #define VALID_PIXEL_COUNT    50                   // pixels needed to consider a frame “valid”
 
 #define CIRCULAR_TIME       500                   // ms to wait after swipe before declaring “circular”
 
 // Sleep detection thresholds
-#define SLEEP_MIN_DISTANCE    5                   // mm
-#define SLEEP_MAX_DISTANCE   18                   // mm
-#define SLEEP_COVERAGE_COUNT 50                   // # pixels in [5,18] → “covered”
+#define SLEEP_MIN_DISTANCE    3                   // mm
+#define SLEEP_MAX_DISTANCE   15                   // mm
+#define SLEEP_COVERAGE_COUNT 45                   // # pixels in [0,15] → “covered”
 #define SLEEP_HOLD_MS      3000UL                 // ms of coverage to declare Sleep
 
 // Finger-tip detection thresholds
-#define TIP_MIN_DISTANCE      5                   // mm
+#define TIP_MIN_DISTANCE     15                   // mm
 #define TIP_MAX_DISTANCE    130                   // mm
 
 // Frame dimensions

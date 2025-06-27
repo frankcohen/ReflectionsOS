@@ -366,7 +366,7 @@ void setup()
   }
 
   // Core 1 services
-  
+
   systemload.begin();  // System load monitor
   experiencestats.begin();
   systemload.printHeapSpace( "Start" );
@@ -543,7 +543,7 @@ void loop()
   
   // Sleepy after minutes of WatchFaceMain in MAIN and no activity
 
-  if ( watchfacemain.isSleepy() )
+  if ( watchfacemain.isSleepy() && ( ! experienceservice.active() ) )
   {
     Serial.println("Getting sleepy");
 
@@ -563,12 +563,6 @@ void loop()
   }
 
   int recentGesture = tof.getGesture();
-
-  if ( recentGesture == GESTURE_NONE )
-  {
-    smartdelay(10);
-    return;
-  }
 
   // Go to sleep when gestured or when the battery is low
 
@@ -596,6 +590,18 @@ void loop()
     // Put cat into deep sleep  
     hardware.powerDownComponents();
     esp_deep_sleep_start();
+    return;
+  }
+
+  if ( experienceservice.active() )
+  {
+    smartdelay(10);
+    return;
+  }
+
+  if ( recentGesture == GESTURE_NONE )
+  {
+    smartdelay(10);
     return;
   }
 

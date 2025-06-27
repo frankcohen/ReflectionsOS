@@ -31,7 +31,7 @@ void TOF::begin()
     while (1);
   }
 
-  Serial.println("VL53L5CX started");
+  Serial.println("VL53L5CX TOF sensor started");
 
   // Configure sensor
   tof.setRangingFrequency(FRAME_RATE);
@@ -137,7 +137,7 @@ void TOF::computeOpticalFlow(const float frameA[HEIGHT][WIDTH],
 int TOF::getGesture() 
 {
   int prevd = direction;
-  direction = 0;
+  direction = GESTURE_NONE;
   return prevd;
 }
 
@@ -180,9 +180,7 @@ String TOF::getRecentMessage2()
 }
 
 void TOF::loop() {
-  if (!isRunning) {
-    return;
-  }
+  if (!isRunning || direction != GESTURE_NONE ) return;
 
   unsigned long now = millis();
 
@@ -213,12 +211,36 @@ void TOF::loop() {
   if ( !tof.getRangingData(&rd) ) return;
 
   // Build raw[64] and count how many pixels lie in [MIN_DISTANCE, MAX_DISTANCE]
+  // also detect Sleep gesture
+  int sleepCnt = 0;
   int16_t raw[64];
   int validCnt = 0;
-  for (int i = 0; i < 64; ++i) {
-    raw[i] = rd.distance_mm[i];
-    if (raw[i] >= MIN_DISTANCE && raw[i] <= MAX_DISTANCE) {
+  for (int i = 0; i < 64; ++i) 
+  {
+    uint16_t d = rd.distance_mm[ i ];
+    if (d >= SLEEP_MIN_DISTANCE && d <= SLEEP_MAX_DISTANCE) {
+      sleepCnt++;
+    }
+    raw[i] = d;
+    if ( d >= MIN_DISTANCE && d <= MAX_DISTANCE) {
       validCnt++;
+    }
+  }
+
+  // ——— Sleep detection ———
+  if ( now - sleepStart > SLEEP_HOLD_MS )
+  {
+    sleepStart = now;
+
+    if (sleepCnt >= SLEEP_COVERAGE_COUNT) 
+    {
+      resetGesture();
+      direction = GESTURE_SLEEP;
+      directionWay = "→ Sleep";
+      mymessage = directionWay;
+      mymessage2 = sleepCnt;
+      captTime = now;
+      return;
     }
   }
 
@@ -294,32 +316,6 @@ void TOF::loop() {
   mymessage2 = "tipDist: ";
   mymessage2 += tipDist;
   */
-
-  // ——— Sleep detection ———
-  if ( now - sleepStart > SLEEP_HOLD_MS )
-  {
-    sleepStart = now;
-
-    int sleepCnt = 0;
-    for (uint8_t r = 0; r < 8; ++r) {
-      for (uint8_t c = 0; c < 8; ++c) {
-        uint16_t d = rd.distance_mm[ ( r * 8 ) + c];
-        if (d >= SLEEP_MIN_DISTANCE && d <= SLEEP_MAX_DISTANCE) {
-          sleepCnt++;
-        }
-      }
-    }
-    if (sleepCnt >= SLEEP_COVERAGE_COUNT) 
-    {
-      resetGesture();
-      direction = GESTURE_SLEEP;
-      directionWay = "→ Sleep";
-      mymessage = directionWay;
-      mymessage2 = sleepCnt;
-      captTime = now;
-      return;
-    }
-  }
 
   // ——— Pending direction / circular detection ———
   if (pendingDirection) {

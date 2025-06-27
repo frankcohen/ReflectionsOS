@@ -41,7 +41,23 @@ void Video::begin()
     Serial.println(F("gfx->begin() failed. Stopping."));
     while(1);
   }
-  gfx->fillScreen( BLACK );
+
+  gfx->fillScreen( COLOR_PANTONE_310 );
+  gfx->fillCircle( 120, 120, 5, COLOR_PANTONE_662 );
+  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
+  delay(800);
+  gfx->fillCircle( 140, 120, 5, COLOR_PANTONE_102 );
+  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
+  delay(800);
+  gfx->fillCircle( 120, 140, 5, COLOR_PANTONE_102 );
+  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
+  delay(800);
+  gfx->fillCircle( 100, 120, 5, COLOR_PANTONE_102 );
+  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
+  delay(800);
+  gfx->fillCircle( 120, 100, 5, COLOR_PANTONE_151 );
+  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
+  delay(800);
 
   videoStatus = false;   // idle
   vidtimer = millis();

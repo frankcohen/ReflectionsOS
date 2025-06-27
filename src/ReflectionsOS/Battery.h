@@ -18,6 +18,7 @@
 #include "Logger.h"
 
 // Thresholds in millivolts
+#define batterysleep 2500
 #define batterylow   2900
 #define batteryfull  4100  // mV at 100% charge
 #define batterymedium ((batterylow + batteryfull)/2)  // midpoint threshold
@@ -35,7 +36,7 @@ public:
   uint16_t getVoltage() const;
 
   /** Returns true if voltage is below the low threshold */
-  bool isBatteryLow() const;
+  bool isBatteryLow();
 
   /**
    * Returns estimated battery percentage (0–100%)
@@ -56,7 +57,6 @@ private:
 
   uint16_t _voltageMv;
   unsigned long batck;
-  
 };
 
 #endif // _BATTERY_

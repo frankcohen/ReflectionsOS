@@ -42,8 +42,9 @@ uint16_t Battery::getVoltage() const {
   return _voltageMv;
 }
 
-bool Battery::isBatteryLow() const {
-  return _voltageMv < batterylow;
+bool Battery::isBatteryLow() {
+  readVoltage_();
+  return _voltageMv < batterysleep;
 }
 
 float Battery::getBatteryPercent() const {

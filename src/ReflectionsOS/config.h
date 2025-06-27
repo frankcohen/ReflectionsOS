@@ -215,6 +215,20 @@ static const NimBLEUUID BLE_CHARACTERISTIC_UUID( "33a03886-0db0-43c8-90a2-bca6a8
 // Logger POST URL
 #define cloudCityLogPostURL "https://cloudcity.starlingwatch.com/api/logitpost"
 
+/* New colors */
+
+#define COLOR_PANTONE_310 RGB565( 91, 208, 230 )     // Pantone 310 C
+#define COLOR_PANTONE_102 RGB565( 255, 236, 45 )       // Pantone 102 C
+#define COLOR_PANTONE_577 RGB565( 20, 48, 15 )      // Pantone 577 C
+#define COLOR_PANTONE_151 RGB565( 255, 130, 0 )       // Pantone 151 C
+#define COLOR_PANTONE_282 RGB565( 37, 40, 73 )        // Pantone 282 C
+#define COLOR_PANTONE_662 RGB565( 0, 26, 112 )     // Pantone 662 C
+#define COLOR_PANTONE_310 RGB565( 91, 208, 230 )     // Pantone 310 C
+#define COLOR_PANTONE_313 RGB565( 0, 146, 188 )     // Pantone 313 C
+#define COLOR_PANTONE_189 RGB565( 248, 163, 188 )     // Pantone 189 C
+#define COLOR_PANTONE_205 RGB565( 224, 69, 123 )     // Pantone 205 C
+#define COLOR_PANTONE_206 RGB565( 206, 0, 55 )     // Pantone 206 C
+
 /* Show Time text and colors */
 
 #define COLOR_BACKGROUND RGB565(115, 58, 0)

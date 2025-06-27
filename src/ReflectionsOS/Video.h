@@ -76,8 +76,9 @@ class Video
     bool getStatus();
     void setPaused( bool p );
     unsigned long getVideoTime();
-    void paintText( String mef );
 
+    void paintText( String mef );
+    
     void addReadTime( unsigned long rtime );
 
   private:
