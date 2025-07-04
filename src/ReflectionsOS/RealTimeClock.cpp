@@ -52,8 +52,7 @@ void RealTimeClock::loop()
       time_t now = time(nullptr);
       struct tm lt;
       localtime_r(&now, &lt);
-      Serial.print("RTC year: ");
-      Serial.println(lt.tm_year + 1900);
+      Serial.printf("RTC valid: %d %02d:%02d\n", lt.tm_year + 1900, tmBuf.tm_hour, tmBuf.tm_min);
       if ((lt.tm_year + 1900) >= MIN_VALID_YEAR) {
         _state = State::Done;
       } else {

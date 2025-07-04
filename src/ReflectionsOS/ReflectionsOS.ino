@@ -350,7 +350,7 @@ static void smartdelay(unsigned long ms) {
 void setup() 
 {
   Serial.begin(115200);
-  delay(2000);
+  delay(200);
   Serial.setDebugOutput(true);
 
   esp_sleep_wakeup_cause_t reason = esp_sleep_get_wakeup_cause();
@@ -365,18 +365,18 @@ void setup()
     Serial.println(F("ReflectionsOS"));
   }
 
+  // Doing this here to get some color onto the display quickly
+  // for the usere to think the startup is quick
+  
+  hardware.begin();  // Sets all the hardware pins
+  video.begin();
+  video.setPaused( true );
+
   // Core 1 services
 
   systemload.begin();  // System load monitor
   experiencestats.begin();
   systemload.printHeapSpace( "Start" );
-
-  hardware.begin();  // Sets all the hardware pins
-  systemload.printHeapSpace( "Hardware" );
-
-  video.begin();
-  video.setPaused( true );
-  systemload.printHeapSpace( "Video" );
 
   mjpegrunner.begin();
   systemload.printHeapSpace( "MjpegRunner" );
@@ -464,6 +464,15 @@ void setup()
     0              // Core where the task should run (core 0)
   );
 
+  if (reason == ESP_SLEEP_WAKEUP_EXT1) 
+  {
+    video.startVideo( WatchFaceOpener_video );
+  } 
+  else 
+  {
+    video.startVideo( OutOfTheBox_video );
+  }
+  
   // Experience initialization
 
   textmessageservice.begin();
@@ -474,16 +483,6 @@ void setup()
   while ( ! tofstarted )
   {
     smartdelay(1000);
-  }
-
-
-  if (reason == ESP_SLEEP_WAKEUP_EXT1) 
-  {
-    video.startVideo( WatchFaceOpener_video );
-  } 
-  else 
-  {
-    video.startVideo( OutOfTheBox_video );
   }
 
   video.setPaused( false );
@@ -547,6 +546,8 @@ void printCore0TasksMessages()
   }
 }
 
+int sleepcnt = 0;
+
 void loop() 
 {
   printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services
@@ -578,6 +579,14 @@ void loop()
 
   if ( ( recentGesture == GESTURE_SLEEP || battery.isBatteryLow() || watchfacemain.isSleepNow() ) && watchfacemain.okToDeepSleep() )
   {
+    // Sleep after 3 consequtive gestures, just to be safe from an accidental sleep gesture
+    if ( sleepcnt <3 )
+    {
+      sleepcnt++;
+      return;
+    }
+    sleepcnt = 0;
+
     Serial.println("Deep Sleep");
 
     if ( experienceservice.active() )
@@ -602,6 +611,8 @@ void loop()
     esp_deep_sleep_start();
     return;
   }
+
+  sleepcnt = 0;
 
   if ( experienceservice.active() )
   {
@@ -644,15 +655,6 @@ void loop()
   }
 
 /*
-  // Shake experience
-
-  if ( accel.getTripleTap() )
-  {
-    experienceservice.startExperience( ExperienceService::Shaken );
-    smartdelay(10);
-    return;
-  }
-
   // Wait 60 seconds after a CatsPlay experience before another CatsPlay
 
   if ( ( blesupport.getRemoteDevicesCount() > 0 ) && ( ( millis() - afterCatsPlay) > ( 60 * 1000 ) ) ) 
@@ -665,6 +667,11 @@ void loop()
 */
 
   if ( ! watchfacemain.isMain() ) return;   // No gestures unless watchface is on MAIN
+
+  if ( accel.isShaken() )
+  {
+    experienceservice.startExperience( ExperienceService::Shaken );
+  }
 
   if ( recentGesture == GESTURE_CIRCULAR )
   {

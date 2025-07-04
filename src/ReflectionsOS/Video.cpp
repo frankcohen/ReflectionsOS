@@ -42,8 +42,8 @@ void Video::begin()
     while(1);
   }
 
-  gfx->fillScreen( COLOR_PANTONE_310 );
-  gfx->fillCircle( 120, 120, 5, COLOR_PANTONE_662 );
+  gfx->fillScreen( COLOR_PANTONE_662 );
+  gfx->fillCircle( 120, 120, 5, COLOR_PANTONE_310 );
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
   delay(800);
   gfx->fillCircle( 140, 120, 5, COLOR_PANTONE_102 );

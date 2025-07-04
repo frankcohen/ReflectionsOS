@@ -28,14 +28,13 @@
 extern Utils utils;
 extern LOGGER logger;
 
-#define AccelCalN 59
-
-#define WAIT_TIME       3000
-#define LOOKAHEAD_MAX   8
-#define SAMPLE_RATE     50       // Sample every x milliseconds
-#define CLICKTHRESHHOLD 25
+#define WAIT_TIME       2000
+#define LOOKAHEAD_MAX   5
+#define SAMPLE_RATE     200       // Sample every x milliseconds
 
 #define ACCEL_I2C_ADDR   LIS3DH_DEFAULT_ADDRESS   // 0x18 from Adafruit_LIS3DH
+
+#define CLICKTHRESHHOLD 25    // Strenth of tap to bring back from deep sleep
 
 class AccelSensor
 {
@@ -44,14 +43,14 @@ class AccelSensor
     void begin();
     void loop();
 
-    void resetLIS3DH();
-
     void configureSensorWakeOnMotion();
 
     void reset();
 
     void setStatus( bool running );
     bool getStatus();
+
+    bool isShaken();
 
     /**
      * Returns true once when a confirmed single tap is detected.
@@ -72,29 +71,37 @@ class AccelSensor
     String getRecentMessage2();
 
   private:
-    void computeThreshold(const double *vals, int n, double &outMedian, double &outMad);
-    void runSimulation();
-    void fillValues();
 
     Adafruit_LIS3DH lis;
 
-    int      lookaheadCount;
-    int      firstIdx;
-    double   firstMag;
-    double   threshold;
-    unsigned long sampleIndex;
+    bool      started;
+    bool      runflag;
+
+    int       lookaheadCount;
     unsigned long last;
-    int      state;
+    int       state;
     unsigned long waittime;
 
-    bool     _pendingSingle;
-    bool     _pendingDouble;
+    bool      click;
+    unsigned long magtime;
+    float     magnow;
+    unsigned long magprevtime;
+    float     maghistory1;
+    float     maghistory2;
+    float     maghistory3;
 
-    bool started;
-    bool runflag;
+    int shakencount;
+    unsigned long shakentime;
+    unsigned long shakentime2;
     
-    String myMef;
-    String myMef2;
+    bool      firstpart;
+    bool      secondpart;
+
+    bool      _pendingSingle;
+    bool      _pendingDouble;
+    
+    String    myMef;
+    String    myMef2;
 
 };
 
