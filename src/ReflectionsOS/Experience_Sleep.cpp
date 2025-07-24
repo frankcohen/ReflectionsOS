@@ -26,6 +26,8 @@ void Experience_Sleep::init()
 
 void Experience_Sleep::setup() 
 {
+  setExperienceName( SleepName );
+
   Serial.println( F("Sleep SETUP") );
   video.startVideo( Sleep_video );
   setSetupComplete(true);  // Signal that setup is complete

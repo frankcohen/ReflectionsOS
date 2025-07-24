@@ -20,8 +20,8 @@
 // Thresholds in millivolts
 #define batterysleep 2500
 #define batterylow   2900
+#define batterymedium 3700
 #define batteryfull  4100  // mV at 100% charge
-#define batterymedium ((batterylow + batteryfull)/2)  // midpoint threshold
 
 extern LOGGER logger;
 
@@ -33,7 +33,7 @@ public:
   void loop();
 
   /** Returns the last-measured battery voltage in mV */
-  uint16_t getVoltage() const;
+  uint16_t getVoltage();
 
   /** Returns true if voltage is below the low threshold */
   bool isBatteryLow();
@@ -42,14 +42,14 @@ public:
    * Returns estimated battery percentage (0–100%)
    * based on linear mapping between batterylow and batteryfull.
    */
-  float getBatteryPercent() const;
+  float getBatteryPercent();
 
   /**
    * Returns a simple level (1=low, 2=medium, 3=high) based on thresholds
    */
-  int getBatteryLevel() const;
+  int getBatteryLevel();
 
-  String getBatteryStats() const;
+  String getBatteryStats();
 
 private:
   /** Reads the ADC and updates _voltageMv */

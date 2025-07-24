@@ -26,6 +26,8 @@ void Experience_Chastise::init()
 
 void Experience_Chastise::setup() 
 {
+  setExperienceName( chastisename );
+
   Serial.print( chastisename );
   Serial.println( F("SETUP") );
 

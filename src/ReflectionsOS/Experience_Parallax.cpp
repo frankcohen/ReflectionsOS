@@ -45,6 +45,8 @@ void Experience_Parallax::setup()
 {
   if ( vidflag )
   {
+    setExperienceName( parallaxname );
+
     Serial.println( parallaxname );
     Serial.println( F("SETUP") );
 
@@ -88,7 +90,7 @@ void Experience_Parallax::run()
   if ( x != currentFrame ) 
   {
     currentFrame = x;
-    String mef = "cat" + String(currentFrame) + "_parallax_baseline.jpg";
+    String mef = "cat" + String(currentFrame) + "_parallax.jpg";
     watchfacemain.drawImageFromFile(mef, true, 0, 0);
     watchfacemain.show();
 

@@ -19,6 +19,7 @@
 #include "time.h"
 #include "gps.h"
 #include <Preferences.h>
+#include "esp_sntp.h"  // for SNTP if needed; configTime is in <time.h>
 
 // Configuration constants
 #define MIN_VALID_YEAR         2023
@@ -27,7 +28,7 @@
 
 #define NVS_NAMESPACE          "rtc"
 #define NVS_KEY_LAST_TS        "last_ts"
-#define NVS_SAVE_INTERVAL_MS   120000  // 2 minutes
+#define NVS_SAVE_INTERVAL_MS   60000  // 1 minute
 
 // these must be defined elsewhere in your project:
 extern LOGGER       logger;           // your serial‐logging object
@@ -45,6 +46,14 @@ public:
   // returns "HH:MM" from RTC if valid, otherwise tries GPS,
   // otherwise returns "10:10" and re-triggers begin()
   String getTime();
+
+  /**
+     * @brief Synchronize RTC from an NTP server.
+     * @param ntpServer  Hostname of NTP server (default "pool.ntp.org")
+     * @param timeoutMs  How long (ms) to wait for a valid time (default 5 000)
+     * @return true if sync succeeded, false on timeout
+  */
+  bool syncWithNTP(const char* ntpServer = "pool.ntp.org", uint32_t timeoutMs = 5000);
 
 private:
   enum class State {

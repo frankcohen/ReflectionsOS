@@ -45,9 +45,10 @@ extern Steps steps;
 extern TimerService timerservice;
 extern GPS gps;
 
-#define nomov 1500    // Hourglass timeout duration
-
-#define tiltspeed 1500 // Speed to update set-time values
+#define nomov 1500                  // Hourglass timeout duration
+#define sleepyTime (60 * 1000 * 2)  // 5 minutes until feeling sleepy
+#define sleepyTime2 (60 * 1000 * 4)  // 5 minutes until feeling sleepy
+#define tiltspeed 1200              // Speed to update set-time values
 
 class WatchFaceMain : public WatchFaceBase 
 {
@@ -59,36 +60,41 @@ class WatchFaceMain : public WatchFaceBase
     void setDrawItAll();
     bool isMain();
     bool isSleepy();
-
-    bool okToDeepSleep();
-    bool okToLightSleep();
-    bool isSleepNow();
-
+    bool goToSleep();
+    
     enum Panel { 
       STARTUP, 
       MAIN, 
-      DISPLAYING_DIGITAL_TIME, 
-      SETTING_DIGITAL_TIME, 
+      
+      DISPLAYING_TIME, 
+      SETTING_TIME,
+      CONFIRM_SETTING_TIME,
+
+      DISPLAYING_MOVES,
+      CONFIRM_CLEAR_MOVES, 
+
       DISPLAYING_TIMER, 
       SETTING_TIMER,
-      DISPLAYING_HEALTH_STATISTICS,
-      CONFIRM_TIME, 
-      CONFIRM_CLEAR_STEPS, 
-      CONFIRM_START_TIMER      
+      CONFIRM_START_TIMER
     };
     
   private:
+    void changeTo( int panelnum, bool setup, String videoname );
+
     void startup();
     void main();
-    void displayingdigitaltime();
-    void settingdigitaltime();
+
+    void displaytime();
+    void settingtime();
+    void confirmsettingtime();
+
+    void displayingmoves();
+    void confirmclearmoves();
+
     void displayingtimer();
     void settingtimer();
-    void displayinghealthstatistics();
-    void changetime();
-    void clearsteps();
-    void starttimer();
-    void resetOnces();
+    void confirmstarttimer();
+  
     void printStatus();
     
     void showDisplayMain();
@@ -102,25 +108,22 @@ class WatchFaceMain : public WatchFaceBase
 
     bool changing( bool hourflag );
 
-    void drawHourMinute( int hourc, int minutec, bool hourschanging );
+    void clearSleepy();
+
+    void drawHourMinute( int hourc, int minutec );
 
     int panel;
-
-    unsigned long sleepytimer;
-    unsigned long timetosleep;
-    bool sleepnow;
 
     unsigned long maintimer;
 
     unsigned long slowman;
     int rowCount;
     
+    bool movesflag;
+
     bool displayUpdateable;
 
     int oldHour, oldMinute, oldBattery, oldBlink;
-
-    bool onceDigitalTime;
-    bool onceHealth;
 
     unsigned long battimer;
     int batcount;
@@ -135,8 +138,6 @@ class WatchFaceMain : public WatchFaceBase
     bool drawFace;
     bool drawitall;
     bool needssetup;
-
-    unsigned long enoughTimePassedtimer;
 
     unsigned long noMovementTime;
 
@@ -161,6 +162,8 @@ class WatchFaceMain : public WatchFaceBase
 
     unsigned long minuteRedrawtimer;
 
+    unsigned long sleepyTimer;
+    unsigned long sleepyTimer2;
 
 };
 

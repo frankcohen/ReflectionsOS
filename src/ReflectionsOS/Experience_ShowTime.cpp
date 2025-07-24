@@ -28,6 +28,8 @@ void Experience_ShowTime::setup()
 {
   if ( vidflag )
   {
+    setExperienceName( showtimename );
+
     Serial.print( showtimename );
     Serial.println( F("SETUP") );
 

@@ -9,7 +9,13 @@
  Read the license in the license.txt file that comes with this code.
 */
 
+#include <Arduino.h>
+#include <esp32-hal-adc.h>
+
 #include "Battery.h"
+#include <driver/adc.h>
+#include <esp_adc_cal.h>
+
 
 Battery::Battery()
   : _voltageMv(0)
@@ -17,28 +23,23 @@ Battery::Battery()
 
 void Battery::begin() 
 {
+  pinMode(Battery_Sensor, INPUT);
+
+  analogSetPinAttenuation(Battery_Sensor, ADC_11db);
+
+  // set up your periodic timer
   batck = millis();
   readVoltage_();
-}
-
-void Battery::loop() 
-{
-  if ( millis() - batck < 10000 ) return;
-  batck = millis();
-
-  readVoltage_();
-
-  if (isBatteryLow()) {
-    logger.info("Battery low (< " + String(batterylow) + "mV): signalling to sleep");
-  }
 }
 
 void Battery::readVoltage_() {
-  // analogReadMilliVolts returns mV; apply scale if your hardware needs it
   _voltageMv = analogReadMilliVolts(Battery_Sensor) * 5.4014;
+  
+  //Serial.print( "Battery voltage: ");
+  //Serial.println( _voltageMv );
 }
 
-uint16_t Battery::getVoltage() const {
+uint16_t Battery::getVoltage() {
   return _voltageMv;
 }
 
@@ -47,7 +48,9 @@ bool Battery::isBatteryLow() {
   return _voltageMv < batterysleep;
 }
 
-float Battery::getBatteryPercent() const {
+float Battery::getBatteryPercent() 
+{
+  readVoltage_();
   if (_voltageMv <= batterylow) return 0.0f;
   if (_voltageMv >= batteryfull) return 100.0f;
   return ( ( _voltageMv - static_cast<float>(batterylow) )
@@ -55,22 +58,32 @@ float Battery::getBatteryPercent() const {
        * 100.0f;
 }
 
-int Battery::getBatteryLevel() const {
-  float v = static_cast<float>(_voltageMv);
-  if (v < batterylow) return 1;
-  if (v < batterymedium) return 2;
-  return 3;
+// Returns 1-4 value depending on battery voltage
+int Battery::getBatteryLevel() 
+{
+  readVoltage_();
+  if ( _voltageMv < batterysleep ) return 1;
+  if ( _voltageMv < batterylow ) return 2;
+  if ( _voltageMv < batterymedium ) return 3;
+  return 4;
 }
 
-String Battery::getBatteryStats() const {
-    // Read raw voltage and smooth to nearest 10 mV
-    float rawMv = analogReadMilliVolts(Battery_Sensor) * 5.4014;
-    int v = static_cast<int>(round(rawMv / 10.0f) * 10);  // smooth noise to 10 mV
+String Battery::getBatteryStats() {
+  // use your existing legacy readVoltage_()
+  readVoltage_();  
+  // _voltageMv is already scaled by 5.4014
+  int v   = int((_voltageMv + 5) / 10) * 10;         // round to nearest 10 mV
+  int pct = int(round(getBatteryPercent()));         // still calls readVoltage_()
+  return "  " + String(v) + "mV, " + String(pct) + "%";
+}
 
-    // Get and round percentage
-    int pct = static_cast<int>(round(getBatteryPercent()));
+void Battery::loop() 
+{
+  if ( millis() - batck < 10000 ) return;
+  batck = millis();
 
-    // Return voltage (smoothed) and percentage
-    return "  " + String(v) + "mV, " + String(pct) + "%";
+  if ( isBatteryLow()) {
+    logger.info("Battery low (< " + String(batterylow) + "mV): signalling to sleep");
+  }
 }
 

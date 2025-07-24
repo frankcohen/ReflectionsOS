@@ -19,6 +19,8 @@
 #include "Logger.h"
 #include "Video.h"
 
+#define awakename F("Awake ")
+
 class Experience_Awake : public Experience {
   public:
     void setup() override;

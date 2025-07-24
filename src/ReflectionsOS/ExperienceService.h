@@ -63,6 +63,8 @@ class ExperienceService
 
     String experienceNameToString( int experience);
 
+    bool timeToRunAnother();
+
   private:
     Experience* currentExperience;
     Experience* makeExp;
@@ -86,6 +88,8 @@ class ExperienceService
     bool beingpounced;
 
     unsigned long temptimer;
+
+    unsigned long mostrecentendtime;
 };
 
 #endif   // _EXPERIENCESERVICE_H

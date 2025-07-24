@@ -36,6 +36,7 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 #include "config.h"
 #include <ArduinoJson.h>
 #include <Arduino_GFX_Library.h>
+#include "Minya16pt7b.h"
 
 #include "MjpegRunner.h"        // Ensure this is included first
 extern MjpegRunner mjpegrunner; // Declare the external instance

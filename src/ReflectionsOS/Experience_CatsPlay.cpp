@@ -47,6 +47,8 @@ float Experience_CatsPlay::calculateBearing( float headingA, float headingB, flo
 
 void Experience_CatsPlay::setup() 
 {
+  setExperienceName( catsplayname );
+
   if ( ! setupVidplayed )
   {
     setupVidplayed = true;

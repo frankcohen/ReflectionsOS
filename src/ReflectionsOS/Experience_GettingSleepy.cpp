@@ -26,6 +26,7 @@ void Experience_GettingSleepy::init()
 
 void Experience_GettingSleepy::setup() 
 {
+  setExperienceName( sleepyname );
   Serial.println( F("Getting Sleepy SETUP") );
   video.startVideo( Getting_Sleepy_video );
   setSetupComplete(true);  // Signal that setup is complete

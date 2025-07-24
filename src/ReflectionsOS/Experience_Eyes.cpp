@@ -32,6 +32,7 @@ void Experience_Eyes::setup()
 {
   if ( vidflag )
   {
+  setExperienceName( eyesname );
     Serial.print( eyesname );
     Serial.println( F("SETUP") );
 
@@ -64,43 +65,36 @@ void Experience_Eyes::setup()
 
 void Experience_Eyes::run() 
 {
-  if ( millis() - eyestime > ( 20000 + ( dur * 250 ) ) ) 
+  if ( millis() - eyestime > ( 15000 + ( dur * 250 ) ) ) 
   {
     setRunComplete(true);  // Signal run complete
     video.setPaused( false );
     return;
   }
 
-  int col = constrain(tof.getFingerPos(), 0, 5);
-  float dist = tof.getFingerDist();
+  int col = tof.getFingerPos();
 
-  if (col < 0 || dist <= 4 || dist > 130) return;
+  if ( col < 0 || col > 7 ) 
+  {
+    Serial.print( "Experience_eyes col is out of bounds " );
+    Serial.println( col );
+    return;
+  }
 
   // Only repaint if finger moved
-  if (col != prevFingerPosCol || fabs(dist - prevFingerDist) > 1.0f) 
+  if ( col != prevFingerPosCol ) 
   {
     // Erase previous pupils
-    if (prevLeftPupilX >= 0)
+    if ( prevLeftPupilX >= 0)
     {
       gfx->fillCircle(prevLeftPupilX, 100, 18, COLOR_EYES_LEFT);
       gfx->fillCircle(prevRightPupilX, 100, 18, COLOR_EYES_RIGHT);
       prevFingerPosCol = col;
-      prevFingerDist = dist;
     }      
 
-    // Map column 0–5 → pixel position for each eye
-    int leftMapped  = map(col, 0, 5, 58, 88);
-    int rightMapped = map(col, 0, 5, 160, 188);
-
-    // Clamp dist and map to alpha range
-    dist = constrain(dist, 20.0f, 100.0f);
-    float alpha = (100.0f - dist) / 80.0f;
-
-    int leftTarget  = 88;  // Full convergence position (left eye inward)
-    int rightTarget = 160; // Full convergence position (right eye inward)
-
-    int leftPupilX  = leftMapped  + alpha * (leftTarget  - leftMapped);
-    int rightPupilX = rightMapped + alpha * (rightTarget - rightMapped);
+    // Map column 0–7 → pixel position for each eye
+    int leftPupilX  = map(col, 0, 7, 58, 88);
+    int rightPupilX = map(col, 0, 7, 160, 188);
 
     prevLeftPupilX = leftPupilX;
     prevRightPupilX = rightPupilX;

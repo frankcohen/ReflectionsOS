@@ -22,6 +22,8 @@
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
 
+#define sleepyname F("GettingSleepy ")
+
 class Experience_GettingSleepy : public Experience {
   public:
     void setup() override;

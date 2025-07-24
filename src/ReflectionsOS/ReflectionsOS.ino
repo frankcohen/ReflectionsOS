@@ -250,6 +250,16 @@ void BoardInitializationUtility()
   }
 
   delay( 1000 );
+  if ( realtimeclock.syncWithNTP("pool.ntp.org", 5000) )
+  {
+    Serial.println( F( "Could not sync to network time over wifi" ) );
+  }
+  else
+  {
+    Serial.println( F( "Sync'd to network time over wifi" ) );
+  }
+
+  delay( 1000 );
   printCentered( F( "Replicate" ) );
   delay( 1000 );
 
@@ -367,8 +377,10 @@ void setup()
 
   // Doing this here to get some color onto the display quickly
   // for the usere to think the startup is quick
-  
+
   hardware.begin();  // Sets all the hardware pins
+  haptic.begin();
+  haptic.playEffect(14);  // 14 Strong Buzz
   video.begin();
   video.setPaused( true );
 
@@ -425,7 +437,6 @@ void setup()
 
   // Device initialization
 
-  haptic.begin();
   battery.begin();
   audio.begin();
   gps.begin();
@@ -457,7 +468,7 @@ void setup()
   xTaskCreatePinnedToCore(
     Core0Tasks,    // Task function
     "Core0Tasks",  // Name of the task
-    10000,         // Stack size (in words, not bytes)
+    16384,         // Stack size (in words, not bytes)
     NULL,          // Task input parameter
     1,             // Priority of the task
     NULL,          // Task handle
@@ -546,7 +557,8 @@ void printCore0TasksMessages()
   }
 }
 
-int sleepcnt = 0;
+int nextUp = 0;     // For picking the next experience from a left-to-right gesture
+int nextUp2 = 0;    // For picking between Eyes and Parralax experiences
 
 void loop() 
 {
@@ -573,21 +585,29 @@ void loop()
     return;
   }
 
+  if ( experienceservice.active() )
+  {
+    smartdelay(10);
+    return;
+  }
+
   int recentGesture = tof.getGesture();
+
+  if ( recentGesture != GESTURE_NONE )
+  {
+    Serial.print( "Gesture: " );
+    if ( recentGesture == GESTURE_LEFT_RIGHT ) Serial.println( ">>>GESTURE_LEFT_RIGHT" );
+    if ( recentGesture == GESTURE_RIGHT_LEFT ) Serial.println( ">>>GESTURE_RIGHT_LEFT" );
+    if ( recentGesture == GESTURE_CIRCULAR ) Serial.println( ">>>GESTURE_CIRCULAR" );
+    if ( recentGesture == GESTURE_SLEEP ) { Serial.println( ">>>GESTURE_SLEEP" ); }
+    else { Serial.println( ">>>Unknown" ); }
+  }
 
   // Go to sleep when gestured or when the battery is low
 
-  if ( ( recentGesture == GESTURE_SLEEP || battery.isBatteryLow() || watchfacemain.isSleepNow() ) && watchfacemain.okToDeepSleep() )
+  if ( ( recentGesture == GESTURE_SLEEP ) || battery.isBatteryLow() || watchfacemain.goToSleep() )
   {
-    // Sleep after 3 consequtive gestures, just to be safe from an accidental sleep gesture
-    if ( sleepcnt <3 )
-    {
-      sleepcnt++;
-      return;
-    }
-    sleepcnt = 0;
-
-    Serial.println("Deep Sleep");
+    Serial.println("Going to sleep for gesture or low battery");
 
     if ( experienceservice.active() )
     {
@@ -612,20 +632,21 @@ void loop()
     return;
   }
 
-  sleepcnt = 0;
-
-  if ( experienceservice.active() )
+  if ( accel.isShaken() )
   {
+    experienceservice.startExperience( ExperienceService::Shaken );
     smartdelay(10);
     return;
   }
 
+  // Return when no gesture detected
   if ( recentGesture == GESTURE_NONE )
   {
     smartdelay(10);
     return;
   }
 
+  // Wait until current experience stops
   if ( experienceservice.getCurrentState() != ExperienceService::STOPPED )
   {
     smartdelay(10);
@@ -646,11 +667,11 @@ void loop()
   }
 */
 
-  // Wait 4 seconds after an experience before doing another experienxce
+  // Wait 15 seconds after an experience before doing another experienxce
 
-  if ( millis() - afterTimer < 4000 ) 
+  if ( ! experienceservice.timeToRunAnother() )
   {
-    Serial.println( "After experience timer" );
+    smartdelay(10);
     return;
   }
 
@@ -666,42 +687,90 @@ void loop()
   }
 */
 
-  if ( ! watchfacemain.isMain() ) return;   // No gestures unless watchface is on MAIN
+  if ( ! watchfacemain.isMain() ) return;   // No new gestures (except for sleep) unless watchface is on MAIN
 
-  if ( accel.isShaken() )
+  if ( recentGesture == GESTURE_RIGHT_LEFT )
   {
-    experienceservice.startExperience( ExperienceService::Shaken );
+    experienceservice.startExperience( ExperienceService::MysticCat );
+    return;
+  } 
+  
+  // Down gives demo of all experiences
+
+  if ( recentGesture == GESTURE_LEFT_RIGHT )
+  {
+    if ( nextUp == 0 )
+    {
+      nextUp++;
+      experienceservice.startExperience( ExperienceService::Hover );
+      smartdelay(10);
+      return;
+    }
+    if ( nextUp == 1 )
+    {
+      nextUp++;
+      experienceservice.startExperience( ExperienceService::EyesFollowFinger );
+      smartdelay(10);
+      return;
+    }
+    if ( nextUp == 2 )
+    {
+      nextUp++;
+      experienceservice.startExperience( ExperienceService::Chastise );    
+      smartdelay(10);
+      return;
+    }
+
+    if ( nextUp == 3 )
+    {
+      nextUp++;
+      experienceservice.startExperience( ExperienceService::Shaken );
+      smartdelay(10);
+      return;
+    }
+
+    if ( nextUp == 4 )
+    {
+      nextUp++;
+      experienceservice.startExperience( ExperienceService::ParallaxCat );
+      smartdelay(10);
+      return;
+    }
+
+    if ( nextUp == 5 )
+    {
+      nextUp++;
+      experienceservice.startExperience( ExperienceService::ShowTime );
+      smartdelay(10);
+      return;
+    }
+
+    if ( nextUp > 5 )
+    {
+      nextUp = 0;
+      experienceservice.startExperience( ExperienceService::ParallaxCat );
+      smartdelay(10);
+      return;
+    }
+
   }
 
   if ( recentGesture == GESTURE_CIRCULAR )
   {
-    experienceservice.startExperience( ExperienceService::MysticCat );
-  }
+    if ( nextUp2 == 1 )
+    {
+      nextUp2 = 0;
+      experienceservice.startExperience( ExperienceService::EyesFollowFinger );
+      return;
+    }
+    else
+    {
+      nextUp2 = 1;
+      experienceservice.startExperience( ExperienceService::ParallaxCat );
+      return;
+    }
 
-  if ( recentGesture == GESTURE_DOWN )
-  {
-      experienceservice.startExperience( ExperienceService::Hover );
-  }
-
-  if ( recentGesture == GESTURE_DOWN_LEFT || recentGesture == GESTURE_DOWN_RIGHT )
-  {
-    experienceservice.startExperience( ExperienceService::EyesFollowFinger );
-  }
-  
-  if ( recentGesture == GESTURE_LEFT )
-  {
-    experienceservice.startExperience( ExperienceService::Chastise );
-  }
-
-  if ( recentGesture == GESTURE_RIGHT )
-  {
-    experienceservice.startExperience( ExperienceService::ShowTime );
   };
-
-  if ( recentGesture == GESTURE_UP || recentGesture == GESTURE_UP_RIGHT || recentGesture == GESTURE_UP_LEFT )
-  {
-    experienceservice.startExperience( ExperienceService::ParallaxCat );
-  } 
 
   smartdelay(10);
 }

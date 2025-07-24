@@ -53,6 +53,8 @@ class GPS
     unsigned int getMinute();
     unsigned int getSecond();
 
+    uint32_t getSatellites();
+
     float getCourse();
 
     void on();

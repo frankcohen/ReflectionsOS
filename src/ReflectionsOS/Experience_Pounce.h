@@ -24,6 +24,8 @@ extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
 extern Haptic haptic;
 
+#define PounceName F("Pounce ")
+
 class Experience_Pounce : public Experience {
   public:
     void setup() override;

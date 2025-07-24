@@ -177,7 +177,7 @@ void ExperienceService::begin()
 
   temptimer = millis();
 
-  //startExperience( ExperienceService::Awake );   // Sleep experience
+  mostrecentendtime = millis();
 }
 
 void ExperienceService::startExperience( int exper )
@@ -238,7 +238,7 @@ void ExperienceService::operateExperience()
         Serial.println( F("ExperienceService setup currentExperience is null"));
         while(1);
       }
-
+      
       currentExperience->setup();
       if ( currentExperience->isSetupComplete() )
       {
@@ -255,6 +255,19 @@ void ExperienceService::operateExperience()
       }
 
       currentExperience->run();
+
+      // Single or double cancels the experience
+      if ( accel.getSingleTapNoClear() || accel.getDoubleTapNoClear() )
+      {
+        String exn = currentExperience->getExperienceName();
+        if ( ! ( exn == catsplayname || exn == PounceName ) )
+        {
+          Serial.println( "Experience tap exit" );
+          currentExperience->setRunComplete( true );
+          currentState = TEARDOWN;
+          break;
+        }
+      } 
 
       if ( currentExperience->isRunComplete() ) 
       {
@@ -274,12 +287,14 @@ void ExperienceService::operateExperience()
       if ( currentExperience->isTeardownComplete() ) 
       {
         currentState = STOPPED;
-
         watchfacemain.setDrawItAll();
       }
       break;
 
     case STOPPED:    
+      accel.resetTaps();  // Clear any taps
+      tof.getGesture();   // Clear any gestures
+      mostrecentendtime = millis();
       break;
   }
 }
@@ -287,6 +302,15 @@ void ExperienceService::operateExperience()
 bool ExperienceService::active()
 {
   if ( getCurrentState() != STOPPED ) return true;
+  return false;
+}
+
+bool ExperienceService::timeToRunAnother()
+{
+  if ( millis() - mostrecentendtime > 15000 )
+  {
+    return true;
+  }
   return false;
 }
 

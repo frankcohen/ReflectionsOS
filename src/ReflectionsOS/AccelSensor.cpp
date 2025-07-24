@@ -95,32 +95,23 @@ void AccelSensor::begin() {
     while (1) yield();
   }
 
-  // Set shake detection parameters
-  lis.setRange(LIS3DH_RANGE_8_G);  // 2, 4, 8 or 16 G!
-  lis.setDataRate(LIS3DH_DATARATE_50_HZ);
-
-  // 0 = turn off click detection & interrupt
-  // 1 = single click only interrupt output
-  // 2 = double click only interrupt output, detect single click
-  // Adjust threshhold, higher numbers are less sensitive
-  lis.setClick(0, 0);
-  delay(100);
-
-  waittime = millis();
-  last = millis();
-  state = 1;
+  // configure sensor for single‐click detection on Z:
+  lis.setRange(LIS3DH_RANGE_8_G);
+  lis.setDataRate(LIS3DH_DATARATE_400_HZ);
+  lis.setClick(1, 20, 10, 0, 255);
 
   magtime = millis();
+  last = millis();
 
   started = false;
   runflag = false;
 
-  firstpart = true;
-  secondpart = false;
-
-  maghistory1 = 0;
-  maghistory2 = 0;
-  maghistory3 = 0;
+  firstpart = false;
+  firstClickTime = millis();
+  minClickTime = millis();
+  waittime = millis();
+  _pendingSingle = false;
+  _pendingDouble = false;
 
   shakentime = millis();
   shakentime2 = millis();
@@ -133,7 +124,7 @@ void AccelSensor::begin() {
 
 bool AccelSensor::isShaken()
 {
-  if ( shakencount > 10 )
+  if ( shakencount > SHAKEN_COUNT )
   {
     shakencount = 0;
     return true;
@@ -376,9 +367,17 @@ void AccelSensor::enableWakeOnMotion() {
   esp_sleep_enable_ext1_wakeup(BIT(GPIO_NUM_14), ESP_EXT1_WAKEUP_ANY_HIGH);
 */
 
-void AccelSensor::reset() {
+void AccelSensor::resetTaps() {
   _pendingSingle = false;
   _pendingDouble = false;
+}
+
+bool AccelSensor::getSingleTapNoClear() {
+  return _pendingSingle;
+}
+
+bool AccelSensor::getDoubleTapNoClear() {
+  return _pendingDouble;
 }
 
 bool AccelSensor::getSingleTap() {
@@ -420,17 +419,61 @@ bool AccelSensor::getStatus() {
   return runflag;
 }
 
-void AccelSensor::loop() 
-{
-  if ( ! runflag ) return;
+ // Detect single and double clicks
 
+void AccelSensor::handleClicks()
+{
   unsigned long now = millis();
 
   if ( now - waittime < WAIT_TIME ) return;
 
-  if (millis() - last < SAMPLE_RATE) return;
-  last = now;
+  if ( firstpart && ( now - firstClickTime > 450 ) )
+  {
+    firstpart = false;
+    _pendingSingle = true;
+    waittime = now;
+  }
 
+  uint8_t click = lis.getClick();
+  if (click == 0) return;
+  if (! (click & 0x30)) return;
+
+  if ( (click == 0x54 ) && ( now - minClickTime > 150 ) )
+  {
+    minClickTime = now;
+
+    if ( !firstpart )
+    {
+      firstClickTime = now;
+      firstpart = true;
+      return;
+    }
+
+    if ( firstpart && ( now - firstClickTime > 450 ) )
+    {
+      _pendingSingle = true;
+      firstpart = false;
+      waittime = now;
+    }
+
+    if ( firstpart && ( now - firstClickTime < 450 ) )
+    {
+      _pendingDouble = true;
+      firstpart = false;
+      waittime = millis();
+    }
+  }
+}
+
+void AccelSensor::loop() 
+{
+  if ( ! runflag ) return;
+
+  handleClicks();     // Detect single and double clicks
+
+  if ( millis() - last < SAMPLE_RATE) return;
+  last = millis();
+  
   sensors_event_t event;
   lis.getEvent(&event);
 
@@ -454,76 +497,5 @@ void AccelSensor::loop()
     Serial.println( magnow );
   }
 
-  /*
-  Serial.print( fabs( maghistory1 - maghistory2 ) );
-  Serial.print( "\t" );
-  Serial.print( fabs( maghistory2 - maghistory3 ) );
-  Serial.print( "\t" );
-  Serial.print( fabs( maghistory3 - magnow ) );
-  Serial.print( "\t" );
-  Serial.print( lookaheadCount );
-  */
+}  
 
-  float mag1 = fabs( maghistory1 - maghistory2 );
-  float mag2 = fabs( maghistory2 - maghistory3 );
-  float mag3 = fabs( maghistory3 - magnow );
-
-  // Trigger on 0 1 1 in the first part for a single click
-  if ( ( mag1 < 1 ) && ( mag2 > 1 ) && ( mag3 > 1 ) && firstpart && ( lookaheadCount == 0 ) )
-  {
-    //Serial.print( "=" );
-
-    firstpart = false;
-    secondpart = true;
-    lookaheadCount = 1; 
-  }
-
-  // 1 1 0 in the second part for a single click
-  if ( ( mag1 > 1 ) && ( mag2 > 1 ) && ( mag3 < 1 ) && secondpart && 
-  ( lookaheadCount == 2 || lookaheadCount == 3 ) )
-  {
-    //Serial.print( "#" );  
-
-    firstpart = true;
-    secondpart = false;
-    waittime = millis();
-    lookaheadCount = 0; 
-
-    _pendingSingle = true;
-    _pendingDouble = false;
-  }
-
-  // 1 1 0 in the second part for a double click
-  if ( ( mag1 > 1 ) && ( mag2 > 1 ) && ( mag3 < 1 ) && secondpart && lookaheadCount == 4  )
-  {
-    Serial.print( "@" );
-    click = true;
-    firstpart = true;
-    secondpart = false;
-    waittime = millis();
-    lookaheadCount = 0; 
-
-    _pendingSingle = false;
-    _pendingDouble = true;
-  }
-
-  //Serial.println( " " );
-
-  maghistory1 = maghistory2;
-  maghistory2 = maghistory3;
-  maghistory3 = magnow;
-
-  if ( lookaheadCount > 0 ) lookaheadCount++;
-
-  if ( lookaheadCount >= LOOKAHEAD_MAX )
-  {
-    lookaheadCount = 0;
-    firstpart = true;
-    secondpart = false;
-    maghistory1 = 0;
-    maghistory2 = 0;
-    maghistory3 = 0;
-    waittime = millis();
-  }
-
-}

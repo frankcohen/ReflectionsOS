@@ -22,12 +22,12 @@ Read the license in the license.txt file that comes with this code.
 
 /* Experience videos */
 
-#define OutOfTheBox_video "a1d7900fc81c714ccbdb692231c16d70"
+#define OutOfTheBox_video "178e801340f79249dbb2b34b3e64eda4"    // updated
 
 #define Chastise_video "29eebc0d0804260f934575ceaedc50b1"
 
 #define CatsPlayFound_video "5a9d9f72264522abc51300f9e772b136"
-#define Pounce_video "c3d2eb0ad90b7a91db981fe01e8ee1b3"
+#define Pounce_video "5e1995361aeeba66eb3a927d5453e105"       // updated
 
 #define CatsPlay1_video "001c0e74e770ec34c053879be10d1a7e"    // E
 #define CatsPlay2_video "6216cf1923de998474b25afeda659448"    // NE
@@ -40,13 +40,13 @@ Read the license in the license.txt file that comes with this code.
 
 #define EyesFollowFinger_video "f99c9b5031e6102ef45fbdf71cb09134"
 
-#define MysticCat_video "af8d13e501bc2e6d61275e5faffde141"
+#define MysticCat_video "fb6001b81b161fc556371a5bb34c17c9"    // updated
 
 #define ParallaxCat_video "7f4f62c859d8a8638cb9126c23775372"
 
 #define Shaken_video "538b9f5360a511bf20e1b85a1dc6250d"
 
-#define Sleep_video "c13cccc1f14b431659a70127aa276452"
+#define Sleep_video "72ec4d3eb423bd80ae8fd0c3bfd44143"    // updated
 
 #define Swipe_video "4e93a6c65511b257e959b0cdc9f9709f"
 
@@ -59,42 +59,48 @@ Read the license in the license.txt file that comes with this code.
 #define videoname_end ".mjpeg"
 
 // WatchFace_Main
-#define wfMainBackground "Face_Main_background_baseline.jpg"
-#define wfMainBattery "Battery_"
+#define wfMainBackground "Face_Main_background.jpg"   // updated
+#define wfMainBattery "Battery_"    // updated
 #define wfMainBattery2 ".png"
-#define wfMainHours "Hours_"
+
+#define wfMainHours "Hour"      // updated
 #define wfMainHours2 ".png"
-#define wfMainMinutes "Minutes_"
+#define wfMainMinutes "Minute"  // updated
 #define wfMainMinutes2 ".png"
-#define wfMainFace "Blink_"
+
+#define wfMainFace "Blink_"     // updated
 #define wfMainFace2 ".png"
-#define wfMainFaceBlue "Blink_Blue2Blue_"
-#define wfMainFaceBlue2 ".png"
 #define blinkspeed 100
-#define wfMainFlip "Main_Flip"
-#define wfMainFlip2 ".png"
-#define wfMainMaxFlips 14
 #define flipspeed 50
-#define wfMainHourglass "Main_HourGlass"
+
+#define wfMainHourglass "Main_HourGlass"    // updated
 #define wfMainHourglass2 ".png"
-#define WatchFaceOpener_video "809090d2b1c7b3829a3a72f583d58a7b"
-#define WatchFaceFlip1_video "fb4bb116c31cd13777604f0c9c15f649"
-#define WatchFaceFlip2_video "993d7b88b5b61b5488ad00bfd8d0c990"
-#define WatchFaceFlip3_video "a4a5922d89d70c079514a5a21648804a"
-#define wfMain_Timer_Background "Face_Main_Timer_Background.jpg"
-#define wfMain_SetTimer_Background "Face_Main_SetTimer_Background.jpg"
-#define wfMain_SetTimer_Background_Shortie "Face_Main_SetTimer_Background_Shortie.jpg"
-#define wfMain_Health_Background "Face_Main_Health_Background2.jpg"
-#define wfMain_SetTime_Background_Hour "Face_Main_SetTime_Hour_Background3.jpg"
-#define wfMain_SetTime_Background_Minute "Face_Main_SetTime_Minute_Background3.jpg"
-#define wfMain_SetTime_Background_Hour_Shortie "Face_Main_SetTime_Hour_Background3_Shortie.jpg"
-#define wfMain_SetTime_Background_Minute_Shortie "Face_Main_SetTime_Minute_Background3_Shortie.jpg"
-#define wfMain_Time_Background "Face_Main_Time_Background.jpg"
-#define wfMain_Time_Background_Shortie "Face_Main_Time_Background_Shortie.jpg"
+
+#define WatchFaceOpener_video "d1b0ec686a285bc1b75e268d62da0f49"    // updated
+#define WatchFaceFlip1_video "08ff4765f6c5cf764288afba9b4bcbbb"     // updated
+#define WatchFaceFlip2_video "358c45f36fba9802fdc26f67395119cc"     // updated
+#define WatchFaceFlip3_video "87af910e9dd542c183dc2e27a32d02e7"     // updated
+
+#define wfMain_Timer_Background "Face_Main_Timer_Background.jpg"    // updated
+#define wfMain_SetTimer_Background "Face_Main_SetTimer_Background.jpg"  // updated
+#define wfMain_SetTimer_Background_Shortie "Face_Main_SetTimer_Background_Shortie.jpg"  // updated
+
+#define wfMain_Health_Background "Face_Main_Health_Background.jpg"    // updated
+
+#define wfMain_SetTime_Background_Shortie "Face_Main_SetTime_Background_Shortie.jpg"    // updated
+
+#define wfMain_Time_Background "Face_Main_Blue_Dot_Background.jpg"
+#define wfMain_Time_Background_Shortie "Face_Main_Time_Background_Shortie.jpg"  // updated
+
 #define wfMain_Face_Main_TimerNotice "Face_Main_TimerNotice.png"
-#define wfMain_Face_BlueDot_Background "Face_Main_Blue_Dot_Background.jpg"
+
+#define wfMain_Face_BlueDot_Background "Face_Main_Blue_Dot_Background.jpg"    // updated
+
 #define wfMain_GPSmarker "GPSmarker.png"
-#define wfMain_BackgroundBlue RGB565( 55, 160, 223 )
+#define wfMain_Wifimarker "WIFI.png"
+#define wfMain_BLEmarker "BLE.png"
+
+#define wfMain_BackgroundBlue RGB565( 0, 26, 112 )   // COLOR_PANTONE_662
 
 #define TRANSPARENT_COLOR 0xFFE0
 #define TRANSPARENT_COLOR_PNG 0x00000000
@@ -221,13 +227,13 @@ static const NimBLEUUID BLE_CHARACTERISTIC_UUID( "33a03886-0db0-43c8-90a2-bca6a8
 #define COLOR_PANTONE_102 RGB565( 255, 236, 45 )       // Pantone 102 C
 #define COLOR_PANTONE_577 RGB565( 20, 48, 15 )      // Pantone 577 C
 #define COLOR_PANTONE_151 RGB565( 255, 130, 0 )       // Pantone 151 C
-#define COLOR_PANTONE_282 RGB565( 37, 40, 73 )        // Pantone 282 C
+#define COLOR_PANTONE_282 RGB565( 4, 30, 66 )        // Pantone 282 C
 #define COLOR_PANTONE_662 RGB565( 0, 26, 112 )     // Pantone 662 C
-#define COLOR_PANTONE_310 RGB565( 91, 208, 230 )     // Pantone 310 C
 #define COLOR_PANTONE_313 RGB565( 0, 146, 188 )     // Pantone 313 C
 #define COLOR_PANTONE_189 RGB565( 248, 163, 188 )     // Pantone 189 C
 #define COLOR_PANTONE_205 RGB565( 224, 69, 123 )     // Pantone 205 C
 #define COLOR_PANTONE_206 RGB565( 206, 0, 55 )     // Pantone 206 C
+#define COLOR_PANTONE_265 RGB565( 206, 0, 55 )     // Pantone 206 C
 
 /* Show Time text and colors */
 

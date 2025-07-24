@@ -91,7 +91,7 @@ void TextMessageService::runMysticShow()
 }
 
 void TextMessageService::startShow( int shownum, String msg1, String msg2 )
-{
+{ 
   showNum = shownum;
   showStep = 0;
   activated = true;
@@ -103,11 +103,14 @@ void TextMessageService::startShow( int shownum, String msg1, String msg2 )
 
 void TextMessageService::deactivate()
 {
+  showNum = ShowDigitalTimeFunMessages;
+  showStep = 0;
   activated = false;
   waitTime = millis();
-  showStep = 0;
   stepDelay = 100;
   fadeset = 1;
+  theMsg1 = " ";
+  theMsg2 = " ";
 }
 
 /* Show the current time with a funny message above and below */
@@ -215,7 +218,7 @@ void TextMessageService::runDigitalTime()
 
   if ( showStep == 1 )
   {
-    if ( fadeInCenteredText( theTime, 127, 30, COLOR_TEXT_YELLOW, wfMain_BackgroundBlue, &Minya_Nouvelle_Rg30pt7b ) )
+    if ( fadeInCenteredText( theTime, 127, 20, COLOR_TEXT_YELLOW, wfMain_BackgroundBlue, &Minya_Nouvelle_Rg30pt7b ) )
     {
       deactivate();
     }
@@ -307,14 +310,15 @@ void TextMessageService::updateHealth( int smallsteps )
   gfx->setFont( &Some_Time_Later20pt7b );
   gfx->setTextSize( 0 );
   y = 100;
-  String mef = F("Moves");
+  String mef = F(" ");
   gfx->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);
   gfx->setCursor( (gfx->width() - w) / 2, 100 );
   gfx->setTextColor( COLOR_STRIPE_PINK );
   gfx->println( mef );
 
-  gfx->setFont( &Minya16pt7b );
+  gfx->setFont( &Minya_Nouvelle_Rg30pt7b );
   gfx->setTextSize( 0 );
+
   y = 135;
   mef = formatWithCommas( smallsteps );
   gfx->getTextBounds( mef.c_str(), 0, 0, &x, &y, &w, &h);

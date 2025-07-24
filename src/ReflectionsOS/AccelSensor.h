@@ -29,12 +29,13 @@ extern Utils utils;
 extern LOGGER logger;
 
 #define WAIT_TIME       2000
-#define LOOKAHEAD_MAX   5
 #define SAMPLE_RATE     200       // Sample every x milliseconds
 
 #define ACCEL_I2C_ADDR   LIS3DH_DEFAULT_ADDRESS   // 0x18 from Adafruit_LIS3DH
 
 #define CLICKTHRESHHOLD 25    // Strenth of tap to bring back from deep sleep
+
+#define SHAKEN_COUNT 2        // Big movements to signal shaken gesture
 
 class AccelSensor
 {
@@ -44,8 +45,6 @@ class AccelSensor
     void loop();
 
     void configureSensorWakeOnMotion();
-
-    void reset();
 
     void setStatus( bool running );
     bool getStatus();
@@ -62,6 +61,10 @@ class AccelSensor
      * Returns true once when a confirmed double tap is detected.
      */
     bool getDoubleTap();
+
+    void resetTaps();
+    bool getSingleTapNoClear();
+    bool getDoubleTapNoClear();
     
     float getXreading();
     float getYreading();
@@ -72,34 +75,28 @@ class AccelSensor
 
   private:
 
+    void handleClicks();
+    
     Adafruit_LIS3DH lis;
 
     bool      started;
     bool      runflag;
 
-    int       lookaheadCount;
-    unsigned long last;
-    int       state;
+    bool      firstpart;
+    unsigned long firstClickTime;
+    unsigned long minClickTime;
     unsigned long waittime;
-
-    bool      click;
-    unsigned long magtime;
-    float     magnow;
-    unsigned long magprevtime;
-    float     maghistory1;
-    float     maghistory2;
-    float     maghistory3;
+    bool      _pendingSingle;
+    bool      _pendingDouble;
 
     int shakencount;
     unsigned long shakentime;
     unsigned long shakentime2;
-    
-    bool      firstpart;
-    bool      secondpart;
 
-    bool      _pendingSingle;
-    bool      _pendingDouble;
-    
+    unsigned long magtime;
+    float magnow;
+
+    unsigned long last;        
     String    myMef;
     String    myMef2;
 

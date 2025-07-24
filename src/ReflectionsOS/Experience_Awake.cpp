@@ -28,6 +28,7 @@ void Experience_Awake::init()
 
 void Experience_Awake::setup() 
 {
+  setExperienceName( awakename );
   video.startVideo( OutOfTheBox_video );
   setSetupComplete(true);  // Signal that setup is complete
 }

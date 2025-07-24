@@ -26,6 +26,8 @@ void Experience_MysticCat::init()
 
 void Experience_MysticCat::setup() 
 {
+  setExperienceName( mysticname );
+
   if ( vidflag )
   {
     Serial.print( mysticname );
@@ -38,7 +40,7 @@ void Experience_MysticCat::setup()
     tearflag = true;
   }
 
-  if ( video.getVideoTime() > 3000 )
+  if ( video.getVideoTime() > 4000 || ( ! video.getStatus() ) )
   {
     video.setPaused( true );
     setSetupComplete( true );  // Signal that setup is complete
@@ -73,19 +75,18 @@ void Experience_MysticCat::run()
     textmessageservice.startShow( TextMessageExperiences::MysticalAnswer, theMsg1, theMsg2 );  
     timeflag = false;
   }
-  else
+ 
+  if ( ! textmessageservice.active() )
   {
-    if ( ! textmessageservice.active() )
-    {
-      video.setPaused( false );
-      setRunComplete(true);  // Signal run complete
-      return;
-    }
+    setRunComplete(true);  // Signal run complete
+    return;
   }
 }
 
 void Experience_MysticCat::teardown() 
 {
+  video.setPaused( false );
+
   if ( video.getStatus() ) return;
 
   setTeardownComplete(true);

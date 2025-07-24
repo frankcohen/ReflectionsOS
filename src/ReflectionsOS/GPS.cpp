@@ -86,6 +86,11 @@ bool GPS::isActive()
   return active;
 }
 
+uint32_t GPS::getSatellites()
+{
+  return gps.satellites.value();
+}
+
 bool GPS::test()
 {
   // waits up to 5 seconds to get data from the GPS module

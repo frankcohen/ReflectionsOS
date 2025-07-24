@@ -14,13 +14,14 @@
   identify user gestures with their fingers and hand. Gestures control
   operating the Experiences.
 
+  Note: I tried Lucas–Kanade optical‐flow and kept coming back to
+  centroid differentials. I expect with more work Lucas-Kanade is more
+  accurate, ran out of time to find out.
+
   Datasheet comes with this source code, see: vl53l5cx-2886943_.pdf
 */
 
 #include "TOF.h"
-
-// Initialize static sleepStart
-unsigned long TOF::sleepStart = 0;
 
 TOF::TOF() {}
 
@@ -43,95 +44,70 @@ void TOF::begin()
     while (1) delay(10);
   }
 
-  // Initialize timing
-  lastRead    = 0;
-  captTime    = millis();
-  timeLimit   = millis();
+  lastRead = millis();
+  captTime = millis();
+  lastValid = millis();
+  circCnt = 0;
   sleepStart  = millis();
 
-  pendingDirection = false;
-  prevValid        = false;
-  direction        = GESTURE_NONE;
-  tipPos           = 0;
+  tipPos = 0;
+  tipDist = 0;
+  tipMin = 10;
+  tipMax = 0;
+
   isRunning        = false;
+
+  pendingDirection = false;
   direction        = GESTURE_NONE;
   directionWay     = " ";
 
-  // Zero‐initialize frame buffers
-  for (int y = 0; y < HEIGHT; ++y) {
-    for (int x = 0; x < WIDTH; ++x) {
-      frame1[y][x] = 0.0f;
-      frame2[y][x] = 0.0f;
-    }
-  }
+  for ( int i = 0; i< WINDOW; i++ ) deltas[ i ] = 0;
+  lastCentroid = 0;
+  wi = 0;
+
 }
 
 void TOF::resetGesture() {
-  prevValid        = false;
   pendingDirection = false;
   directionWay     = " ";
   direction        = GESTURE_NONE;
 }
 
-// Motion estimation is a Lucas–Kanade optical‐flow solver 
-
-void TOF::computeOpticalFlow(const float frameA[HEIGHT][WIDTH],
-                             const float frameB[HEIGHT][WIDTH],
-                             float &u, float &v)
-{
-  double sumIx2  = 0.0;
-  double sumIy2  = 0.0;
-  double sumIxIy = 0.0;
-  double sumIxIt = 0.0;
-  double sumIyIt = 0.0;
-
-  // Iterate interior pixels (1..6 in both x and y)
-  for (int y = 1; y < HEIGHT - 1; ++y) {
-    for (int x = 1; x < WIDTH - 1; ++x) {
-      float Ix = (
-          (frameA[y][x + 1] - frameA[y][x - 1]) +
-          (frameB[y][x + 1] - frameB[y][x - 1])
-        ) * 0.25f;
-
-      float Iy = (
-          (frameA[y + 1][x] - frameA[y - 1][x]) +
-          (frameB[y + 1][x] - frameB[y - 1][x])
-        ) * 0.25f;
-
-      float It = frameB[y][x] - frameA[y][x];
-
-      sumIx2  += Ix * Ix;
-      sumIy2  += Iy * Iy;
-      sumIxIy += Ix * Iy;
-      sumIxIt += Ix * It;
-      sumIyIt += Iy * It;
+// ——— Dump all WINDOW rotated[] frames (oldest→newest) ——————————————
+void TOF::prettyPrintAllRotated() {
+  Serial.println("---- Last 5 rotated frames (mm) ----");
+  for (int f = 0; f < WINDOW; f++) {
+    int idx = (wi + f) % WINDOW;
+    Serial.print("Frame "); Serial.print( centroidFrames[idx] ); Serial.println(f);
+    for (int r = 0; r < 8; r++) {
+      for (int c = 0; c < 8; c++) {
+        Serial.print(rotatedFrames[idx][r*8 + c]);
+        Serial.print('\t');
+      }
+      Serial.println();
     }
+    Serial.println();
   }
+}
 
-  double A00 = sumIx2;
-  double A01 = sumIxIy;
-  double A10 = sumIxIy;
-  double A11 = sumIy2;
-  double b0  = -sumIxIt;
-  double b1  = -sumIyIt;
+// For finger tip location analysis
+int TOF::mapFloatTo0_7(float input, float inMin, float inMax) 
+{
+    // Avoid division by zero
+    if (inMax <= inMin) return 0;
 
-  double det = A00 * A11 - A01 * A10;
-  if (fabs(det) < 1e-6) {
-    u = 0.0f;
-    v = 0.0f;
-    return;
-  }
+    // 1) Normalize to [0,1]
+    float norm = (input - inMin) / (inMax - inMin);
 
-  double invA00 =  A11 / det;
-  double invA01 = -A01 / det;
-  double invA10 = -A10 / det;
-  double invA11 =  A00 / det;
+    // 2) Clamp between 0 and 1
+    norm = std::max(0.0f, std::min(1.0f, norm));
 
-  double u_d = invA00 * b0 + invA01 * b1;
-  double v_d = invA10 * b0 + invA11 * b1;
+    // 3) Scale to [0..7] and round
+    //    – multiply by 7 gives [0..7]
+    //    – +0.5 then truncate gives proper rounding
+    int result = static_cast<int>(norm * 7.0f + 0.5f);
 
-  u = static_cast<float>(u_d);
-  v = static_cast<float>(v_d);
+    return result;  // guaranteed 0 ≤ result ≤ 7
 }
 
 int TOF::getGesture() 
@@ -184,46 +160,28 @@ void TOF::loop() {
 
   unsigned long now = millis();
 
-  // Enforce 2 s lockout after a gesture is reported
-  if (now - captTime < 2000) {
-    return;
-  }
+  // Enforce lockout after a gesture is reported
+  if (now - captTime < GESTURE_WAIT) return;
 
-  // Wait until sensor has new data
-  if (!tof.isDataReady()) {
-    return;
-  }
-
-  // Throttle read rate to FRAME_INTERVAL_MS
-  if (now - lastRead < FRAME_INTERVAL_MS) {
-    return;
-  }
+  if (now - lastRead < FRAME_INTERVAL_MS) return;
   lastRead = now;
 
-  // If no direction is pending and 1 s has passed since timeLimit, reset state
-  if ((!pendingDirection) && (now - timeLimit > 1000)) {
-    timeLimit = now;
-    resetGesture();
-  }
-
-  // Fetch new 8×8 frame
   VL53L5CX_ResultsData rd;
-  if ( !tof.getRangingData(&rd) ) return;
 
-  // Build raw[64] and count how many pixels lie in [MIN_DISTANCE, MAX_DISTANCE]
-  // also detect Sleep gesture
-  int sleepCnt = 0;
-  int16_t raw[64];
+  if (!tof.getRangingData(&rd)) return;
+
+  // build a tmp[] and count valid pixels and sleep pixels
+  int16_t tmp[64];
   int validCnt = 0;
-  for (int i = 0; i < 64; ++i) 
-  {
-    uint16_t d = rd.distance_mm[ i ];
-    if (d >= SLEEP_MIN_DISTANCE && d <= SLEEP_MAX_DISTANCE) {
-      sleepCnt++;
-    }
-    raw[i] = d;
-    if ( d >= MIN_DISTANCE && d <= MAX_DISTANCE) {
+  int sleepCnt = 0;
+  for (int i = 0; i < 64; i++) {
+    int16_t d = rd.distance_mm[i];
+    if (d >= SLEEP_MIN_DISTANCE && d <= SLEEP_MAX_DISTANCE) sleepCnt++;
+    if (d >= MIN_DIST_MM && d <= MAX_DIST_MM) {
+      tmp[i] = d;
       validCnt++;
+    } else {
+      tmp[i] = MAX_DIST_MM;
     }
   }
 
@@ -232,6 +190,23 @@ void TOF::loop() {
   {
     sleepStart = now;
 
+    /*
+    // Debugging
+    String mez = "TOF ";
+    mez += sleepCnt;
+    mez += "\n";
+    for (int r = 0; r < 8; r++) 
+    {
+      for (int c = 0; c < 8; c++ )
+      {
+        mez += rd.distance_mm[ (r*8) + c ];
+        mez += "\t";
+      }
+      mez += "\n";
+    }
+    Serial.println( mez );
+    */
+    
     if (sleepCnt >= SLEEP_COVERAGE_COUNT) 
     {
       resetGesture();
@@ -244,161 +219,244 @@ void TOF::loop() {
     }
   }
 
-  // ——— Preprocess: Rotate 90° CW then vertical flip ———
+  if (validCnt < VALID_PIXEL_COUNT) return;
+
+  // rotate+flip into rotated[]
   int16_t rotated[64];
-  // Step 1: Transpose (r,c) → (c,r)
-  for (int r = 0; r < 8; ++r) {
-    for (int c = 0; c < 8; ++c) {
-      rotated[c * 8 + r] = raw[r * 8 + c];
+  for (int r = 0; r < 8; r++)
+    for (int c = 0; c < 8; c++)
+      rotated[c*8 + r] = tmp[r*8 + c];
+  for (int r = 0; r < 4; r++)
+    for (int c = 0; c < 8; c++) {
+      int16_t t = rotated[r*8 + c];
+      rotated[r*8 + c] = rotated[(7-r)*8 + c];
+      rotated[(7-r)*8 + c] = t;
+    }
+
+  // copy this frame into our circular buffer
+  memcpy(rotatedFrames[wi], rotated, sizeof(rotated));
+
+  // compute centroid
+  float num = 0, denom = 0;
+  for (int i = 0; i < 64; i++) {
+    int16_t d = rotated[i];
+    if (d >= MIN_DIST_MM && d <= MAX_DIST_MM) {
+      float w   = float(MAX_DIST_MM - d);
+      num   += w * (i % 8);
+      denom += w;
     }
   }
-  // Step 2: Vertical flip
-  for (int r = 0; r < 4; ++r) {
-    for (int c = 0; c < 8; ++c) {
-      int topIdx    = r * 8 + c;
-      int bottomIdx = (7 - r) * 8 + c;
-      int16_t tmp   = rotated[topIdx];
-      rotated[topIdx]    = rotated[bottomIdx];
-      rotated[bottomIdx] = tmp;
-    }
+  float centroid = (denom > 0) ? (num / denom) : 3.5f;
+  if (centroid == 3.5f) {
+    // skip if no object
+    return;
   }
 
-  int16_t minDist = TIP_MAX_DISTANCE + 1;
-  tipPos = 0;
+  centroidFrames[wi] = centroid;
 
-  // Fingertip detection: Phase 1 (center of valid mass) or Phase 2 (minimum value)
-  bool leftInvalid = false;
-  bool rightInvalid = false;
+  // Finger tip location analysis
+  if ( centroid < tipMin ) tipMin = centroid;
+  if ( centroid > tipMax ) tipMax = centroid;
+  tipPos = mapFloatTo0_7( centroid, tipMin, tipMax );
+  tipDist = rotated[ ( 8 * 4 ) + tipPos ];
 
-  // Check leftmost and rightmost valid columns (columns 0 and 5 only)
-  for (int row = 0; row < 8; row++) {
-    int16_t leftVal  = rotated[row * 8 + 0];
-    int16_t rightVal = rotated[row * 8 + 5];
-    if (leftVal < TIP_MIN_DISTANCE || leftVal > TIP_MAX_DISTANCE) leftInvalid = true;
-    if (rightVal < TIP_MIN_DISTANCE || rightVal > TIP_MAX_DISTANCE) rightInvalid = true;
-  }
+  // compute delta and store
+  float delta      = centroid - lastCentroid;
+  sumDelta         = sumDelta - deltas[wi] + delta;
+  deltas[wi]       = delta;
+  lastCentroid     = centroid;
 
-  const uint8_t row = 3; // Central row
-  tipPos = -1;           // -1 means not detected
+  // Ignore small movements, and when there is enough of them declare a circular gesture
+  if (fabs( delta ) < 0.08 )
+  {
+    
+    Serial.print( "ignoring " );
+    Serial.println( delta );
 
-  // Phase 1: Estimate center of valid cluster
-  if (leftInvalid || rightInvalid) {
-    int validSum = 0;
-    int weightedSum = 0;
-    for (uint8_t c = 0; c < 6; c++) {
-      int16_t d = rotated[row * 8 + c];
-      if (d >= TIP_MIN_DISTANCE && d <= TIP_MAX_DISTANCE) {
-        validSum++;
-        weightedSum += c;
-      }
-    }
-    if (validSum > 0)
+    Serial.print( "Cir count " );
+    Serial.println( circCnt );
+
+    circCnt++;
+    if ( circCnt > CIRCULAR_MAX )
     {
-      tipPos = weightedSum / validSum;
-      tipDist = rotated[row * 8 + tipPos];
+      //Serial.println( cirmesg );
+      direction = GESTURE_CIRCULAR;
+      directionWay = cirmesg;
+      captTime  = now;
+      circCnt = 0;
+      return;
     }
 
-  } else {
-    // Phase 2: All center columns valid, find the lowest distance value
-    for (uint8_t c = 0; c < 6; c++) {
-      int16_t d = rotated[row * 8 + c];
-      if (d >= TIP_MIN_DISTANCE && d <= TIP_MAX_DISTANCE && d < minDist) {
-        minDist = d;
-        tipPos = c;
-        tipDist = d;
-      }
-    }
+    return;
+  }
+
+  // 
+  if ( now - lastValid > MAX_SCANTIME )
+  {
+    lastValid = now;
+    wi = 0;
+    for ( int i = 0; i < WINDOW; i++ ) deltas[i] = 0;
   }
 
   /*
-  mymessage = "tipPos: ";
-  mymessage += tipPos;
-  mymessage2 = "tipDist: ";
-  mymessage2 += tipDist;
+  Serial.print( sumDelta );
+  Serial.print( "\t" );
+  Serial.print( centroid );
+  Serial.print( "\t" );
+  Serial.print( delta );
+  Serial.print( "\t" );
+  Serial.print( wi );
+  Serial.print( "\t" );
+  
+  for ( int i = 0; i < WINDOW; i++ )
+  {
+    Serial.print( ( wi + i ) % WINDOW );
+    Serial.print( " " );
+    Serial.print( deltas[ ( wi + i ) % WINDOW ] );
+    Serial.print( " " );
+  }
+  Serial.println( " " );
+
   */
 
-  // ——— Pending direction / circular detection ———
-  if (pendingDirection) {
-    // If still “valid” frames after CIRCULAR_TIME, declare circular
-    if ((validCnt > VALID_PIXEL_COUNT) && (now - pendingTimer > CIRCULAR_TIME)) 
-    {
-      resetGesture();
-      direction = GESTURE_CIRCULAR;
-      directionWay = "→ Circular";
-      mymessage = directionWay;
-      captTime = now;
-      return;
-    }
-    // If pixels drop below threshold after CIRCULAR_TIME, finalize original swipe
-    if ((validCnt < VALID_PIXEL_COUNT) && (now - pendingTimer > CIRCULAR_TIME)) 
-    {
-      resetGesture();
-      mymessage = directionWay;
-      captTime = now;
-      return;
-    }
-    return;
+  // Analysis
+  // negative delta = moving right to left
+  // positive = moving left to right
+
+  // count consecutive same‐sign deltas
+  int cposcon = 0, cnegcon = 0, cpos = 0, cneg = 0;
+  for (int i = 0; i < WINDOW; i++) {
+    int idx = (wi + i) % WINDOW;
+    float d = deltas[idx];
+    if (d > 0) cpos++;
+    if (d < 0) cneg++;
+    float dn = deltas[(idx + 1) % WINDOW];
+    if (d > 0 && dn > 0) cposcon++;
+    if (d < 0 && dn < 0) cnegcon++;
   }
 
-  // If too few valid pixels, do nothing
-  if (validCnt < VALID_PIXEL_COUNT) {
-    return;
-  }
+  /*
+  Serial.print( "R-L neg: " );
+  Serial.print( cneg );
+  Serial.print( ":" );
+  Serial.print( cnegcon );
+  Serial.print( " L-R pos: " );
+  Serial.print( cpos );
+  Serial.print( ":" );
+  Serial.println( cposcon );
+  */
 
-  // ——— Build optical‐flow frames ———
-  if (!prevValid) {
-    // Store as “previous” frame
-    prevValid = true;
-    for (int i = 0; i < 64; ++i) {
-      int row = i / WIDTH;
-      int col = i % WIDTH;
-      frame1[row][col] = static_cast<float>(rotated[i]);
-    }
-    return;
-  }
+  // advance write pointer
+  wi = (wi + 1) % WINDOW;
+  lastValid    = now;
 
-  // Store as “current” frame
-  for (int i = 0; i < 64; ++i) {
-    int row = i / WIDTH;
-    int col = i % WIDTH;
-    frame2[row][col] = static_cast<float>(rotated[i]);
-  }
-
-  // ——— Compute global optical‐flow (u,v) via Lucas–Kanade ———
-  float u = 0.0f, v = 0.0f;
-  computeOpticalFlow(frame1, frame2, u, v);
-
-  if ( u == 0 && v == 0 )
+  if ( cnegcon == 0 && cposcon == 0 ) 
   {
-    directionWay     = String( "none" );
-    pendingDirection = false;
-    pendingTimer     = now;
-    direction = GESTURE_NONE;
     return;
   }
 
-  // Convert (u,v) to an angle in [0,360)
-  float angleRad = atan2(v, u);                // range (–π, +π]
-  float angleDeg = angleRad * 180.0f / M_PI;    // → degrees
-  if (angleDeg < 0) {
-    angleDeg += 360.0f;
+  if ( cneg == 2 && cnegcon == 1 && cpos == 1 && cposcon == 0 )
+  {
+    //Serial.println( "Ignoring 1" );
+    return;
+  }
+  
+  /*
+  if ( cneg == 0 && cnegcon == 0 && cpos == 2 && cposcon == 1 )
+  {
+    //Serial.println( "Ignoring 2" );
+    return;
+  }
+  */
+  
+  if ( cneg > 0 && cnegcon == 0 && cpos < 3 && cposcon < 2 )
+  {
+    //Serial.print( lrmesg );
+    //Serial.println( "1" );
+    direction = GESTURE_LEFT_RIGHT;
+    directionWay = lrmesg;
+    captTime  = now;
+    circCnt = 0;
+    return;
   }
 
-  // Map angle to one of eight discrete codes
-  const char* dirLabelPtr = nullptr;
-  if      (angleDeg < 22.5f || angleDeg >= 337.5f) { dirLabelPtr = "→  (Right)";      direction = GESTURE_RIGHT; }
-  else if (angleDeg <  67.5f)                      { dirLabelPtr = "↗  (Up-Right)";   direction = GESTURE_UP_RIGHT; }
-  else if (angleDeg < 112.5f)                      { dirLabelPtr = "↑  (Up)";         direction = GESTURE_UP; }
-  else if (angleDeg < 157.5f)                      { dirLabelPtr = "↖  (Up-Left)";    direction = GESTURE_UP_LEFT; }
-  else if (angleDeg < 202.5f)                      { dirLabelPtr = "←  (Left)";       direction = GESTURE_LEFT; }
-  else if (angleDeg < 247.5f)                      { dirLabelPtr = "↙  (Down-Left)";  direction = GESTURE_DOWN_LEFT; }
-  else if (angleDeg < 292.5f)                      { dirLabelPtr = "↓  (Down)";       direction = GESTURE_DOWN; }
-  else                                             { dirLabelPtr = "↘  (Down-Right)"; direction = GESTURE_DOWN_RIGHT; }
+  if ( cneg > 1 && cnegcon > 1 && cpos > 0 && cposcon == 0 )
+  {
+    //Serial.print( rlmesg );
+    //Serial.println( "2" );
+    direction = GESTURE_RIGHT_LEFT;
+    directionWay = rlmesg;
+    captTime  = now;
+    circCnt = 0;
+    return;
+  }
 
-  directionWay     = String(dirLabelPtr);
-  pendingDirection = true;
-  pendingTimer     = now;
+  if ( cneg > 0 && cneg < 3 && cnegcon < 2 && cpos == 0 && cposcon == 0 )
+  {
+    //Serial.print( rlmesg );
+    //Serial.println( "3" );
+    direction = GESTURE_RIGHT_LEFT;
+    directionWay = rlmesg;
+    captTime  = now;
+    circCnt = 0;
+    return;
+  }
 
-  // (Actual printing of dirLabelPtr is deferred until pendingDecision)
-  return;
+  if ( cneg > 0 && cpos > 0 && cneg > cpos && cnegcon > 0 && cposcon > 1 )
+  {
+    //Serial.print( rlmesg );
+    //Serial.println( "4" );
+    direction = GESTURE_RIGHT_LEFT;
+    directionWay = rlmesg;
+    captTime  = now;
+    circCnt = 0;
+    return;
+  }
+
+  if ( cneg > 0 && cpos > 0 && cneg < cpos && cnegcon > 1 && cposcon > 1 )
+  {
+    //Serial.print( lrmesg );
+    //Serial.println( "5" );
+    direction = GESTURE_LEFT_RIGHT;
+    directionWay = lrmesg;
+    captTime  = now;
+    circCnt = 0;
+    return;
+  }
+
+  if ( cneg > 0 && cpos > 0 && cneg < cpos && cnegcon > 0 && cposcon > 1 )
+  {
+    //Serial.print( lrmesg );
+    //Serial.println( "6" );
+    direction = GESTURE_LEFT_RIGHT;
+    directionWay = lrmesg;
+    captTime  = now;
+    circCnt = 0;
+    return;
+  }
+
+  if ( cneg > 1 && cnegcon > 0 && cpos > 0 && cposcon == 0 )
+  {
+    //Serial.print( rlmesg );
+    //Serial.println( "7" );
+    direction = GESTURE_RIGHT_LEFT;
+    directionWay = rlmesg;
+    captTime  = now;
+    circCnt = 0;
+    return;
+  }
+
+  Serial.print( "circCnt " );
+  Serial.println( circCnt );
+  circCnt++;
+  if ( circCnt > CIRCULAR_MAX )
+  {
+    //Serial.println( cirmesg );
+    direction = GESTURE_CIRCULAR;
+    directionWay = cirmesg;
+    captTime  = now;
+    circCnt = 0;
+    return;
+  }
+
 }

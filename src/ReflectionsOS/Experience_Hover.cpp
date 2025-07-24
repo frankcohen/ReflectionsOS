@@ -26,6 +26,8 @@ void Experience_Hover::init()
 
 void Experience_Hover::setup() 
 {
+  setExperienceName( HoverName );
+
   Serial.print( HoverName );
   Serial.println( F("SETUP") );
   

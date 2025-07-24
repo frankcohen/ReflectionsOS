@@ -21,7 +21,7 @@ void Hardware::begin()
 
   pinMode( NAND_SPI_PWR, OUTPUT);
   digitalWrite( NAND_SPI_PWR, HIGH);
-  delay(500);
+  delay(1000);
   digitalWrite( NAND_SPI_PWR, LOW);
 
   pinMode(NAND_SPI_CS, OUTPUT);

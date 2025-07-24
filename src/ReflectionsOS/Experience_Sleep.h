@@ -24,6 +24,8 @@ extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
 extern Hardware hardware;
 
+#define SleepName F("Sleep ")
+
 class Experience_Sleep : public Experience {
   public:
     void setup() override;

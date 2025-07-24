@@ -25,6 +25,7 @@ void Experience_Pounce::init()
 
 void Experience_Pounce::setup() 
 {
+  setExperienceName( PounceName );
   video.startVideo( Pounce_video );
   haptic.playEffect( 76 ); // 100% to 0% slope
   setSetupComplete(true);  // Signal that setup is complete

@@ -16,8 +16,9 @@ ffmpeg -i cat1_parallax.jpg -q:v 2 -vf "format=yuvj420p" cat1_parallax_baseline.
 
 Some classes use the framebuffer capability in Arduino_GFX. Tutorial is at
 https://github.com/moononournation/Arduino_GFX/wiki/Canvas-Class
+Note: ran out of memory, so no frame buffering right now.
 
-Images must be 240x240 and use JPEG baseline encoding. I use ffmpeg to convert a
+Static JPEG images must be 240x240 and use JPEG baseline encoding. I use ffmpeg to convert a
 JPEG created in Pixelmator on Mac OS to baseline encoding using:
 ffmpeg -i cat1_parallax.jpg -q:v 2 -vf "format=yuvj420p" cat1_parallax_baseline.jpg
 
@@ -43,7 +44,19 @@ void Video::begin()
   }
 
   gfx->fillScreen( COLOR_PANTONE_662 );
+  delay(800);
+
+  if ( battery.isBatteryLow() )
+  {
+    gfx->setFont( &Minya16pt7b );
+    gfx->setTextSize(1);
+    gfx->setCursor( 45, 70 );
+    gfx->setTextColor( COLOR_TEXT_YELLOW );
+    gfx->println( F( "Battery low" ) );
+  }
+
   gfx->fillCircle( 120, 120, 5, COLOR_PANTONE_310 );
+  delay(800);
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
   delay(800);
   gfx->fillCircle( 140, 120, 5, COLOR_PANTONE_102 );
@@ -55,7 +68,7 @@ void Video::begin()
   gfx->fillCircle( 100, 120, 5, COLOR_PANTONE_102 );
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
   delay(800);
-  gfx->fillCircle( 120, 100, 5, COLOR_PANTONE_151 );
+  gfx->fillTriangle( 115, 102, 120, 90, 125, 102, COLOR_PANTONE_151);
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
   delay(800);
 
@@ -231,6 +244,7 @@ void Video::stopVideo()
   {
     mjpegFile.close();
   }
+  setPaused( false );
   videoStatus = false;
 }
 

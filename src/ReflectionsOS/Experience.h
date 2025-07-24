@@ -40,13 +40,21 @@ class Experience
       return idle;
     }
 
-  protected:
-    void setSetupComplete(bool complete) {
-      setupComplete = complete;
+    String getExperienceName() {
+      return experienceName;
+    }
+
+    void setExperienceName( String name ) {
+      experienceName = name;
     }
 
     void setRunComplete(bool complete) {
       runComplete = complete;
+    }
+
+  protected:
+    void setSetupComplete(bool complete) {
+      setupComplete = complete;
     }
 
     void setTeardownComplete(bool complete) 
@@ -71,6 +79,7 @@ class Experience
     bool stopped = false;
     bool idle = false;
     bool tearflag;
+    String experienceName;
 };
 
 #endif // _EXPERIENCE_H

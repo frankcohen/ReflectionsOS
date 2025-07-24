@@ -28,6 +28,8 @@ void Experience_Shaken::init()
 
 void Experience_Shaken::setup() 
 {
+  setExperienceName( shakenname );
+
   Serial.print( shakenname );
   Serial.println( F("SETUP") );
 
