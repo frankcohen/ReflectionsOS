@@ -22,12 +22,12 @@ Read the license in the license.txt file that comes with this code.
 
 /* Experience videos */
 
-#define OutOfTheBox_video "178e801340f79249dbb2b34b3e64eda4"    // updated
+#define OutOfTheBox_video "178e801340f79249dbb2b34b3e64eda4"     
 
 #define Chastise_video "29eebc0d0804260f934575ceaedc50b1"
 
 #define CatsPlayFound_video "5a9d9f72264522abc51300f9e772b136"
-#define Pounce_video "5e1995361aeeba66eb3a927d5453e105"       // updated
+#define Pounce_video "5e1995361aeeba66eb3a927d5453e105"        
 
 #define CatsPlay1_video "001c0e74e770ec34c053879be10d1a7e"    // E
 #define CatsPlay2_video "6216cf1923de998474b25afeda659448"    // NE
@@ -40,15 +40,19 @@ Read the license in the license.txt file that comes with this code.
 
 #define EyesFollowFinger_video "f99c9b5031e6102ef45fbdf71cb09134"
 
-#define MysticCat_video "fb6001b81b161fc556371a5bb34c17c9"    // updated
+#define MysticCat_video "fb6001b81b161fc556371a5bb34c17c9"
 
 #define ParallaxCat_video "7f4f62c859d8a8638cb9126c23775372"
 
-#define Shaken_video "538b9f5360a511bf20e1b85a1dc6250d"
+#define Sleep_video "72ec4d3eb423bd80ae8fd0c3bfd44143"
 
-#define Sleep_video "72ec4d3eb423bd80ae8fd0c3bfd44143"    // updated
+#define Shaken_video "89d7ee32f925de8a719726fbcacc622c"
 
-#define Swipe_video "4e93a6c65511b257e959b0cdc9f9709f"
+#define Swipe_video "3d64a7500f82e9e3aa022318d17253ad"
+
+#define EasterEggTerri_video "00e700137430e520ae75fb2b545eed31"
+
+#define EasterEggFrank_video "a847ec268d727e816711caa1cb7e272c"
 
 #define ShowTime_video "0c694842005c6e03d2abe845e530815e"
 
@@ -59,42 +63,42 @@ Read the license in the license.txt file that comes with this code.
 #define videoname_end ".mjpeg"
 
 // WatchFace_Main
-#define wfMainBackground "Face_Main_background.jpg"   // updated
-#define wfMainBattery "Battery_"    // updated
+#define wfMainBackground "Face_Main_background.jpg"
+#define wfMainBattery "Battery_"   
 #define wfMainBattery2 ".png"
 
-#define wfMainHours "Hour"      // updated
+#define wfMainHours "Hour"      
 #define wfMainHours2 ".png"
-#define wfMainMinutes "Minute"  // updated
+#define wfMainMinutes "Minute"  
 #define wfMainMinutes2 ".png"
 
-#define wfMainFace "Blink_"     // updated
+#define wfMainFace "Blink_"    
 #define wfMainFace2 ".png"
 #define blinkspeed 100
 #define flipspeed 50
 
-#define wfMainHourglass "Main_HourGlass"    // updated
+#define wfMainHourglass "Main_HourGlass"    
 #define wfMainHourglass2 ".png"
 
-#define WatchFaceOpener_video "d1b0ec686a285bc1b75e268d62da0f49"    // updated
-#define WatchFaceFlip1_video "08ff4765f6c5cf764288afba9b4bcbbb"     // updated
-#define WatchFaceFlip2_video "358c45f36fba9802fdc26f67395119cc"     // updated
-#define WatchFaceFlip3_video "87af910e9dd542c183dc2e27a32d02e7"     // updated
+#define WatchFaceOpener_video "d1b0ec686a285bc1b75e268d62da0f49"    
+#define WatchFaceFlip1_video "08ff4765f6c5cf764288afba9b4bcbbb"      
+#define WatchFaceFlip2_video "358c45f36fba9802fdc26f67395119cc"      
+#define WatchFaceFlip3_video "87af910e9dd542c183dc2e27a32d02e7"      
 
-#define wfMain_Timer_Background "Face_Main_Timer_Background.jpg"    // updated
-#define wfMain_SetTimer_Background "Face_Main_SetTimer_Background.jpg"  // updated
-#define wfMain_SetTimer_Background_Shortie "Face_Main_SetTimer_Background_Shortie.jpg"  // updated
+#define wfMain_Timer_Background "Face_Main_Timer_Background.jpg"     
+#define wfMain_SetTimer_Background "Face_Main_SetTimer_Background.jpg"   
+#define wfMain_SetTimer_Background_Shortie "Face_Main_SetTimer_Background_Shortie.jpg"   
 
-#define wfMain_Health_Background "Face_Main_Health_Background.jpg"    // updated
+#define wfMain_Health_Background "Face_Main_Health_Background.jpg"     
 
-#define wfMain_SetTime_Background_Shortie "Face_Main_SetTime_Background_Shortie.jpg"    // updated
+#define wfMain_SetTime_Background_Shortie "Face_Main_SetTime_Background_Shortie.jpg"     
 
 #define wfMain_Time_Background "Face_Main_Blue_Dot_Background.jpg"
-#define wfMain_Time_Background_Shortie "Face_Main_Time_Background_Shortie.jpg"  // updated
+#define wfMain_Time_Background_Shortie "Face_Main_Time_Background_Shortie.jpg"   
 
 #define wfMain_Face_Main_TimerNotice "Face_Main_TimerNotice.png"
 
-#define wfMain_Face_BlueDot_Background "Face_Main_Blue_Dot_Background.jpg"    // updated
+#define wfMain_Face_BlueDot_Background "Face_Main_Blue_Dot_Background.jpg"     
 
 #define wfMain_GPSmarker "GPSmarker.png"
 #define wfMain_Wifimarker "WIFI.png"

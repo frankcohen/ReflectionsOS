@@ -68,7 +68,9 @@ void WatchFaceMain::begin()
   minuteRedrawtimer = millis();
   sleepyTimer = millis();
   sleepyTimer2 = millis();
-
+  
+  movesOld = 0;
+  
   _runmode = true;
 }
 
@@ -405,6 +407,7 @@ void WatchFaceMain::loop()
       break;
     case CONFIRM_SETTING_TIME:
       confirmsettingtime();
+      break;
 
     case DISPLAYING_MOVES:
       displayingmoves();
@@ -549,7 +552,7 @@ void WatchFaceMain::settingtime()
     return;
   }
 
-  if ( accel.getSingleTap() )
+  if ( accel.getSingleTap() || accel.getDoubleTap() )
   {
     changeTo( DISPLAYING_MOVES, true, WatchFaceFlip2_video );
     return;
@@ -617,20 +620,20 @@ void WatchFaceMain::confirmsettingtime()
 
   if ( updateTimeLeft() )
   {
-    realtimeclock.setTime( hour, minute, 0 );
     changeTo( MAIN, true, WatchFaceFlip3_video );
     return;
   }
 
   if ( accel.getSingleTap() || accel.getDoubleTap() )
   {
+    Serial.println( "Accepted new time setting" );
     realtimeclock.setTime( hour, minute, 0 );
     changeTo( MAIN, true, WatchFaceFlip3_video );
     return;
   }
 
   //drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
-  textmessageservice.drawCenteredMesssage( F("Tap To Set"), F("New Time") );
+  textmessageservice.drawCenteredMesssage( F("Tap To"), F("Set Time") );
 }
 
 void WatchFaceMain::displayingmoves()
@@ -657,12 +660,14 @@ void WatchFaceMain::displayingmoves()
     return;
   }
 
-  if ( movesflag )
+  int newmoves = steps.howManySteps();
+  if ( newmoves != movesOld )
   {
-    movesflag = false;
+    movesOld = newmoves;
     drawImageFromFile( wfMain_Health_Background, true, 0, 0 );
-    textmessageservice.updateHealth( steps.howManySteps() );
+    textmessageservice.updateHealth( newmoves );
   }
+
 }
 
 void WatchFaceMain::confirmclearmoves()

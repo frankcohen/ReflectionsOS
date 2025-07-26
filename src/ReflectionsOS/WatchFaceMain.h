@@ -46,8 +46,8 @@ extern TimerService timerservice;
 extern GPS gps;
 
 #define nomov 1500                  // Hourglass timeout duration
-#define sleepyTime (60 * 1000 * 2)  // 5 minutes until feeling sleepy
-#define sleepyTime2 (60 * 1000 * 4)  // 5 minutes until feeling sleepy
+#define sleepyTime (60 * 1000 * 6)  // 6 minutes until feeling sleepy
+#define sleepyTime2 (60 * 1000 * 8) // 8 minutes to fall alseep
 #define tiltspeed 1200              // Speed to update set-time values
 
 class WatchFaceMain : public WatchFaceBase 
@@ -61,6 +61,7 @@ class WatchFaceMain : public WatchFaceBase
     bool isMain();
     bool isSleepy();
     bool goToSleep();
+    void clearSleepy();
     
     enum Panel { 
       STARTUP, 
@@ -107,8 +108,6 @@ class WatchFaceMain : public WatchFaceBase
     void updateGPSmarker();
 
     bool changing( bool hourflag );
-
-    void clearSleepy();
 
     void drawHourMinute( int hourc, int minutec );
 
@@ -164,6 +163,8 @@ class WatchFaceMain : public WatchFaceBase
 
     unsigned long sleepyTimer;
     unsigned long sleepyTimer2;
+
+    unsigned long movesOld;
 
 };
 

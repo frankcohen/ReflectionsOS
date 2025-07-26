@@ -156,7 +156,7 @@ String TOF::getRecentMessage2()
 }
 
 void TOF::loop() {
-  if (!isRunning || direction != GESTURE_NONE ) return;
+  if (!isRunning ) return;
 
   unsigned long now = millis();
 

@@ -58,6 +58,8 @@ class ExperienceService
       Shaken,
       GettingSleepy,
       Pounce,
+      EasterEggFrank,
+      EasterEggTerri,
       ExperienceCount   // Used to iterate through the list,  add new elements above
     };
 

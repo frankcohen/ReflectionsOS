@@ -41,18 +41,24 @@ public:
      */
     void update(unsigned long currentMs = millis());
 
+    bool isTerri();
+    bool isFrank();
+
+    unsigned long totalCalls_;
+
 private:
     void printStats() const;
 
     unsigned long intervalMs_;
     unsigned long lastReportMs_;
-    unsigned long totalCalls_;
 
     std::vector<String> names_;
     std::vector<unsigned long> counts_;
 
     Preferences prefs_;     // Retains stats between ESP32 deep sleep modes
 
+    unsigned long lastTerriCall;
+    unsigned long lastFrankCall;
 };
 
 #endif // EXPERIENCESTATS_H

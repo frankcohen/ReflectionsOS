@@ -252,11 +252,11 @@ void BoardInitializationUtility()
   delay( 1000 );
   if ( realtimeclock.syncWithNTP("pool.ntp.org", 5000) )
   {
-    Serial.println( F( "Could not sync to network time over wifi" ) );
+    Serial.println( F( "Sync'd to network time over wifi" ) );
   }
   else
   {
-    Serial.println( F( "Sync'd to network time over wifi" ) );
+    Serial.println( F( "Could not sync to network time over wifi" ) );
   }
 
   delay( 1000 );
@@ -352,7 +352,7 @@ static void smartdelay(unsigned long ms) {
 
     // Paint debug details over display
     //video.paintText( battery.getBatteryStats() );
-    video.paintText( gps.getStats() );
+    //video.paintText( gps.getStats() );
 
   } while (millis() - start < ms);
 }
@@ -689,8 +689,25 @@ void loop()
 
   if ( ! watchfacemain.isMain() ) return;   // No new gestures (except for sleep) unless watchface is on MAIN
 
-  if ( recentGesture == GESTURE_RIGHT_LEFT )
+  if ( recentGesture == GESTURE_RIGHT_LEFT || recentGesture == GESTURE_CIRCULAR || recentGesture == GESTURE_LEFT_RIGHT )
   {
+    if ( experiencestats.isFrank() )
+    {
+      experienceservice.startExperience( ExperienceService::EasterEggFrank );
+      smartdelay(10);
+      return;
+    }
+
+    if ( experiencestats.isTerri() )
+    {
+      experienceservice.startExperience( ExperienceService::EasterEggTerri );
+      smartdelay(10);
+      return;
+    }
+  }
+
+  if ( recentGesture == GESTURE_RIGHT_LEFT )
+  {  
     experienceservice.startExperience( ExperienceService::MysticCat );
     return;
   } 
@@ -739,16 +756,8 @@ void loop()
 
     if ( nextUp == 5 )
     {
-      nextUp++;
-      experienceservice.startExperience( ExperienceService::ShowTime );
-      smartdelay(10);
-      return;
-    }
-
-    if ( nextUp > 5 )
-    {
       nextUp = 0;
-      experienceservice.startExperience( ExperienceService::ParallaxCat );
+      experienceservice.startExperience( ExperienceService::ShowTime );
       smartdelay(10);
       return;
     }

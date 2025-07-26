@@ -117,10 +117,11 @@ public:
   String getRecentMessage();
   String getRecentMessage2();
 
+  void resetGesture();
+
 private:
   SparkFun_VL53L5CX tof;
 
-  void resetGesture();
   void prettyPrintAllRotated();
   int mapFloatTo0_7(float input, float inMin, float inMax);
 

@@ -9,26 +9,22 @@
  Read the license in the license.txt file that comes with this code.
 */
 
-#ifndef Experience_Eyes_H
-#define Experience_Eyes_H
+#ifndef EasterEggTerri_H
+#define EasterEggTerri_H
 
 #include <Arduino.h>
 
 #include "Experience.h"
-#include "TextMessageService.h"
 
 #include "Logger.h"
 #include "Video.h"
-#include "TOF.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
-extern TOF tof;
-extern Arduino_GFX *gfx;
 
-#define eyesname F("Eyes ")
+#define EasterEggTerriName F("EasterEggTerri ")
 
-class Experience_Eyes : public Experience {
+class Experience_EasterEggTerri : public Experience {
   public:
     void setup() override;
     void run() override;
@@ -40,21 +36,7 @@ class Experience_Eyes : public Experience {
     bool tearflag;
     bool timeflag;
     bool vidflag;
-    unsigned long eyestime;
-    unsigned long dur;
-
-    unsigned long pace;
-
-    int prevFingerPosCol;
-    float prevFingerDist;
-
-    int prevLeftPupilX;
-    int prevRightPupilX;
-
-    int eyeposx;
-    int eyeposy;
-    int eyedist;
     
 };
 
-#endif // Experience_Eyes_H
+#endif // EasterEggTerri

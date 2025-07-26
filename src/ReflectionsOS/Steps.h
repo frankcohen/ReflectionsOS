@@ -18,6 +18,9 @@
 #include "Arduino.h"
 #include "Logger.h"
 
+#include <nvs_flash.h>
+#include <nvs.h>
+
 #include "AccelSensor.h"
 
 extern AccelSensor accel;
@@ -32,6 +35,8 @@ class Steps
     void loop();
     int howManySteps();
     void resetStepCount();
+    bool saveToNVS();
+    bool loadFromNVS();
 
   private:
     int stepCount;    

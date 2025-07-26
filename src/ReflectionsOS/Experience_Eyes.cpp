@@ -40,6 +40,7 @@ void Experience_Eyes::setup()
 
     vidflag = false;
     tearflag = true;
+    pace = millis();
   }
 
   if ( video.getVideoTime() > 2800 )
@@ -72,20 +73,25 @@ void Experience_Eyes::run()
     return;
   }
 
+  if ( millis() - pace < 500 ) return;
+  pace = millis();
+
   int col = tof.getFingerPos();
 
-  if ( col < 0 || col > 7 ) 
-  {
-    Serial.print( "Experience_eyes col is out of bounds " );
-    Serial.println( col );
-    return;
-  }
+  /*
+  Serial.print( "Eyes " );
+  Serial.print( col );
+  Serial.print( " prev " );
+  Serial.println( prevFingerPosCol );
+  */
+  
+  if ( col < 0 || col > 7 ) return;
 
   // Only repaint if finger moved
   if ( col != prevFingerPosCol ) 
   {
     // Erase previous pupils
-    if ( prevLeftPupilX >= 0)
+    if ( prevLeftPupilX != -1 )
     {
       gfx->fillCircle(prevLeftPupilX, 100, 18, COLOR_EYES_LEFT);
       gfx->fillCircle(prevRightPupilX, 100, 18, COLOR_EYES_RIGHT);

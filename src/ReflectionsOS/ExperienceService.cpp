@@ -36,6 +36,8 @@ the #include list and class instantiation method below.
 #include "Experience_Shaken.h"
 #include "Experience_GettingSleepy.h"
 #include "Experience_Pounce.h"
+#include "Experience_EasterEggFrank.h"
+#include "Experience_EasterEggTerri.h"
 
 ExperienceService::ExperienceService() : currentExperience( nullptr ), currentState( STOPPED ) 
 {
@@ -142,6 +144,22 @@ ExperienceService::ExperienceService() : currentExperience( nullptr ), currentSt
     while(1);
   }
   experiences.push_back( makeExp );
+
+  makeExp = new Experience_EasterEggFrank();
+  if ( makeExp == nullptr )
+  {
+    Serial.println( F( "ExperienceService error making Experience_EasterEggFrank" ) );
+    while(1);
+  }
+  experiences.push_back( makeExp );
+
+  makeExp = new Experience_EasterEggTerri();
+  if ( makeExp == nullptr )
+  {
+    Serial.println( F( "ExperienceService error making Experience_EasterEggTerri" ) );
+    while(1);
+  }
+  experiences.push_back( makeExp );
 }
 
 String ExperienceService::experienceNameToString( int experience ) 
@@ -160,6 +178,8 @@ String ExperienceService::experienceNameToString( int experience )
     case Shaken: return F("Shaken");
     case GettingSleepy: return F("GettingSleepy");
     case Pounce: return F("Pounce");
+    case EasterEggFrank: return F("EasterEggFrank");
+    case EasterEggTerri: return F("EasterEggTerri");
     default: return F("Unknown Experience");
   }
 }
@@ -233,6 +253,8 @@ void ExperienceService::operateExperience()
   switch ( currentState ) 
   {
     case SETUP:
+      watchfacemain.clearSleepy();
+
       if ( currentExperience == NULL )
       {
         Serial.println( F("ExperienceService setup currentExperience is null"));
@@ -288,6 +310,8 @@ void ExperienceService::operateExperience()
       {
         currentState = STOPPED;
         watchfacemain.setDrawItAll();
+        tof.resetGesture();
+        accel.resetTaps();
       }
       break;
 

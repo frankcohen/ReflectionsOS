@@ -12,7 +12,7 @@
 #include "ExperienceStats.h"
 
 ExperienceStats::ExperienceStats(unsigned long reportIntervalMs)
-  : intervalMs_(reportIntervalMs), totalCalls_(0), lastReportMs_(0) {}
+  : intervalMs_(reportIntervalMs), totalCalls_(0), lastReportMs_(0), lastTerriCall(0), lastFrankCall(0) {}
 
 void ExperienceStats::begin(unsigned long currentMs) 
 {
@@ -24,7 +24,11 @@ void ExperienceStats::begin(unsigned long currentMs)
   // 2) Recover totalCalls
   totalCalls_ = prefs_.getULong("totalCalls", 0);
 
-  // 3) Recover how many distinct names we stored
+  // 3) Recover lastTerriCall and lastFrankCall
+  lastTerriCall = prefs_.getULong("lastTerriCall", 0);
+  lastFrankCall = prefs_.getULong("lastFrankCall", 0);
+
+  // 4) Recover how many distinct names we stored
   uint16_t numNames = prefs_.getUShort("numNames", 0);
   for (uint16_t i = 0; i < numNames; i++) {
     char keyName[16];
@@ -87,6 +91,28 @@ void ExperienceStats::update(unsigned long currentMs) {
     }
 }
 
+bool ExperienceStats::isTerri()
+{
+  // Only return true when totalCalls is a multiple of 100, and it hasn't been triggered already
+  if ((totalCalls_ % 100) == 0 && totalCalls_ != lastTerriCall) {
+    lastTerriCall = totalCalls_;  // Update the lastTerriCall to avoid multiple triggers
+    prefs_.putULong("lastTerriCall", lastTerriCall);  // Persist lastTerriCall
+    return true;
+  }
+  return false;
+}
+
+bool ExperienceStats::isFrank()
+{
+  // Only return true when totalCalls is a multiple of 150, and it hasn't been triggered already
+  if ((totalCalls_ % 150) == 0 && totalCalls_ != lastFrankCall) {
+    lastFrankCall = totalCalls_;  // Update the lastFrankCall to avoid multiple triggers
+    prefs_.putULong("lastFrankCall", lastFrankCall);  // Persist lastFrankCall
+    return true;
+  }
+  return false;
+}
+
 void ExperienceStats::printStats() const {
     Serial.println(F("=== Experience Statistics ==="));
     for (size_t i = 0; i < names_.size(); ++i) {
@@ -100,5 +126,11 @@ void ExperienceStats::printStats() const {
     }
     Serial.print(F("Total calls: "));
     Serial.println(totalCalls_);
+    
+    Serial.print( "lastFrank: " );
+    Serial.print( lastFrankCall );
+    Serial.print( " lastTerri: " );
+    Serial.println( lastTerriCall );
+    
     Serial.println(F("============================="));
 }

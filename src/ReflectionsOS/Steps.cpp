@@ -18,8 +18,53 @@ Steps::Steps(){}
 
 void Steps::begin()
 { 
+  loadFromNVS();    // Load saved step count
   lastStepTime = millis();
-  stepCount = 0;
+}
+
+bool Steps::saveToNVS() {
+    nvs_handle handle;
+    esp_err_t err = nvs_open("storage", NVS_READWRITE, &handle);
+    if (err != ESP_OK) {
+        Serial.printf("[Steps] NVS open failed: %d\n", err);
+        return false;
+    }
+    err = nvs_set_u32(handle, "stepCount", stepCount);
+    if (err != ESP_OK) {
+        Serial.printf("[Steps] NVS set failed: %d\n", err);
+        nvs_close(handle);
+        return false;
+    }
+    err = nvs_commit(handle);
+    if (err != ESP_OK) {
+        Serial.printf("[Steps] NVS commit failed: %d\n", err);
+        nvs_close(handle);
+        return false;
+    }
+    nvs_close(handle);
+    return true;
+}
+
+bool Steps::loadFromNVS() {
+    nvs_handle handle;
+    esp_err_t err = nvs_open("storage", NVS_READONLY, &handle);
+    if (err != ESP_OK) {
+        Serial.printf("[Steps] NVS open failed: %d\n", err);
+        stepCount = 0;
+        return false;
+    }
+    uint32_t stored = 0;
+    err = nvs_get_u32(handle, "stepCount", &stored);
+    if (err == ESP_OK) {
+        stepCount = stored;
+    } else if (err == ESP_ERR_NVS_NOT_FOUND) {
+        stepCount = 0;
+    } else {
+        Serial.printf("[Steps] NVS read failed: %d\n", err);
+        stepCount = 0;
+    }
+    nvs_close(handle);
+    return true;
 }
 
 void Steps::loop()
@@ -48,14 +93,18 @@ void Steps::loop()
     if ( magnitude >= accelThreshold ) 
     {
       stepCount++;
+      saveToNVS();
     }
   }
 }
 
-int Steps::howManySteps() {
-    return stepCount;
+int Steps::howManySteps() 
+{
+  return stepCount;
 }
 
-void Steps::resetStepCount() {
-    stepCount = 0;
+void Steps::resetStepCount() 
+{
+  saveToNVS();
+  stepCount = 0;
 }

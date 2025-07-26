@@ -18,8 +18,8 @@
 RealTimeClock::RealTimeClock() {}
 
 void RealTimeClock::begin() {
-  // set timezone so time APIs work
-  setenv("TZ", "GMT0", 1);
+  const char* tz = _tzString ? _tzString : "America/Los_Angeles";
+  setenv("TZ", tz, 1);
   tzset();
 
   // if we woke from a deep-sleep
@@ -41,95 +41,21 @@ void RealTimeClock::begin() {
   _lastSaveMs = millis();
 }
 
-void RealTimeClock::loop() 
-{
-  // periodic NVS save every 1 minutes
-  periodicSave();
-
-  struct tm tmBuf;
-
-  switch (_state) {
-    case State::CheckRTC: {
-      time_t now = time(nullptr);
-      struct tm lt;
-      localtime_r(&now, &lt);
-      if ( ( (lt.tm_year + 1900) >= MIN_VALID_YEAR ) && ( tmBuf.tm_hour > 0 ) ) 
-      {
-        Serial.printf("RTC valid: %d %02d:%02d\n", lt.tm_year + 1900, tmBuf.tm_hour, tmBuf.tm_min);
-        _state = State::Done;
-      } 
-      else 
-      {
-        Serial.println("RTC invalid, trying GPS sync");
-        gps.on();
-        _gpsStartMs = millis();
-        _state      = State::GPSWait;
-      }
-      break;
-    }
-
-    case State::GPSWait:
-      gps.loop();
-      if (gps.getProcessed() >= GPS_SENTENCE_THRESHOLD ||
-          (millis() - _gpsStartMs) >= GPS_TIMEOUT_MS) 
-      {
-        if ( ( ! ( gps.getHour() == 0 && gps.getMinute() == 0 ) ) && gps.getSatellites() > 2 ) 
-        {
-          tmBuf.tm_year = gps.getYear()  - 1900;
-          tmBuf.tm_mon  = gps.getMonth() - 1;
-          tmBuf.tm_mday = gps.getDay();
-          tmBuf.tm_hour = (gps.getHour() + timeRegionOffset) % 24;
-          tmBuf.tm_min  = gps.getMinute();
-          tmBuf.tm_sec  = 0;
-          Serial.printf("GPS sync OK: %02d:%02d\n", tmBuf.tm_hour, tmBuf.tm_min);
-          _candidate = mktime(&tmBuf);
-        } 
-        else 
-        {
-          Serial.println("Getting time from NVS or fallback to 10:10 AM Jan 1 2025");
-          time_t saved;
-          if (loadFromNVS(saved)) 
-          {
-            _candidate = saved;
-            struct tm lt;
-            localtime_r(&saved, &lt);
-            Serial.printf("Loaded from NVS: %02d:%02d\n", lt.tm_hour, lt.tm_min);
-          } 
-          else           
-          {
-            Serial.println("No NVS: fallback 10:10 AM Jan 1 2025");
-            time_t today = time(nullptr);
-
-            memset(&tmBuf, 0, sizeof(tmBuf));  // clear everything
-            tmBuf.tm_year = 2025;     // e.g. 2025 → 125
-            tmBuf.tm_mon  =  0;       // January (0-based)
-            tmBuf.tm_mday =  1;       // 1st of the month
-            tmBuf.tm_hour = 10;
-            tmBuf.tm_min  = 10;
-            tmBuf.tm_sec  = 0;
-            _candidate = mktime(&tmBuf);
-          }
-        }
-        gps.off();
-        _state = State::ApplyTime;
-      }
-      break;
-
-    case State::ApplyTime: {
-      applyTimestamp(_candidate, true);
-      Serial.println("RTC set and saved to NVS.");
-      time_t confirm = time(nullptr);
-      struct tm cf;
-      localtime_r(&confirm, &cf);
-      Serial.printf("RTC now %02d:%02d %04d\n", cf.tm_hour, cf.tm_min, cf.tm_year);
-      _state = State::Done;
-      break;
-    }
-
-    case State::Done:
-      break;
-  }
+// Returns the nearest whole-hour offset east of UTC.
+// e.g. lon=+30° → +2h, lon=–75° → –5h
+static int computeOffsetFromLongitude(float lon) {
+  return int(std::round(lon / 15.0f));
 }
+
+String RealTimeClock::lookupTimeZone(double lat, double lon) 
+{
+ int offset = int(round(lon / 15.0));
+  char buf[16];
+  if (offset >= 0) snprintf(buf, sizeof(buf), "GMT+%d", offset);
+  else           snprintf(buf, sizeof(buf), "GMT%d", offset);
+  return String(buf);
+}
+ 
 
 void RealTimeClock::applyTimestamp(time_t t, bool saveToNVS) {
   struct timeval tv = { .tv_sec = t, .tv_usec = 0 };
@@ -296,8 +222,8 @@ static bool timeIsValid(time_t t) {
 bool RealTimeClock::syncWithNTP(const char* ntpServer, uint32_t timeoutMs) {
   Serial.printf("Starting NTP sync with %s (timeout %lums)\n", ntpServer, timeoutMs);
 
-  // zero UTC offset, no DST
-  configTime(0, 0, ntpServer);
+  // this sets TZ to PST/PDT (UTC‑8 with DST) *and* starts SNTP
+  configTzTime("PST8PDT", ntpServer);
 
   time_t now;
   uint32_t start = millis();
@@ -311,11 +237,117 @@ bool RealTimeClock::syncWithNTP(const char* ntpServer, uint32_t timeoutMs) {
   }
 
   // print the new time
-  Serial.printf("NTP time acquired: %s", ctime(&now));
+  Serial.printf("NTP time acquired (Pacific Standard Time): %s", ctime(&now));
 
   // apply to RTC and save to NVS
   applyTimestamp(now, true);
   Serial.println("RTC updated from NTP and saved to NVS.");
   return true;
 }
+
+void RealTimeClock::loop() 
+{
+  // periodic NVS save every 1 minutes
+  periodicSave();
+
+  struct tm tmBuf;
+
+  switch (_state) {
+    case State::CheckRTC: {
+      time_t now = time(nullptr);
+      struct tm lt;
+      localtime_r(&now, &lt);
+      if ( ( (lt.tm_year + 1900) >= MIN_VALID_YEAR ) && ( tmBuf.tm_hour > 0 ) ) 
+      {
+        Serial.printf("RTC valid: %d %02d:%02d\n", lt.tm_year + 1900, tmBuf.tm_hour, tmBuf.tm_min);
+        _state = State::Done;
+      } 
+      else 
+      {
+        Serial.println("RTC invalid, trying GPS sync");
+        gps.on();
+        _gpsStartMs = millis();
+        _state      = State::GPSWait;
+      }
+      break;
+    }
+
+    case State::GPSWait:
+      gps.loop();
+      if (gps.getProcessed() >= GPS_SENTENCE_THRESHOLD ||
+          (millis() - _gpsStartMs) >= GPS_TIMEOUT_MS) 
+      {
+        if ( (gps.getHour() != 0 || gps.getMinute() != 0) && gps.getSatellites() > 2 ) 
+        {
+          tmBuf.tm_year = gps.getYear()  - 1900;
+          tmBuf.tm_mon  = gps.getMonth() - 1;
+          tmBuf.tm_mday = gps.getDay();
+          tmBuf.tm_hour = gps.getHour();
+          tmBuf.tm_min  = gps.getMinute();
+          tmBuf.tm_sec  = 0;
+
+          time_t utcEpoch = mktime(&tmBuf);
+
+          float lon = gps.getLng(); 
+          int   offs = computeOffsetFromLongitude(lon);
+          Serial.printf("Lon %.3f → offset %+d\n", lon, offs);
+
+          _candidate = utcEpoch + offs * 3600;
+
+          struct tm localTm;
+          localtime_r(&_candidate, &localTm);
+          Serial.printf("GPS local: %04d-%02d-%02d %02d:%02d (UTC%+dh)\n",
+            localTm.tm_year + 1900, localTm.tm_mon + 1, localTm.tm_mday,
+            localTm.tm_hour, localTm.tm_min, offs
+          );
+
+        } 
+        else 
+        {
+          Serial.println("Getting time from NVS or fallback to 10:10 AM Jan 1 2025");
+          time_t saved;
+          if (loadFromNVS(saved)) 
+          {
+            _candidate = saved;
+            struct tm lt;
+            localtime_r(&saved, &lt);
+            Serial.printf("Loaded from NVS: %02d:%02d\n", lt.tm_hour, lt.tm_min);
+          } 
+          else           
+          {
+            Serial.println("No NVS: fallback 10:10 AM Jan 1 2025");
+            time_t today = time(nullptr);
+
+            memset(&tmBuf, 0, sizeof(tmBuf));  // clear everything
+            tmBuf.tm_year = 2025;     // e.g. 2025 → 125
+            tmBuf.tm_mon  =  0;       // January (0-based)
+            tmBuf.tm_mday =  1;       // 1st of the month
+            tmBuf.tm_hour = 10;
+            tmBuf.tm_min  = 10;
+            tmBuf.tm_sec  = 0;
+            _candidate = mktime(&tmBuf);
+          }
+        }
+        gps.off();
+        _state = State::ApplyTime;
+      }
+      break;
+
+    case State::ApplyTime: 
+    {
+      applyTimestamp(_candidate, true);
+      Serial.println("RTC set and saved to NVS.");
+      time_t confirm = time(nullptr);
+      struct tm cf;
+      localtime_r(&confirm, &cf);
+      Serial.printf("RTC now %02d:%02d %04d\n", cf.tm_hour, cf.tm_min, cf.tm_year);
+      _state = State::Done;
+      break;
+    }
+
+    case State::Done:
+      break;
+  }
+}
+
 

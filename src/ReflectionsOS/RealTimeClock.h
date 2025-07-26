@@ -18,8 +18,13 @@
 #include "Logger.h"
 #include "time.h"
 #include "gps.h"
+#include <sys/time.h>
 #include <Preferences.h>
 #include "esp_sntp.h"  // for SNTP if needed; configTime is in <time.h>
+#include <HTTPClient.h>
+#include <WiFi.h>
+#include <ArduinoJson.h>
+#include <cmath>
 
 // Configuration constants
 #define MIN_VALID_YEAR         2023
@@ -47,6 +52,9 @@ public:
   // otherwise returns "10:10" and re-triggers begin()
   String getTime();
 
+  void setTimeZone(const char* tz);
+  String lookupTimeZone(double lat, double lon);
+
   /**
      * @brief Synchronize RTC from an NTP server.
      * @param ntpServer  Hostname of NTP server (default "pool.ntp.org")
@@ -67,6 +75,8 @@ private:
   bool loadFromNVS(time_t &t);
   void periodicSave();
 
+  const char* _tzString = nullptr;  // holds POSIX TZ or API zoneName
+
   State    _state       = State::CheckRTC;
   bool     _rtcValid    = false;
   bool     _gpsValid    = false;
@@ -74,7 +84,6 @@ private:
   unsigned long _gpsStartMs = 0;
   unsigned long _lastSaveMs  = 0;  
   Preferences   _prefs;
-
 };
 
 #endif // _icons_
