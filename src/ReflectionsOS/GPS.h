@@ -63,6 +63,8 @@ class GPS
     String getStats();
 
   private:
+    void sendCommandToGPS(const char* cmd);
+
     TinyGPSPlus gps;
     bool active;
     unsigned long gpstime;

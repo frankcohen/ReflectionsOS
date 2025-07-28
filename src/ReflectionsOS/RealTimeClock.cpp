@@ -11,28 +11,41 @@
 
 // RealTimeClock.cpp
 #include "RealTimeClock.h"
-#include <Arduino.h>
-#include <sys/time.h>
-#include <time.h>
+
+ESP32Time rtc(0); 
 
 RealTimeClock::RealTimeClock() {}
 
 void RealTimeClock::begin() {
-  const char* tz = _tzString ? _tzString : "America/Los_Angeles";
-  setenv("TZ", tz, 1);
-  tzset();
+  rtc.offset = -32400;  // // offset in seconds GMT+1, this is for Pacific Standard Time (PST)
+
+  Serial.printf(
+    "RTC: %04d-%02d-%02d %02d:%02d (epoch %lu)\n",
+    rtc.getYear(), rtc.getMonth(), rtc.getDay(),
+    rtc.getHour(), rtc.getMinute(),
+    (unsigned long) rtc.getEpoch()
+  );
+
+  _prefs.begin(NVS_NAMESPACE, true);
+  unsigned long before = _prefs.getULong(NVS_KEY_LAST_TS, 0);
+  _prefs.end();
+  if (before) 
+  {
+    // Print the NVS saved time
+    Serial.printf(
+      "RTC NVS = %04d-%02d-%02d %02d:%02d (epoch %lu)\n",
+      rtc.getYear(), rtc.getMonth(), rtc.getDay(),
+      rtc.getHour(), rtc.getMinute(), before
+    );
+  } 
 
   // if we woke from a deep-sleep
   esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
 
   if ( cause == ESP_SLEEP_WAKEUP_EXT1) 
   {
-    time_t confirm = time(nullptr);
-    struct tm lt;
-    localtime_r(&confirm, &lt);
-    Serial.printf("RTC woke from deep sleep: %d %02d:%02d\n", lt.tm_year + 1900, lt.tm_hour, lt.tm_min);
     _lastSaveMs = millis();
-    _state      = State::Done;
+    _state = State::Done;
     return;
   }
 
@@ -56,10 +69,10 @@ String RealTimeClock::lookupTimeZone(double lat, double lon)
   return String(buf);
 }
  
+void RealTimeClock::applyTimestamp(time_t t, bool saveToNVS) 
+{
+  rtc.setTime(t);  // Set RTC to the provided epoch time
 
-void RealTimeClock::applyTimestamp(time_t t, bool saveToNVS) {
-  struct timeval tv = { .tv_sec = t, .tv_usec = 0 };
-  settimeofday(&tv, nullptr);
   if (saveToNVS) {
     _prefs.begin(NVS_NAMESPACE, false);
     _prefs.putULong(NVS_KEY_LAST_TS, (unsigned long)t);
@@ -80,267 +93,282 @@ bool RealTimeClock::loadFromNVS(time_t &t) {
 
 void RealTimeClock::periodicSave() {
   unsigned long nowMs = millis();
-  if (nowMs - _lastSaveMs < NVS_SAVE_INTERVAL_MS ) return;
 
-  // 1) Read & fix RTC as before…
-  time_t now = time(nullptr);
-  struct tm tmNow;
-  localtime_r(&now, &tmNow);
+  if ( nowMs - _lastSaveMs < NVS_SAVE_INTERVAL_MS ) return;
+  _lastSaveMs = nowMs;
 
-  time_t writeEpoch = now;
-  if ((tmNow.tm_year + 1900) < MIN_VALID_YEAR) {
+  time_t now = rtc.getEpoch();  // Get the current epoch time from RTC
+
+  // Check if the current year is valid, if not, set to Jan 1 2025
+  int currentYear = rtc.getYear();
+  if (currentYear < MIN_VALID_YEAR) 
+  {
     Serial.println("PeriodicSave: RTC invalid, fixing date to Jan 1 2025");
-    tmNow.tm_year = 2025 - 1900;
-    tmNow.tm_mon  = 0;
-    tmNow.tm_mday = 1;
-    writeEpoch = mktime(&tmNow);
-    // update the system clock right away
-    timeval tv{ .tv_sec = writeEpoch, .tv_usec = 0 };
-    settimeofday(&tv, nullptr);
+
+    // Manually set the epoch time to Jan 1, 2025, 00:00 (midnight UTC)
+    const int SECONDS_IN_A_DAY = 86400; // Number of seconds in a day
+    const int SECONDS_IN_A_YEAR = SECONDS_IN_A_DAY * 365; // Rough estimate for 365 days
+    time_t jan1_2025_epoch = 55 * SECONDS_IN_A_YEAR;  // Rough epoch time for 55 years after 1970
+    
+    // Set the corrected time in the RTC (no time zone offset adjustment needed)
+    rtc.setTime( jan1_2025_epoch );
+    now = rtc.getEpoch();  // Update the "now" with the fixed epoch time
   }
 
+  // Print the current RTC time
   Serial.printf(
     "PeriodicSave: RTC now = %04d-%02d-%02d %02d:%02d (epoch %lu)\n",
-    tmNow.tm_year + 1900, tmNow.tm_mon + 1, tmNow.tm_mday,
-    tmNow.tm_hour,    tmNow.tm_min,
-    (unsigned long)writeEpoch
+    rtc.getYear(), rtc.getMonth(), rtc.getDay(),
+    rtc.getHour(), rtc.getMinute(),
+    (unsigned long) rtc.getEpoch()
   );
 
-  // 2) Read & show the old NVS value...
+  // Read & show the old NVS value
   _prefs.begin(NVS_NAMESPACE, true);
   unsigned long before = _prefs.getULong(NVS_KEY_LAST_TS, 0);
   _prefs.end();
-  if (before) {
-    time_t bsec = (time_t)before;             // << convert to time_t
-    struct tm tmBefore;
-    localtime_r(&bsec, &tmBefore);
-    if ((tmBefore.tm_year + 1900) < MIN_VALID_YEAR) {
-      tmBefore.tm_year = 2025 - 1900;
-      tmBefore.tm_mon  = 0;
-      tmBefore.tm_mday = 1;
-    }
+  if (before) 
+  {
+    // Print the NVS saved time
     Serial.printf(
       "PeriodicSave: NVS before = %04d-%02d-%02d %02d:%02d (epoch %lu)\n",
-      tmBefore.tm_year + 1900, tmBefore.tm_mon + 1,
-      tmBefore.tm_mday,      tmBefore.tm_hour,
-      tmBefore.tm_min,       before
+      rtc.getYear(), rtc.getMonth(), rtc.getDay(),
+      rtc.getHour(), rtc.getMinute(), before
     );
-  } else {
+  } 
+  else 
+  {
     Serial.println("PeriodicSave: NVS before = <none>");
   }
 
-  // 3) Write the corrected epoch into NVS
+  // Write the corrected epoch into NVS
   _prefs.begin(NVS_NAMESPACE, false);
-  _prefs.putULong(NVS_KEY_LAST_TS, (unsigned long)writeEpoch);
+  _prefs.putULong(NVS_KEY_LAST_TS, (unsigned long) rtc.getLocalEpoch() );
   _prefs.end();
 
-  // 4) Read & show the new NVS value (properly converted)
+  // Read & show the new NVS value (properly converted)
   _prefs.begin(NVS_NAMESPACE, true);
   unsigned long after = _prefs.getULong(NVS_KEY_LAST_TS, 0);
   _prefs.end();
-  {
-    time_t asec = (time_t)after;             // << convert to time_t
-    struct tm tmAfter;
-    localtime_r(&asec, &tmAfter);
-    if ((tmAfter.tm_year + 1900) < MIN_VALID_YEAR) {
-      tmAfter.tm_year = 2025 - 1900;
-      tmAfter.tm_mon  = 0;
-      tmAfter.tm_mday = 1;
-    }
+
+  if (after) {
+    // Set RTC to the new time after saving (epoch time should match)
+    rtc.setTime(after);
+
+    // Print the NVS updated time (should not apply any time zone adjustments)
     Serial.printf(
       "PeriodicSave: NVS after  = %04d-%02d-%02d %02d:%02d (epoch %lu)\n",
-      tmAfter.tm_year + 1900, tmAfter.tm_mon + 1,
-      tmAfter.tm_mday,       tmAfter.tm_hour,
-      tmAfter.tm_min,        after
+      rtc.getYear(), rtc.getMonth(), rtc.getDay(),
+      rtc.getHour(), rtc.getMinute(), after
     );
   }
-
-  _lastSaveMs = nowMs;
 }
 
-int RealTimeClock::getHour() {
-  time_t now = time(nullptr);
-  struct tm tmNow;
-  localtime_r(&now, &tmNow);
-  return tmNow.tm_hour;
+// Get the current hour from ESP32Time
+int RealTimeClock::getHour() 
+{
+  return rtc.getHour();  // Directly fetch the hour from ESP32Time
 }
 
-int RealTimeClock::getMinute() {
-  time_t now = time(nullptr);
-  struct tm tmNow;
-  localtime_r(&now, &tmNow);
-  return tmNow.tm_min;
+// Get the current minute from ESP32Time
+int RealTimeClock::getMinute() 
+{
+  return rtc.getMinute();  // Directly fetch the minute from ESP32Time
 }
 
-void RealTimeClock::setTime(int hour, int minute, int ampm) {
-  time_t now = time(nullptr);
-  struct tm tmBuf;
-  localtime_r(&now, &tmBuf);
-  tmBuf.tm_hour = hour;
-  tmBuf.tm_min  = minute;
-  tmBuf.tm_sec  = 0;
-  applyTimestamp(mktime(&tmBuf), true);
+// Set the time based on the given hour, minute, and AM/PM
+void RealTimeClock::setTime(int hour, int minute, int ampm) 
+{
+  rtc.setTime( 0, minute, ( hour - 3 ) % 12, 23, 4, 2025);
+
+  // Print the set time to verify
+  Serial.printf("Time set to: %04d-%02d-%02d %02d:%02d:%02d\n",
+                rtc.getYear(), rtc.getMonth(), rtc.getDay(),
+                rtc.getHour(), rtc.getMinute(), rtc.getSecond());
 }
 
-String RealTimeClock::getTime() {
-  time_t now = time(nullptr);
-  struct tm tmBuf;
-  localtime_r(&now, &tmBuf);
+String RealTimeClock::getTime() 
+{
+  // Get the current time from the RTC
+  int currentHour = rtc.getHour();
+  int currentMinute = rtc.getMinute();
 
-  if ((tmBuf.tm_year + 1900) < MIN_VALID_YEAR) {
+  // Validate RTC time (check if hour is between 0 and 23, and minute is between 0 and 59)
+  if ((currentHour < 0 || currentHour > 23) || (currentMinute < 0 || currentMinute > 59)) {
+    // RTC time is invalid, fall back to NVS value
     time_t saved;
     if (loadFromNVS(saved)) {
-      applyTimestamp(saved, false);
-      localtime_r(&saved, &tmBuf);
+      // Load the saved time from NVS
+      rtc.setTime(saved);  // Set RTC to the saved time
+      currentHour = rtc.getHour();
+      currentMinute = rtc.getMinute();
+      Serial.printf("Loaded from NVS: %02d:%02d\n", currentHour, currentMinute);
     } else {
-      tmBuf.tm_hour = 10;
-      tmBuf.tm_min  = 10;
-      tmBuf.tm_sec  = 0;
-      applyTimestamp(mktime(&tmBuf), true);
+      // NVS value is also invalid, set the time to default (10:10 AM)
+      currentHour = 10;
+      currentMinute = 10;
+      rtc.setTime(currentHour * 3600 + currentMinute * 60);  // Set default time to 10:10 AM
+      Serial.println("No valid time in RTC or NVS, set to 10:10 AM");
     }
   }
 
-  int myhour = tmBuf.tm_hour;
-  int myminute = tmBuf.tm_min;
-  if ( myhour < 1 ) myhour = 1;
-  if ( myhour > 12 ) myhour = 12;
-  if ( myminute < 1 ) myminute = 1;
-  if ( myminute > 59 ) myminute = 59;
-
+  // Format the time as "HH:MM"
   char buf[6];
-  snprintf( buf, sizeof(buf), "%d:%02d", myhour, myminute );
+  snprintf(buf, sizeof(buf), "%d:%02d", currentHour, currentMinute);
   return String(buf);
 }
 
-// static helper to check for a “reasonable” time
+// Static helper to check for a "reasonable" time
 static bool timeIsValid(time_t t) {
-  struct tm tmNow;
-  localtime_r(&t, &tmNow);
-  return (tmNow.tm_year + 1900) >= MIN_VALID_YEAR;
+  // Create an ESP32Time object
+  ESP32Time rtc2;
+
+  // Set the time in RTC
+  rtc2.setTime(t);
+
+  // Get the year using the ESP32Time API
+  int currentYear = rtc2.getYear();
+
+  // Check if the year is greater than or equal to MIN_VALID_YEAR
+  if (currentYear < MIN_VALID_YEAR) {
+    return false;
+  }
+
+  // Optionally, you can check for a future year limit
+  if (currentYear > 2050) {
+    return false;
+  }
+
+  return true;
 }
+
+/*
+  This will eventually change to include GPS support to determine the time zone 
+  For now it forces Pacific Standard Time zone
+*/
 
 bool RealTimeClock::syncWithNTP(const char* ntpServer, uint32_t timeoutMs) {
   Serial.printf("Starting NTP sync with %s (timeout %lums)\n", ntpServer, timeoutMs);
 
-  // this sets TZ to PST/PDT (UTC‑8 with DST) *and* starts SNTP
-  configTzTime("PST8PDT", ntpServer);
+  // Set the time zone offset to Pacific Standard Time (PST) using configTime
+  configTime(-32400, 3600, ntpServer);  // PST (GMT-8) with 1-hour daylight saving time offset (3600)
 
-  time_t now;
+  struct tm timeinfo;
   uint32_t start = millis();
-  // wait up to timeoutMs for the SNTP client to set the time
-  while ((now = time(nullptr)), !timeIsValid(now)) {
-    if (millis() - start > timeoutMs) {
-      Serial.println("NTP sync failed: timeout");
-      return false;
+  
+  // Wait for NTP sync to complete within the specified timeout
+  while (millis() - start < timeoutMs) {
+    if (getLocalTime(&timeinfo)) {
+      // Sync successful, set the time to the ESP32Time object
+      rtc.setTimeStruct(timeinfo);
+      time_t now = rtc.getEpoch();
+      Serial.printf("NTP time acquired: %s", ctime(&now));
+      applyTimestamp(now, true);  // Apply the time to the RTC and save to NVS
+      return true;
     }
-    delay(100);
+    delay(100);  // Try again every 100 ms
   }
 
-  // print the new time
-  Serial.printf("NTP time acquired (Pacific Standard Time): %s", ctime(&now));
-
-  // apply to RTC and save to NVS
-  applyTimestamp(now, true);
-  Serial.println("RTC updated from NTP and saved to NVS.");
-  return true;
+  // NTP sync failed within timeout
+  Serial.println("NTP sync failed: timeout");
+  return false;
 }
 
 void RealTimeClock::loop() 
 {
-  // periodic NVS save every 1 minutes
-  periodicSave();
+  periodicSave();  // periodic NVS save every 1 minute
 
-  struct tm tmBuf;
+  switch (_state) 
+  {
 
-  switch (_state) {
-    case State::CheckRTC: {
-      time_t now = time(nullptr);
-      struct tm lt;
-      localtime_r(&now, &lt);
-      if ( ( (lt.tm_year + 1900) >= MIN_VALID_YEAR ) && ( tmBuf.tm_hour > 0 ) ) 
+    case State::CheckRTC: 
+    {
+      if (rtc.getYear() > MIN_VALID_YEAR) 
       {
-        Serial.printf("RTC valid: %d %02d:%02d\n", lt.tm_year + 1900, tmBuf.tm_hour, tmBuf.tm_min);
+        // RTC is valid, print time
+        Serial.printf("RTC valid: %02d:%02d %02d\n", rtc.getHour(), rtc.getMinute(), rtc.getYear());
         _state = State::Done;
       } 
       else 
       {
-        Serial.println("RTC invalid, trying GPS sync");
+        // RTC is invalid, try syncing with GPS
+        Serial.print("RTC invalid, " );
+        Serial.print( rtc.getYear() );
+        Serial.println( " trying GPS sync");
         gps.on();
         _gpsStartMs = millis();
-        _state      = State::GPSWait;
+        _state = State::GPSWait;
       }
       break;
     }
 
     case State::GPSWait:
       gps.loop();
-      if (gps.getProcessed() >= GPS_SENTENCE_THRESHOLD ||
-          (millis() - _gpsStartMs) >= GPS_TIMEOUT_MS) 
+
+      // If we have sufficient GPS data or timeout has occurred, proceed
+      if (gps.getProcessed() >= GPS_SENTENCE_THRESHOLD || (millis() - _gpsStartMs) >= GPS_TIMEOUT_MS) 
       {
-        if ( (gps.getHour() != 0 || gps.getMinute() != 0) && gps.getSatellites() > 2 ) 
+        // If GPS has a valid time and sufficient satellites, set RTC
+        if ((gps.getHour() != 0 || gps.getMinute() != 0) && gps.getSatellites() > 2) 
         {
-          tmBuf.tm_year = gps.getYear()  - 1900;
-          tmBuf.tm_mon  = gps.getMonth() - 1;
-          tmBuf.tm_mday = gps.getDay();
-          tmBuf.tm_hour = gps.getHour();
-          tmBuf.tm_min  = gps.getMinute();
-          tmBuf.tm_sec  = 0;
+          // Compute offset from GPS longitude
+          float lon = gps.getLng();
+          int offs = computeOffsetFromLongitude(lon);
+          Serial.printf("Longitude %.3f → offset %+d\n", lon, offs);
 
-          time_t utcEpoch = mktime(&tmBuf);
+          // Note: Doing nothing with GPS offset at the moment, during debugging, todo later
+          rtc.setTime( 0, gps.getMinute(), ( gps.getHour() - 3 ) % 12, gps.getDay(), gps.getMonth(), gps.getYear());
 
-          float lon = gps.getLng(); 
-          int   offs = computeOffsetFromLongitude(lon);
-          Serial.printf("Lon %.3f → offset %+d\n", lon, offs);
+          Serial.printf("GPS local time: %d-%d-%d %02d:%02d\n", gps.getYear(), gps.getMonth(), gps.getDay(), gps.getHour(), gps.getMinute() );
+          _state = State::Done;
+        }
+      }
 
-          _candidate = utcEpoch + offs * 3600;
+      else
+      {
+        // Read & show the old NVS value
+        _prefs.begin(NVS_NAMESPACE, true);
+        unsigned long before = _prefs.getULong(NVS_KEY_LAST_TS, 0);
+        _prefs.end();
+        if (before) 
+        {
+          time_t epochTime = (time_t)before;  // Cast to time_t
+          struct tm timeinfo;
+          localtime_r(&epochTime, &timeinfo);  // Localtime function to get time components
 
-          struct tm localTm;
-          localtime_r(&_candidate, &localTm);
-          Serial.printf("GPS local: %04d-%02d-%02d %02d:%02d (UTC%+dh)\n",
-            localTm.tm_year + 1900, localTm.tm_mon + 1, localTm.tm_mday,
-            localTm.tm_hour, localTm.tm_min, offs
+          // Extract year, month, day, hour, and minute from struct tm
+          int year = timeinfo.tm_year + 1900;  // tm_year is years since 1900
+          int month = timeinfo.tm_mon + 1;     // tm_mon is 0-based, so we add 1
+          int day = timeinfo.tm_mday;          // Day of the month
+          int hour = timeinfo.tm_hour;         // Hour of the day (0-23)
+          int minute = timeinfo.tm_min;        // Minute of the hour (0-59)
+
+          // Print the derived date and time
+          Serial.printf(
+            "NVS = %04d-%02d-%02d %02d:%02d (epoch %lu)\n",
+            year, month, day, hour, minute, before
           );
 
-        } 
-        else 
-        {
-          Serial.println("Getting time from NVS or fallback to 10:10 AM Jan 1 2025");
-          time_t saved;
-          if (loadFromNVS(saved)) 
-          {
-            _candidate = saved;
-            struct tm lt;
-            localtime_r(&saved, &lt);
-            Serial.printf("Loaded from NVS: %02d:%02d\n", lt.tm_hour, lt.tm_min);
-          } 
-          else           
-          {
-            Serial.println("No NVS: fallback 10:10 AM Jan 1 2025");
-            time_t today = time(nullptr);
-
-            memset(&tmBuf, 0, sizeof(tmBuf));  // clear everything
-            tmBuf.tm_year = 2025;     // e.g. 2025 → 125
-            tmBuf.tm_mon  =  0;       // January (0-based)
-            tmBuf.tm_mday =  1;       // 1st of the month
-            tmBuf.tm_hour = 10;
-            tmBuf.tm_min  = 10;
-            tmBuf.tm_sec  = 0;
-            _candidate = mktime(&tmBuf);
-          }
+          rtc.setTime( 0, minute, hour, day, month, year);
+          Serial.printf("RTC is now: %02d:%02d %02d\n", rtc.getHour(), rtc.getMinute(), rtc.getYear());
+          _state = State::Done;
         }
-        gps.off();
-        _state = State::ApplyTime;
-      }
+        else
+        {
+          rtc.setTime( 0, 10, 10, 23, 4, 2025);          
+          _state = State::Done;
+        }
+      }              
       break;
 
-    case State::ApplyTime: 
+    case State::ApplyTime:
     {
-      applyTimestamp(_candidate, true);
-      Serial.println("RTC set and saved to NVS.");
-      time_t confirm = time(nullptr);
-      struct tm cf;
-      localtime_r(&confirm, &cf);
-      Serial.printf("RTC now %02d:%02d %04d\n", cf.tm_hour, cf.tm_min, cf.tm_year);
+      // Print the new RTC time
+      int currentYear = rtc.getYear();
+      int currentHour = rtc.getHour();
+      int currentMinute = rtc.getMinute();
+
+      Serial.printf("RTC now %02d:%02d %04d\n", currentHour, currentMinute, currentYear);
       _state = State::Done;
       break;
     }
@@ -349,5 +377,3 @@ void RealTimeClock::loop()
       break;
   }
 }
-
-

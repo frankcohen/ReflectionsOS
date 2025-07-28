@@ -40,6 +40,7 @@ NTPClient, Network Time Protocol, https://github.com/arduino-libraries/NTPClient
 ESP32 JPEG Library, https://github.com/bitbank2/JPEGDEC.git
 PNGdec library, https://github.com/bitbank2/PNGdec
 TinyGPSPlus-ESP32, https://github.com/Tinyu-Zhao/TinyGPSPlus-ESP32
+ESP32Time library from https://github.com/fbiego/ESP32Time
 
 Depends on Esspresif ESP32 libraries at
 [https://github.com/espressif/arduino-esp32](https://github.com/espressif/arduino-esp32)
@@ -225,15 +226,6 @@ void BoardInitializationUtility()
   
   Serial.println( F( "Board Initialization Utility started" ) );
   
-  /*
-  // For debugging
-  File myfile1 = SD.open( "/" );
-  storage.rm(myfile1, "/");
-  Serial.println( "Files:" );
-  storage.listDir(SD, "/", 100, true);
-  while(1);
-  */
-
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
   printCentered("Initialize");
@@ -337,16 +329,6 @@ static void smartdelay(unsigned long ms) {
     systemload.logtasktime(millis() - fellow, 3, "tm");
 
   	systemload.loop();
-
-/*
-    if ( watchfaceexperiences.okToLightSleep() )
-    {
-      Serial.println( F("Light sleep") );
-
-      esp_sleep_enable_timer_wakeup( 100000 * 3 );  // Time in microseconds, 3 = 300 milliseconds ms
-      esp_light_sleep_start();                      // Enter light sleep mode
-    }
-*/
 
     systemload.logtasktime( millis() - tasktime, 0, " " );
 
@@ -557,14 +539,26 @@ void printCore0TasksMessages()
   }
 }
 
+void waitForExperienceToStop()
+{
+  while ( experienceservice.active() )
+  {
+    smartdelay(10);
+  }
+}
+
 int nextUp = 0;     // For picking the next experience from a left-to-right gesture
-int nextUp2 = 0;    // For picking between Eyes and Parralax experiences
+int nextUp2 = 0;    // For picking between Eyes and Parallax experiences
 
 void loop() 
 {
   printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services
-  
-  // Sleepy after minutes of WatchFaceMain in MAIN and no activity
+    
+smartdelay(10);
+return;
+
+
+   // Sleepy after minutes of WatchFaceMain in MAIN and no activity
 
   if ( watchfacemain.isSleepy() && ( ! experienceservice.active() ) )
   {
@@ -573,15 +567,10 @@ void loop()
     if ( experienceservice.active() )
     {
       experienceservice.setCurrentState( ExperienceService::TEARDOWN );
-
-      while ( experienceservice.active() )
-      {
-        smartdelay(10);
-      }
+      waitForExperienceToStop();
     }
 
     experienceservice.startExperience( ExperienceService::Sleep );
-
     return;
   }
 
@@ -600,10 +589,11 @@ void loop()
     if ( recentGesture == GESTURE_RIGHT_LEFT ) Serial.println( ">>>GESTURE_RIGHT_LEFT" );
     if ( recentGesture == GESTURE_CIRCULAR ) Serial.println( ">>>GESTURE_CIRCULAR" );
     if ( recentGesture == GESTURE_SLEEP ) { Serial.println( ">>>GESTURE_SLEEP" ); }
+    if ( recentGesture == GESTURE_NONE ) { smartdelay(10); return; }
     else { Serial.println( ">>>Unknown" ); }
   }
 
-  // Go to sleep when gestured or when the battery is low
+ // Go to sleep when gestured or when the battery is low
 
   if ( ( recentGesture == GESTURE_SLEEP ) || battery.isBatteryLow() || watchfacemain.goToSleep() )
   {
@@ -612,11 +602,7 @@ void loop()
     if ( experienceservice.active() )
     {
       experienceservice.setCurrentState( ExperienceService::TEARDOWN );
-
-      while ( experienceservice.active() )
-      {
-        smartdelay(10);
-      }
+      waitForExperienceToStop();
     }
 
     experienceservice.startExperience( ExperienceService::Sleep );
@@ -632,28 +618,6 @@ void loop()
     return;
   }
 
-  if ( accel.isShaken() )
-  {
-    experienceservice.startExperience( ExperienceService::Shaken );
-    smartdelay(10);
-    return;
-  }
-
-  // Return when no gesture detected
-  if ( recentGesture == GESTURE_NONE )
-  {
-    smartdelay(10);
-    return;
-  }
-
-  // Wait until current experience stops
-  if ( experienceservice.getCurrentState() != ExperienceService::STOPPED )
-  {
-    smartdelay(10);
-    return;
-  }
-
-/*
   // Pounce message received, overrides exepriences and main watch face
 
   if ( blesupport.isAnyDevicePounceTrue() && ( millis() - pnctimer > 60000 ))
@@ -665,7 +629,20 @@ void loop()
     experienceservice.startExperience( ExperienceService::Pounce );
     return;
   }
-*/
+
+  if ( accel.isShaken() )
+  {
+    experienceservice.startExperience( ExperienceService::Shaken );
+    smartdelay(10);
+    return;
+  }
+
+  // Wait until current experience stops
+  if ( experienceservice.getCurrentState() != ExperienceService::STOPPED )
+  {
+    smartdelay(10);
+    return;
+  }
 
   // Wait 15 seconds after an experience before doing another experienxce
 
@@ -674,18 +651,6 @@ void loop()
     smartdelay(10);
     return;
   }
-
-/*
-  // Wait 60 seconds after a CatsPlay experience before another CatsPlay
-
-  if ( ( blesupport.getRemoteDevicesCount() > 0 ) && ( ( millis() - afterCatsPlay) > ( 60 * 1000 ) ) ) 
-  {
-    afterCatsPlay = millis();
-    experienceservice.startExperience( ExperienceService::CatsPlay );
-    smartdelay(10);
-    return;
-  }
-*/
 
   if ( ! watchfacemain.isMain() ) return;   // No new gestures (except for sleep) unless watchface is on MAIN
 
@@ -709,10 +674,11 @@ void loop()
   if ( recentGesture == GESTURE_RIGHT_LEFT )
   {  
     experienceservice.startExperience( ExperienceService::MysticCat );
+    smartdelay(10);
     return;
   } 
   
-  // Down gives demo of all experiences
+  // Left to Right gives all experiences one-at-a-time
 
   if ( recentGesture == GESTURE_LEFT_RIGHT )
   {

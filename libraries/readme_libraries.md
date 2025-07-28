@@ -50,6 +50,7 @@ TinyGPSPlus-ESP32, https://github.com/Tinyu-Zhao/TinyGPSPlus-ESP32
 URLEncode, https://github.com/plageoj/urlencode
 AutoConnect by Hieromon, https://github.com/Hieromon/AutoConnect
 PNGdec library, https://github.com/bitbank2/PNGdec
+ESP32Time library from https://github.com/fbiego/ESP32Time
 
 Depends on Esspresif ESP32 libraries at
 [https://github.com/espressif/arduino-esp32](https://github.com/espressif/arduino-esp32)

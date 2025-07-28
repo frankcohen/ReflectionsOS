@@ -20,8 +20,24 @@ void GPS::begin()
 { 
   Serial2.begin(GPSBaud, SERIAL_8N1, RXPin, TXPin);
 
+  // --- Send GPS commands ---
+  sendCommandToGPS("$PMTK101*32");      // Hot Start
+  delay(200);
+  sendCommandToGPS("$PGKC115,3*2F");    // Set GNSS mode to GPS + Beidou
+  delay(200);
+
+
   active = true;
   gpstime = millis();  
+}
+
+void GPS::sendCommandToGPS(const char* cmd)
+{
+  Serial2.print(cmd);
+  Serial2.print("\r\n");  // Add CR+LF
+  
+  //Serial.print("Sent to GPS: ");
+  //Serial.println(cmd);
 }
 
 void GPS::on()

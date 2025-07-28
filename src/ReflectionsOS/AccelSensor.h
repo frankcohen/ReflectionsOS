@@ -25,8 +25,11 @@
 #include "Utils.h"
 #include "Logger.h"
 
+#include "Video.h"
+
 extern Utils utils;
 extern LOGGER logger;
+extern Video video;
 
 #define WAIT_TIME       2000
 #define SAMPLE_RATE     200       // Sample every x milliseconds

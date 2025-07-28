@@ -25,7 +25,6 @@
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
 
-extern TOF tof;
 extern Compass compass;
 extern Haptic haptic;
 extern AccelSensor accel;

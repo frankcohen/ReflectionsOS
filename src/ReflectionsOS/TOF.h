@@ -42,6 +42,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <SparkFun_VL53L5CX_Library.h>
+#include "Video.h"
 
 // ——— CONFIGURATION ———
 #define SDA_PIN               3

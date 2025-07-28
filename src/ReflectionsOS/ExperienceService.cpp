@@ -39,128 +39,59 @@ the #include list and class instantiation method below.
 #include "Experience_EasterEggFrank.h"
 #include "Experience_EasterEggTerri.h"
 
-ExperienceService::ExperienceService() : currentExperience( nullptr ), currentState( STOPPED ) 
+ExperienceService::ExperienceService() : currentExperience(nullptr), currentState(STOPPED) 
 {
-  // Add instances of each experience to the vector, do not change the order
+    // List of experience types to create
+    const char* experienceNames[] = {
+        "Experience_Awake", "Experience_ShowTime", "Experience_Sleep", "Experience_Chastise",
+        "Experience_Eyes", "Experience_Parallax", "Experience_Hover", "Experience_CatsPlay",
+        "Experience_MysticCat", "Experience_Shaken", "Experience_GettingSleepy", "Experience_Pounce",
+        "Experience_EasterEggFrank", "Experience_EasterEggTerri"
+    };
 
-  // TOF experiences
-  
-  makeExp = new Experience_Awake();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_Awake" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-  
-  makeExp = new Experience_ShowTime();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_ShowTime" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
+    // Loop over the experience names, dynamically creating each experience and adding to the vector
+    for (const char* expName : experienceNames) {
+        Experience* makeExp = nullptr;
+        
+        if (strcmp(expName, "Experience_Awake") == 0) {
+            makeExp = new Experience_Awake();
+        } else if (strcmp(expName, "Experience_ShowTime") == 0) {
+            makeExp = new Experience_ShowTime();
+        } else if (strcmp(expName, "Experience_Sleep") == 0) {
+            makeExp = new Experience_Sleep();
+        } else if (strcmp(expName, "Experience_Chastise") == 0) {
+            makeExp = new Experience_Chastise();
+        } else if (strcmp(expName, "Experience_Eyes") == 0) {
+            makeExp = new Experience_Eyes();
+        } else if (strcmp(expName, "Experience_Parallax") == 0) {
+            makeExp = new Experience_Parallax();
+        } else if (strcmp(expName, "Experience_Hover") == 0) {
+            makeExp = new Experience_Hover();
+        } else if (strcmp(expName, "Experience_CatsPlay") == 0) {
+            makeExp = new Experience_CatsPlay();
+        } else if (strcmp(expName, "Experience_MysticCat") == 0) {
+            makeExp = new Experience_MysticCat();
+        } else if (strcmp(expName, "Experience_Shaken") == 0) {
+            makeExp = new Experience_Shaken();
+        } else if (strcmp(expName, "Experience_GettingSleepy") == 0) {
+            makeExp = new Experience_GettingSleepy();
+        } else if (strcmp(expName, "Experience_Pounce") == 0) {
+            makeExp = new Experience_Pounce();
+        } else if (strcmp(expName, "Experience_EasterEggFrank") == 0) {
+            makeExp = new Experience_EasterEggFrank();
+        } else if (strcmp(expName, "Experience_EasterEggTerri") == 0) {
+            makeExp = new Experience_EasterEggTerri();
+        }
 
-  makeExp = new Experience_Sleep();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_Sleep" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-
-  makeExp = new Experience_Chastise();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_Chastise" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-
-  makeExp = new Experience_Eyes();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_Eyes" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-
-  makeExp = new Experience_Parallax();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_Parallax" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-
-  makeExp = new Experience_Hover();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_Hover" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-
-  // BLE experiences
-
-  makeExp = new Experience_CatsPlay();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_CatsPlay" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-
-  // Accel experiences
-
-  makeExp = new Experience_MysticCat();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_MysticCat" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-
-  makeExp = new Experience_Shaken();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_Shaken" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-
-  makeExp = new Experience_GettingSleepy();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_GettingSleepy" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-
-  makeExp = new Experience_Pounce();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_Pounce" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-
-  makeExp = new Experience_EasterEggFrank();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_EasterEggFrank" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
-
-  makeExp = new Experience_EasterEggTerri();
-  if ( makeExp == nullptr )
-  {
-    Serial.println( F( "ExperienceService error making Experience_EasterEggTerri" ) );
-    while(1);
-  }
-  experiences.push_back( makeExp );
+        if (makeExp == nullptr) {
+            Serial.printf("ExperienceService error making %s\n", expName);
+            video.stopOnError( expName, F("unable"), F("to"), F("create"), F(" "));
+        } else {
+            experiences.push_back(makeExp);
+        }
+    }
 }
+
 
 String ExperienceService::experienceNameToString( int experience ) 
 {
@@ -258,7 +189,7 @@ void ExperienceService::operateExperience()
       if ( currentExperience == NULL )
       {
         Serial.println( F("ExperienceService setup currentExperience is null"));
-        while(1);
+        video.stopOnError( F( "currExp" ), F( "is null" ), F( " " ), F( " " ), F( " " ) );
       }
       
       currentExperience->setup();
@@ -273,7 +204,7 @@ void ExperienceService::operateExperience()
       if ( currentExperience == NULL )
       {
         Serial.println( F("ExperienceService run currentExperience is null"));
-        while(1);
+        video.stopOnError( F( "currExp" ), F( "is null" ), F( " " ), F( " " ), F( " " ) );
       }
 
       currentExperience->run();

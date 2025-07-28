@@ -7,6 +7,8 @@
  Licensed under GPL v3 Open Source Software
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
+
+ Requires ESP32Time library from https://github.com/fbiego/ESP32Time
 */
 
 #ifndef _RealTimeClock_
@@ -16,6 +18,7 @@
 #include "secrets.h"
 #include "Arduino.h"
 #include "Logger.h"
+
 #include "time.h"
 #include "gps.h"
 #include <sys/time.h>
@@ -25,6 +28,9 @@
 #include <WiFi.h>
 #include <ArduinoJson.h>
 #include <cmath>
+#include <sys/time.h>
+#include <time.h>
+#include <ESP32Time.h>
 
 // Configuration constants
 #define MIN_VALID_YEAR         2023
@@ -74,6 +80,7 @@ private:
   void applyTimestamp(time_t t, bool saveToNVS = true);
   bool loadFromNVS(time_t &t);
   void periodicSave();
+  time_t calculateEpoch(int year, int month, int day, int hour, int minute, int second);
 
   const char* _tzString = nullptr;  // holds POSIX TZ or API zoneName
 

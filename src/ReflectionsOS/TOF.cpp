@@ -23,17 +23,17 @@
 
 #include "TOF.h"
 
+extern Video video;
+
 TOF::TOF() {}
 
 void TOF::begin() 
 {
   if (!tof.begin()) {
-    Serial.println("VL53L5CX init failed");
-    while (1);
+    Serial.println("TOF failed");
+    video.stopOnError( "TOF failed", "to start", " ", " ", " " );
   }
-
-  Serial.println("VL53L5CX TOF sensor started");
-
+ 
   // Configure sensor
   tof.setRangingFrequency(FRAME_RATE);
   tof.setResolution(64);
@@ -41,7 +41,7 @@ void TOF::begin()
   if (!tof.startRanging()) 
   {
     Serial.println("TOF failed to start ranging. Stopping");
-    while (1) delay(10);
+    video.stopOnError( "TOF failed", "to start", "ranging", " ", " " );
   }
 
   lastRead = millis();
@@ -269,12 +269,12 @@ void TOF::loop() {
   // Ignore small movements, and when there is enough of them declare a circular gesture
   if (fabs( delta ) < 0.08 )
   {
-    
+    /* 
     Serial.print( "ignoring " );
     Serial.println( delta );
-
     Serial.print( "Cir count " );
     Serial.println( circCnt );
+    */
 
     circCnt++;
     if ( circCnt > CIRCULAR_MAX )
@@ -446,8 +446,9 @@ void TOF::loop() {
     return;
   }
 
-  Serial.print( "circCnt " );
-  Serial.println( circCnt );
+  //Serial.print( "circCnt " );
+  //Serial.println( circCnt );
+  
   circCnt++;
   if ( circCnt > CIRCULAR_MAX )
   {

@@ -108,48 +108,37 @@ void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, Str
 
   ringtimer = millis();
 
-  while(1)
+  gfx->fillScreen( COLOR_PANTONE_577 );
+  gfx -> fillRect( 40, 40, 160, 160, COLOR_PANTONE_662 );
+  gfx -> drawRect( 39, 39, 162, 162, COLOR_PANTONE_102 );
+  gfx -> drawRect( 40, 40, 160, 160, COLOR_PANTONE_151 );
+
+  gfx->setFont(&ScienceFair14pt7b);
+  gfx->setTextColor( COLOR_PANTONE_102 );
+  gfx->setCursor( leftmargin, topmargin - 5 );
+  gfx->println(F("OH BOTHER"));
+
+  gfx->setCursor( leftmargin, topmargin + ( 1 * linespacing ) );
+  gfx->setFont(&ScienceFair14pt7b);
+  gfx->setTextColor( COLOR_PANTONE_310 );
+  gfx->println( msg1 );
+
+  gfx->setCursor( leftmargin, topmargin + ( 2 * linespacing ) );
+  gfx->println( msg2 );
+
+  gfx->setCursor( leftmargin, topmargin + ( 3 * linespacing ) );
+  gfx->println( msg3 );
+
+  gfx->setCursor( leftmargin, topmargin + ( 4 * linespacing ) );
+  gfx->println( msg4 );
+
+  gfx->setCursor( leftmargin, topmargin + ( 5 * linespacing ) );
+  gfx->println( msg5 );
+  
+  while (1)
   {
-    int16_t diam = 20;
-    int16_t x = random( 40, 200 );
-    int16_t y = random( 40, 200 );
-
-    gfx -> drawCircle( x, y, diam, COLOR_BACKGROUND);
-    gfx -> drawCircle( x, y, diam - 1, COLOR_BACKGROUND);
-    gfx -> drawCircle( x, y, diam - 2, COLOR_LEADING);
-
-    gfx -> drawCircle( x, y, diam - 3, COLOR_RING);
-    gfx -> drawCircle( x, y, diam - 4, COLOR_TRAILING);
-
-    gfx -> fillRect( 40, 40, 160, 160, COLOR_TEXT_BACKGROUND );
-    gfx -> drawRect( 39, 39, 162, 162, COLOR_TEXT_BORDER );
-    gfx -> drawRect( 40, 40, 160, 160, COLOR_TEXT_BORDER );
-
-    gfx->setFont(&ScienceFair14pt7b);
-    gfx->setTextColor( COLOR_LEADING );
-    gfx->setCursor( leftmargin, topmargin - 5 );
-    gfx->println(F("REFLECTIONS"));
-
-    gfx->setCursor( leftmargin, topmargin + ( 1 * linespacing ) );
-    gfx->setFont(&ScienceFair14pt7b);
-    gfx->setTextColor( COLOR_TEXT );
-    gfx->println( msg1 );
-
-    gfx->setCursor( leftmargin, topmargin + ( 2 * linespacing ) );
-    gfx->setTextColor( COLOR_TEXT );
-    gfx->println( msg2 );
-
-    gfx->setCursor( leftmargin, topmargin + ( 3 * linespacing ) );
-    gfx->println( msg3 );
-
-    gfx->setCursor( leftmargin, topmargin + ( 4 * linespacing ) );
-    gfx->println( msg4 );
-
-    gfx->setCursor( leftmargin, topmargin + ( 5 * linespacing ) );
-    gfx->println( msg5 );
-    
     delay(500);
-  }
+  }  
 }
 
 // Returns milliseconds since the video started playing

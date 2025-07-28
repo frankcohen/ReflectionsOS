@@ -21,6 +21,8 @@
 #include "Wire.h"
 #include "Logger.h"
 #include <esp32-hal-adc.h>    // defines analogSetWidth, analogSetPinAttenuation, ADC_11db, etc.
+#include "Video.h"
+
 class Hardware
 {
   public:

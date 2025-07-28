@@ -12,6 +12,7 @@
 #include "Hardware.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
+extern Video video;
 
 Hardware::Hardware(){}
 
@@ -37,7 +38,7 @@ void Hardware::begin()
     Serial.println(F("SD storage failed"));
     Serial.println(F("Stopping"));
     NANDMounted = false;
-    while(1);
+    video.stopOnError( F( "Storage" ), F( "failed" ), F( "to" ), F( "start" ), F( " " ) );
   }
   else
   {

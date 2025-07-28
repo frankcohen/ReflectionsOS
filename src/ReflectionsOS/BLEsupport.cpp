@@ -86,7 +86,7 @@ void BLEsupport::ScanCallbacks::onResult(const NimBLEAdvertisedDevice* advertise
   }
 
   data.rssi = advertisedDevice->getRSSI();
-  data.pounce = false;  // Set pounce state as needed.
+  data.pounce = false; //_parent->getPounce();
   data.latitude = gps.getLat();
   data.longitude = gps.getLng();
 
@@ -123,7 +123,7 @@ BLEsupport::BLEsupport() : scanCallbacks(this) {
   pService = nullptr;
   pCharacteristic = nullptr;
   pAdvertising = nullptr;
-  lastServerUpdate = 0;
+  lastServerUpdate = 0; //millis();
 }
 
 void BLEsupport::begin() 
@@ -188,7 +188,7 @@ String BLEsupport::getJsonData()
     doc["heading"] = 0;
   }
 
-  doc["pounce"] = false;
+  doc["pounce"] = false; // getPounce();
   doc["latitude"] = gps.getLat();
   doc["longitude"] = gps.getLng();
   String output;
@@ -258,6 +258,9 @@ bool BLEsupport::getPounce()
 
 void BLEsupport::loop()
 {
+
+  return;
+  
   unsigned long currentMillis = millis();
   
   // Print remote devices' data every 30 seconds.
@@ -266,7 +269,7 @@ void BLEsupport::loop()
     lastPrintTime = currentMillis;
   }
 
-  // Remove stale remote devices (timeout after 2 minutes).
+  // Remove stale remote devices (timeout after 1 minute)
   for ( auto it = remoteDevices.begin(); it != remoteDevices.end(); ) 
   {
     if ( currentMillis - it->second.lastUpdate >= 60000 ) 
@@ -281,15 +284,17 @@ void BLEsupport::loop()
     }
   }
   
-  // Update the server's characteristic value every 20 seconds.
-  if (currentMillis - lastServerUpdate >= 20000) {
-    if (pCharacteristic != nullptr) {
+  // Update the server's characteristic value every 20 seconds
+  if (currentMillis - lastServerUpdate >= 20000) 
+  {
+    lastServerUpdate = currentMillis;
+    if (pCharacteristic != nullptr) 
+    {
       String json = getJsonData();
       pCharacteristic->setValue((uint8_t*)json.c_str(), json.length());
       Serial.print("Server updated: ");
       Serial.println( json );
     }
-    lastServerUpdate = currentMillis;
   }
 
   if ( millis() - pnctime > 30000 )

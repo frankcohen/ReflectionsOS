@@ -42,12 +42,10 @@ Note: To play 240x240 MJPEG uncompressed files requires the audio at
 extern MjpegRunner mjpegrunner; // Declare the external instance
 
 #include "Logger.h"
-#include "TOF.h"
 #include "Battery.h"
 #include "Wifi.h"
 
 extern LOGGER logger;
-extern TOF tof;
 extern Battery battery;
 extern Wifi wifi;
 
@@ -57,7 +55,7 @@ extern Wifi wifi;
 
 #define leftmargin 48
 #define topmargin 75
-#define linespacing 20
+#define linespacing 24
 #define maxchars 16
 
 class Video

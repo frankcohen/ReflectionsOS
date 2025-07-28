@@ -92,7 +92,7 @@ void AccelSensor::begin() {
 
   if (!lis.begin(accelAddress)) {
     Serial.println(F("Accelerometer did not start, stopping"));
-    while (1) yield();
+     video.stopOnError( "Accel", "did not", "start", " ", " " );
   }
 
   // configure sensor for single‐click detection on Z:
@@ -491,10 +491,12 @@ void AccelSensor::loop()
     shakentime2 = millis();
     shakencount++;
 
+    /*
     Serial.print( "Accel shaken ");
     Serial.print( shakencount );
     Serial.print( " magnow " );
     Serial.println( magnow );
+    */
   }
 
 }  
