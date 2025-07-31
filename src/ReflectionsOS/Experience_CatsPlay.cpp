@@ -91,7 +91,7 @@ void Experience_CatsPlay::run()
 
   if ( accel.getSingleTap() )
   {
-    Serial.println( "CatsPlay start pounce to remote devices" );
+    Serial.println( "CatsPlay send pounce to other cats" );
     blesupport.setPounce( true );    
   }
 
@@ -101,7 +101,7 @@ void Experience_CatsPlay::run()
   {
     setRunComplete(true);  // Signal run complete
 
-    video.startVideo( Getting_Sleepy_video );
+    // video.startVideo( Getting_Sleepy_video );
   }
 }
 

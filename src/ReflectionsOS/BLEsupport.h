@@ -19,11 +19,12 @@
 #ifndef BLE_SUPPORT_H
 #define BLE_SUPPORT_H
 
-#include <Arduino.h>
 #include "NimBLEDevice.h"
 #include "NimBLEScan.h"             // Contains NimBLEScanCallbacks in 2.2.3
 #include "NimBLEAdvertisementData.h"
 #include "NimBLEAdvertising.h"
+
+#include <Arduino.h>
 #include <ArduinoJson.h>
 
 #include <map>
@@ -31,12 +32,10 @@
 #include <vector>
 
 #include "config.h"
-#include "secrets.h"
 #include "Logger.h"
 #include "Compass.h"
 #include "GPS.h"
 #include "RealTimeClock.h"
-#include "Wifi.h"
 
 extern LOGGER logger;
 extern Compass compass;
@@ -44,107 +43,70 @@ extern GPS gps;
 extern RealTimeClock realtimeclock;
 extern Wifi wifi;
 
-static NimBLEServer* pServer;
-static NimBLEService* pService;
-static NimBLECharacteristic* pCharacteristic;
-static NimBLEAdvertising* pAdvertising;    
-static const NimBLEAdvertisedDevice* advDevice;
-static bool doConnect  = false;
-static uint32_t scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
-static bool mypounce;
+#define POUNCETIMEOUT           10000   // Timeout pounce
 
-// Timing definitions (milliseconds)
-#define scanInterval 1000    // Scan cycle in milliseconds
-#define scanWindow 1000      // How long the scan waits
-#define advInterval 10000    // Advertise every 10 seconds (10000 ms)
-
-#define SCAN_TIME_MS            0       // 0 = scan forever
-#define OWN_WATCHDOG_TIMEOUT    60000   // 20 seconds until our advertisement is considered stale
-#define MAX_DEVICES             10      // Maximum number of remote devices to track
-#define BLE_CLIENT_SCAN_TIME    60000   // Client scan duration
-#define BLE_CLIENT_ATTEMPT_TIME 60000   // How long the client tries to connect
-
-// Structure to hold remote device information.
-struct ReflectionsData {
-  String devicename;
-  unsigned long lastUpdate;
-  int heading;
-  bool pounce;
-  float latitude;
-  float longitude;
-  int rssi;
+struct PounceData {
+    bool pounce;
+    unsigned long timestamp;
 };
 
-class BLEsupport 
-{
+struct DeviceConnection {
+    unsigned long timestamp;
+};
+
+class BLEsupport {
   public:
     BLEsupport();
+    void begin();
+    void loop();
+    
+    // Function to send JSON data to connected clients
+    void sendJsonData(const JsonDocument& doc);
+    // Function to read JSON data from the characteristic
+    bool readJsonData(JsonDocument& doc);
 
-    void begin();         // Initialize BLE (server, advertising, scanning)
-    void loop();          // Process BLE events (connections, watchdog, etc.)
+    // Function to print the list of remote devices matching the UUIDs
+    void printRemoteDevices();
+    
+    // Function to set heading, pounce, latitude, and longitude in JSON data
+    void setJsonData(const String& devicename, float heading, bool pounce, float latitude, float longitude);
 
-    String getJsonData();
-    void printRemoteDevices();  // For debugging: print list of remote devices
-    unsigned long lastServerUpdate;    
-    int getRemoteDevicesCount();  // Devices in BLE range
+    // Function to check if any device has sent a pounce value of true in the last 10 seconds
     bool isAnyDevicePounceTrue();
 
     void setPounce( bool pnc );
     bool getPounce();
 
-    // Helper function used by the scan callback to connect to remote devices.
-    void connectAndRead(NimBLEAdvertisedDevice* advertisedDevice);
-
-    // Map to store remote device data; key is the device address.
-    std::map<String, ReflectionsData> remoteDevices;
-    
-    // **Move ClientCallbacks here to public access**
-    class ClientCallbacks : public NimBLEClientCallbacks 
-    {
-      public:
-        void onConnect(NimBLEClient* pClient) override { Serial.printf(F("Connected\n")); }
-        
-        void onDisconnect(NimBLEClient* pClient, int reason) override 
-        {
-            Serial.printf(F("%s Disconnected, reason = %d - Starting scan\n"), pClient->getPeerAddress().toString().c_str(), reason);
-            NimBLEDevice::getScan()->start(scanTimeMs, false, true);
-        }
-    };
+    int getRemoteDevicesCount();
 
   private:
-    unsigned long compasstime;
-    unsigned long lastAdvUpdate;
-    unsigned long lastPrintTime;  // Timer for printing devices' data
-    unsigned long pnctime;
-    bool mypounce;
+    NimBLEServer* pServer;
+    NimBLEService* pService;
+    NimBLECharacteristic* pCharacteristic;
+    NimBLEAdvertising* pAdvertising;
 
-    bool connectToServer();
+    std::vector<PounceData> pounceDataList;
 
-    void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
+    // MAC addresses of unique devices that have connected
+    std::vector<std::string> uniqueDeviceAddresses;
 
-    // ----------------- SERVER CALLBACK -----------------
-    class MyCharacteristicCallbacks : public NimBLECharacteristicCallbacks 
-    {
-      public:
-        MyCharacteristicCallbacks(BLEsupport* parent);
-        void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;
-      private:
-        BLEsupport* _parent;
-    };
+    // Timestamp of the last received pounce message with pounce = true
+    unsigned long lastPounceTimestamp;
 
-    // ----------------- CLIENT SCAN CALLBACK -----------------
-    // Use NimBLEScanCallbacks (available in 2.2.3).
-
-    class ScanCallbacks : public NimBLEScanCallbacks {
-      public:
-        // Constructor takes a pointer to the parent BLEsupport instance.
-        ScanCallbacks(BLEsupport* parent);
-        void onResult(const NimBLEAdvertisedDevice* advertisedDevice) override;
-        void onScanEnd(const NimBLEScanResults& results, int reason) override;
-      private:
-        BLEsupport* _parent;
-    } scanCallbacks;
+    // Function to handle BLE client connections and data transfer
+    void handleBLEConnections();
+    // Function to setup the server and characteristic
+    void setupServer();
     
+    // Function to handle device scan results
+    void scanForDevices();
+
+    // JSON document for sending data
+    StaticJsonDocument<200> jsonData;
+
+    bool mypounce;
+    unsigned long pnctime;
 };
+
 
 #endif // BLE_SUPPORT_H

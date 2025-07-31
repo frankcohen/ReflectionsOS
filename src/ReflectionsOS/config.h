@@ -18,8 +18,6 @@ Read the license in the license.txt file that comes with this code.
 #ifndef _config_
 #define _config_
 
-#include "NimBLEDevice.h"
-
 /* Experience videos */
 
 #define OutOfTheBox_video "178e801340f79249dbb2b34b3e64eda4"     
@@ -27,7 +25,7 @@ Read the license in the license.txt file that comes with this code.
 #define Chastise_video "29eebc0d0804260f934575ceaedc50b1"
 
 #define CatsPlayFound_video "5a9d9f72264522abc51300f9e772b136"
-#define Pounce_video "5e1995361aeeba66eb3a927d5453e105"        
+#define Pounce_video "f8a8ca14d0240f8d74fd10d38d412106"        
 
 #define CatsPlay1_video "001c0e74e770ec34c053879be10d1a7e"    // E
 #define CatsPlay2_video "6216cf1923de998474b25afeda659448"    // NE
@@ -176,10 +174,9 @@ Read the license in the license.txt file that comes with this code.
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
-static const NimBLEUUID BLE_SERVICE_UUID( "7d9029fe-48d5-49e0-b9ad-8fd7dac70354" );
-static const NimBLEUUID BLE_CHARACTERISTIC_UUID( "33a03886-0db0-43c8-90a2-bca6a8c7eaf0" );
-
-#define bleServerName "REFLECTIONS"
+#define BLE_SERVER_UUID         "7d9029fe-48d5-49e0-b9ad-8fd7dac70354"
+#define BLE_CHARACTERISTIC_UUID "33a03886-0db0-43c8-90a2-bca6a8c7eaf0"
+#define BLE_SERVER_NAME         "REFLECTIONS"
 
 // LED
 

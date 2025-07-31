@@ -80,7 +80,7 @@ static int WatchFaceJPEGDraw(JPEGDRAW *pDraw)
 }
 
 // Function to draw pixels to the display
-void WatchFacePNGDraw(PNGDRAW *pDraw)
+int WatchFacePNGDraw(PNGDRAW *pDraw)
 {
   uint16_t usPixels[320];
   uint8_t usMask[320];
@@ -88,6 +88,8 @@ void WatchFacePNGDraw(PNGDRAW *pDraw)
   png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_LITTLE_ENDIAN, 0x00000000);
   png.getAlphaMask(pDraw, usMask, 1);
   gfx->draw16bitRGBBitmapWithMask(0, pDraw->y, usPixels, usMask, pDraw->iWidth, 1);
+
+  return 0; // success
 }
 
 void *myOpen( const char* filename, int32_t *size )

@@ -142,11 +142,14 @@ ExperienceService experienceservice;
 
 int rowCount = 0;
 unsigned long statstime = millis();
-unsigned long pnctimer = millis();
-unsigned long watchdog = millis();
+unsigned long pounceTimer = millis();
+unsigned long catNearBy = millis();
 unsigned long afterTimer = millis();
 unsigned long gestureTimer = millis();
 unsigned long afterCatsPlay = millis();
+
+int nextUp = 0;     // For picking the next experience from a left-to-right gesture
+int nextUp2 = 0;    // For picking between Eyes and Parallax experiences
 
 const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
 
@@ -210,8 +213,27 @@ void BIUfaled( String text )
   while (1);
 }
 
+// Clears the NVS Flash memory
+
+void clearNVSMemory()
+{
+  Serial.println( F("nvs_flash_init()") );
+  nvs_flash_erase();
+  esp_err_t ret = nvs_flash_init();
+  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      // NVS partition was truncated and needs to be erased
+      Serial.println( F("nvs_flash_erase()") );
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret = nvs_flash_init();
+  }
+  ESP_ERROR_CHECK(ret);
+  Serial.println( F("nvs done") );
+}
+
 /*
-Reflections board initialization utility
+  Reflections board initialization utility
+  Mounts the SD, connects to Wifi, replicates the disk image tar file,
+  unpacks the tar, restarts
 */
 
 void BoardInitializationUtility()
@@ -345,6 +367,9 @@ void setup()
   delay(200);
   Serial.setDebugOutput(true);
 
+  //utils.WireScan();   // Shows devices on the I2S bus, including compass, TOF, accelerometeer
+  //clearNVSMemory()    // Clear the non-volitile storage
+
   esp_sleep_wakeup_cause_t reason = esp_sleep_get_wakeup_cause();
   if (reason == ESP_SLEEP_WAKEUP_EXT1) 
   {
@@ -357,6 +382,9 @@ void setup()
     Serial.println(F("ReflectionsOS"));
   }
 
+  systemload.begin();  // System load monitor
+  systemload.printHeapSpace( "Start" );
+
   // Doing this here to get some color onto the display quickly
   // for the usere to think the startup is quick
 
@@ -368,41 +396,15 @@ void setup()
 
   // Core 1 services
 
-  systemload.begin();  // System load monitor
-  experiencestats.begin();
-  systemload.printHeapSpace( "Start" );
-
   mjpegrunner.begin();
-  systemload.printHeapSpace( "MjpegRunner" );
+  systemload.printHeapSpace( "Video" );
 
   storage.begin();
-  storage.setMounted(hardware.getMounted());
-
-  systemload.printHeapSpace( "Storage" );
-
-  //utils.WireScan();   // Shows devices on the I2S bus, including compass, TOF, accelerometeer
-
-  /*
-  // Clears the NVS Flash memory
-
-  Serial.println( F("nvs_flash_init()") );
-  nvs_flash_erase();
-  esp_err_t ret = nvs_flash_init();
-  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-      // NVS partition was truncated and needs to be erased
-      Serial.println( F("nvs_flash_erase()") );
-      ESP_ERROR_CHECK(nvs_flash_erase());
-      ret = nvs_flash_init();
-  }
-  ESP_ERROR_CHECK(ret);
-  Serial.println( F("nvs done") );
-  */
+  storage.setMounted( hardware.getMounted() );
 
   logger.begin();
   logger.setEchoToSerial(true);
   logger.setEchoToServer(false);
-
-  systemload.printHeapSpace( F("Logger") );
 
   String hostinfo = F("Host: ");
   hostinfo += wifi.getDeviceName().c_str();
@@ -424,14 +426,12 @@ void setup()
   gps.begin();
   compass.begin();
   utils.begin();
+  realtimeclock.begin();
 
   systemload.printHeapSpace( F("Devices") );
 
   BoardInitializationUtility();   // Installs needed video and other files
 
-  systemload.printHeapSpace( F("Board-init") );
-
-  realtimeclock.begin();
   blesupport.begin();
 
   systemload.printHeapSpace( "BLE" );
@@ -450,26 +450,20 @@ void setup()
   xTaskCreatePinnedToCore(
     Core0Tasks,    // Task function
     "Core0Tasks",  // Name of the task
-    16384,         // Stack size (in words, not bytes)
+    32768,         // Stack size (in words, not bytes)
     NULL,          // Task input parameter
     1,             // Priority of the task
     NULL,          // Task handle
     0              // Core where the task should run (core 0)
   );
-
-  if (reason == ESP_SLEEP_WAKEUP_EXT1) 
-  {
-    video.startVideo( WatchFaceOpener_video );
-  } 
-  else 
-  {
-    video.startVideo( OutOfTheBox_video );
-  }
   
   // Experience initialization
 
   textmessageservice.begin();
   experienceservice.begin();
+
+  experienceservice.startExperience( ExperienceService::Awake );
+
   watchfaceexperiences.begin();
   watchfacemain.begin();
   
@@ -547,30 +541,60 @@ void waitForExperienceToStop()
   }
 }
 
-int nextUp = 0;     // For picking the next experience from a left-to-right gesture
-int nextUp2 = 0;    // For picking between Eyes and Parallax experiences
+/*
+  Main loop for controlling experiences and main watch face
+*/
+
+bool pouncetest = true;
 
 void loop() 
 {
   printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services
-    
-smartdelay(10);
-return;
 
-
-   // Sleepy after minutes of WatchFaceMain in MAIN and no activity
-
-  if ( watchfacemain.isSleepy() && ( ! experienceservice.active() ) )
+  /*
+  Serial.print( "isAnyDevicePounceTrue " );
+  Serial.print( blesupport.isAnyDevicePounceTrue() );
+  Serial.print( " pounceTimer " );
+  Serial.println( millis() - pounceTimer );
+  */
+  
+/*
+  if ( millis() - pounceTimer > 10000 )
   {
-    Serial.println("Getting sleepy");
-
-    if ( experienceservice.active() )
+    pounceTimer = millis();
+    if ( pouncetest )
     {
-      experienceservice.setCurrentState( ExperienceService::TEARDOWN );
-      waitForExperienceToStop();
-    }
+      pouncetest = false;
 
-    experienceservice.startExperience( ExperienceService::Sleep );
+      Serial.println( "CatsPlay turn pounce on" );
+      blesupport.setPounce( true );    
+
+    }
+    else
+    {
+      pouncetest = true;
+      Serial.println( "CatsPlay turn pounce off" );
+      blesupport.setPounce( false );    
+    }
+  }
+*/
+
+
+
+
+
+  // Pounce message received
+  if ( ( blesupport.isAnyDevicePounceTrue() ) && ( millis() - pounceTimer > 10000 ))
+  {
+    pounceTimer = millis();
+    Serial.println( "Pounce from an other device" );
+    textmessageservice.deactivate();
+    experienceservice.startExperience( ExperienceService::Pounce );
+    waitForExperienceToStop();
+    Serial.println( "Pounce done" );
+    // Put cat into deep sleep  
+    //hardware.powerDownComponents();
+    //esp_deep_sleep_start();
     return;
   }
 
@@ -578,6 +602,28 @@ return;
   {
     smartdelay(10);
     return;
+  }
+  
+  // Sleepy after minutes of WatchFaceMain in MAIN and no activity
+
+  if ( watchfacemain.isSleepy() )
+  {
+    Serial.println("Getting sleepy");
+    experienceservice.startExperience( ExperienceService::Sleep );
+    smartdelay(10);
+    return;
+  }
+
+  // There's another cat nearby!
+
+  if ( ( blesupport.getRemoteDevicesCount() > 0 ) && ( millis() - catNearBy > 60000 ) )
+  {
+    catNearBy = millis();
+    Serial.println( "Cats Play" );
+    textmessageservice.deactivate();
+    experienceservice.startExperience( ExperienceService::CatsPlay );
+    smartdelay(10);
+    return;   
   }
 
   int recentGesture = tof.getGesture();
@@ -598,35 +644,11 @@ return;
   if ( ( recentGesture == GESTURE_SLEEP ) || battery.isBatteryLow() || watchfacemain.goToSleep() )
   {
     Serial.println("Going to sleep for gesture or low battery");
-
-    if ( experienceservice.active() )
-    {
-      experienceservice.setCurrentState( ExperienceService::TEARDOWN );
-      waitForExperienceToStop();
-    }
-
     experienceservice.startExperience( ExperienceService::Sleep );
-
-    while ( experienceservice.active() )
-    {
-      smartdelay(10);
-    }
- 
+    waitForExperienceToStop();
     // Put cat into deep sleep  
-    hardware.powerDownComponents();
-    esp_deep_sleep_start();
-    return;
-  }
-
-  // Pounce message received, overrides exepriences and main watch face
-
-  if ( blesupport.isAnyDevicePounceTrue() && ( millis() - pnctimer > 60000 ))
-  {
-    Serial.println( "Pounce from an other device" );
-    video.stopVideo();
-    pnctimer = millis();
-    watchdog = millis();
-    experienceservice.startExperience( ExperienceService::Pounce );
+    //hardware.powerDownComponents();
+    //esp_deep_sleep_start();
     return;
   }
 
@@ -637,23 +659,20 @@ return;
     return;
   }
 
-  // Wait until current experience stops
-  if ( experienceservice.getCurrentState() != ExperienceService::STOPPED )
-  {
-    smartdelay(10);
-    return;
-  }
-
-  // Wait 15 seconds after an experience before doing another experienxce
-
+  // Wait 15 seconds after an experience before doing another experience
   if ( ! experienceservice.timeToRunAnother() )
   {
     smartdelay(10);
     return;
   }
 
-  if ( ! watchfacemain.isMain() ) return;   // No new gestures (except for sleep) unless watchface is on MAIN
-
+  // No new gestures (except for sleep) unless watchface is on MAIN
+  if ( ! watchfacemain.isMain() ) 
+  {
+    smartdelay(10);
+    return;   
+  }
+  
   if ( recentGesture == GESTURE_RIGHT_LEFT || recentGesture == GESTURE_CIRCULAR || recentGesture == GESTURE_LEFT_RIGHT )
   {
     if ( experiencestats.isFrank() )

@@ -8,7 +8,7 @@
  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
  Read the license in the license.txt file that comes with this code.
 
- Experience lets the user set the time for the internal RTC
+ Shows wake-up video
 
 */
 
@@ -24,13 +24,25 @@ void Experience_Awake::init()
   teardownComplete = false;
   stopped = false;
   idle = false;
-} 
+}
 
 void Experience_Awake::setup() 
 {
   setExperienceName( awakename );
-  video.startVideo( OutOfTheBox_video );
-  setSetupComplete(true);  // Signal that setup is complete
+
+  esp_sleep_wakeup_cause_t reason = esp_sleep_get_wakeup_cause();
+
+  if (reason == ESP_SLEEP_WAKEUP_EXT1) 
+  {   
+    video.startVideo( WatchFaceOpener_video );  
+  } 
+  else 
+  {
+    video.startVideo( OutOfTheBox_video );
+  }
+
+  video.setPaused( true );
+  setSetupComplete( true );  // Signal that setup is complete
 }
 
 void Experience_Awake::run() 
@@ -40,7 +52,7 @@ void Experience_Awake::run()
 
 void Experience_Awake::teardown() {
   // Teardown code for Experience_Awake
-  if ( video.getStatus() == 0 )
+  if ( ! video.getStatus() )
   {
     setTeardownComplete( true );  // Signal teardown complete
   }
