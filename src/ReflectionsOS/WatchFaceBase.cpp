@@ -10,6 +10,14 @@
 
  Requires PNGdec library https://github.com/bitbank2/PNGdec
 
+ Note:
+ NIMble and PNGDEC libraries have a conflict. PNGDEC defines
+ local as a macro for static. This causes an "unqualified-id before static"
+ compiler error. In libraries/PNGdec/src/zutil.h line 38 
+ changed #define local static to #define PNGDEC_LOCAL static
+ and changed its use in zutil.c on line 200 and 207 and
+ alder32.c line 140 See https://github.com/bitbank2/PNGdec/issues/36
+
  Uses framebuffer capability in Arduino_GFX. Tutorial is at
  https://github.com/moononournation/Arduino_GFX/wiki/Canvas-Class
 
@@ -89,7 +97,7 @@ int WatchFacePNGDraw(PNGDRAW *pDraw)
   png.getAlphaMask(pDraw, usMask, 1);
   gfx->draw16bitRGBBitmapWithMask(0, pDraw->y, usPixels, usMask, pDraw->iWidth, 1);
 
-  return 0; // success
+  return 1; // success
 }
 
 void *myOpen( const char* filename, int32_t *size )

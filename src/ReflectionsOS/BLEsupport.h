@@ -27,15 +27,13 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-#include <map>
-#include <set>
-#include <vector>
-
 #include "config.h"
 #include "Logger.h"
 #include "Compass.h"
 #include "GPS.h"
 #include "RealTimeClock.h"
+
+#define scanTimeMs 5000
 
 extern LOGGER logger;
 extern Compass compass;
@@ -43,15 +41,19 @@ extern GPS gps;
 extern RealTimeClock realtimeclock;
 extern Wifi wifi;
 
-#define POUNCETIMEOUT           10000   // Timeout pounce
+static String s_devicename;
+static bool   s_pounce;
+static float  s_heading;
+static float  s_latitude;
+static float  s_longitude;
+static int    s_rssi;
+static unsigned long s_when;
 
-struct PounceData {
-    bool pounce;
-    unsigned long timestamp;
-};
+static bool pounced;
 
-struct DeviceConnection {
-    unsigned long timestamp;
+struct ClientData {
+    NimBLEClient* pClient;
+    unsigned long lastActivityTime;  // Store the last activity time for the client
 };
 
 class BLEsupport {
@@ -59,54 +61,24 @@ class BLEsupport {
     BLEsupport();
     void begin();
     void loop();
-    
-    // Function to send JSON data to connected clients
-    void sendJsonData(const JsonDocument& doc);
-    // Function to read JSON data from the characteristic
-    bool readJsonData(JsonDocument& doc);
 
-    // Function to print the list of remote devices matching the UUIDs
-    void printRemoteDevices();
-    
-    // Function to set heading, pounce, latitude, and longitude in JSON data
-    void setJsonData(const String& devicename, float heading, bool pounce, float latitude, float longitude);
+    bool isCatNearby();
+    bool isPounced();
+    void sendPounce();
+    int getRSSI();
 
-    // Function to check if any device has sent a pounce value of true in the last 10 seconds
-    bool isAnyDevicePounceTrue();
-
-    void setPounce( bool pnc );
     bool getPounce();
-
-    int getRemoteDevicesCount();
+    float getHeading();
+    float getLatitude();
+    float getLongitude();
+    String getDevicename();
 
   private:
-    NimBLEServer* pServer;
-    NimBLEService* pService;
-    NimBLECharacteristic* pCharacteristic;
-    NimBLEAdvertising* pAdvertising;
-
-    std::vector<PounceData> pounceDataList;
-
-    // MAC addresses of unique devices that have connected
-    std::vector<std::string> uniqueDeviceAddresses;
-
-    // Timestamp of the last received pounce message with pounce = true
-    unsigned long lastPounceTimestamp;
-
-    // Function to handle BLE client connections and data transfer
-    void handleBLEConnections();
-    // Function to setup the server and characteristic
+    bool connectToServer();
     void setupServer();
-    
-    // Function to handle device scan results
-    void scanForDevices();
-
-    // JSON document for sending data
-    StaticJsonDocument<200> jsonData;
-
-    bool mypounce;
-    unsigned long pnctime;
+    void handleServerConnections();
+    int mynum;
+    unsigned long mytime;    
 };
-
 
 #endif // BLE_SUPPORT_H

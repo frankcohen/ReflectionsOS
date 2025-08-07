@@ -73,26 +73,57 @@ void Experience_CatsPlay::run()
     directionTimer = millis();
     if ( video.getStatus() != 0 ) return;
 
-    String vid = CatsPlay1_video;
-    String head = compass.decodeHeading( compass.getHeading() );
-    if ( head == "E" ) vid = CatsPlay1_video;
-    if ( head == "NE" ) vid = CatsPlay2_video;
-    if ( head == "N" ) vid = CatsPlay3_video;
-    if ( head == "NW" ) vid = CatsPlay4_video;
-    if ( head == "W" ) vid = CatsPlay5_video;
-    if ( head == "SW" ) vid = CatsPlay6_video;
-    if ( head == "S" ) vid = CatsPlay7_video;
-    if ( head == "SE" ) vid = CatsPlay8_video;
-    video.startVideo( vid );
+    // Get the local heading (from the compass)
+    float localHeading = compass.getHeading();
 
-    Serial.print( F("CatsPlay run: ") );
-    Serial.println( head );
+    // Get the remote heading and RSSI from BLEsupport
+    float remoteHeading = blesupport.getHeading();
+    int rssi = blesupport.getRSSI();
+
+    // Use the calculateBearing function to find the relative bearing
+    float bearing = calculateBearing(localHeading, remoteHeading, rssi);
+
+    // Determine which video to play based on the bearing
+    String vid = CatsPlay1_video;  // Default video
+
+    if (bearing >= 0 && bearing < 45) {
+      vid = CatsPlay1_video;  // East (E)
+    } else if (bearing >= 45 && bearing < 90) {
+      vid = CatsPlay2_video;  // Northeast (NE)
+    } else if (bearing >= 90 && bearing < 135) {
+      vid = CatsPlay3_video;  // North (N)
+    } else if (bearing >= 135 && bearing < 180) {
+      vid = CatsPlay4_video;  // Northwest (NW)
+    } else if (bearing >= 180 && bearing < 225) {
+      vid = CatsPlay5_video;  // West (W)
+    } else if (bearing >= 225 && bearing < 270) {
+      vid = CatsPlay6_video;  // Southwest (SW)
+    } else if (bearing >= 270 && bearing < 315) {
+      vid = CatsPlay7_video;  // South (S)
+    } else if (bearing >= 315 && bearing < 360) {
+      vid = CatsPlay8_video;  // Southeast (SE)
+    }
+
+    // Start the selected video
+    video.startVideo(vid);
+
+    // Print the calculated bearing for debugging
+    Serial.print(F("CatsPlay run: Calculated Bearing: "));
+    Serial.println(bearing);
+    Serial.print(F("Local Heading: "));
+    Serial.println(localHeading);
+    Serial.print(F("Remote Heading: "));
+    Serial.println(remoteHeading);
+    Serial.print(F("RSSI: "));
+    Serial.println(rssi);
+    Serial.print(F("Selected Video: "));
+    Serial.println(vid);
   }
 
   if ( accel.getSingleTap() )
   {
     Serial.println( "CatsPlay send pounce to other cats" );
-    blesupport.setPounce( true );    
+    blesupport.sendPounce();    
   }
 
   // Play time done?

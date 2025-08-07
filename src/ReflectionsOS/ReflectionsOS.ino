@@ -155,6 +155,7 @@ const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certi
 
 bool tofstarted = false;
 bool accelstarted = false;
+bool blestarted = false;
 
 /* Test for a device number on the I2C bus, display error when not found */
 
@@ -323,7 +324,6 @@ static void smartdelay(unsigned long ms) {
     utils.loop();
     compass.loop();
     haptic.loop();
-    blesupport.loop();
     realtimeclock.loop();
     gps.loop();
     steps.loop();
@@ -432,10 +432,6 @@ void setup()
 
   BoardInitializationUtility();   // Installs needed video and other files
 
-  blesupport.begin();
-
-  systemload.printHeapSpace( "BLE" );
-
   // Support service initialization
 
   steps.begin();
@@ -445,6 +441,7 @@ void setup()
 
   tofstarted = false;
   accelstarted = false;
+  blestarted = false;
 
   // Create a new task for TOF processing, pin it to core 0
   xTaskCreatePinnedToCore(
@@ -461,12 +458,13 @@ void setup()
 
   textmessageservice.begin();
   experienceservice.begin();
+  watchfaceexperiences.begin();
+  watchfacemain.begin();
 
   experienceservice.startExperience( ExperienceService::Awake );
 
-  watchfaceexperiences.begin();
-  watchfacemain.begin();
-  
+  systemload.printHeapSpace( "Experience services" );
+
   while ( ! tofstarted )
   {
     smartdelay(1000);
@@ -475,8 +473,9 @@ void setup()
   video.setPaused( false );
   tof.setStatus( true );
   accel.setStatus( true );
-
   gps.on();
+
+  systemload.printHeapSpace( "Setup done" );
 
   logger.info(F("Setup complete"));
 }
@@ -484,11 +483,17 @@ void setup()
 /* Runs TOF and Accelerometer gesture sensors in core 0 */
 
 void Core0Tasks(void *pvParameters) {
+
+  int muck = 0;
+
   while (true) {
-    if (!tofstarted) {
+    if ( ! tofstarted) 
+    {
       tof.begin();
       tofstarted = true;
-    } else {
+    } 
+    else 
+    {
       tof.loop(); // Process and update gesture data
     }
 
@@ -497,6 +502,17 @@ void Core0Tasks(void *pvParameters) {
       accelstarted = true;
     } else {
       accel.loop();
+    }
+
+    if ( ! blestarted )
+    {
+      blesupport.begin();
+      systemload.printHeapSpace( "BLE" );
+      blestarted = true;
+    }
+    else
+    {
+      blesupport.loop();
     }
 
     // Delay to prevent task from monopolizing the CPU
@@ -546,45 +562,14 @@ void waitForExperienceToStop()
 */
 
 bool pouncetest = true;
+unsigned long catTimer = millis();
 
 void loop() 
 {
   printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services
 
-  /*
-  Serial.print( "isAnyDevicePounceTrue " );
-  Serial.print( blesupport.isAnyDevicePounceTrue() );
-  Serial.print( " pounceTimer " );
-  Serial.println( millis() - pounceTimer );
-  */
-  
-/*
-  if ( millis() - pounceTimer > 10000 )
-  {
-    pounceTimer = millis();
-    if ( pouncetest )
-    {
-      pouncetest = false;
-
-      Serial.println( "CatsPlay turn pounce on" );
-      blesupport.setPounce( true );    
-
-    }
-    else
-    {
-      pouncetest = true;
-      Serial.println( "CatsPlay turn pounce off" );
-      blesupport.setPounce( false );    
-    }
-  }
-*/
-
-
-
-
-
   // Pounce message received
-  if ( ( blesupport.isAnyDevicePounceTrue() ) && ( millis() - pounceTimer > 10000 ))
+  if ( ( blesupport.isPounced() ) && ( millis() - pounceTimer > 10000 ))
   {
     pounceTimer = millis();
     Serial.println( "Pounce from an other device" );
@@ -615,17 +600,16 @@ void loop()
   }
 
   // There's another cat nearby!
-
-  if ( ( blesupport.getRemoteDevicesCount() > 0 ) && ( millis() - catNearBy > 60000 ) )
+  if ( ( blesupport.isCatNearby() > 0 ) && ( millis() - catTimer > 60000 ) )
   {
-    catNearBy = millis();
+    catTimer = millis();
     Serial.println( "Cats Play" );
     textmessageservice.deactivate();
     experienceservice.startExperience( ExperienceService::CatsPlay );
     smartdelay(10);
     return;   
   }
-
+  
   int recentGesture = tof.getGesture();
 
   if ( recentGesture != GESTURE_NONE )
@@ -647,8 +631,8 @@ void loop()
     experienceservice.startExperience( ExperienceService::Sleep );
     waitForExperienceToStop();
     // Put cat into deep sleep  
-    //hardware.powerDownComponents();
-    //esp_deep_sleep_start();
+    hardware.powerDownComponents();
+    esp_deep_sleep_start();
     return;
   }
 

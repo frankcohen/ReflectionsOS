@@ -15,205 +15,390 @@
  changed #define local static to #define PNGDEC_LOCAL static
  and changed its use in zutil.c on line 200 and 207 and
  alder32.c line 140
+ See https://github.com/bitbank2/PNGdec/issues/36
 
 */
 
 #include "BLEsupport.h"
 
-// Constructor for the BLEsupport class
+static const NimBLEAdvertisedDevice* advDevice;
+static bool doConnect;
+static NimBLEServer* pServer;
+
+class ClientCallbacks : public NimBLEClientCallbacks {
+    void onConnect(NimBLEClient* pClient) override 
+    { 
+        //Serial.printf( "Connected\n"); 
+    }
+
+    void onDisconnect(NimBLEClient* pClient, int reason) override 
+    {
+        //Serial.printf("%s Disconnected, reason = %d\n", pClient->getPeerAddress().toString().c_str(), reason);
+        NimBLEDevice::getScan()->start(scanTimeMs, false, true);
+    }
+} clientCallbacks;
+
+/** Callbacks when scan events are received */
+
+class ScanCallbacks : public NimBLEScanCallbacks {
+    void onResult(const NimBLEAdvertisedDevice* advertisedDevice) override 
+    {
+        if (advertisedDevice->isAdvertisingService(NimBLEUUID( BLE_SERVER_UUID ) ) )
+        {
+            //Serial.printf("Found: %s\n", advertisedDevice->toString().c_str());
+
+            // TODO: Support messaging to multiple servers
+
+            NimBLEDevice::getScan()->stop();
+            advDevice = advertisedDevice;
+            doConnect = true;
+        }
+    }
+
+    /** Callback to process the results of the completed scan or restart it */
+    void onScanEnd(const NimBLEScanResults& results, int reason) override 
+    {
+        //Serial.printf("Scan Ended, reason: %d, device count: %d; Restarting scan\n", reason, results.getCount());
+        NimBLEDevice::getScan()->start( 5000, false, true);
+    }
+} scanCallbacks;
+
+// Client
+class CharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override 
+    {
+        //Serial.printf("%s : onRead(), value: %s\n", pCharacteristic->getUUID().toString().c_str(), pCharacteristic->getValue().c_str());
+    }
+
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        //Serial.printf("%s : onWrite(), value: %s\n", pCharacteristic->getUUID().toString().c_str(), pCharacteristic->getValue().c_str());
+    }
+} chrCallbacks;
+
+class MyServerCallbacks : public NimBLEServerCallbacks {
+    void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo ) override 
+    {
+        //Note: Disabled, NIMble says don't advertise while serving a connection
+        //      later this will support multiple connections.
+
+        //Serial.println("Client Connected. Restarting advertising.");
+        // Restart advertising after a connection is made
+        //NimBLEDevice::getAdvertising()->start();
+    }
+
+    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason ) override {
+        //Serial.println("Client Disconnected. Restarting advertising.");
+        // Restart advertising after a disconnect
+        NimBLEDevice::getAdvertising()->start();
+    }
+} srvCallbacks;
+
+// Server
+class CharacteristicCallbacksServer : public NimBLECharacteristicCallbacks 
+{
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        //Serial.printf("%s : onRead(), value: %s\n", pCharacteristic->getUUID().toString().c_str(), pCharacteristic->getValue().c_str());
+    }
+
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        //Serial.printf("%s : onWrite(), value: %s\n", pCharacteristic->getUUID().toString().c_str(), pCharacteristic->getValue().c_str() );
+
+        String input = pCharacteristic->getValue().c_str();
+
+        int equalsPos = input.indexOf( ':' );
+
+        if (equalsPos != -1) 
+        {
+            // Extract the name (before the equals sign)
+            String pnc = input.substring(0, equalsPos);
+            if ( pnc == "true" ) s_pounce = true;
+            if ( pnc == "false" ) s_pounce = false;
+            
+            // Extract the value (after the equals sign)
+            String hdg = input.substring(equalsPos + 1);
+
+            s_heading = hdg.toInt();
+            s_when = millis();
+
+            // Get the client associated with this connection using the correct getClient() method
+            NimBLEServer* pServer = pCharacteristic->getService()->getServer();
+            NimBLEClient* pClient = pServer->getClient(connInfo);  // Use getClient with connInfo
+
+            if (pClient) {
+                s_rssi = pClient->getRssi();  // Fetch RSSI from the client
+            }
+
+            // Print the parsed values
+            Serial.print("Received Pounce: ");
+            Serial.println( s_pounce );
+            Serial.print("Heading: ");
+            Serial.println( s_heading );
+            Serial.print("RSSI: ");
+            Serial.println( s_rssi );            
+        } else {
+            Serial.print("Data not valid: ");
+            Serial.println( input );
+        }
+
+    }
+} chrCallbacksServer;
+
 BLEsupport::BLEsupport() {}
 
 void BLEsupport::begin() 
-{    
-    // Initialize the BLE device
+{
     NimBLEDevice::init( wifi.getDeviceName().c_str() );
     NimBLEDevice::setPower(3);  // 3dbm
 
     setupServer();
 
-    // Start advertising
-    pAdvertising->start();
+    NimBLEScan* pScan = NimBLEDevice::getScan();
+    pScan->setScanCallbacks(&scanCallbacks, false);
+    pScan->setInterval(100);
+    pScan->setWindow(100);
+    pScan->setActiveScan(true);
+    pScan->start( 5000 );
+    Serial.printf("Scanning for server\n");
 
-    mypounce = false;
-    pnctime = millis();
+    doConnect = false;
 
-    Serial.println("BLE started");
+    s_devicename = wifi.getDeviceName().c_str();
+    s_pounce = false;
+    s_heading = 0;
+    s_latitude = 0;
+    s_longitude = 0;
+
+    pounced = false;
+
+    mytime = millis();
+    mynum = 0;
+
+    Serial.println( "BLE setup finished" );
 }
+
+// Server
 
 void BLEsupport::setupServer() 
 {
-    // Create a new BLE server
     pServer = NimBLEDevice::createServer();
-
-    // Create a BLE service
-    pService = pServer->createService( BLE_SERVER_UUID );
-
-    // Create a BLE characteristic
-    pCharacteristic = pService->createCharacteristic(BLE_CHARACTERISTIC_UUID, NIMBLE_PROPERTY::READ );
-    pCharacteristic->setValue("Initial Data");
-
-    // Start the service
+    pServer->setCallbacks( &srvCallbacks );
+    NimBLEService* pService = pServer->createService( BLE_SERVER_UUID );
+    NimBLECharacteristic* pCharacteristic = pService->createCharacteristic( BLE_CHARACTERISTIC_UUID, NIMBLE_PROPERTY::WRITE );
+    pCharacteristic->setCallbacks(&chrCallbacksServer);
     pService->start();
 
-    // Create advertising
-    pAdvertising = NimBLEDevice::getAdvertising();
-    pAdvertising->addServiceUUID( BLE_SERVER_UUID );
-
-    NimBLEAdvertisementData scanResponse;
-    scanResponse.setName( wifi.getDeviceName().c_str() );
-    pAdvertising->setScanResponseData( scanResponse );
-
+    NimBLEAdvertising* pAdvertising = NimBLEDevice::getAdvertising();
+    pAdvertising->setName( wifi.getDeviceName().c_str() );
+    pAdvertising->addServiceUUID( pService->getUUID() );
+    pAdvertising->enableScanResponse(true);
     pAdvertising->start();
+
+    Serial.println( "pAdvertising started" );
 }
 
-void BLEsupport::handleBLEConnections() 
+void BLEsupport::handleServerConnections() 
 {
-    if (pServer == nullptr) {
-        Serial.println("BLE pServer is not initialized.");
-        return;
+    if ( pServer == nullptr ) return;
+    if ( pServer->getConnectedCount() == 0 ) return;
+    NimBLEClient* pClient = pServer->getClient( 0 );
+    if ( pClient == nullptr ) return;
+    if ( ! pClient->isConnected() ) return;
+
+    //Serial.println( "Client connected" );
+}
+
+bool BLEsupport::connectToServer() {
+    NimBLEClient* pClient = nullptr;
+
+    // Prevent self-connections
+    uint8_t localMac[6];
+    esp_efuse_mac_get_default(localMac);
+    String advertisedDeviceAddress = advDevice->getAddress().toString().c_str();
+    String localDeviceAddress = String(localMac[5], HEX) + ":" + String(localMac[4], HEX) + ":" + String(localMac[3], HEX) + ":" +
+                                String(localMac[2], HEX) + ":" + String(localMac[1], HEX) + ":" + String(localMac[0], HEX);
+    if (advertisedDeviceAddress == localDeviceAddress) {
+        Serial.println("Not connecting to the server on the same device.");
+        return false;
     }
 
-    // Check if the server has connected clients
-    if (pServer->getConnectedCount() > 0) {
-        // Iterate through each connected client
-        for (int i = 0; i < pServer->getConnectedCount(); i++) {
-            NimBLEClient* pClient = pServer->getClient(i);
+    /** Check if we have a client we should reuse first **/
+    if (NimBLEDevice::getCreatedClientCount()) 
+    {
+        /**
+         *  Note: NIMble examples say when we already know this device, we send false as the
+         *  second argument in connect() to prevent refreshing the service database.
+         *  This saves considerable time and power.
+         */
+        pClient = NimBLEDevice::getClientByPeerAddress(advDevice->getAddress());
+        if (pClient) {
+            if (!pClient->connect(advDevice, false)) {
+                //Serial.printf("Reconnect failed\n");
+                return false;
+            }
+            //Serial.printf("Reconnected client\n");
+        } else {
+            /**
+             *  We don't already have a client that knows this device,
+             *  check for a client that is disconnected that we can use.
+             */
+            pClient = NimBLEDevice::getDisconnectedClient();
+        }
+    }
 
-            // Check if the client is advertising the required service and characteristic UUID
-            if (pClient->isConnected()) 
+    /** No client to reuse? Create a new one. */
+    if (!pClient) {
+        if (NimBLEDevice::getCreatedClientCount() >= NIMBLE_MAX_CONNECTIONS) {
+            Serial.printf("Max clients reached - no more connections available\n");
+            return false;
+        }
+
+        pClient = NimBLEDevice::createClient();
+
+        pClient->setClientCallbacks(&clientCallbacks, false);
+        /**
+         *  Note: NIMble says settings are safe for 3 clients to connect reliably, can go faster if you have less
+         *  connections. Timeout should be a multiple of the interval, minimum is 100ms.
+         *  Min interval: 12 * 1.25ms = 15, Max interval: 12 * 1.25ms = 15, 0 latency, 150 * 10ms = 1500ms timeout
+         */
+        pClient->setConnectionParams(12, 12, 0, 150);
+
+        /** Set how long we are willing to wait for the connection to complete (milliseconds), default is 30000. */
+        pClient->setConnectTimeout(5 * 1000);
+
+        if (!pClient->connect( advDevice )) {
+            /** Created a client but failed to connect, don't need to keep it as it has no data */
+            NimBLEDevice::deleteClient(pClient);
+            Serial.printf("Failed to connect, deleted client\n");
+            return false;
+        }
+    }
+
+    if (!pClient->isConnected()) {
+        if (!pClient->connect(advDevice)) {
+            Serial.printf("Failed to connect\n");
+            return false;
+        }
+    }
+
+    //Serial.printf("Connected to: %s RSSI: %d\n", pClient->getPeerAddress().toString().c_str(), pClient->getRssi());
+
+    /** Now we can read/write/subscribe the characteristics of the services we are interested in */
+    NimBLERemoteService*        pSvc = nullptr;
+    NimBLERemoteCharacteristic* pChr = nullptr;
+    NimBLERemoteDescriptor*     pDsc = nullptr;
+
+    pSvc = pClient->getService( BLE_SERVER_UUID );
+    if (pSvc) {
+        pChr = pSvc->getCharacteristic( BLE_CHARACTERISTIC_UUID );
+    }
+
+    if (pChr) 
+    {
+        if (pChr->canWrite()) 
+        {
+
+            // Note: For now we send only the pounce value and heading, in the future 
+            // we will connect, send a value, disconnect, repeat for devicename,
+            // latitude, longitude. Do not try to pack all the data into one write,
+            // NIMble 4.x sends maximum of 21 bytes
+            // For the moment the client sends pounce:heading in one
+
+            s_heading = compass.getHeading();
+
+            String mydata;
+            if ( pounced ) { mydata="true"; } else { mydata = "false"; }
+            mydata += ":";
+            mydata += String(s_heading, 0) ;
+
+            /*
+            Serial.print( "Client writing " );
+            Serial.print( mydata );
+            Serial.print( ", ");
+            Serial.println( mydata.length() );
+            */
+
+            if ( pChr->writeValue( mydata.c_str() ) ) 
             {
-                Serial.println(" isConnected");
-                NimBLERemoteService* pService = pClient->getService(NimBLEUUID(BLE_SERVER_UUID));
-                if (pService) {
-                    NimBLERemoteCharacteristic* pChar = pService->getCharacteristic(NimBLEUUID(BLE_CHARACTERISTIC_UUID));
-                    if (pChar) {
-                        // Get the client's MAC address
-                        std::string deviceAddress = pClient->getPeerAddress().toString();
-
-                Serial.print("Found ");
-                Serial.println( pClient->getPeerAddress() );
-
-                        // Check if this device address is already in the list of unique devices
-                        auto it = std::find(uniqueDeviceAddresses.begin(), uniqueDeviceAddresses.end(), deviceAddress);
-                        if (it == uniqueDeviceAddresses.end()) {
-                            // If the device is not in the list, add it
-                            uniqueDeviceAddresses.push_back(deviceAddress);
-                        }
-                    }
-                }
+                //Serial.printf("Wrote data to: %s\n", pChr->getUUID().toString().c_str());
             }
-        }
-    }
-}
-
-void BLEsupport::sendJsonData(const JsonDocument& doc) {
-    // Convert JSON data to a string
-    String jsonString;
-    serializeJson(doc, jsonString);
-
-    // Send the JSON string to the client through the characteristic
-    pCharacteristic->setValue(jsonString.c_str());
-    pCharacteristic->notify();  // Notify connected clients about the new data
-}
-
-bool BLEsupport::readJsonData(JsonDocument& doc) {
-    // Read the data from the characteristic (incoming data from clients)
-    String jsonString = pCharacteristic->getValue().c_str();
-
-    // Parse the JSON string into the provided JSON document
-    DeserializationError error = deserializeJson(doc, jsonString);
-
-    // Return whether the JSON data was successfully parsed
-    return !error;
-}
-
-void BLEsupport::setJsonData(const String& devicename, float heading, bool pounce, float latitude, float longitude) {
-    // Set the JSON fields with the provided values
-    jsonData["devicename"] = devicename;
-    jsonData["heading"] = heading;
-    jsonData["pounce"] = pounce;
-    jsonData["latitude"] = latitude;
-    jsonData["longitude"] = longitude;
-}
-
-void BLEsupport::scanForDevices() {
-    // Start scanning for nearby BLE devices
-    NimBLEScan* pScan = NimBLEDevice::getScan();
-    pScan->setActiveScan(true);  // Active scanning to receive more detailed results
-    pScan->setInterval(1349);    // Scan interval (in 0.625 ms units)
-    pScan->setWindow(449);       // Scan window (in 0.625 ms units)
-    pScan->start(5, false);      // Scan for 5 seconds, non-blocking
-}
-
-void BLEsupport::printRemoteDevices() {
-    // Start scanning for remote devices
-    scanForDevices();
-
-    // Wait for the scan to complete
-    delay(5000);  // Wait for the scanning process to finish
-
-    // Check the scan results for devices matching the BLE_SERVER_UUID and BLE_CHARACTERISTIC_UUID
-    NimBLEScanResults results = NimBLEDevice::getScan()->getResults();
-    for (int i = 0; i < results.getCount(); i++) {
-        const NimBLEAdvertisedDevice* advertisedDevice = results.getDevice(i);
-
-        // Check if the device advertises the required service UUID
-        if (advertisedDevice->isAdvertisingService(NimBLEUUID(BLE_SERVER_UUID))) {
-            Serial.print("Found device: ");
-            Serial.println(advertisedDevice->getAddress().toString().c_str());
             
-            // Try to connect to the device and check if it has the required characteristic
-            NimBLEClient* pClient = NimBLEDevice::createClient();
-            pClient->connect(advertisedDevice);
-            if (pClient->isConnected()) {
-                NimBLERemoteService* pService = pClient->getService(NimBLEUUID(BLE_SERVER_UUID));
-                if (pService) {
-                    NimBLERemoteCharacteristic* pChar = pService->getCharacteristic(NimBLEUUID(BLE_CHARACTERISTIC_UUID));
-                    if (pChar) {
-                        Serial.println("  Found matching characteristic!");
-                    } else {
-                        Serial.println("  Characteristic not found");
-                    }
-                }
-                pClient->disconnect();
-            } else {
-                Serial.println("  Failed to connect to the device");
-            }
-        }
-    }
-}
-
-int BLEsupport::getRemoteDevicesCount() {
-    return uniqueDeviceAddresses.size();  // Return the size of the list of unique device addresses
-}
-
-bool BLEsupport::isAnyDevicePounceTrue() {
-    unsigned long currentTime = millis();
-    bool pounceDetected = false;
-
-    // Check if any device's pounce is true within the last 10 seconds
-    for (const PounceData& data : pounceDataList) {
-        if (data.pounce && (currentTime - data.timestamp <= 10000)) {  // 10 seconds threshold
-            pounceDetected = true;
-            break;  // No need to check further once a valid pounce is found
+            pounced = false;
+            pClient->disconnect();
+            return true;
         }
     }
 
-    return pounceDetected;
+    return true;
 }
 
-void BLEsupport::setPounce( bool pnc )
+bool BLEsupport::isCatNearby()
 {
-  mypounce = pnc;
-  pnctime = millis();
+    if ( millis() - s_when < 3000 ) return true;
+    return false;
+}
+
+bool BLEsupport::isPounced()
+{
+    if ( millis() - s_when < 3000 && s_pounce ) return true;
+    return false;
+}
+
+void BLEsupport::sendPounce()
+{
+    pounced = true;
+    s_when = millis();
 }
 
 bool BLEsupport::getPounce()
 {
-  return mypounce;
+    return s_pounce;
 }
 
-void BLEsupport::loop() {
-    //handleBLEConnections();
+float BLEsupport::getHeading()
+{
+    return s_heading;
 }
 
+float BLEsupport::getLatitude()
+{
+    return s_latitude;
+}
+
+float BLEsupport::getLongitude()
+{
+    return s_longitude;
+}
+
+String BLEsupport::getDevicename()
+{
+    return s_devicename;
+}
+
+int BLEsupport::getRSSI()
+{
+    return s_rssi;
+}
+
+void BLEsupport::loop() 
+{
+    if ( millis() - mytime > 5000 )
+    {
+        mytime = millis();
+        handleServerConnections();    
+
+        if ( doConnect || pounced ) 
+        {
+            doConnect = false;
+            if ( connectToServer() ) 
+            {
+                // Serial.println("Send to server");
+            } 
+            else 
+            {
+                Serial.printf("Failed to connect, starting scan\n");
+            }
+            NimBLEDevice::getScan()->start(scanTimeMs, false, true);
+        }
+
+    }
+}

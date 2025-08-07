@@ -34,7 +34,7 @@ void Experience_Awake::setup()
 
   if (reason == ESP_SLEEP_WAKEUP_EXT1) 
   {   
-    video.startVideo( WatchFaceOpener_video );  
+    video.startVideo( WatchFaceOpener_video );
   } 
   else 
   {

@@ -174,8 +174,8 @@ Read the license in the license.txt file that comes with this code.
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
-#define BLE_SERVER_UUID         "7d9029fe-48d5-49e0-b9ad-8fd7dac70354"
-#define BLE_CHARACTERISTIC_UUID "33a03886-0db0-43c8-90a2-bca6a8c7eaf0"
+#define BLE_SERVER_UUID         "CATS"
+#define BLE_CHARACTERISTIC_UUID "MEOW"
 #define BLE_SERVER_NAME         "REFLECTIONS"
 
 // LED
