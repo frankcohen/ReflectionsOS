@@ -676,7 +676,7 @@ void loop()
 
   if ( recentGesture == GESTURE_RIGHT_LEFT )
   {  
-    experienceservice.startExperience( ExperienceService:: );
+    experienceservice.startExperience( ExperienceService::Sand );
     //experienceservice.startExperience( ExperienceService::MysticCat );
     smartdelay(10);
     return;

@@ -30,7 +30,10 @@ Experience_Sand::Experience_Sand()
   for (uint8_t z=0; z<MAX_ZONES; ++z) zones_[z] = {120,120, 0, false, 0};
 }
 
-void Experience_Sand::setup() {
+void Experience_Sand::setup() 
+{
+  setExperienceName( sandname );
+
   phase_ = PH_SETUP;
   phaseStartMs_ = millis();
   lastFrameMs_  = phaseStartMs_;
@@ -164,6 +167,13 @@ void Experience_Sand::applyOne(uint16_t i, int16_t axQ88, int16_t ayQ88) {
   vy_[i] += (int16_t)((ayQ88 * GRAVITY_SCALE_Q88) >> 8);
   vx_[i] = (int16_t)((int32_t)vx_[i] * FRICTION_Q88 >> 8);
   vy_[i] = (int16_t)((int32_t)vy_[i] * FRICTION_Q88 >> 8);
+
+  // Clamp velocity to avoid runaway
+  if (vx_[i] > VEL_CAP_Q88)  vx_[i] = VEL_CAP_Q88;
+  if (vx_[i] < -VEL_CAP_Q88) vx_[i] = -VEL_CAP_Q88;
+  if (vy_[i] > VEL_CAP_Q88)  vy_[i] = VEL_CAP_Q88;
+  if (vy_[i] < -VEL_CAP_Q88) vy_[i] = -VEL_CAP_Q88;
+
 }
 
 void Experience_Sand::integrate(uint16_t i, uint32_t dtMs) {

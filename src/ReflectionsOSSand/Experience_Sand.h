@@ -13,6 +13,8 @@ extern TOF tof;
 class Arduino_GFX;
 extern Arduino_GFX *gfx;
 
+#define sandname F("Sand ")
+
 class Experience_Sand : public Experience
 {
   public:
@@ -20,7 +22,6 @@ class Experience_Sand : public Experience
     virtual void setup() override;
     virtual void run() override;
     virtual void teardown() override;
-    virtual String getName() override { return String("Experience_Sand"); }
 
   private:
     static constexpr uint16_t W = 240;
@@ -38,7 +39,12 @@ class Experience_Sand : public Experience
     };
 
     static constexpr int16_t GRAVITY_SCALE_Q88 = 220;
-    static constexpr int16_t FRICTION_Q88      = 65472;
+
+    // 0.985 * 256 ≈ 252  (nice, slightly “sandy” damping)
+    // Use 255 if you want very light damping (~0.996)
+    static constexpr int16_t FRICTION_Q88      = 252;
+
+    static constexpr int16_t VEL_CAP_Q88 = 512; // ~2 px/ms cap
 
     static constexpr uint16_t TOF_MIN_MM       = 180;
     static constexpr uint16_t TOF_MAX_MM       = 400;
