@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include "Experience.h"
 
-// Forward decls from your project
+// Forward declarations provided by ReflectionsOS
 class Arduino_GFX;
 class AccelSensor;
 class TOF;
@@ -10,16 +10,14 @@ extern Arduino_GFX *gfx;
 extern AccelSensor accel;
 extern TOF tof;
 
-#define eyesname F("Sand ")
-
 class Experience_Sand : public Experience {
 public:
   Experience_Sand();
 
-  // Experience lifecycle (called by ExperienceService)
-  void setup() override;     // animate grains falling into initial place
-  void run() override;       // accelerometer gravity + TOF blocking zones
-  void teardown() override;  // animate clearing (grains lift)
+  // Lifecycle exactly like Experience_Awake: ExperienceService calls these
+  void setup() override;     // animate grains "falling in", then setSetupComplete(true)
+  void run() override;       // gravity from accelerometer + TOF blocking zones
+  void teardown() override;  // animate clearing, then setTeardownComplete(true)
 
 private:
   // Screen
@@ -27,21 +25,21 @@ private:
   static constexpr uint16_t H = 240;
 
   // Particles
-  static constexpr uint16_t MAX_PARTICLES   = 1800;  // conservative default
-  static constexpr uint16_t SETUP_PARTICLES = 1200;
+  static constexpr uint16_t MAX_PARTICLES   = 1600;  // conservative default
+  static constexpr uint16_t SETUP_PARTICLES = 1100;
 
   // Physics (Q8.8)
   static constexpr int16_t  GRAVITY_SCALE_Q88 = 80;   // tilt gain
   static constexpr int16_t  FRICTION_Q88      = 252;  // ~0.985
-  static constexpr int16_t  VEL_CAP_Q88       = 384;  // ~1.5 px/ms
+  static constexpr int16_t  VEL_CAP_Q88       = 384;  // ~1.5 px/ms (~384/256)
 
-  // TOF → zones (up to 4)
-  static constexpr uint8_t  MAX_ZONES    = 4;
+  // TOF sampling (throttled) and zone sizing
+  static constexpr uint8_t  MAX_ZONES     = 4;
   static constexpr uint16_t TOF_PERIOD_MS = 40;       // 25 Hz reads
-  static constexpr uint16_t TOF_MIN_MM   = 180;
-  static constexpr uint16_t TOF_MAX_MM   = 400;
-  static constexpr uint8_t  ZONE_R_MIN   = 10;
-  static constexpr uint8_t  ZONE_R_MAX   = 26;
+  static constexpr uint16_t TOF_MIN_MM    = 180;
+  static constexpr uint16_t TOF_MAX_MM    = 400;
+  static constexpr uint8_t  ZONE_R_MIN    = 10;
+  static constexpr uint8_t  ZONE_R_MAX    = 26;
 
   struct Zone {
     uint16_t cx, cy;
@@ -50,7 +48,7 @@ private:
     bool     active;
   };
 
-  // Data (SoA)
+  // Particle data
   uint16_t count_;
   uint16_t x_[MAX_PARTICLES];
   uint16_t y_[MAX_PARTICLES];
@@ -70,6 +68,12 @@ private:
   int8_t   lastCol_;
   int16_t  lastMm_;
 
+  // Lifecycle guards (to match Experience_Awake style)
+  bool     setupStarted_;
+  uint32_t setupStartMs_;
+  bool     teardownStarted_;
+  uint32_t teardownStartMs_;
+
   // Helpers
   inline void putPixel(uint16_t px, uint16_t py, uint16_t color);
   inline void erasePixel(uint16_t px, uint16_t py) { putPixel(px,py,0x0000); }
@@ -88,3 +92,4 @@ private:
   void updateZonesFromTOF();
   void addOrUpdateZone(uint16_t sx, uint16_t sy, uint8_t r);
   bool  resolveBlocking(uint16_t &nx, uint16_t &ny, int16_t &vxQ, int16_t &vyQ);
+};

@@ -1,0 +1,62 @@
+name: Apply patch from URL
+
+on:
+  workflow_dispatch:
+    inputs:
+      patch_url:
+        description: "Direct URL to a .patch file (raw)"
+        required: true
+      base_branch:
+        description: "Branch to apply patch onto"
+        required: true
+        default: "Sand"
+      pr_title:
+        description: "Title for the pull request"
+        required: false
+        default: "Apply patch from URL"
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.base_branch }}
+
+      - name: Fetch patch
+        run: |
+          curl -fsSL "${{ inputs.patch_url }}" -o /tmp/patch.patch
+          echo "Downloaded patch size:" $(wc -c </tmp/patch.patch) "bytes"
+
+      - name: Try applying as email-style patch (git am)
+        id: try_am
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git am --3way /tmp/patch.patch; then
+            echo "mode=am" >> $GITHUB_OUTPUT
+          else
+            echo "mode=apply" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Fallback to git apply (if needed)
+        if: steps.try_am.outputs.mode == 'apply'
+        run: |
+          git reset --hard
+          git apply --reject --whitespace=fix /tmp/patch.patch
+          git add -A
+          git commit -m "Apply patch from URL (git apply)"
+
+      - name: Open PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: ${{ inputs.pr_title }}
+          title: ${{ inputs.pr_title }}
+          body: |
+            Patch URL: `${{ inputs.patch_url }}`
+            Base: `${{ inputs.base_branch }}`
+          branch: auto/apply-patch-${{ github.run_id }}
+          base: ${{ inputs.base_branch }}
+

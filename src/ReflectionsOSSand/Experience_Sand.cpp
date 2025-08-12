@@ -1,4 +1,5 @@
 #include "Experience_Sand.h"
+// Project-provided headers
 #include "AccelSensor.h"
 #include "TOF.h"
 
@@ -19,48 +20,74 @@ Experience_Sand::Experience_Sand()
   lastMs_(0),
   lastTofMs_(0),
   lastCol_(-1),
-  lastMm_(-1)
+  lastMm_(-1),
+  setupStarted_(false),
+  setupStartMs_(0),
+  teardownStarted_(false),
+  teardownStartMs_(0)
 {
   for (uint16_t i=0;i<MAX_PARTICLES;++i) live_[i]=0;
   for (uint8_t z=0; z<MAX_ZONES; ++z) zones_[z] = {120,120,0,0,false};
 }
 
 void Experience_Sand::setup() {
+  // ExperienceService will keep calling setup() until we call setSetupComplete(true).
+  if (!setupStarted_) {
+    setupStarted_   = true;
+    setupStartMs_   = millis();
+    lastMs_         = setupStartMs_;
+    lastTofMs_      = 0;
+    lastCol_        = -1;
+    lastMm_         = -1;
+    zoneCount_      = 0;
+    count_          = 0;
+    setExperienceName(F("Sand ")); // trailing space intentional per your codebase
+    if (gfx) gfx->fillScreen(BLACK);
+    // Reset particles
+    for (uint16_t i=0;i<MAX_PARTICLES;++i) live_[i]=0;
+    seedInitial();
+  }
 
-  setExperienceName(F("Sand ")); // keep trailing space per your codebase
-  if (gfx) gfx->fillScreen(BLACK);
+  // Animate a brief settle during setup (like Experience_Awake style intro)
+  const uint32_t now = millis();
+  uint32_t dt = now - lastMs_;
+  if (dt > 33) dt = 33;
+  lastMs_ = now;
 
-  count_ = 0;
-  for (uint16_t i=0;i<MAX_PARTICLES;++i) live_[i]=0;
-  zoneCount_ = 0;
-  lastMs_ = millis();
-  lastTofMs_ = 0;
-  lastCol_ = -1;
-  lastMm_ = -1;
+  stepSetup(dt);
 
-  seedInitial(); // animate drop-in during first few frames inside run()
+  // After ~1 second of settle, tell the service to switch to run()
+  if (now - setupStartMs_ >= 1000) {
+    setSetupComplete(true);
+  }
 }
 
 void Experience_Sand::run() {
   const uint32_t now = millis();
   uint32_t dt = now - lastMs_;
-  if (dt > 33) dt = 33; // clamp for stability
+  if (dt > 33) dt = 33;
   lastMs_ = now;
 
-  // 1) Setup phase animation for a short while (grains fall into place)
-  stepSetup(dt); // light bias + gravity; will quickly resemble settled state
-
-  // 2) Main sim
   stepRun(dt);
 }
 
 void Experience_Sand::teardown() {
+  // ExperienceService will keep calling teardown() until we call setTeardownComplete(true).
+  if (!teardownStarted_) {
+    teardownStarted_ = true;
+    teardownStartMs_ = millis();
+  }
+
   const uint32_t now = millis();
   uint32_t dt = now - lastMs_;
   if (dt > 33) dt = 33;
   lastMs_ = now;
 
   stepTeardown(dt);
+
+  if (now - teardownStartMs_ >= 900) {
+    setTeardownComplete(true);
+  }
 }
 
 /* ---------- helpers ---------- */
@@ -107,7 +134,7 @@ void Experience_Sand::applyOne(uint16_t i, int16_t axQ, int16_t ayQ) {
   vx_[i] = (int16_t)((int32_t)vx_[i] * FRICTION_Q88 >> 8);
   vy_[i] = (int16_t)((int32_t)vy_[i] * FRICTION_Q88 >> 8);
 
-  // NaN guards (just in case)
+  // NaN guards (paranoia)
   if (vx_[i] != vx_[i]) vx_[i] = 0;
   if (vy_[i] != vy_[i]) vy_[i] = 0;
 
@@ -184,13 +211,10 @@ void Experience_Sand::stepTeardown(uint32_t dt) {
 
 void Experience_Sand::updateZonesFromTOF() {
   const uint32_t now = millis();
-  if (now - lastTofMs_ < TOF_PERIOD_MS) {
-    // reuse cached sample
-  } else {
+  if (now - lastTofMs_ >= TOF_PERIOD_MS) {
     lastTofMs_ = now;
-    const int col = tof.getFingerPos();   // 0..7, 0/neg == none
+    const int col  = tof.getFingerPos();   // 0..7, 0/neg == none
     const float mmf = tof.getFingerDist();
-    // cache (store ints)
     lastCol_ = (col <= 0) ? -1 : (int8_t)col;
     lastMm_  = (int16_t)((mmf < 0) ? -1 : mmf);
   }

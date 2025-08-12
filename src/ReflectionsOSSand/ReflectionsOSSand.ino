@@ -686,6 +686,12 @@ void loop()
 
   if ( recentGesture == GESTURE_LEFT_RIGHT )
   {
+
+    experienceservice.startExperience( ExperienceService::Sand );
+    smartdelay(10);
+    return;
+
+
     if ( nextUp == 0 )
     {
       nextUp++;
@@ -736,6 +742,11 @@ void loop()
 
   if ( recentGesture == GESTURE_CIRCULAR )
   {
+    experienceservice.startExperience( ExperienceService::Sand );
+    smartdelay(10);
+    return;
+
+
     if ( nextUp2 == 1 )
     {
       nextUp2 = 0;
