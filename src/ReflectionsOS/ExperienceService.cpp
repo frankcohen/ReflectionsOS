@@ -47,7 +47,6 @@ ExperienceService::ExperienceService() : currentExperience(nullptr), currentStat
         "Experience_Eyes", "Experience_Parallax", "Experience_Hover", "Experience_CatsPlay",
         "Experience_MysticCat", "Experience_Shaken", "Experience_GettingSleepy", "Experience_Pounce",
         "Experience_EasterEggFrank", "Experience_EasterEggTerri"
-        "Experience_Sand",
     };
 
     // Loop over the experience names, dynamically creating each experience and adding to the vector
