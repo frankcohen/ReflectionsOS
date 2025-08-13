@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       patch_url:
-        description: "Direct URL to a .patch file (raw)"
+        description: "Direct RAW URL to a .patch file (e.g., Gist Raw)"
         required: true
       base_branch:
-        description: "Branch to apply patch onto"
+        description: "Branch to apply onto"
         required: true
         default: "Sand"
       pr_title:
@@ -15,39 +15,76 @@ on:
         required: false
         default: "Apply patch from URL"
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   apply:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout target branch
+      - name: Checkout target branch (full history)
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.base_branch }}
+          fetch-depth: 0
+
+      - name: Show repo state
+        run: |
+          echo "Branch:" $(git branch --show-current)
+          git log --oneline -5 || true
+          git status
 
       - name: Fetch patch
         run: |
-          curl -fsSL "${{ inputs.patch_url }}" -o /tmp/patch.patch
-          echo "Downloaded patch size:" $(wc -c </tmp/patch.patch) "bytes"
-
-      - name: Try applying as email-style patch (git am)
-        id: try_am
-        run: |
           set -e
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git am --3way /tmp/patch.patch; then
-            echo "mode=am" >> $GITHUB_OUTPUT
-          else
-            echo "mode=apply" >> $GITHUB_OUTPUT
+          echo "URL: ${{ inputs.patch_url }}"
+          curl -fsSL "${{ inputs.patch_url }}" -o /tmp/patch.patch
+          echo "Downloaded patch size: $(wc -c </tmp/patch.patch) bytes"
+          echo "First 5 lines of patch:"
+          head -n 5 /tmp/patch.patch || true
+
+      - name: Preflight check (is this a Gist RAW URL? size > 0?)
+        run: |
+          BYTES=$(wc -c </tmp/patch.patch)
+          if [ "$BYTES" -lt 10 ]; then
+            echo "Patch seems empty. Make sure you used the **Raw** URL from Gist." >&2
+            exit 128
           fi
 
-      - name: Fallback to git apply (if needed)
-        if: steps.try_am.outputs.mode == 'apply'
+      - name: Detect patch type (email-style vs plain)
+        id: dtype
         run: |
-          git reset --hard
-          git apply --reject --whitespace=fix /tmp/patch.patch
-          git add -A
-          git commit -m "Apply patch from URL (git apply)"
+          if grep -qE '^(From |diff --git|^\*\*\* Begin Patch)' /tmp/patch.patch; then
+            if grep -q '^From ' /tmp/patch.patch; then echo "mode=am" >>$GITHUB_OUTPUT; else echo "mode=apply" >>$GITHUB_OUTPUT; fi
+          else
+            echo "Patch does not look like diff/patch content." >&2
+            exit 128
+          fi
+
+      - name: Try git am (email-style, with 3-way)
+        if: steps.dtype.outputs.mode == 'am'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git am --3way /tmp/patch.patch
+
+      - name: Preflight plain patch (no changes applied yet)
+        if: steps.dtype.outputs.mode == 'apply'
+        run: |
+          # Validate the patch against working tree before touching it
+          if ! git apply --check /tmp/patch.patch; then
+            echo "git apply --check failed. Patch may not match the branch or file paths." >&2
+            exit 128
+          fi
+
+      - name: Apply plain patch and commit
+        if: steps.dtype.outputs.mode == 'apply'
+        run: |
+          git apply --index --whitespace=fix /tmp/patch.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "${{ inputs.pr_title }}"
 
       - name: Open PR
         uses: peter-evans/create-pull-request@v6
@@ -59,4 +96,3 @@ jobs:
             Base: `${{ inputs.base_branch }}`
           branch: auto/apply-patch-${{ github.run_id }}
           base: ${{ inputs.base_branch }}
-
