@@ -2,7 +2,7 @@ name: Apply patch from URL
 
 on:
   workflow_dispatch:
-    inputs:
+    inputs: 
       patch_url:
         description: "Direct URL to a .patch file (raw)"
         required: true
