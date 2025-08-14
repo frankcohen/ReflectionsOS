@@ -12,6 +12,8 @@
 #ifndef _EXPERIENCE_H
 #define _EXPERIENCE_H
 
+#include <Arduino.h>
+
 class Experience 
 {
   public:
