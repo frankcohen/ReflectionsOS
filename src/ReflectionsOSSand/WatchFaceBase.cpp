@@ -57,7 +57,7 @@ PNG png;  // Create a PNG decoder object
 //
 typedef struct my_private_struct
 {
-  int xoff, yoff; // corner offset
+  int16_t xoff, yoff; // corner offset
 } PRIVATE;
 
 // Optimized JPEGDEC callback function to draw raw byte data onto the canvas buffer
@@ -93,9 +93,13 @@ int WatchFacePNGDraw(PNGDRAW *pDraw)
   uint16_t usPixels[320];
   uint8_t usMask[320];
 
+  PRIVATE *priv = (PRIVATE*)pDraw->pUser;
+  const int16_t sx = priv ? priv->xoff : 0;
+  const int16_t sy = (priv ? priv->yoff : 0) + pDraw->y;
+
   png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_LITTLE_ENDIAN, 0x00000000);
   png.getAlphaMask(pDraw, usMask, 1);
-  gfx->draw16bitRGBBitmapWithMask(0, pDraw->y, usPixels, usMask, pDraw->iWidth, 1);
+  gfx->draw16bitRGBBitmapWithMask( sx, sy, usPixels, usMask, pDraw->iWidth, 1);
 
   return 1; // success
 }
@@ -209,8 +213,8 @@ void WatchFaceBase::drawImageFromFile( String filename, bool embellishfilename, 
     if (rc == PNG_SUCCESS)
     {
       PRIVATE priv;
-      priv.xoff = 0;
-      priv.yoff = 0;
+      priv.xoff = x;
+      priv.yoff = y;
       rc = png.decode( (void *) &priv, 0);
       png.close();
     }

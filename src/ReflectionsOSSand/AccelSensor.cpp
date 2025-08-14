@@ -6,7 +6,6 @@
 
   Licensed under GPL v3 Open Source Software
   (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
-  Read the license in the license.txt file that comes with this code.
  
   This module performs real-time detection of single and double tap gestures 
   using the LIS3DH accelerometer. It includes two distinct phases:
