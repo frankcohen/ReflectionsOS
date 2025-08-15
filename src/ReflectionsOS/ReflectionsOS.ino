@@ -735,16 +735,27 @@ void loop()
 
   if ( recentGesture == GESTURE_CIRCULAR )
   {
-    if ( nextUp2 == 1 )
-    {
-      nextUp2 = 0;
-      experienceservice.startExperience( ExperienceService::EyesFollowFinger );
-      return;
-    }
-    else
+    if ( nextUp2 == 0 )
     {
       nextUp2 = 1;
+      experienceservice.startExperience( ExperienceService::EyesFollowFinger );
+      smartdelay(10);
+      return;
+    }
+
+    if ( nextUp2 == 1 )
+    {
+      nextUp2 = 2;
       experienceservice.startExperience( ExperienceService::ParallaxCat );
+      smartdelay(10);
+      return;
+    }
+
+    if ( nextUp2 == 2 )
+    {
+      nextUp2 = 0;      
+      experienceservice.startExperience( ExperienceService::Sand );
+      smartdelay(10);
       return;
     }
 
