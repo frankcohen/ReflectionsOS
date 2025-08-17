@@ -34,6 +34,9 @@ class Hardware
     void powerDownComponents();
     void powerUpComponents();
 
+    void prepareForSleep();
+    void prepareAfterWake();
+
   private:
     bool NANDMounted;
 

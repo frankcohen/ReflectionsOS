@@ -373,6 +373,8 @@ void setup()
   esp_sleep_wakeup_cause_t reason = esp_sleep_get_wakeup_cause();
   if (reason == ESP_SLEEP_WAKEUP_EXT1) 
   {
+    hardware.prepareAfterWake();
+
     Serial.println("Waking from deep sleep");
   } 
   else 
@@ -577,9 +579,6 @@ void loop()
     experienceservice.startExperience( ExperienceService::Pounce );
     waitForExperienceToStop();
     Serial.println( "Pounce done" );
-    // Put cat into deep sleep  
-    //hardware.powerDownComponents();
-    //esp_deep_sleep_start();
     return;
   }
 
@@ -631,6 +630,7 @@ void loop()
     experienceservice.startExperience( ExperienceService::Sleep );
     waitForExperienceToStop();
     // Put cat into deep sleep  
+    hardware.prepareForSleep();
     hardware.powerDownComponents();
     esp_deep_sleep_start();
     return;
