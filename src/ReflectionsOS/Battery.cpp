@@ -218,7 +218,7 @@ void Battery::loop()
   if ( now - batstatustime > 5000 )
   {
     batstatustime = now;
-    Serial.print( battery.getRecentAvgMilliwatts() );
+    Serial.print( getRecentAvgMilliwatts() );
     Serial.print( " average millivolts used" );
 
     if ( isCharging() )
