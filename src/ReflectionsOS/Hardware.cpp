@@ -133,8 +133,8 @@ void Hardware::powerUpComponents()
 
   pinMode(LED_Pin, OUTPUT);
 
-  pinMode( TOFPower, OUTPUT);    // Power control for TOF sensor
-  digitalWrite( TOFPower, LOW);
+  pinMode( TOFPower, OUTPUT);       // Power control for TOF sensor
+  digitalWrite( TOFPower, LOW);     // Low is on
 
   // Turns the speaker amp on
   pinMode(AudioPower, OUTPUT);
@@ -142,7 +142,7 @@ void Hardware::powerUpComponents()
 
   // Turn GPS module on
   pinMode(GPSPower, OUTPUT);
-  digitalWrite(GPSPower, HIGH);      // HIGH is on
+  digitalWrite(GPSPower, LOW);      // HIGH is on
 
   uint32_t seed = esp_random();
   randomSeed( seed );
@@ -154,13 +154,13 @@ void Hardware::powerDownComponents()
   digitalWrite( Display_SPI_BK, HIGH );
 
   pinMode( TOFPower, OUTPUT);       // Power control for TOF sensor
-  digitalWrite( TOFPower, HIGH);     // Low is on
+  digitalWrite( TOFPower, HIGH);    // Low is on
 
-  // Turns the speaker amp on
+  // Turns the speaker amp off
   pinMode(AudioPower, OUTPUT);
   digitalWrite(AudioPower, LOW);    // HIGH is on
 
-  // Turn GPS module on
+  // Turn GPS module off
   pinMode(GPSPower, OUTPUT);
   digitalWrite(GPSPower, HIGH);     // HIGH is on
 }

@@ -53,6 +53,7 @@ void Video::begin()
     gfx->setCursor( 45, 70 );
     gfx->setTextColor( COLOR_TEXT_YELLOW );
     gfx->println( F( "Battery low" ) );
+    while( battery.isBatteryLow() ) { delay(1000); }
   }
 
   gfx->fillCircle( 120, 120, 5, COLOR_PANTONE_310 );

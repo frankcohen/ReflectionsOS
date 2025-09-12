@@ -309,6 +309,8 @@ void BoardInitializationUtility()
   Cooperative multi-tasking functions
 */
 
+unsigned long timeatstart = millis();    // for debug
+
 static void smartdelay(unsigned long ms) {
   unsigned long start = millis();
   unsigned long tasktime;
@@ -357,6 +359,12 @@ static void smartdelay(unsigned long ms) {
     // Paint debug details over display
     //video.paintText( battery.getBatteryStats() );
     //video.paintText( gps.getStats() );
+
+    String mvv = "  ";
+    mvv += String ( ( millis() - timeatstart ) / 1000 );
+    mvv += " ";
+    mvv += battery.getBatteryStats();
+    video.paintText( mvv );
 
   } while (millis() - start < ms);
 }
@@ -590,6 +598,7 @@ void loop()
   
   // Sleepy after minutes of WatchFaceMain in MAIN and no activity
 
+  /*
   if ( watchfacemain.isSleepy() )
   {
     Serial.println("Getting sleepy");
@@ -597,6 +606,7 @@ void loop()
     smartdelay(10);
     return;
   }
+  */
 
   // There's another cat nearby!
   if ( ( blesupport.isCatNearby() > 0 ) && ( millis() - catTimer > 60000 ) )
@@ -617,13 +627,14 @@ void loop()
     if ( recentGesture == GESTURE_LEFT_RIGHT ) Serial.println( ">>>GESTURE_LEFT_RIGHT" );
     if ( recentGesture == GESTURE_RIGHT_LEFT ) Serial.println( ">>>GESTURE_RIGHT_LEFT" );
     if ( recentGesture == GESTURE_CIRCULAR ) Serial.println( ">>>GESTURE_CIRCULAR" );
-    if ( recentGesture == GESTURE_SLEEP ) { Serial.println( ">>>GESTURE_SLEEP" ); }
+    //if ( recentGesture == GESTURE_SLEEP ) { Serial.println( ">>>GESTURE_SLEEP" ); }
     if ( recentGesture == GESTURE_NONE ) { smartdelay(10); return; }
     else { Serial.println( ">>>Unknown" ); }
   }
 
  // Go to sleep when gestured or when the battery is low
 
+  /*
   if ( ( recentGesture == GESTURE_SLEEP ) || battery.isBatteryLow() || watchfacemain.goToSleep() )
   {
     Serial.println("Going to sleep for gesture or low battery");
@@ -635,6 +646,7 @@ void loop()
     esp_deep_sleep_start();
     return;
   }
+  */
 
   if ( accel.isShaken() )
   {
