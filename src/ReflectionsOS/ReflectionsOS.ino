@@ -309,8 +309,6 @@ void BoardInitializationUtility()
   Cooperative multi-tasking functions
 */
 
-unsigned long timeatstart = millis();    // for debug
-
 static void smartdelay(unsigned long ms) {
   unsigned long start = millis();
   unsigned long tasktime;
@@ -359,13 +357,7 @@ static void smartdelay(unsigned long ms) {
     // Paint debug details over display
     //video.paintText( battery.getBatteryStats() );
     //video.paintText( gps.getStats() );
-
-    String mvv = "  ";
-    mvv += String ( ( millis() - timeatstart ) / 1000 );
-    mvv += " ";
-    mvv += battery.getBatteryStats();
-    video.paintText( mvv );
-
+      
   } while (millis() - start < ms);
 }
 
@@ -578,6 +570,10 @@ void loop()
 {
   printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services
 
+  smartdelay(10);
+  return;
+
+
   // Pounce message received
   if ( ( blesupport.isPounced() ) && ( millis() - pounceTimer > 10000 ))
   {
@@ -609,7 +605,8 @@ void loop()
   */
 
   // There's another cat nearby!
-  if ( ( blesupport.isCatNearby() > 0 ) && ( millis() - catTimer > 60000 ) )
+  if ( ( blesupport.isCatNearby() > 0 ) && ( millis() - catTimer > ( 60000 * 3 ) ) 
+     && ( ! watchfacemain.isSettingTime() ) )   // && experienceservice.isRunningExperience() )
   {
     catTimer = millis();
     Serial.println( "Cats Play" );

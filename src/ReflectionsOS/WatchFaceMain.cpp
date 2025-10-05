@@ -448,6 +448,14 @@ void WatchFaceMain::loop()
   }
 }
 
+bool WatchFaceMain::isSettingTime()
+{
+  if ( ( panel == SETTING_TIME ) || ( panel == CONFIRM_SETTING_TIME ) || 
+      ( panel == SETTING_TIMER ) || ( panel == CONFIRM_START_TIMER ) ) return true;
+
+  return false;
+}
+
 void WatchFaceMain::changeTo( int panelnum, bool setup, String videoname )
 {
   panel = panelnum;

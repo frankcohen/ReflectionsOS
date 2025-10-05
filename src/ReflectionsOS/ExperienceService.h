@@ -42,6 +42,7 @@ class ExperienceService
     void setCurrentState( State state );
     int getExperience();
     bool active();
+    bool isRunningExperience();
 
     // Be certain to update experienceNameToString() when making changes to this structure
     enum ExperienceName

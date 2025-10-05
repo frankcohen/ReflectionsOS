@@ -62,6 +62,7 @@ class WatchFaceMain : public WatchFaceBase
     bool isSleepy();
     bool goToSleep();
     void clearSleepy();
+    bool isSettingTime();
     
     enum Panel { 
       STARTUP, 

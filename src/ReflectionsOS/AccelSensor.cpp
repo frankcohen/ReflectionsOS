@@ -83,6 +83,26 @@
 
 AccelSensor::AccelSensor() {}
 
+// Shortest signed angular delta between a and b (degrees), result in [-180, +180]
+static inline float shortestAngleDelta(float a_deg, float b_deg) {
+  float d = a_deg - b_deg;
+  while (d > 180.0f) d -= 360.0f;
+  while (d < -180.0f) d += 360.0f;
+  return d;
+}
+
+// Compute the "twist angle" in degrees based on selected axis mode.
+// Mode 0: roll-like angle = atan2(Y, Z)
+// Mode 1: alternative roll = atan2(X, Z) (often better if the board is rotated)
+static inline float computeTwistAngleDeg(const sensors_event_t& e) {
+#if TWIST_AXIS_MODE == 1
+  return (180.0f / PI) * atan2f(e.acceleration.x, e.acceleration.z);
+#else
+  return (180.0f / PI) * atan2f(e.acceleration.y, e.acceleration.z);
+#endif
+}
+
+
 void AccelSensor::begin() {
   started = false;
   runflag = false;
@@ -119,6 +139,33 @@ void AccelSensor::begin() {
   configureSensorWakeOnMotion();
 
   started = true;
+
+  // ---- Initialize wrist twist state ----
+  _rollEma = 0.0f;
+  _lastRoll = 0.0f;
+  _twistAccumDeg = 0.0f;
+  _twistStartMs = millis();
+  _twistLastMs = millis();
+  _twistCooldownUntil = 0;
+  _twistArmed = false;
+  _twistPending = false;
+  _twistDbgLastMs = 0;
+
+  // Seed initial roll from a single read (helps EMA converge quickly)
+  {
+    sensors_event_t seedEvt;
+    lis.getEvent(&seedEvt);
+    float rollNow = computeTwistAngleDeg(seedEvt);
+    _rollEma = rollNow;
+    _lastRoll = rollNow;
+  }
+
+}
+
+bool AccelSensor::getWristTwist() {
+  bool hit = _twistPending;
+  _twistPending = false;
+  return hit;
 }
 
 bool AccelSensor::isShaken()
@@ -478,6 +525,90 @@ void AccelSensor::loop()
 
   magnow = sqrt( ( event.acceleration.x * event.acceleration.x ) + ( event.acceleration.y * event.acceleration.y ) + ( event.acceleration.z * event.acceleration.z ) );
   
+
+    // ---- Wrist Twist Detector (with debug) ----
+    {
+      unsigned long now = millis();
+
+      // Compute current twist angle (deg) and smooth with EMA
+      float rollDeg = computeTwistAngleDeg(event);
+      _rollEma += ROLL_EMA_ALPHA * (rollDeg - _rollEma);
+
+      // Gravity gate (near 1 g) unless bypassed for self-test
+    #if TWIST_BYPASS_GRAVITY
+      bool nearG = true;
+    #else
+      bool nearG = (magnow >= TWIST_G_MIN) && (magnow <= TWIST_G_MAX);
+    #endif
+
+      // Handle cooldown and arming
+      if (now >= _twistCooldownUntil) {
+        if (!_twistArmed) {
+          if (nearG) {
+            _twistArmed = true;
+            _twistStartMs = now;
+            _twistAccumDeg = 0.0f;
+            _lastRoll = _rollEma;
+          }
+        }
+
+        if (_twistArmed) {
+          float d = shortestAngleDelta(_rollEma, _lastRoll); // signed shortest delta
+          _twistAccumDeg += d;
+          _lastRoll = _rollEma;
+
+          // Within allowed time window?
+          unsigned long age = now - _twistStartMs;
+          if (age <= TWIST_MAX_WINDOW_MS) {
+            if (fabsf(_twistAccumDeg) >= TWIST_MIN_ANGLE_DEG) {
+              _twistPending = true;
+              _twistArmed = false;
+              _twistCooldownUntil = now + TWIST_COOLDOWN_MS;
+            }
+          } else {
+            // Window expired; reset
+            _twistArmed = false;
+            _twistAccumDeg = 0.0f;
+          }
+        }
+      } else {
+        // During cooldown ensure we aren't armed
+        _twistArmed = false;
+      }
+
+    #if TWIST_DEBUG
+      // Rate-limited debug print to keep logs readable
+      if (now - _twistDbgLastMs >= TWIST_DEBUG_PERIOD_MS) {
+        _twistDbgLastMs = now;
+        long coolLeft = (now >= _twistCooldownUntil) ? 0 : (long)(_twistCooldownUntil - now);
+        unsigned long age = now - _twistStartMs;
+
+        Serial.printf(
+          "TWIST dbg | t=%lu ms | axis=%s | nearG=%d | armed=%d | pend=%d | cool=%ld "
+          "| roll=%.1f ema=%.1f d=%.1f accum=%.1f | mag=%.2f | age=%lu\n",
+          now,
+    #if TWIST_AXIS_MODE == 1
+          "XZ",
+    #else
+          "YZ",
+    #endif
+          (int)nearG,
+          (int)_twistArmed,
+          (int)_twistPending,
+          coolLeft,
+          rollDeg, _rollEma,
+          shortestAngleDelta(_rollEma, _lastRoll), // this delta is zero right after update; still useful
+          _twistAccumDeg,
+          magnow,
+          age
+        );
+      }
+    #endif
+    }
+
+
+
+
   // With enough movement, run the shaken experience
   if ( millis() - shakentime > 5000 )
   {
@@ -497,6 +628,49 @@ void AccelSensor::loop()
     Serial.println( magnow );
     */
   }
+
+  // ---- Wrist Twist Detector ----
+  {
+    unsigned long now = millis();
+
+    // Compute roll from gravity (deg)
+    float rollDeg = (180.0f / PI) * atan2f(event.acceleration.y, event.acceleration.z);
+    _rollEma += ROLL_EMA_ALPHA * (rollDeg - _rollEma);
+
+    // If cooldown expired, check for motion
+    if (now >= _twistCooldownUntil) {
+      bool nearG = (magnow >= TWIST_G_MIN) && (magnow <= TWIST_G_MAX);
+
+      if (!_twistArmed) {
+        if (nearG) {
+          _twistArmed = true;
+          _twistStartMs = now;
+          _twistAccumDeg = 0.0f;
+          _lastRoll = _rollEma;
+        }
+      }
+
+      if (_twistArmed) {
+        float delta = shortestAngleDelta(_rollEma, _lastRoll);
+        _twistAccumDeg += delta;
+        _lastRoll = _rollEma;
+
+        if ((now - _twistStartMs) <= TWIST_MAX_WINDOW_MS) {
+          if (fabsf(_twistAccumDeg) >= TWIST_MIN_ANGLE_DEG) {
+            _twistPending = true;
+            _twistArmed = false;
+            _twistCooldownUntil = now + TWIST_COOLDOWN_MS;
+          }
+        } else {
+          _twistArmed = false;
+          _twistAccumDeg = 0.0f;
+        }
+      }
+    } else {
+      _twistArmed = false;
+    }
+  }
+
 
 }  
 

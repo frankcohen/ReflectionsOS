@@ -40,6 +40,21 @@ extern Video video;
 
 #define SHAKEN_COUNT 2        // Big movements to signal shaken gesture
 
+// -------- Wrist Twist Tunables --------
+#define TWIST_MIN_ANGLE_DEG   75      // required total roll delta to trigger
+#define TWIST_MAX_WINDOW_MS   600     // max time window for the twist
+#define TWIST_COOLDOWN_MS     1200    // cooldown between twists
+#define TWIST_G_MIN           8.0f    // minimum gravity magnitude
+#define TWIST_G_MAX           12.5f   // maximum gravity magnitude
+#define ROLL_EMA_ALPHA        0.25f   // smoothing for roll angle
+
+// ===== Wrist Twist Debug & Options =====
+#define TWIST_DEBUG           1     // 1 = print debug, 0 = silent
+#define TWIST_AXIS_MODE       0     // 0: atan2(Y,Z)  (default/original)
+                                    // 1: atan2(X,Z)  (use if board orientation differs)
+#define TWIST_BYPASS_GRAVITY  0     // 1 = ignore gravity gate (self-test mode)
+#define TWIST_DEBUG_PERIOD_MS 200   // min ms between debug lines
+
 class AccelSensor
 {
   public:
@@ -76,6 +91,8 @@ class AccelSensor
     String getRecentMessage();
     String getRecentMessage2();
 
+    bool getWristTwist();
+
   private:
 
     void handleClicks();
@@ -103,6 +120,17 @@ class AccelSensor
     String    myMef;
     String    myMef2;
 
+    // ---- Wrist Twist Detection State ----
+    float         _rollEma;               // smoothed roll angle
+    float         _lastRoll;              // previous roll
+    float         _twistAccumDeg;         // accumulated roll delta
+    unsigned long _twistStartMs;          // window start
+    unsigned long _twistLastMs;           // last twist update
+    unsigned long _twistCooldownUntil;    // cooldown until this time
+    bool          _twistArmed;            // currently tracking a twist
+    bool          _twistPending;          // true if a twist is detected
+
+    unsigned long _twistDbgLastMs;
 };
 
 #endif // ACCEL_SENSOR_H

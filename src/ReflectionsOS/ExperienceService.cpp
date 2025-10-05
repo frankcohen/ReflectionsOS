@@ -136,6 +136,12 @@ void ExperienceService::begin()
   mostrecentendtime = millis();
 }
 
+bool ExperienceService::isRunningExperience()
+{
+  if ( currentState != STOPPED ) return true;
+  return false;
+}
+
 void ExperienceService::startExperience( int exper )
 {
   expernum = exper;
