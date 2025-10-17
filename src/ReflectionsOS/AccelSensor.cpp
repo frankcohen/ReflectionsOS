@@ -244,7 +244,7 @@ void AccelSensor::configureSensorWakeOnMotion() {
   esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
 }
 
-/* Legacy code, could be handy for future user
+/* Legacy code, could be handy for future use
 
 // Helpers to read/write a single LIS3DH register over I²C
 static uint8_t lis3dh_read8(uint8_t addr, uint8_t reg) {

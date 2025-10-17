@@ -563,16 +563,14 @@ void waitForExperienceToStop()
   Main loop for controlling experiences and main watch face
 */
 
-bool pouncetest = true;
 unsigned long catTimer = millis();
+
+unsigned long demoTimer = millis();
+int demoIndex = 0;
 
 void loop() 
 {
   printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services
-
-  smartdelay(10);
-  return;
-
 
   // Pounce message received
   if ( ( blesupport.isPounced() ) && ( millis() - pounceTimer > 10000 ))
@@ -583,6 +581,7 @@ void loop()
     experienceservice.startExperience( ExperienceService::Pounce );
     waitForExperienceToStop();
     Serial.println( "Pounce done" );
+    smartdelay(10);
     return;
   }
 
@@ -594,7 +593,6 @@ void loop()
   
   // Sleepy after minutes of WatchFaceMain in MAIN and no activity
 
-  /*
   if ( watchfacemain.isSleepy() )
   {
     Serial.println("Getting sleepy");
@@ -602,7 +600,6 @@ void loop()
     smartdelay(10);
     return;
   }
-  */
 
   // There's another cat nearby!
   if ( ( blesupport.isCatNearby() > 0 ) && ( millis() - catTimer > ( 60000 * 3 ) ) 
@@ -624,14 +621,13 @@ void loop()
     if ( recentGesture == GESTURE_LEFT_RIGHT ) Serial.println( ">>>GESTURE_LEFT_RIGHT" );
     if ( recentGesture == GESTURE_RIGHT_LEFT ) Serial.println( ">>>GESTURE_RIGHT_LEFT" );
     if ( recentGesture == GESTURE_CIRCULAR ) Serial.println( ">>>GESTURE_CIRCULAR" );
-    //if ( recentGesture == GESTURE_SLEEP ) { Serial.println( ">>>GESTURE_SLEEP" ); }
+    if ( recentGesture == GESTURE_SLEEP ) { Serial.println( ">>>GESTURE_SLEEP" ); }
     if ( recentGesture == GESTURE_NONE ) { smartdelay(10); return; }
     else { Serial.println( ">>>Unknown" ); }
   }
 
  // Go to sleep when gestured or when the battery is low
 
-  /*
   if ( ( recentGesture == GESTURE_SLEEP ) || battery.isBatteryLow() || watchfacemain.goToSleep() )
   {
     Serial.println("Going to sleep for gesture or low battery");
@@ -643,7 +639,6 @@ void loop()
     esp_deep_sleep_start();
     return;
   }
-  */
 
   if ( accel.isShaken() )
   {
@@ -655,9 +650,44 @@ void loop()
   // Wait 15 seconds after an experience before doing another experience
   if ( ! experienceservice.timeToRunAnother() )
   {
+    demoTimer = millis();
     smartdelay(10);
     return;
   }
+
+  if ( millis() - demoTimer < 15000 )
+  {
+    smartdelay(10);
+    return;
+  }
+
+  /*
+  demoTimer = millis();
+  demoIndex++;
+  if ( demoIndex > 13 ) demoIndex = 1;
+  if ( demoIndex == 1 ) experienceservice.startExperience( ExperienceService::CatsPlay );
+  if ( demoIndex == 2 ) experienceservice.startExperience( ExperienceService::Pounce );
+  //if ( demoIndex == 3 ) experienceservice.startExperience( ExperienceService::Awake );
+  if ( demoIndex == 3 ) experienceservice.startExperience( ExperienceService::Chastise );
+  if ( demoIndex == 4 ) experienceservice.startExperience( ExperienceService::Sleep );
+  if ( demoIndex == 5 ) experienceservice.startExperience( ExperienceService::Shaken );
+  if ( demoIndex == 6 ) experienceservice.startExperience( ExperienceService::EasterEggFrank );
+  if ( demoIndex == 7 ) experienceservice.startExperience( ExperienceService::EasterEggTerri );
+  if ( demoIndex == 8 ) experienceservice.startExperience( ExperienceService::MysticCat );
+  if ( demoIndex == 9 ) experienceservice.startExperience( ExperienceService::Hover );
+  //if ( demoIndex == 10 ) experienceservice.startExperience( ExperienceService::EyesFollowFinger );
+  if ( demoIndex == 10 ) experienceservice.startExperience( ExperienceService::Shaken );
+  //if ( demoIndex == 12 ) experienceservice.startExperience( ExperienceService::ParallaxCat );
+  if ( demoIndex == 11 ) experienceservice.startExperience( ExperienceService::ShowTime );
+  if ( demoIndex == 12 ) experienceservice.startExperience( ExperienceService::Sand );
+  if ( demoIndex == 13 ) experienceservice.startExperience( ExperienceService::GettingSleepy );
+  //if ( demoIndex == 14 ) experienceservice.startExperience( ExperienceService::ParallaxCat );
+
+Serial.print("===================================================" );
+Serial.print("demoIndex " );
+Serial.println( demoIndex );
+Serial.print("===================================================" );
+*/
 
   // No new gestures (except for sleep) unless watchface is on MAIN
   if ( ! watchfacemain.isMain() ) 
@@ -665,7 +695,7 @@ void loop()
     smartdelay(10);
     return;   
   }
-  
+
   if ( recentGesture == GESTURE_RIGHT_LEFT || recentGesture == GESTURE_CIRCULAR || recentGesture == GESTURE_LEFT_RIGHT )
   {
     if ( experiencestats.isFrank() )

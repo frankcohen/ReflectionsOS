@@ -215,6 +215,7 @@ void Battery::loop()
     }
   }
 
+  /*
   if ( now - batstatustime > 5000 )
   {
     batstatustime = now;
@@ -230,6 +231,7 @@ void Battery::loop()
       Serial.println( " " );
     }
   }
+  */
 
   // Power estimator sampling (every ~4s)
   if ( now - _pwrLastSampleMs >= kPwrSampleEveryMs ) {

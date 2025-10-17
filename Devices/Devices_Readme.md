@@ -2,9 +2,9 @@
 
 Started: October 6, 2023
 
-Updated: October 29, 2024
+Updated: October 17, 2025
 
-Reflections is a hardware, software, and server architecture for building mobile entertaining experiences. We went through 8 revisions to the board to get to a finished prototype. Each revision is in a sub directory of [Reflections/devices](https://github.com/frankcohen/ReflectionsOS/tree/main/Devices).
+Reflections is a hardware, software, and server architecture for building mobile entertaining experiences. We went through 12 revisions to the board to get to a finished prototype. Each revision is in a sub directory of [Reflections/devices](https://github.com/frankcohen/ReflectionsOS/tree/main/Devices).
 
 - [Sox](https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Sox) - 1st generation board design
 - [Hoober](https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/Hoober) - rev 2, fixes problems
@@ -17,5 +17,7 @@ Reflections is a hardware, software, and server architecture for building mobile
 - [Yertle](https://github.com/frankcohen/ReflectionsOS/tree/main/Devices/CatInHat) - 9th revision, removes U9 to abandon the press-and-hold power on/off.
 - [Vlad](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/Vlad/Vlad%20Project%20Notes.md) - 10th revision, adds NAND power control via GPIO pin and LIS3DH accelerometer support for waking the ESP32-S3 from Deep Sleep.
 - [VladPlus](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/VladPlus/VladPlus%20Project%20Notes.md) - 11th revision, replaces U4 with a higher efficiency power converter. The old one heated up when recharging a battery.
+
+- [JoJo](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/JoJo/JoJo%20Project%20Notes.md) - 12th revision, fixes problems preventing GPS from capturing satellites consistently.
 
 ![Cindy Lou board example](https://github.com/frankcohen/ReflectionsOS/blob/main/Docs/images/CindyLou.jpg)

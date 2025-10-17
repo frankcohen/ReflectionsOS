@@ -36,7 +36,7 @@ extern Video video;
 
 #define ACCEL_I2C_ADDR   LIS3DH_DEFAULT_ADDRESS   // 0x18 from Adafruit_LIS3DH
 
-#define CLICKTHRESHHOLD 25    // Strenth of tap to bring back from deep sleep
+#define CLICKTHRESHHOLD 40    // Strenth of tap to bring back from deep sleep
 
 #define SHAKEN_COUNT 2        // Big movements to signal shaken gesture
 
@@ -49,7 +49,7 @@ extern Video video;
 #define ROLL_EMA_ALPHA        0.25f   // smoothing for roll angle
 
 // ===== Wrist Twist Debug & Options =====
-#define TWIST_DEBUG           1     // 1 = print debug, 0 = silent
+#define TWIST_DEBUG           0     // 1 = print debug, 0 = silent
 #define TWIST_AXIS_MODE       0     // 0: atan2(Y,Z)  (default/original)
                                     // 1: atan2(X,Z)  (use if board orientation differs)
 #define TWIST_BYPASS_GRAVITY  0     // 1 = ignore gravity gate (self-test mode)
