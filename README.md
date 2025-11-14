@@ -15,7 +15,7 @@ Reflections goes beyond the wearable device to deliver server side architecture.
 
 I worked on [Starling Watch](http://starlingwatch.com) steampunk art jewelry pocket watches with Disney Imagineer and Muppeteer [Terri Hardin](https://terrihardin.com/). In November 2025 we announced the first commercial product based on Reflections. It's Terri Hardin's Cheshire Cat. Details and purchase at [StarlingWatch.com](https://starlingwatch.com/).
 
-(https://img.youtube.com/vi/qcqhzyMLibs/0.jpg)](https://www.youtube.com/watch?v=qcqhzyMLibs)
+[![Announcement video](https://img.youtube.com/vi/qcqhzyMLibs/0.jpg)](https://www.youtube.com/watch?v=qcqhzyMLibs)
 
 I love working with a group of creative makers and the Arduino community. Please feel free to let me know your feedback and ideas.
 
