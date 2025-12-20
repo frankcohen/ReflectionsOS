@@ -23,12 +23,41 @@ static int g_confirmMin  = 0;
 static int g_lastSigHour = -1;
 static int g_lastSigMin  = -1;
 
+// Digital Time tap gate: clear taps for 2 seconds on entry
+static uint32_t g_displayTimeTapGateStart = 0;
+static const uint32_t DISPLAYTIME_TAP_GATE_MS = 2000;
+
 // Wrap-safe minute diff, e.g. 59 -> 0 is diff 1
 static int minuteDiffWrap(int a, int b)
 {
   int d = abs(a - b);
   if (d > 30) d = 60 - d;
   return d;
+}
+
+// -----------------------------------------------------------------------------
+// Twist helper: require 2 consecutive non-zero readings within a gate interval
+// Returns true once per "recognized twist"
+// -----------------------------------------------------------------------------
+static bool twistTriggered()
+{
+  static uint32_t twistGate = 0;
+  static int lastDir = 0;
+
+  if ( millis() - twistGate <= 180 ) return false;
+  twistGate = millis();
+
+  int dir = accel.getWristTwistDir(); // -1 / +1 / 0
+
+  // Require 2 consecutive non-zero readings to trigger
+  if ( ( dir != 0 ) && ( dir == lastDir ) )
+  {
+    lastDir = 0;
+    return true;
+  }
+
+  lastDir = dir;
+  return false;
 }
 
 WatchFaceMain::WatchFaceMain()
@@ -123,7 +152,6 @@ float WatchFaceMain::mapFloat(float x, float in_min, float in_max, float out_min
 }
 
 // GPS marker
-
 void WatchFaceMain::updateGPSmarker()
 {
   if ( gps.isActive() )
@@ -146,14 +174,12 @@ void WatchFaceMain::updateGPSmarker()
 }
 
 // Timer notice indicator
-
 void WatchFaceMain::updateTimerNotice()
 {
   notificationflag = timerservice.status();
 }
 
 // Battery indicator grows/loses leaves
-
 void WatchFaceMain::updateBattery()
 {
   if ( ( millis() - battimer ) > ( 2 * 60000 ) )
@@ -171,7 +197,6 @@ void WatchFaceMain::updateBattery()
 }
 
 // Hour and minutes hands to current time
-
 void WatchFaceMain::updateHoursAndMinutes()
 {
   int hour2 = realtimeclock.getHour();
@@ -193,7 +218,6 @@ void WatchFaceMain::updateHoursAndMinutes()
 }
 
 // Cat blinks eyes
-
 void WatchFaceMain::updateBlink()
 {
   if ( ! blinking )
@@ -236,7 +260,6 @@ void WatchFaceMain::updateBlink()
 }
 
 // Draw the elements to the display
-
 void WatchFaceMain::showDisplayMain()
 {
   if ( ! displayUpdateable ) return;
@@ -314,7 +337,6 @@ void WatchFaceMain::showDisplayMain()
 
 // Draws hour glass time left display, 3, 2, 1
 // Returns true when time is up
-
 bool WatchFaceMain::updateTimeLeft()
 {
   if ( panel == MAIN ) return false;
@@ -376,6 +398,7 @@ void WatchFaceMain::loop()
     case STARTUP:
       startup();
       break;
+
     case MAIN:
       main();
       break;
@@ -383,9 +406,11 @@ void WatchFaceMain::loop()
     case DISPLAYING_TIME:
       displaytime();
       break;
+
     case SETTING_TIME:
       settingtime();
       break;
+
     case CONFIRM_SETTING_TIME:
       confirmsettingtime();
       break;
@@ -393,6 +418,7 @@ void WatchFaceMain::loop()
     case DISPLAYING_MOVES:
       displayingmoves();
       break;
+
     case CONFIRM_CLEAR_MOVES:
       confirmclearmoves();
       break;
@@ -400,9 +426,11 @@ void WatchFaceMain::loop()
     case DISPLAYING_TIMER:
       displayingtimer();
       break;
+
     case SETTING_TIMER:
       settingtimer();
       break;
+
     case CONFIRM_START_TIMER:
       confirmstarttimer();
       break;
@@ -462,24 +490,11 @@ void WatchFaceMain::main()
     return;
   }
 
-  // MAIN only: Twist to show digital time panel (DISPLAYING_TIME)
-  static uint32_t twistGate = 0;
-  static int lastDir = 0;
-
-  if ( millis() - twistGate > 180 )
+  // MAIN: Twist => Digital Time panel
+  if ( twistTriggered() )
   {
-    twistGate = millis();
-    int dir = accel.getWristTwistDir(); // -1 / +1 / 0
-
-    // Require 2 consecutive non-zero readings to trigger
-    if ( ( dir != 0 ) && ( dir == lastDir ) )
-    {
-      changeTo( DISPLAYING_TIME, true, WatchFaceFlip1_video );
-      lastDir = 0;
-      return;
-    }
-
-    lastDir = dir;
+    changeTo( DISPLAYING_TIME, true, WatchFaceFlip1_video );
+    return;
   }
 
   // Single tap does nothing on MAIN (per your flow)
@@ -507,19 +522,37 @@ void WatchFaceMain::displaytime()
     Serial.println( F("DISPLAYING_TIME") );
     noMovementTime = millis();
 
+    g_displayTimeTapGateStart = millis();
+    (void)accel.getSingleTap();
+    (void)accel.getDoubleTap();
+
     drawImageFromFile( wfMain_Time_Background, true, 0, 0 );
     textmessageservice.startShow( TextMessageExperiences::DigitalTime, "", "" );
     return;
   }
 
-  // Single tap does nothing on DISPLAYING_TIME (per your flow)
+  // DISPLAYING_TIME: Twist => back to MAIN
+  if ( twistTriggered() )
+  {
+    changeTo( MAIN, true, WatchFaceFlip3_video );
+    return;
+  }
 
-  // Double tap enters SETTING_TIME
-  if ( accel.getDoubleTap() )
+  if ( millis() - g_displayTimeTapGateStart < DISPLAYTIME_TAP_GATE_MS )
+  {
+    (void)accel.getSingleTap();
+    (void)accel.getDoubleTap();
+    return;
+  }
+
+  // DISPLAYING_TIME: Single tap => enter SETTING_TIME
+  if ( accel.getSingleTap() )
   {
     changeTo( SETTING_TIME, true, "none" );
     return;
   }
+
+  // Double tap does nothing here (per new flow)
 }
 
 void WatchFaceMain::settingtime()
@@ -553,6 +586,13 @@ void WatchFaceMain::settingtime()
     return;
   }
 
+  // SETTING_TIME: Twist => back to MAIN
+  if ( twistTriggered() )
+  {
+    changeTo( MAIN, true, WatchFaceFlip3_video );
+    return;
+  }
+
   // Hourglass timeout drives confirm panel
   if ( updateTimeLeft() )
   {
@@ -567,9 +607,8 @@ void WatchFaceMain::settingtime()
   // Single tap does nothing on SETTING_TIME (per your flow)
   // Double tap does nothing here too.
 
-  // Set time as before:
+  // Set time:
   // horizontal (X) adjusts minutes, vertical (Y) adjusts hours
-
   if ( millis() - tilttimer < tiltspeed ) return;
   tilttimer = millis();
 
@@ -640,6 +679,13 @@ void WatchFaceMain::confirmsettingtime()
     return;
   }
 
+  // CONFIRM_SETTING_TIME: Twist => back to MAIN (cancel)
+  if ( twistTriggered() )
+  {
+    changeTo( MAIN, true, WatchFaceFlip3_video );
+    return;
+  }
+
   // If user does nothing, return to MAIN
   if ( updateTimeLeft() )
   {
@@ -647,17 +693,16 @@ void WatchFaceMain::confirmsettingtime()
     return;
   }
 
-  // Single tap is the primary accept (double tap also accepts)
-  if ( accel.getSingleTap() || accel.getDoubleTap() )
+  // CONFIRM_SETTING_TIME: Single tap accepts and sets RTC
+  if ( accel.getSingleTap() )
   {
     Serial.printf("Accepted new time setting: %d:%02d\n", g_confirmHour, g_confirmMin);
-
-    // Use frozen values to avoid drift during confirm
-    realtimeclock.setTime( g_confirmHour, g_confirmMin, 0 );
-
+    realtimeclock.setHourMinute(g_confirmHour, g_confirmMin);
     changeTo( MAIN, true, WatchFaceFlip3_video );
     return;
   }
+
+  // Double tap does nothing here (per new flow)
 
   textmessageservice.drawCenteredMesssage( F("Tap To"), F("Set Time") );
 }

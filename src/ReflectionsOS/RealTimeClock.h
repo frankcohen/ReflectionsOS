@@ -45,6 +45,8 @@ public:
   // Manual setting (hour: 1-12, ampm: 0=AM, 1=PM)
   void setTime(int hour12, int minute, int ampm);
 
+  void setHourMinute(int hour12, int minute);
+
   // For BoardInitializationUtility: set from epoch or struct tm
   void setEpoch(time_t epoch);
   time_t getEpoch();
