@@ -1,5 +1,5 @@
 /*
-Reflections is a hardware and software platform for building entertaining mobile experiences.
+Reflections is a hardware and software platform for building entertaining mobile and wearable experiences.
 
 What started as a project to wear videos of my children as they grew up on my
 arm as a wristwatch, grew to be a platform for making entertaining experiences.
