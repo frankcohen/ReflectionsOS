@@ -252,19 +252,34 @@ static void write8(uint8_t reg, uint8_t value) {
 // Configure to wake from deep sleep on a click/tap movement
 
 void AccelSensor::configureSensorWakeOnMotion() {
-  // 1) Choose ±8 g (click detection works best at lower ranges)
+  // Keep a known ODR so timing math is stable
+  lis.setDataRate(LIS3DH_DATARATE_400_HZ);
+
+  // Click timing registers are in samples (LSB = 1/ODR).
+  // At 400 Hz: 1 LSB = 2.5 ms
+  const float msPerCount = 1000.0f / 400.0f;
+
+  uint8_t timeLimit   = (uint8_t)constrain((int)round(WAKE_MIN_MOTION_MS / msPerCount), 1, 255);
+  uint8_t timeLatency = (uint8_t)constrain((int)round(WAKE_LATENCY_MS    / msPerCount), 0, 255);
+  uint8_t timeWindow  = (uint8_t)constrain((int)round(WAKE_MAX_WINDOW_MS / msPerCount), 1, 255);
+
+  // Range choice: 8g is fine (you already use it)
   lis.setRange(LIS3DH_RANGE_8_G);
 
-  // 2) Configure “single‐click” on all three axes, threshold=0x10 (tune up for a harder tap)
-  lis.setClick(1, CLICKTHRESHHOLD);
+  // ★ KEY CHANGE:
+  // Use DOUBLE-CLICK for wake:
+  //   - must get 2 hits
+  //   - within timeWindow (~500 ms)
+  //   - with a “motion time” gate via timeLimit (~200 ms)
+  lis.setClick(2, CLICKTHRESHHOLD, timeLimit, timeLatency, timeWindow);
 
-  // 3) Route click interrupt to INT1 pin (CTRL_REG3 bit7 = I1_CLICK)
-  write8(LIS3DH_REG_CTRL3, 0x80);
+  write8(LIS3DH_REG_CLICKCFG, 0x2A);   // enable double-click on X, Y, Z
+  write8(LIS3DH_REG_CTRL3, 0x80);      // Route click interrupt to INT1 pin (CTRL_REG3 bit7 = I1_CLICK)
 
-  // 4) Clear any pending click (read the click‐source register)
+  // Clear any pending click (read the click-source register)
   lis.getClick();
 
-  // 5) Arm the ESP32-S3 EXT1 wake on a HIGH at GPIO14 only
+  // Arm the ESP32-S3 EXT1 wake on a HIGH at GPIO14 only
   uint64_t wakeMask = (1ULL << ACCEL_INT1_PIN);
   esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
 }
@@ -496,43 +511,56 @@ void AccelSensor::handleClicks()
 {
   unsigned long now = millis();
 
-  if ( now - waittime < WAIT_TIME ) return;
+  // Global quiet time after any resolved click event
+  if (now - waittime < WAIT_TIME) return;
 
-  if ( firstpart && ( now - firstClickTime > 450 ) )
+  // If we saw a single-click candidate, confirm it once the double-click window expires
+  // (no second click arrived in time).
+  const unsigned long CONFIRM_MS = 450;   // keep your existing feel; can be 500 if desired
+
+  if (firstpart && (now - firstClickTime > CONFIRM_MS))
   {
     firstpart = false;
     _pendingSingle = true;
     waittime = now;
+    return;
   }
 
+  // Read click source register (clears latch)
   uint8_t click = lis.getClick();
   if (click == 0) return;
-  if (! (click & 0x30)) return;
 
-  if ( (click == 0x54 ) && ( now - minClickTime > 150 ) )
+  // Optional: require IA (Interrupt Active) to be set
+  // if (!(click & 0x40)) return;
+
+  // Must be either single or double
+  if (!(click & 0x30)) return;
+
+  // Debounce very fast repeats (noise / bounce)
+  if (now - minClickTime < 120) return;   // was 150; slightly tighter is fine
+  minClickTime = now;
+
+  bool isDouble = (click & 0x20) != 0;
+  bool isSingle = (click & 0x10) != 0;
+
+  // If hardware reports a double click, that's definitive.
+  if (isDouble)
   {
-    minClickTime = now;
+    _pendingDouble = true;
+    _pendingSingle = false;
+    firstpart = false;
+    waittime = now;
+    return;
+  }
 
-    if ( !firstpart )
-    {
-      firstClickTime = now;
-      firstpart = true;
-      return;
-    }
-
-    if ( firstpart && ( now - firstClickTime > 450 ) )
-    {
-      _pendingSingle = true;
-      firstpart = false;
-      waittime = now;
-    }
-
-    if ( firstpart && ( now - firstClickTime < 450 ) )
-    {
-      _pendingDouble = true;
-      firstpart = false;
-      waittime = millis();
-    }
+  // Otherwise it's a single click event.
+  // We stage it and only confirm after CONFIRM_MS if no double arrives.
+  if (isSingle)
+  {
+    // Start (or restart) the single confirmation window
+    firstClickTime = now;
+    firstpart = true;
+    return;
   }
 }
 

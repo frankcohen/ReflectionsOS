@@ -36,7 +36,11 @@ extern Video video;
 
 #define ACCEL_I2C_ADDR   LIS3DH_DEFAULT_ADDRESS   // 0x18 from Adafruit_LIS3DH
 
-#define CLICKTHRESHHOLD 40    // Strenth of tap to bring back from deep sleep
+// ---- Deep-sleep wake tuning (LIS3DH click timing) ----
+#define CLICKTHRESHHOLD      28    // much easier than 45/50/60
+#define WAKE_MAX_WINDOW_MS   900   // slower, more natural double-tap
+#define WAKE_MIN_MOTION_MS   30    // remove the “needs a whack” feel
+#define WAKE_LATENCY_MS      10    // keep it responsive
 
 #define SHAKEN_COUNT 2        // Big movements to signal shaken gesture
 
