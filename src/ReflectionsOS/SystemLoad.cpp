@@ -55,9 +55,9 @@ void SystemLoad::printHeapSpace( String message )
   Serial.print( message );
   Serial.print(F(" Heap: "));
   Serial.print( freeHeap );
-  Serial.print(F(" , FreeBlock: "));
+  Serial.print(F(", FreeBlock: "));
   Serial.print( largestBlock );
-  Serial.print(F(" , Fragmentation ratio: "));
+  Serial.print(F(", Fragmentation ratio: "));
   Serial.println( fragRatio );
 
   /*
