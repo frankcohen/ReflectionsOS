@@ -41,22 +41,22 @@ static int minuteDiffWrap(int a, int b)
 // -----------------------------------------------------------------------------
 static bool twistTriggered()
 {
-  static uint32_t twistGate = 0;
-  static int lastDir = 0;
+  static uint32_t lastPoll = 0;
+  static uint32_t lastFire = 0;
 
-  if ( millis() - twistGate <= 180 ) return false;
-  twistGate = millis();
+  // Poll at a calm rate (Option A)
+  if (millis() - lastPoll < 300) return false;
+  lastPoll = millis();
 
-  int dir = accel.getWristTwistDir(); // -1 / +1 / 0
+  // Optional extra cooldown so MAIN doesn’t feel jumpy
+  if (millis() - lastFire < 900) return false;
 
-  // Require 2 consecutive non-zero readings to trigger
-  if ( ( dir != 0 ) && ( dir == lastDir ) )
+  int dir = accel.getWristTwistDir();   // already “2-hit confirmed” inside AccelSensor
+  if (dir != 0)
   {
-    lastDir = 0;
+    lastFire = millis();
     return true;
   }
-
-  lastDir = dir;
   return false;
 }
 
@@ -531,13 +531,6 @@ void WatchFaceMain::displaytime()
     return;
   }
 
-  // DISPLAYING_TIME: Twist => back to MAIN
-  if ( twistTriggered() )
-  {
-    changeTo( MAIN, true, WatchFaceFlip3_video );
-    return;
-  }
-
   if ( millis() - g_displayTimeTapGateStart < DISPLAYTIME_TAP_GATE_MS )
   {
     (void)accel.getSingleTap();
@@ -545,9 +538,18 @@ void WatchFaceMain::displaytime()
     return;
   }
 
+  // DISPLAYING_TIME: Twist => back to MAIN
+  if ( twistTriggered() )
+  {
+    Serial.println("Displaying_Time got a Twist" );
+    changeTo( MAIN, true, WatchFaceFlip3_video );
+    return;
+  }
+
   // DISPLAYING_TIME: Single tap => enter SETTING_TIME
   if ( accel.getSingleTap() )
   {
+    Serial.println("Displaying_Time got a single tap" );
     changeTo( SETTING_TIME, true, "none" );
     return;
   }
@@ -587,11 +589,13 @@ void WatchFaceMain::settingtime()
   }
 
   // SETTING_TIME: Twist => back to MAIN
+  /* Disabled so a Twist or accidental click won't interrupt setting time
   if ( twistTriggered() )
   {
     changeTo( MAIN, true, WatchFaceFlip3_video );
     return;
   }
+  */
 
   // Hourglass timeout drives confirm panel
   if ( updateTimeLeft() )
