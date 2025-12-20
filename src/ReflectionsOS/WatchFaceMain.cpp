@@ -14,11 +14,28 @@
 
 #include "WatchFaceMain.h"
 
-WatchFaceMain::WatchFaceMain() 
-    : WatchFaceBase() // Call to the base class constructor
+// -----------------------------------------------------------------------------
+// Shared state for Set Time + Confirm Set Time behavior
+// -----------------------------------------------------------------------------
+static int g_confirmHour = 0;
+static int g_confirmMin  = 0;
+
+static int g_lastSigHour = -1;
+static int g_lastSigMin  = -1;
+
+// Wrap-safe minute diff, e.g. 59 -> 0 is diff 1
+static int minuteDiffWrap(int a, int b)
+{
+  int d = abs(a - b);
+  if (d > 30) d = 60 - d;
+  return d;
+}
+
+WatchFaceMain::WatchFaceMain()
+  : WatchFaceBase() // Call to the base class constructor
 {}
 
-void WatchFaceMain::begin() 
+void WatchFaceMain::begin()
 {
   WatchFaceBase::begin();  // This ensures the base method is executed
 
@@ -34,6 +51,7 @@ void WatchFaceMain::begin()
 
   tilttimer = millis();
 
+  // Baseline ranges (used elsewhere, and as a reference)
   smallX = -6;
   largeX = 6;
   smallY = 7;
@@ -68,9 +86,9 @@ void WatchFaceMain::begin()
   minuteRedrawtimer = millis();
   sleepyTimer = millis();
   sleepyTimer2 = millis();
-  
+
   movesOld = 0;
-  
+
   _runmode = true;
 }
 
@@ -99,7 +117,8 @@ void WatchFaceMain::setDrawItAll()
 }
 
 // helper: map float
-float WatchFaceMain::mapFloat(float x, float in_min, float in_max, float out_min, float out_max) {
+float WatchFaceMain::mapFloat(float x, float in_min, float in_max, float out_min, float out_max)
+{
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
@@ -143,10 +162,10 @@ void WatchFaceMain::updateBattery()
 
     batlev = battery.getBatteryLevel();
 
-    if ( ( batlev != batcount ) && ( batcount < 5 ) ) 
+    if ( ( batlev != batcount ) && ( batcount < 5 ) )
     {
       batcount = batlev;
-      displayUpdateable = true;      
+      displayUpdateable = true;
     }
   }
 }
@@ -158,17 +177,6 @@ void WatchFaceMain::updateHoursAndMinutes()
   int hour2 = realtimeclock.getHour();
   int minute2 = realtimeclock.getMinute();
 
-  /*
-  Serial.print( "WatchFaceMain " );
-  Serial.print( hour2 );
-  Serial.print( ":" );
-  Serial.print( minute2 );
-  Serial.print( " " );
-  Serial.print( hour );
-  Serial.print( ":" );
-  Serial.println( minute );
-  */
-  
   if ( hour2 != hour )
   {
     hour = hour2;
@@ -203,10 +211,10 @@ void WatchFaceMain::updateBlink()
     {
       catFaceIndex++;
       displayUpdateable = true;
-  
+
       if ( catFaceIndex > 5 )
       {
-        catFaceDirection = false;       
+        catFaceDirection = false;
         catFaceIndex = 5;
       }
     }
@@ -214,10 +222,10 @@ void WatchFaceMain::updateBlink()
     {
       catFaceIndex--;
       displayUpdateable = true;
-  
+
       if ( catFaceIndex < 1 )
       {
-        catFaceDirection = true;       
+        catFaceDirection = true;
         catFaceIndex = 1;
         blinking = false;
         catFaceTimer = millis();
@@ -239,7 +247,6 @@ void WatchFaceMain::showDisplayMain()
   String mef;
 
   // Draw hour image
-
   if ( ( hour != oldHour ) || drawitall )
   {
     oldHour = hour;
@@ -250,7 +257,7 @@ void WatchFaceMain::showDisplayMain()
     mef += hour;
     mef += wfMainHours2;
     drawImageFromFile( mef, true, 0, 0 );
-  } 
+  }
 
   if ( ( minute != oldMinute ) || drawitall )
   {
@@ -265,7 +272,6 @@ void WatchFaceMain::showDisplayMain()
   }
 
   // Battery indicator
-
   if ( ( batcount != oldBattery ) || drawitall )
   {
     oldBattery = batcount;
@@ -277,7 +283,6 @@ void WatchFaceMain::showDisplayMain()
   }
 
   // Timer indicator
-
   if ( notificationflag )
   {
     mef = wfMain_Face_Main_TimerNotice;
@@ -285,7 +290,6 @@ void WatchFaceMain::showDisplayMain()
   }
 
   // Cat face in the middle, and he blinks randomly
-
   if ( ( catFaceIndex != oldBlink ) || drawitall || drawFace )
   {
     oldBlink = catFaceIndex;
@@ -317,20 +321,9 @@ bool WatchFaceMain::updateTimeLeft()
 
   int index = 1;
 
-  if ( ( millis() - noMovementTime ) > ( nomov * 1 ) )
-  {
-    index = 2;
-  }
-
-  if ( ( millis() - noMovementTime ) > ( nomov * 2 ) )
-  {
-    index = 3;
-  }
-
-  if ( ( millis() - noMovementTime ) > ( nomov * 3 ) )
-  {
-    index = 4;
-  }
+  if ( ( millis() - noMovementTime ) > ( nomov * 1 ) ) index = 2;
+  if ( ( millis() - noMovementTime ) > ( nomov * 2 ) ) index = 3;
+  if ( ( millis() - noMovementTime ) > ( nomov * 3 ) ) index = 4;
 
   if ( ( millis() - noMovementTime ) > ( nomov * 4 ) )
   {
@@ -355,25 +348,13 @@ void WatchFaceMain::printStatus()
     temptimer = millis();
 
     String mef = "WatchFaceMain ";
-    
-    if ( video.getStatus() )
-    {
-      mef += "1 ";
-    }
-    else
-    {
-      mef += "0 ";
-    }
 
-    if ( textmessageservice.active() )
-    {
-      mef += "1 ";
-    }
-    else
-    {
-      mef += "0 ";
-    }
-    
+    if ( video.getStatus() ) mef += "1 ";
+    else mef += "0 ";
+
+    if ( textmessageservice.active() ) mef += "1 ";
+    else mef += "0 ";
+
     Serial.println( mef );
   }
 
@@ -390,11 +371,11 @@ void WatchFaceMain::loop()
 {
   if ( video.getStatus() ) return;
 
-  switch ( panel ) 
+  switch ( panel )
   {
     case STARTUP:
       startup();
-      break;      
+      break;
     case MAIN:
       main();
       break;
@@ -411,10 +392,10 @@ void WatchFaceMain::loop()
 
     case DISPLAYING_MOVES:
       displayingmoves();
-      break;  
+      break;
     case CONFIRM_CLEAR_MOVES:
       confirmclearmoves();
-      break;  
+      break;
 
     case DISPLAYING_TIMER:
       displayingtimer();
@@ -424,11 +405,10 @@ void WatchFaceMain::loop()
       break;
     case CONFIRM_START_TIMER:
       confirmstarttimer();
-      break;  
+      break;
   }
 
   // Timeout any panel - except for the main - with no change in 20 seconds
-
   if ( ( ( millis() - noMovementTime ) > 20000 ) && ( panel != MAIN ) )
   {
     changeTo( MAIN, true, WatchFaceFlip3_video );
@@ -436,10 +416,6 @@ void WatchFaceMain::loop()
   }
 
   // Force a redraw periodically, to move the minutes hand
-  // We don't have enough memory on an ESP32-S3 to double
-  // buffer the video. Double buffering would hide the flicker
-  // during a redraw
-
   if ( millis() - minuteRedrawtimer > 100000 )
   {
     setDrawItAll();
@@ -450,8 +426,8 @@ void WatchFaceMain::loop()
 
 bool WatchFaceMain::isSettingTime()
 {
-  if ( ( panel == SETTING_TIME ) || ( panel == CONFIRM_SETTING_TIME ) || 
-      ( panel == SETTING_TIMER ) || ( panel == CONFIRM_START_TIMER ) ) return true;
+  if ( ( panel == SETTING_TIME ) || ( panel == CONFIRM_SETTING_TIME ) ||
+       ( panel == SETTING_TIMER ) || ( panel == CONFIRM_START_TIMER ) ) return true;
 
   return false;
 }
@@ -486,17 +462,27 @@ void WatchFaceMain::main()
     return;
   }
 
-  if ( accel.getDoubleTap() )
+  // MAIN only: Twist to show digital time panel (DISPLAYING_TIME)
+  static uint32_t twistGate = 0;
+  static int lastDir = 0;
+
+  if ( millis() - twistGate > 180 )
   {
-    changeTo( SETTING_TIME, true, WatchFaceFlip1_video );
-    return;
+    twistGate = millis();
+    int dir = accel.getWristTwistDir(); // -1 / +1 / 0
+
+    // Require 2 consecutive non-zero readings to trigger
+    if ( ( dir != 0 ) && ( dir == lastDir ) )
+    {
+      changeTo( DISPLAYING_TIME, true, WatchFaceFlip1_video );
+      lastDir = 0;
+      return;
+    }
+
+    lastDir = dir;
   }
 
-  if ( accel.getSingleTap() )
-  {
-    changeTo( DISPLAYING_TIME, true, WatchFaceFlip1_video );
-    return;
-  }
+  // Single tap does nothing on MAIN (per your flow)
 
   if ( ( millis() - maintimer > 50 ) && ( ! video.getStatus() ) )
   {
@@ -505,8 +491,8 @@ void WatchFaceMain::main()
     updateBlink();            // Blink eyes
     updateBattery();          // Battery level indicator
     updateHoursAndMinutes();  // Hour and minute hands
-    updateTimerNotice();      // Timer notice
-    updateGPSmarker();        // GPS marker
+    // updateTimerNotice();   // Timer notice (disabled for shipment)
+    // updateGPSmarker();     // GPS marker (disabled for shipment)
 
     showDisplayMain();
   }
@@ -526,89 +512,117 @@ void WatchFaceMain::displaytime()
     return;
   }
 
+  // Single tap does nothing on DISPLAYING_TIME (per your flow)
+
+  // Double tap enters SETTING_TIME
   if ( accel.getDoubleTap() )
   {
     changeTo( SETTING_TIME, true, "none" );
-    return;
-  }
-
-  if ( accel.getSingleTap() )
-  {
-    changeTo( DISPLAYING_MOVES, true, WatchFaceFlip2_video );
     return;
   }
 }
 
 void WatchFaceMain::settingtime()
 {
+  // More sensitive tilt ranges for setting time (shorter wrist angles have more effect)
+  // Smaller absolute values => more sensitive.
+  const float setSmallX = -3.0f;
+  const float setLargeX =  3.0f;
+  const float setSmallY =  3.5f;
+  const float setLargeY = -3.5f;
+
   if ( needssetup )
   {
     Serial.println( F("SETTING_TIME") );
     needssetup = false;
     noMovementTime = millis();
     tilttimer = millis();
+
     hour = realtimeclock.getHour();
     minute = realtimeclock.getMinute();
-    hourschanging = true;
+
+    // Initialize “significant change” tracking
+    g_lastSigHour = hour;
+    g_lastSigMin  = minute;
+
+    // Initialize confirm (frozen) values
+    g_confirmHour = hour;
+    g_confirmMin  = minute;
+
     drawHourMinute( hour, minute );
     return;
   }
 
+  // Hourglass timeout drives confirm panel
   if ( updateTimeLeft() )
   {
+    // Freeze chosen time at the moment we leave SETTING_TIME
+    g_confirmHour = hour;
+    g_confirmMin  = minute;
+
     changeTo( CONFIRM_SETTING_TIME, true, "none" );
     return;
   }
 
-  if ( accel.getSingleTap() || accel.getDoubleTap() )
-  {
-    changeTo( DISPLAYING_MOVES, true, WatchFaceFlip2_video );
-    return;
-  }
+  // Single tap does nothing on SETTING_TIME (per your flow)
+  // Double tap does nothing here too.
 
-  // Change time by tilting left-right for minutes and up-down for hours
+  // Set time as before:
+  // horizontal (X) adjusts minutes, vertical (Y) adjusts hours
 
   if ( millis() - tilttimer < tiltspeed ) return;
   tilttimer = millis();
 
   float xraw = accel.getXreading();
   float yraw = accel.getYreading();
-  
-  int newMinutes = constrain( round( mapFloat(xraw, smallX, largeX, 1.0f, 59.0f) ), 1, 59 );
-  int newHours   = constrain( round( mapFloat(yraw, largeY, smallY, 1.0f, 12.0f) ), 1, 12 );
 
-  if ( minute != newMinutes )
+  int newMinute = constrain( round( mapFloat( xraw, setSmallX, setLargeX, 0.0f, 59.0f ) ), 0, 59 );
+  int newHour   = constrain( round( mapFloat( yraw, setLargeY, setSmallY, 1.0f, 12.0f ) ), 1, 12 );
+
+  bool changed = false;
+
+  if ( minute != newMinute )
   {
-    int delta = abs(newMinutes - minute);
-    minute = newMinutes;
+    minute = newMinute;
+    changed = true;
+  }
 
-    // only reset if the jump was more than 4 minutes
-    if (delta > 4) {
-      noMovementTime = millis();  // Reset inactivity timer
+  if ( hour != newHour )
+  {
+    hour = newHour;
+    changed = true;
+  }
+
+  if ( changed )
+  {
+    // Only reset hourglass if change is "significant":
+    // - hour changed, OR minutes moved by >= 5 (wrap-safe)
+    bool significant = false;
+
+    if (hour != g_lastSigHour) significant = true;
+    if (minuteDiffWrap(minute, g_lastSigMin) >= 5) significant = true;
+
+    if (significant)
+    {
+      noMovementTime = millis();
+      g_lastSigHour = hour;
+      g_lastSigMin  = minute;
     }
 
-    hourschanging = false;
+    // Always redraw on any change
     drawHourMinute( hour, minute );
-  }
 
-  if ( hour != newHours )
-  {
-    hour = newHours;
-    noMovementTime = millis();  // Reset inactivity timer
-    hourschanging = true;
-    drawHourMinute( hour, minute );
+    // Track the most recent chosen values for confirmation
+    g_confirmHour = hour;
+    g_confirmMin  = minute;
   }
-
 }
 
 void WatchFaceMain::drawHourMinute( int hourc, int minutec )
 {
   String mef = String( hourc );
   mef += F(":");
-  if ( minutec < 10 )
-  {
-    mef += F("0");
-  }
+  if ( minutec < 10 ) mef += F("0");
   mef += String( minutec );
 
   drawImageFromFile( wfMain_SetTime_Background_Shortie, true, 0, 0 );
@@ -626,21 +640,25 @@ void WatchFaceMain::confirmsettingtime()
     return;
   }
 
+  // If user does nothing, return to MAIN
   if ( updateTimeLeft() )
   {
     changeTo( MAIN, true, WatchFaceFlip3_video );
     return;
   }
 
+  // Single tap is the primary accept (double tap also accepts)
   if ( accel.getSingleTap() || accel.getDoubleTap() )
   {
-    Serial.println( "Accepted new time setting" );
-    realtimeclock.setTime( hour, minute, 0 );
+    Serial.printf("Accepted new time setting: %d:%02d\n", g_confirmHour, g_confirmMin);
+
+    // Use frozen values to avoid drift during confirm
+    realtimeclock.setTime( g_confirmHour, g_confirmMin, 0 );
+
     changeTo( MAIN, true, WatchFaceFlip3_video );
     return;
   }
 
-  //drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
   textmessageservice.drawCenteredMesssage( F("Tap To"), F("Set Time") );
 }
 
@@ -675,7 +693,6 @@ void WatchFaceMain::displayingmoves()
     drawImageFromFile( wfMain_Health_Background, true, 0, 0 );
     textmessageservice.updateHealth( newmoves );
   }
-
 }
 
 void WatchFaceMain::confirmclearmoves()
@@ -702,7 +719,6 @@ void WatchFaceMain::confirmclearmoves()
     return;
   }
 
-  //drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
   textmessageservice.drawCenteredMesssage( F("Tap To"), F("Clear Moves") );
 }
 
@@ -729,7 +745,6 @@ void WatchFaceMain::displayingtimer()
     return;
   }
 
-  //drawImageFromFile( wfMain_Timer_Background, true, 0, 0 );
   textmessageservice.updateTimer( timerservice.getTime() );
 }
 
@@ -759,12 +774,11 @@ void WatchFaceMain::settingtimer()
   }
 
   // Change timer time by tilting up-down
-  
   if ( millis() - tilttimer < tiltspeed ) return;
   tilttimer = millis();
-  
+
   float yraw = accel.getYreading();
-  
+
   int newHours = constrain( round( mapFloat(yraw, largeY, smallY, 1.0f, 12.0f) ), 1, 12 );
 
   if ( hour != newHours )
@@ -804,7 +818,5 @@ void WatchFaceMain::confirmstarttimer()
     return;
   }
 
-  //drawImageFromFile( wfMain_Time_Background_Shortie, true, 0, 0 );
   textmessageservice.drawCenteredMesssage( F("Tap To"), F("Start Timer") );
-}  
-
+}

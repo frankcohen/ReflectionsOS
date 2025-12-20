@@ -93,6 +93,12 @@ class AccelSensor
 
     bool getWristTwist();
 
+    // Returns wrist twist direction:
+    //  -1 = twist left (counter-clockwise)
+    //  +1 = twist right (clockwise)
+    //   0 = no significant twist
+    int getWristTwistDir();
+
   private:
 
     void handleClicks();

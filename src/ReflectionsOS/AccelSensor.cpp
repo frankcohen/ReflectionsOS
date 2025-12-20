@@ -168,6 +168,31 @@ bool AccelSensor::getWristTwist() {
   return hit;
 }
 
+int AccelSensor::getWristTwistDir()
+{
+    static float lastX = 0;
+    static float lastY = 0;
+
+    float x = getXreading();
+    float y = getYreading();
+
+    float dx = x - lastX;
+    float dy = y - lastY;
+
+    lastX = x;
+    lastY = y;
+
+    // Twist is rotation, not tilt:
+    // clockwise vs counter-clockwise derived from cross-axis delta
+    float twist = (dx - dy);
+
+    const float DEADZONE = 0.35f;
+
+    if (twist > DEADZONE)  return +1;
+    if (twist < -DEADZONE) return -1;
+    return 0;
+}
+
 bool AccelSensor::isShaken()
 {
   if ( shakencount > SHAKEN_COUNT )
