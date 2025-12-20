@@ -19,52 +19,79 @@
   accurate, ran out of time to find out.
 
   Datasheet comes with this source code, see: vl53l5cx-2886943_.pdf
+
+  2025-12: Refactor to split:
+    (1) Finger position tracking (runs even with low valid pixel count)
+    (2) Gesture detection + sleep detection (uses VALID_PIXEL_COUNT gate)
 */
 
 #include "TOF.h"
 
 extern Video video;
 
+// How long we keep reporting the last known finger position after tracking drops
+// (prevents eyes from freezing on brief dropouts)
+static constexpr unsigned long FINGER_HOLD_MS = 250UL;
+
+// A small denom threshold so we don’t treat tiny weights as “real”
+static constexpr float CENTROID_DENOM_EPS = 1.0f;
+
+// Helpers (file-local)
+static inline int16_t clamp16(int16_t v, int16_t lo, int16_t hi)
+{
+  if (v < lo) return lo;
+  if (v > hi) return hi;
+  return v;
+}
+
 TOF::TOF() {}
 
-void TOF::begin() 
+void TOF::begin()
 {
   if (!tof.begin()) {
     Serial.println("TOF failed");
-    video.stopOnError( "TOF failed", "to start", " ", " ", " " );
+    video.stopOnError("TOF failed", "to start", " ", " ", " ");
   }
- 
+
   // Configure sensor
   tof.setRangingFrequency(FRAME_RATE);
   tof.setResolution(64);
 
-  if (!tof.startRanging()) 
+  if (!tof.startRanging())
   {
     Serial.println("TOF failed to start ranging. Stopping");
-    video.stopOnError( "TOF failed", "to start", "ranging", " ", " " );
+    video.stopOnError("TOF failed", "to start", "ranging", " ", " ");
   }
 
-  lastRead = millis();
-  captTime = millis();
-  lastValid = millis();
-  circCnt = 0;
-  sleepStart  = millis();
+  lastRead   = millis();
+  captTime   = millis();
+  lastValid  = millis();
+  circCnt    = 0;
+  sleepStart = millis();
 
-  tipPos = 0;
+  tipPos  = 0;
   tipDist = 0;
+
+  // Old min/max scaling no longer used for tip mapping (kept for compatibility)
   tipMin = 10;
   tipMax = 0;
 
-  isRunning        = false;
+  isRunning = false;
 
   pendingDirection = false;
   direction        = GESTURE_NONE;
   directionWay     = " ";
 
-  for ( int i = 0; i< WINDOW; i++ ) deltas[ i ] = 0;
+  for (int i = 0; i < WINDOW; i++) deltas[i] = 0;
   lastCentroid = 0;
   wi = 0;
 
+  // NEW: finger tracking presence state
+  fingerLastSeen = 0;
+  fingerPresent  = false;
+
+  mymessage  = "";
+  mymessage2 = "";
 }
 
 void TOF::resetGesture() {
@@ -73,8 +100,10 @@ void TOF::resetGesture() {
   direction        = GESTURE_NONE;
 }
 
-// ——— Dump all WINDOW rotated[] frames (oldest→newest) ——————————————
-void TOF::prettyPrintAllRotated() {
+// Dump all WINDOW rotated[] frames (oldest→newest)
+
+void TOF::prettyPrintAllRotated() 
+{
   Serial.println("---- Last 5 rotated frames (mm) ----");
   for (int f = 0; f < WINDOW; f++) {
     int idx = (wi + f) % WINDOW;
@@ -90,8 +119,9 @@ void TOF::prettyPrintAllRotated() {
   }
 }
 
-// For finger tip location analysis
-int TOF::mapFloatTo0_7(float input, float inMin, float inMax) 
+// For finger tip location analysis - no longer used
+
+int TOF::mapFloatTo0_7(float input, float inMin, float inMax)
 {
     // Avoid division by zero
     if (inMax <= inMin) return 0;
@@ -110,7 +140,7 @@ int TOF::mapFloatTo0_7(float input, float inMin, float inMax)
     return result;  // guaranteed 0 ≤ result ≤ 7
 }
 
-int TOF::getGesture() 
+int TOF::getGesture()
 {
   int prevd = direction;
   direction = GESTURE_NONE;
@@ -119,12 +149,9 @@ int TOF::getGesture()
 
 void TOF::setStatus(bool running) {
   isRunning = running;
-  if ( isRunning )
-  {
+  if (isRunning) {
     tof.startRanging();
-  }
-  else
-  {
+  } else {
     tof.stopRanging();
   }
 }
@@ -137,7 +164,7 @@ int TOF::getFingerPos() {
   return tipPos;
 }
 
-float TOF::getFingerDist(){
+float TOF::getFingerDist() {
   return tipDist;
 }
 
@@ -155,28 +182,95 @@ String TOF::getRecentMessage2()
   return myMefa;
 }
 
-void TOF::loop() {
-  if (!isRunning ) return;
+/*
+  Phase 1: Finger tracking
+  - Computes centroid on X (column domain 0..7) using weights.
+  - Updates tipPos immediately, even if validCnt is low.
+  - Uses FIXED mapping: tipPos = round(centroidX) clamped 0..7.
+  - tipDist = minimum valid distance in that column (across all rows).
+*/
+
+static bool computeFingerTracking(
+  const int16_t rotated[64],
+  float &outCentroidX,
+  int &outTipPos,
+  float &outTipDist
+)
+{
+  float num = 0.0f;
+  float denom = 0.0f;
+
+  // centroid over X only, weighted by closeness
+  for (int i = 0; i < 64; i++) {
+    int16_t d = rotated[i];
+    if (d >= MIN_DIST_MM && d <= MAX_DIST_MM) {
+      float w = float(MAX_DIST_MM - d);  // closer => higher weight
+      num   += w * float(i % 8);
+      denom += w;
+    }
+  }
+
+  if (denom < CENTROID_DENOM_EPS) {
+    // No usable object
+    return false;
+  }
+
+  float cx = num / denom; // ~0..7
+  outCentroidX = cx;
+
+  // FIXED mapping to column index 0..7
+  int col = (int)lroundf(cx);
+  if (col < 0) col = 0;
+  if (col > 7) col = 7;
+  outTipPos = col;
+
+  // tip distance as minimum valid distance in that column across rows
+  int16_t best = MAX_DIST_MM;
+  for (int r = 0; r < 8; r++) {
+    int idx = r*8 + col;
+    int16_t d = rotated[idx];
+    if (d >= MIN_DIST_MM && d <= MAX_DIST_MM) {
+      if (d < best) best = d;
+    }
+  }
+  outTipDist = float(best);
+
+  return true;
+}
+
+/*
+  Phase 2: Gesture detection
+  - Uses VALID_PIXEL_COUNT gate
+  - Uses your existing WINDOW/deltas logic
+  - Uses centroidFrames / rotatedFrames ring buffers for debugging/analysis
+*/
+
+void TOF::loop()
+{
+  if (!isRunning) return;
 
   unsigned long now = millis();
 
   // Enforce lockout after a gesture is reported
   if (now - captTime < GESTURE_WAIT) return;
 
+  // Frame rate pacing
   if (now - lastRead < FRAME_INTERVAL_MS) return;
   lastRead = now;
 
   VL53L5CX_ResultsData rd;
-
   if (!tof.getRangingData(&rd)) return;
 
-  // build a tmp[] and count valid pixels and sleep pixels
+  // Build tmp[] and count valid pixels and sleep pixels
   int16_t tmp[64];
   int validCnt = 0;
   int sleepCnt = 0;
+
   for (int i = 0; i < 64; i++) {
     int16_t d = rd.distance_mm[i];
+
     if (d >= SLEEP_MIN_DISTANCE && d <= SLEEP_MAX_DISTANCE) sleepCnt++;
+
     if (d >= MIN_DIST_MM && d <= MAX_DIST_MM) {
       tmp[i] = d;
       validCnt++;
@@ -185,47 +279,29 @@ void TOF::loop() {
     }
   }
 
-  // ——— Sleep detection ———
-  if ( now - sleepStart > SLEEP_HOLD_MS )
+  // ——— Sleep detection (unchanged) ———
+  if (now - sleepStart > SLEEP_HOLD_MS)
   {
     sleepStart = now;
 
-    /*
-    // Debugging
-    String mez = "TOF ";
-    mez += sleepCnt;
-    mez += "\n";
-    for (int r = 0; r < 8; r++) 
-    {
-      for (int c = 0; c < 8; c++ )
-      {
-        mez += rd.distance_mm[ (r*8) + c ];
-        mez += "\t";
-      }
-      mez += "\n";
-    }
-    Serial.println( mez );
-    */
-    
-    if (sleepCnt >= SLEEP_COVERAGE_COUNT) 
+    if (sleepCnt >= SLEEP_COVERAGE_COUNT)
     {
       resetGesture();
       direction = GESTURE_SLEEP;
       directionWay = "→ Sleep";
       mymessage = directionWay;
-      mymessage2 = sleepCnt;
+      mymessage2 = String(sleepCnt);
       captTime = now;
       return;
     }
   }
 
-  if (validCnt < VALID_PIXEL_COUNT) return;
-
-  // rotate+flip into rotated[]
+  // Rotate + flip into rotated[]
   int16_t rotated[64];
   for (int r = 0; r < 8; r++)
     for (int c = 0; c < 8; c++)
       rotated[c*8 + r] = tmp[r*8 + c];
+
   for (int r = 0; r < 4; r++)
     for (int c = 0; c < 8; c++) {
       int16_t t = rotated[r*8 + c];
@@ -233,97 +309,67 @@ void TOF::loop() {
       rotated[(7-r)*8 + c] = t;
     }
 
-  // copy this frame into our circular buffer
-  memcpy(rotatedFrames[wi], rotated, sizeof(rotated));
+  // ---- PHASE 1: Finger tracking (ALWAYS) ----
+  float centroidX = 3.5f;
+  int   newTipPos = tipPos;
+  float newTipDist = tipDist;
 
-  // compute centroid
-  float num = 0, denom = 0;
-  for (int i = 0; i < 64; i++) {
-    int16_t d = rotated[i];
-    if (d >= MIN_DIST_MM && d <= MAX_DIST_MM) {
-      float w   = float(MAX_DIST_MM - d);
-      num   += w * (i % 8);
-      denom += w;
+  bool fingerOk = computeFingerTracking(rotated, centroidX, newTipPos, newTipDist);
+
+  if (fingerOk) {
+    tipPos = newTipPos;
+    tipDist = newTipDist;
+    fingerLastSeen = now;
+    fingerPresent = true;
+  } else {
+    // If tracking drops, keep last tipPos briefly, then “neutral”
+    if (fingerPresent && (now - fingerLastSeen) > FINGER_HOLD_MS) {
+      fingerPresent = false;
+      tipPos = 0;          // match your existing semantics (0 means none)
+      tipDist = MAX_DIST_MM;
     }
   }
-  float centroid = (denom > 0) ? (num / denom) : 3.5f;
-  if (centroid == 3.5f) {
-    // skip if no object
+
+  // ---- PHASE 2: Gesture detection (ONLY when enough pixels) ----
+  if (validCnt < VALID_PIXEL_COUNT) {
+    // Not enough signal to form gestures, but finger tracking already updated.
     return;
   }
 
-  centroidFrames[wi] = centroid;
+  // Copy this frame into our circular buffer (for debugging/analysis)
+  memcpy(rotatedFrames[wi], rotated, sizeof(rotated));
+  centroidFrames[wi] = centroidX;
 
-  // Finger tip location analysis
-  if ( centroid < tipMin ) tipMin = centroid;
-  if ( centroid > tipMax ) tipMax = centroid;
-  tipPos = mapFloatTo0_7( centroid, tipMin, tipMax );
-  tipDist = rotated[ ( 8 * 4 ) + tipPos ];
+  // compute delta and store (gesture domain)
+  float delta = centroidX - lastCentroid;
+  sumDelta    = sumDelta - deltas[wi] + delta;
+  deltas[wi]  = delta;
+  lastCentroid = centroidX;
 
-  // compute delta and store
-  float delta      = centroid - lastCentroid;
-  sumDelta         = sumDelta - deltas[wi] + delta;
-  deltas[wi]       = delta;
-  lastCentroid     = centroid;
-
-  // Ignore small movements, and when there is enough of them declare a circular gesture
-  if (fabs( delta ) < 0.08 )
+  // Ignore small movements; count toward circular gesture
+  if (fabs(delta) < 0.08)
   {
-    /* 
-    Serial.print( "ignoring " );
-    Serial.println( delta );
-    Serial.print( "Cir count " );
-    Serial.println( circCnt );
-    */
-
     circCnt++;
-    if ( circCnt > CIRCULAR_MAX )
+    if (circCnt > CIRCULAR_MAX)
     {
-      //Serial.println( cirmesg );
       direction = GESTURE_CIRCULAR;
       directionWay = cirmesg;
-      captTime  = now;
+      captTime = now;
       circCnt = 0;
       return;
     }
-
     return;
   }
 
-  // 
-  if ( now - lastValid > MAX_SCANTIME )
+  // If too long since lastValid, reset window
+  if (now - lastValid > MAX_SCANTIME)
   {
     lastValid = now;
     wi = 0;
-    for ( int i = 0; i < WINDOW; i++ ) deltas[i] = 0;
+    for (int i = 0; i < WINDOW; i++) deltas[i] = 0;
   }
 
-  /*
-  Serial.print( sumDelta );
-  Serial.print( "\t" );
-  Serial.print( centroid );
-  Serial.print( "\t" );
-  Serial.print( delta );
-  Serial.print( "\t" );
-  Serial.print( wi );
-  Serial.print( "\t" );
-  
-  for ( int i = 0; i < WINDOW; i++ )
-  {
-    Serial.print( ( wi + i ) % WINDOW );
-    Serial.print( " " );
-    Serial.print( deltas[ ( wi + i ) % WINDOW ] );
-    Serial.print( " " );
-  }
-  Serial.println( " " );
-
-  */
-
-  // Analysis
-  // negative delta = moving right to left
-  // positive = moving left to right
-
-  // count consecutive same‐sign deltas
+  // Analysis: negative delta = moving right-to-left, positive = left-to-right
   int cposcon = 0, cnegcon = 0, cpos = 0, cneg = 0;
   for (int i = 0; i < WINDOW; i++) {
     int idx = (wi + i) % WINDOW;
@@ -335,129 +381,89 @@ void TOF::loop() {
     if (d < 0 && dn < 0) cnegcon++;
   }
 
-  /*
-  Serial.print( "R-L neg: " );
-  Serial.print( cneg );
-  Serial.print( ":" );
-  Serial.print( cnegcon );
-  Serial.print( " L-R pos: " );
-  Serial.print( cpos );
-  Serial.print( ":" );
-  Serial.println( cposcon );
-  */
-
   // advance write pointer
   wi = (wi + 1) % WINDOW;
-  lastValid    = now;
+  lastValid = now;
 
-  if ( cnegcon == 0 && cposcon == 0 ) 
-  {
+  if (cnegcon == 0 && cposcon == 0) {
     return;
   }
 
-  if ( cneg == 2 && cnegcon == 1 && cpos == 1 && cposcon == 0 )
-  {
-    //Serial.println( "Ignoring 1" );
+  if (cneg == 2 && cnegcon == 1 && cpos == 1 && cposcon == 0) {
     return;
   }
-  
-  /*
-  if ( cneg == 0 && cnegcon == 0 && cpos == 2 && cposcon == 1 )
+
+  if (cneg > 0 && cnegcon == 0 && cpos < 3 && cposcon < 2)
   {
-    //Serial.println( "Ignoring 2" );
-    return;
-  }
-  */
-  
-  if ( cneg > 0 && cnegcon == 0 && cpos < 3 && cposcon < 2 )
-  {
-    //Serial.print( lrmesg );
-    //Serial.println( "1" );
     direction = GESTURE_LEFT_RIGHT;
     directionWay = lrmesg;
-    captTime  = now;
+    captTime = now;
     circCnt = 0;
     return;
   }
 
-  if ( cneg > 1 && cnegcon > 1 && cpos > 0 && cposcon == 0 )
+  if (cneg > 1 && cnegcon > 1 && cpos > 0 && cposcon == 0)
   {
-    //Serial.print( rlmesg );
-    //Serial.println( "2" );
     direction = GESTURE_RIGHT_LEFT;
     directionWay = rlmesg;
-    captTime  = now;
+    captTime = now;
     circCnt = 0;
     return;
   }
 
-  if ( cneg > 0 && cneg < 3 && cnegcon < 2 && cpos == 0 && cposcon == 0 )
+  if (cneg > 0 && cneg < 3 && cnegcon < 2 && cpos == 0 && cposcon == 0)
   {
-    //Serial.print( rlmesg );
-    //Serial.println( "3" );
     direction = GESTURE_RIGHT_LEFT;
     directionWay = rlmesg;
-    captTime  = now;
+    captTime = now;
     circCnt = 0;
     return;
   }
 
-  if ( cneg > 0 && cpos > 0 && cneg > cpos && cnegcon > 0 && cposcon > 1 )
+  if (cneg > 0 && cpos > 0 && cneg > cpos && cnegcon > 0 && cposcon > 1)
   {
-    //Serial.print( rlmesg );
-    //Serial.println( "4" );
     direction = GESTURE_RIGHT_LEFT;
     directionWay = rlmesg;
-    captTime  = now;
+    captTime = now;
     circCnt = 0;
     return;
   }
 
-  if ( cneg > 0 && cpos > 0 && cneg < cpos && cnegcon > 1 && cposcon > 1 )
+  if (cneg > 0 && cpos > 0 && cneg < cpos && cnegcon > 1 && cposcon > 1)
   {
-    //Serial.print( lrmesg );
-    //Serial.println( "5" );
     direction = GESTURE_LEFT_RIGHT;
     directionWay = lrmesg;
-    captTime  = now;
+    captTime = now;
     circCnt = 0;
     return;
   }
 
-  if ( cneg > 0 && cpos > 0 && cneg < cpos && cnegcon > 0 && cposcon > 1 )
+  if (cneg > 0 && cpos > 0 && cneg < cpos && cnegcon > 0 && cposcon > 1)
   {
-    //Serial.print( lrmesg );
-    //Serial.println( "6" );
     direction = GESTURE_LEFT_RIGHT;
     directionWay = lrmesg;
-    captTime  = now;
+    captTime = now;
     circCnt = 0;
     return;
   }
 
-  if ( cneg > 1 && cnegcon > 0 && cpos > 0 && cposcon == 0 )
+  if (cneg > 1 && cnegcon > 0 && cpos > 0 && cposcon == 0)
   {
-    //Serial.print( rlmesg );
-    //Serial.println( "7" );
     direction = GESTURE_RIGHT_LEFT;
     directionWay = rlmesg;
-    captTime  = now;
+    captTime = now;
     circCnt = 0;
     return;
   }
 
-  //Serial.print( "circCnt " );
-  //Serial.println( circCnt );
-  
+  // fallthrough: count toward circular gesture
   circCnt++;
-  if ( circCnt > CIRCULAR_MAX )
+  if (circCnt > CIRCULAR_MAX)
   {
-    //Serial.println( cirmesg );
     direction = GESTURE_CIRCULAR;
     directionWay = cirmesg;
-    captTime  = now;
+    captTime = now;
     circCnt = 0;
     return;
   }
-
 }

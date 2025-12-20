@@ -17,7 +17,12 @@
 GPS::GPS(){}
 
 void GPS::begin()
-{ 
+{
+  #if DISABLE_GPS
+  active = false;
+  return;
+  #endif
+
   Serial2.begin(GPSBaud, SERIAL_8N1, RXPin, TXPin);
 
   // --- Send GPS commands ---
@@ -42,6 +47,11 @@ void GPS::sendCommandToGPS(const char* cmd)
 
 void GPS::on()
 {
+  #if DISABLE_GPS
+  active = false;
+  return;
+  #endif
+
   digitalWrite(GPSPower, HIGH);   // HIGH is On
   active = true;
 }
@@ -301,6 +311,11 @@ String GPS::getStats()
 
 void GPS::loop()
 {
+  #if DISABLE_GPS
+  active = false;
+  return;
+  #endif
+
   if ( active )
   {
     while ( Serial2.available() ) 

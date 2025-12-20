@@ -245,10 +245,10 @@ void BoardInitializationUtility()
   mfd += NAND_BASE_DIR;
   mfd += OTA_VERSION_FILE_NAME;
 
-  if ( SD.exists( mfd ) ) return;
-  
-  Serial.println( F( "Board Initialization Utility started" ) );
-  
+  if (SD.exists(mfd)) return;
+
+  Serial.println(F("Board Initialization Utility started"));
+
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 
   printCentered("Initialize");
@@ -256,49 +256,46 @@ void BoardInitializationUtility()
   // Start Wifi
 
   wifi.reset();  // Optionally reset any previous connection settings
-  printCentered( F( "Wifi" ) );
-  delay( 1000 );
+  printCentered(F("Wifi"));
+  delay(1000);
 
-  if ( ! wifi.begin() )  // Non-blocking, until guest uses it to connect
+  if (!wifi.begin())  // Non-blocking, until guest uses it to connect
   {
-    BIUfaled( "Wifi failed" );
+    BIUfaled("Wifi failed");
   }
 
-  delay( 1000 );
-  if ( realtimeclock.syncWithNTP("pool.ntp.org", 5000) )
+  delay(1000);
+
+  // NTP sync is handled by RealTimeClock again
+  if (realtimeclock.syncWithNTP("pool.ntp.org", 5000))
   {
-    Serial.println( F( "Sync'd to network time over wifi" ) );
+    Serial.println(F("Sync'd to network time over wifi"));
   }
   else
   {
-    Serial.println( F( "Could not sync to network time over wifi" ) );
+    Serial.println(F("Could not sync to network time over wifi"));
+    BIUfaled( F( "NTP failed" ) );
   }
 
-  delay( 1000 );
-  printCentered( F( "Replicate" ) );
-  delay( 1000 );
+  delay(1000);
+  printCentered(F("Replicate"));
+  delay(1000);
 
   storage.printStats();
 
   // Download cat-file-package.tar and any other files, then expand the tars
 
-  if ( ! storage.replicateServerFiles() )
+  if (!storage.replicateServerFiles())
   {
-    BIUfaled( F("Replicate failed") );
+    BIUfaled(F("Replicate failed"));
   }
 
-  Serial.println( "After: ");
+  Serial.println("After: ");
   storage.printStats();
 
-  /*
-  Serial.println( F("- - -") );
-  Serial.println( F("Files:") );
-  storage.listDir(SD, F("/"), 100, true);
-  */
-
-  delay( 1000 );
-  printCentered( F( "Restart" ) );
-  delay( 1000 );
+  delay(1000);
+  printCentered(F("Restart"));
+  delay(1000);
 
   digitalWrite(Display_SPI_BK, HIGH);  // Turn display backlight off
 
@@ -559,18 +556,65 @@ void waitForExperienceToStop()
   }
 }
 
+// Demonstrates every experience, used to produce Beauty Videos of the watch
+
+unsigned long demoTimer = millis();
+int demoIndex = 0;
+
+void demoService()
+{
+  // Wait 15 seconds after an experience before doing another experience
+  if ( ! experienceservice.timeToRunAnother() )
+  {
+    demoTimer = millis();
+    smartdelay(10);
+    return;
+  }
+
+  if ( millis() - demoTimer < 15000 )
+  {
+    smartdelay(10);
+    return;
+  }
+
+  demoTimer = millis();
+  demoIndex++;
+  if ( demoIndex > 13 ) demoIndex = 1;
+  if ( demoIndex == 1 ) experienceservice.startExperience( ExperienceService::CatsPlay );
+  if ( demoIndex == 2 ) experienceservice.startExperience( ExperienceService::GettingSleepy );
+  //if ( demoIndex == 2 ) experienceservice.startExperience( ExperienceService::Awake );
+  if ( demoIndex == 3 ) experienceservice.startExperience( ExperienceService::Chastise );
+  if ( demoIndex == 4 ) experienceservice.startExperience( ExperienceService::Pounce );
+  if ( demoIndex == 5 ) experienceservice.startExperience( ExperienceService::Sleep );
+  if ( demoIndex == 6 ) experienceservice.startExperience( ExperienceService::Shaken );
+  if ( demoIndex == 7 ) experienceservice.startExperience( ExperienceService::MysticCat );
+  if ( demoIndex == 8 ) experienceservice.startExperience( ExperienceService::Hover );
+  if ( demoIndex == 9 ) experienceservice.startExperience( ExperienceService::Shaken );
+  if ( demoIndex == 10 ) experienceservice.startExperience( ExperienceService::ShowTime );
+  if ( demoIndex == 11 ) experienceservice.startExperience( ExperienceService::Sand );
+  if ( demoIndex == 12 ) experienceservice.startExperience( ExperienceService::EasterEggFrank );
+  if ( demoIndex == 13 ) experienceservice.startExperience( ExperienceService::EasterEggTerri );
+  //if ( demoIndex == 10 ) experienceservice.startExperience( ExperienceService::EyesFollowFinger );
+  //if ( demoIndex == 12 ) experienceservice.startExperience( ExperienceService::ParallaxCat );
+
+  Serial.println("===================================================" );
+  Serial.print("demoIndex " );
+  Serial.println( demoIndex );
+  Serial.println("===================================================" );
+
+  smartdelay(10);
+  return;   
+}
+
 /*
   Main loop for controlling experiences and main watch face
 */
 
 unsigned long catTimer = millis();
 
-unsigned long demoTimer = millis();
-int demoIndex = 0;
-
 void loop() 
 {
-  printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services
+  printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services (running in core 0)
 
   // Pounce message received
   if ( ( blesupport.isPounced() ) && ( millis() - pounceTimer > 10000 ))
@@ -647,49 +691,7 @@ void loop()
     return;
   }
 
-  // Wait 15 seconds after an experience before doing another experience
-  if ( ! experienceservice.timeToRunAnother() )
-  {
-    demoTimer = millis();
-    smartdelay(10);
-    return;
-  }
-
-  if ( millis() - demoTimer < 15000 )
-  {
-    smartdelay(10);
-    return;
-  }
-
-  
-  demoTimer = millis();
-  demoIndex++;
-  if ( demoIndex > 13 ) demoIndex = 1;
-  if ( demoIndex == 1 ) experienceservice.startExperience( ExperienceService::CatsPlay );
-  if ( demoIndex == 2 ) experienceservice.startExperience( ExperienceService::GettingSleepy );
-  //if ( demoIndex == 2 ) experienceservice.startExperience( ExperienceService::Awake );
-  if ( demoIndex == 3 ) experienceservice.startExperience( ExperienceService::Chastise );
-  if ( demoIndex == 4 ) experienceservice.startExperience( ExperienceService::Pounce );
-  if ( demoIndex == 5 ) experienceservice.startExperience( ExperienceService::Sleep );
-  if ( demoIndex == 6 ) experienceservice.startExperience( ExperienceService::Shaken );
-  if ( demoIndex == 7 ) experienceservice.startExperience( ExperienceService::MysticCat );
-  if ( demoIndex == 8 ) experienceservice.startExperience( ExperienceService::Hover );
-  if ( demoIndex == 9 ) experienceservice.startExperience( ExperienceService::Shaken );
-  if ( demoIndex == 10 ) experienceservice.startExperience( ExperienceService::ShowTime );
-  if ( demoIndex == 11 ) experienceservice.startExperience( ExperienceService::Sand );
-  if ( demoIndex == 12 ) experienceservice.startExperience( ExperienceService::EasterEggFrank );
-  if ( demoIndex == 13 ) experienceservice.startExperience( ExperienceService::EasterEggTerri );
-  //if ( demoIndex == 10 ) experienceservice.startExperience( ExperienceService::EyesFollowFinger );
-  //if ( demoIndex == 12 ) experienceservice.startExperience( ExperienceService::ParallaxCat );
-
-Serial.println("===================================================" );
-Serial.print("demoIndex " );
-Serial.println( demoIndex );
-Serial.println("===================================================" );
-
-smartdelay(10);
-return;   
-
+  // demoService();    // Demonstrates every experience, used to produce Beauty Videos of the watch
 
   // No new gestures (except for sleep) unless watchface is on MAIN
   if ( ! watchfacemain.isMain() ) 
@@ -717,7 +719,8 @@ return;
 
   if ( recentGesture == GESTURE_RIGHT_LEFT )
   {  
-    experienceservice.startExperience( ExperienceService::MysticCat );
+    experienceservice.startExperience( ExperienceService::EyesFollowFinger );
+    //experienceservice.startExperience( ExperienceService::MysticCat );
     smartdelay(10);
     return;
   } 

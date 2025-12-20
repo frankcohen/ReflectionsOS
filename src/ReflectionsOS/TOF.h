@@ -152,6 +152,9 @@ private:
   float tipMin;
   float tipMax;
 
+  unsigned long fingerLastSeen;
+  bool          fingerPresent;
+
   String mymessage;
   String mymessage2;
 };

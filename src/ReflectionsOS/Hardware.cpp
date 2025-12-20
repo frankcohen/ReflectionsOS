@@ -108,8 +108,11 @@ void Hardware::prepareAfterWake()
   // Reapply your run-mode config
 
   // Turn GPS module on
-  pinMode(GPSPower, OUTPUT);
-  digitalWrite(GPSPower, HIGH);      // HIGH is on
+  #if DISABLE_GPS == 0
+    pinMode(GPSPower, OUTPUT);
+    digitalWrite(GPSPower, HIGH);  // HIGH is on
+  #endif
+
 }
 
 void Hardware::powerUpComponents()

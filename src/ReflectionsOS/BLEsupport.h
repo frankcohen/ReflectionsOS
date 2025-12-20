@@ -32,6 +32,7 @@
 #include "Compass.h"
 #include "GPS.h"
 #include "RealTimeClock.h"
+#include "Wifi.h"
 
 #define scanTimeMs 5000
 
