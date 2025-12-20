@@ -661,33 +661,35 @@ void loop()
     return;
   }
 
-  /*
+  
   demoTimer = millis();
   demoIndex++;
   if ( demoIndex > 13 ) demoIndex = 1;
   if ( demoIndex == 1 ) experienceservice.startExperience( ExperienceService::CatsPlay );
-  if ( demoIndex == 2 ) experienceservice.startExperience( ExperienceService::Pounce );
-  //if ( demoIndex == 3 ) experienceservice.startExperience( ExperienceService::Awake );
+  if ( demoIndex == 2 ) experienceservice.startExperience( ExperienceService::GettingSleepy );
+  //if ( demoIndex == 2 ) experienceservice.startExperience( ExperienceService::Awake );
   if ( demoIndex == 3 ) experienceservice.startExperience( ExperienceService::Chastise );
-  if ( demoIndex == 4 ) experienceservice.startExperience( ExperienceService::Sleep );
-  if ( demoIndex == 5 ) experienceservice.startExperience( ExperienceService::Shaken );
-  if ( demoIndex == 6 ) experienceservice.startExperience( ExperienceService::EasterEggFrank );
-  if ( demoIndex == 7 ) experienceservice.startExperience( ExperienceService::EasterEggTerri );
-  if ( demoIndex == 8 ) experienceservice.startExperience( ExperienceService::MysticCat );
-  if ( demoIndex == 9 ) experienceservice.startExperience( ExperienceService::Hover );
+  if ( demoIndex == 4 ) experienceservice.startExperience( ExperienceService::Pounce );
+  if ( demoIndex == 5 ) experienceservice.startExperience( ExperienceService::Sleep );
+  if ( demoIndex == 6 ) experienceservice.startExperience( ExperienceService::Shaken );
+  if ( demoIndex == 7 ) experienceservice.startExperience( ExperienceService::MysticCat );
+  if ( demoIndex == 8 ) experienceservice.startExperience( ExperienceService::Hover );
+  if ( demoIndex == 9 ) experienceservice.startExperience( ExperienceService::Shaken );
+  if ( demoIndex == 10 ) experienceservice.startExperience( ExperienceService::ShowTime );
+  if ( demoIndex == 11 ) experienceservice.startExperience( ExperienceService::Sand );
+  if ( demoIndex == 12 ) experienceservice.startExperience( ExperienceService::EasterEggFrank );
+  if ( demoIndex == 13 ) experienceservice.startExperience( ExperienceService::EasterEggTerri );
   //if ( demoIndex == 10 ) experienceservice.startExperience( ExperienceService::EyesFollowFinger );
-  if ( demoIndex == 10 ) experienceservice.startExperience( ExperienceService::Shaken );
   //if ( demoIndex == 12 ) experienceservice.startExperience( ExperienceService::ParallaxCat );
-  if ( demoIndex == 11 ) experienceservice.startExperience( ExperienceService::ShowTime );
-  if ( demoIndex == 12 ) experienceservice.startExperience( ExperienceService::Sand );
-  if ( demoIndex == 13 ) experienceservice.startExperience( ExperienceService::GettingSleepy );
-  //if ( demoIndex == 14 ) experienceservice.startExperience( ExperienceService::ParallaxCat );
 
-Serial.print("===================================================" );
+Serial.println("===================================================" );
 Serial.print("demoIndex " );
 Serial.println( demoIndex );
-Serial.print("===================================================" );
-*/
+Serial.println("===================================================" );
+
+smartdelay(10);
+return;   
+
 
   // No new gestures (except for sleep) unless watchface is on MAIN
   if ( ! watchfacemain.isMain() ) 
