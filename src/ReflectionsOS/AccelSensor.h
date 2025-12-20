@@ -45,12 +45,12 @@ extern Video video;
 #define SHAKEN_COUNT 2        // Big movements to signal shaken gesture
 
 // -------- Wrist Twist Tunables --------
-#define TWIST_MIN_ANGLE_DEG   75      // required total roll delta to trigger
-#define TWIST_MAX_WINDOW_MS   600     // max time window for the twist
+#define TWIST_MIN_ANGLE_DEG   95      // required total roll delta to trigger
+#define TWIST_MAX_WINDOW_MS   450     // max time window for the twist
 #define TWIST_COOLDOWN_MS     1200    // cooldown between twists
-#define TWIST_G_MIN           8.0f    // minimum gravity magnitude
-#define TWIST_G_MAX           12.5f   // maximum gravity magnitude
-#define ROLL_EMA_ALPHA        0.25f   // smoothing for roll angle
+#define TWIST_G_MIN           9.0f    // minimum gravity magnitude
+#define TWIST_G_MAX           10.8f   // maximum gravity magnitude
+#define ROLL_EMA_ALPHA        0.15f   // smoothing for roll angle
 
 // ===== Wrist Twist Debug & Options =====
 #define TWIST_DEBUG           0     // 1 = print debug, 0 = silent
@@ -139,8 +139,13 @@ class AccelSensor
     unsigned long _twistCooldownUntil;    // cooldown until this time
     bool          _twistArmed;            // currently tracking a twist
     bool          _twistPending;          // true if a twist is detected
+    unsigned long _twistIgnoreUntilMs;
 
     unsigned long _twistDbgLastMs;
+
+    float _ax, _ay, _az;    
+    int _twistDirHits;
+    int _twistDirLast;    
 };
 
 #endif // ACCEL_SENSOR_H

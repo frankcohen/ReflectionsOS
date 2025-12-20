@@ -16,7 +16,8 @@ ESP32Time rtc(0);
 
 RealTimeClock::RealTimeClock() {}
 
-void RealTimeClock::begin(int utcOffsetSeconds) {
+void RealTimeClock::begin(int utcOffsetSeconds) 
+{
   _utcOffsetSeconds = utcOffsetSeconds;
 
   // ESP32Time uses rtc.offset (seconds)
@@ -29,6 +30,12 @@ void RealTimeClock::begin(int utcOffsetSeconds) {
     (unsigned long)rtc.getEpoch(),
     _utcOffsetSeconds
   );
+
+  if (_lastBuzzedHour < 0) {
+    _lastBuzzedHour = rtc.getHour();
+    return;
+  }
+
 }
 
 bool RealTimeClock::isValid() {
@@ -211,5 +218,13 @@ bool RealTimeClock::syncWithNTP(const char* ntpServer, uint32_t timeoutMs)
 
 void RealTimeClock::loop()
 {
+  /* Haptic buzz on the hour */
+  const int hourNow = getHour();   // use your existing API
+  if (hourNow != _lastBuzzedHour)
+  {
+    haptic.playEffect( 72 );  //   72 − Transition Ramp Down Medium Smooth 1 – 100 to 0%
+    _lastBuzzedHour = hourNow;
+  }
+
 }
 

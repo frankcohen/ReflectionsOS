@@ -14,7 +14,8 @@
 #ifndef _RealTimeClock_
 #define _RealTimeClock_
 
-#include "RealTimeClock.h"
+#include "Haptic.h"
+extern Haptic haptic;
 
 #include "Arduino.h"
 #include <ESP32Time.h>
@@ -63,6 +64,8 @@ public:
 
 private:
   int _utcOffsetSeconds = -28800;
+
+  int _lastBuzzedHour = -1;  
 };
 
 #endif // _RealTimeClock_

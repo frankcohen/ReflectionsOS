@@ -299,7 +299,10 @@ void BoardInitializationUtility()
 
   digitalWrite(Display_SPI_BK, HIGH);  // Turn display backlight off
 
-  ESP.restart();
+  // Installation complete; enter deep sleep until user wakes device
+  hardware.prepareForSleep();
+  hardware.powerDownComponents();
+  esp_deep_sleep_start();
 }
 
 /*
@@ -719,8 +722,8 @@ void loop()
 
   if ( recentGesture == GESTURE_RIGHT_LEFT )
   {  
-    experienceservice.startExperience( ExperienceService::EyesFollowFinger );
-    //experienceservice.startExperience( ExperienceService::MysticCat );
+    //experienceservice.startExperience( ExperienceService::EyesFollowFinger );
+    experienceservice.startExperience( ExperienceService::MysticCat );
     smartdelay(10);
     return;
   } 
@@ -728,7 +731,7 @@ void loop()
   // Left to Right gives all experiences one-at-a-time
 
   if ( recentGesture == GESTURE_LEFT_RIGHT )
-  {
+  {    
     if ( nextUp == 0 )
     {
       nextUp++;
@@ -778,7 +781,7 @@ void loop()
   }
 
   if ( recentGesture == GESTURE_CIRCULAR )
-  {
+  {    
     if ( nextUp2 == 0 )
     {
       nextUp2 = 1;
@@ -804,6 +807,31 @@ void loop()
     }
 
   };
+
+  // Automatic play of experiences on no activity for 4 minutes
+  /* Disabled for now. Need to understand where sleep interferes with this.
+  if ( ! lastActivityFlag )
+  {
+    if ( millis() - lastActivityTime > ( 4 * 60000 ) )
+    {
+      lastActivityFlag = false;
+      lastActivityTime = millis();
+
+      freeplayIndex++;
+      if ( freeplayIndex > 10 ) freeplayIndex = 1;
+      if ( freeplayIndex == 1 ) experienceservice.startExperience( ExperienceService::Chastise );
+      if ( freeplayIndex == 2 ) experienceservice.startExperience( ExperienceService::Pounce );
+      if ( freeplayIndex == 3 ) experienceservice.startExperience( ExperienceService::Shaken );
+      if ( freeplayIndex == 4 ) experienceservice.startExperience( ExperienceService::MysticCat );
+      if ( freeplayIndex == 5 ) experienceservice.startExperience( ExperienceService::Hover );
+      if ( freeplayIndex == 6 ) experienceservice.startExperience( ExperienceService::Shaken );
+      if ( freeplayIndex == 7 ) experienceservice.startExperience( ExperienceService::ShowTime );
+      if ( freeplayIndex == 8 ) experienceservice.startExperience( ExperienceService::Sand );
+      if ( freeplayIndex == 9 ) experienceservice.startExperience( ExperienceService::EyesFollowFinger );
+      if ( freeplayIndex == 10 ) experienceservice.startExperience( ExperienceService::ParallaxCat );
+    }
+  }
+  */
 
   smartdelay(10);
 }

@@ -131,6 +131,7 @@ void AccelSensor::begin() {
   waittime = millis();
   _pendingSingle = false;
   _pendingDouble = false;
+  _twistIgnoreUntilMs = 0;
 
   shakentime = millis();
   shakentime2 = millis();
@@ -151,6 +152,10 @@ void AccelSensor::begin() {
   _twistPending = false;
   _twistDbgLastMs = 0;
 
+  _ax = _ay = _az = 0.0f;
+  _twistDirHits = 0;
+  _twistDirLast = 0;
+
   // Seed initial roll from a single read (helps EMA converge quickly)
   {
     sensors_event_t seedEvt;
@@ -170,27 +175,46 @@ bool AccelSensor::getWristTwist() {
 
 int AccelSensor::getWristTwistDir()
 {
+  // Don’t report twist direction near taps
+  if (millis() < _twistIgnoreUntilMs) 
+  {
     static float lastX = 0;
     static float lastY = 0;
-
-    float x = getXreading();
-    float y = getYreading();
-
-    float dx = x - lastX;
-    float dy = y - lastY;
-
-    lastX = x;
-    lastY = y;
-
-    // Twist is rotation, not tilt:
-    // clockwise vs counter-clockwise derived from cross-axis delta
-    float twist = (dx - dy);
-
-    const float DEADZONE = 0.35f;
-
-    if (twist > DEADZONE)  return +1;
-    if (twist < -DEADZONE) return -1;
+    lastX = _ax;
+    lastY = _ay;
+    _twistDirHits = 0;
+    _twistDirLast = 0;
     return 0;
+  }  
+
+  static float lastX = 0;
+  static float lastY = 0;
+
+  float x = getXreading();
+  float y = getYreading();
+
+  float dx = x - lastX;
+  float dy = y - lastY;
+
+  lastX = x;
+  lastY = y;
+
+  float twist = (dx - dy);
+
+  const float DEADZONE = 0.35f;
+
+  int dir = 0;
+  if (twist > DEADZONE) dir = +1;
+  else if (twist < -DEADZONE) dir = -1;
+
+  if (dir == 0) { _twistDirHits = 0; _twistDirLast = 0; return 0; }
+
+  if (dir == _twistDirLast) _twistDirHits++;
+  else { _twistDirLast = dir; _twistDirHits = 1; }
+
+  if (_twistDirHits >= 2) { _twistDirHits = 0; _twistDirLast = 0; return dir; }
+
+  return 0;
 }
 
 bool AccelSensor::isShaken()
@@ -204,35 +228,9 @@ bool AccelSensor::isShaken()
   return false;
 }
 
-float AccelSensor::getXreading() {
-  if (started) {
-    sensors_event_t evt;
-    lis.getEvent(&evt);
-    return evt.acceleration.x;
-  } else {
-    return 0;
-  }
-}
-
-float AccelSensor::getYreading() {
-  if (started) {
-    sensors_event_t evt;
-    lis.getEvent(&evt);
-    return evt.acceleration.y;
-  } else {
-    return 0;
-  }
-}
-
-float AccelSensor::getZreading() {
-  if (started) {
-    sensors_event_t evt;
-    lis.getEvent(&evt);
-    return evt.acceleration.z;
-  } else {
-    return 0;
-  }
-}
+float AccelSensor::getXreading() { return started ? _ax : 0; }
+float AccelSensor::getYreading() { return started ? _ay : 0; }
+float AccelSensor::getZreading() { return started ? _az : 0; }
 
 // ——— register names from Adafruit_LIS3DH.h ———
 //  INT1CFG: enable X/Y/Z high-event interrupts on INT1
@@ -505,61 +503,57 @@ bool AccelSensor::getStatus() {
   return runflag;
 }
 
- // Detect single and double clicks
+// Detect single and double clicks
 
 void AccelSensor::handleClicks()
 {
   unsigned long now = millis();
 
-  // Global quiet time after any resolved click event
-  if (now - waittime < WAIT_TIME) return;
-
   // If we saw a single-click candidate, confirm it once the double-click window expires
-  // (no second click arrived in time).
-  const unsigned long CONFIRM_MS = 450;   // keep your existing feel; can be 500 if desired
+  const unsigned long CONFIRM_MS = 450;
 
   if (firstpart && (now - firstClickTime > CONFIRM_MS))
   {
     firstpart = false;
     _pendingSingle = true;
     waittime = now;
+    _twistIgnoreUntilMs = now + 350;
     return;
   }
 
-  // Read click source register (clears latch)
+  // Always read click source so we can suppress twist on tap impulses
   uint8_t click = lis.getClick();
+  if (click & 0x30) {
+    _twistIgnoreUntilMs = now + 350;
+  }
+
+  // Apply your global quiet time for generating tap events
+  if (now - waittime < WAIT_TIME) return;
+
   if (click == 0) return;
-
-  // Optional: require IA (Interrupt Active) to be set
-  // if (!(click & 0x40)) return;
-
-  // Must be either single or double
   if (!(click & 0x30)) return;
 
-  // Debounce very fast repeats (noise / bounce)
-  if (now - minClickTime < 120) return;   // was 150; slightly tighter is fine
+  if (now - minClickTime < 120) return;
   minClickTime = now;
 
   bool isDouble = (click & 0x20) != 0;
   bool isSingle = (click & 0x10) != 0;
 
-  // If hardware reports a double click, that's definitive.
   if (isDouble)
   {
     _pendingDouble = true;
     _pendingSingle = false;
     firstpart = false;
     waittime = now;
+    _twistIgnoreUntilMs = now + 350;
     return;
   }
 
-  // Otherwise it's a single click event.
-  // We stage it and only confirm after CONFIRM_MS if no double arrives.
   if (isSingle)
   {
-    // Start (or restart) the single confirmation window
     firstClickTime = now;
     firstpart = true;
+    _twistIgnoreUntilMs = now + 350;
     return;
   }
 }
@@ -576,28 +570,42 @@ void AccelSensor::loop()
   sensors_event_t event;
   lis.getEvent(&event);
 
+  _ax = event.acceleration.x;
+  _ay = event.acceleration.y;
+  _az = event.acceleration.z;  
+
   magnow = sqrt( ( event.acceleration.x * event.acceleration.x ) + ( event.acceleration.y * event.acceleration.y ) + ( event.acceleration.z * event.acceleration.z ) );
   
+  // ---- Wrist Twist Detector (with debug) ----
+  {
+    unsigned long now = millis();
 
-    // ---- Wrist Twist Detector (with debug) ----
+    if (now < _twistIgnoreUntilMs) {
+      _twistArmed = false;
+      _twistAccumDeg = 0.0f;
+      _twistPending = false;   // <- add this
+    } 
+    else 
     {
-      unsigned long now = millis();
 
       // Compute current twist angle (deg) and smooth with EMA
       float rollDeg = computeTwistAngleDeg(event);
       _rollEma += ROLL_EMA_ALPHA * (rollDeg - _rollEma);
 
-      // Gravity gate (near 1 g) unless bypassed for self-test
-    #if TWIST_BYPASS_GRAVITY
-      bool nearG = true;
-    #else
-      bool nearG = (magnow >= TWIST_G_MIN) && (magnow <= TWIST_G_MAX);
-    #endif
+        // Gravity gate (near 1 g) unless bypassed for self-test
+      #if TWIST_BYPASS_GRAVITY
+        bool nearG = true;
+      #else
+        bool nearG = (magnow >= TWIST_G_MIN) && (magnow <= TWIST_G_MAX);
+      #endif
 
       // Handle cooldown and arming
-      if (now >= _twistCooldownUntil) {
-        if (!_twistArmed) {
-          if (nearG) {
+      if (now >= _twistCooldownUntil) 
+      {
+        if (!_twistArmed) 
+        {
+          if (nearG) 
+          {
             _twistArmed = true;
             _twistStartMs = now;
             _twistAccumDeg = 0.0f;
@@ -605,62 +613,71 @@ void AccelSensor::loop()
           }
         }
 
-        if (_twistArmed) {
+        if (_twistArmed) 
+        {
           float d = shortestAngleDelta(_rollEma, _lastRoll); // signed shortest delta
+
+          if (fabsf(d) < 1.5f) d = 0.0f;   // ignore tiny deltas (tap jitter + sensor noise)
+
           _twistAccumDeg += d;
           _lastRoll = _rollEma;
 
           // Within allowed time window?
           unsigned long age = now - _twistStartMs;
           if (age <= TWIST_MAX_WINDOW_MS) {
-            if (fabsf(_twistAccumDeg) >= TWIST_MIN_ANGLE_DEG) {
+            if (fabsf(_twistAccumDeg) >= TWIST_MIN_ANGLE_DEG) 
+            {
               _twistPending = true;
               _twistArmed = false;
               _twistCooldownUntil = now + TWIST_COOLDOWN_MS;
             }
-          } else {
+          } 
+          else 
+          {
             // Window expired; reset
             _twistArmed = false;
             _twistAccumDeg = 0.0f;
           }
         }
-      } else {
+      } 
+      else 
+      {
         // During cooldown ensure we aren't armed
         _twistArmed = false;
       }
 
-    #if TWIST_DEBUG
-      // Rate-limited debug print to keep logs readable
-      if (now - _twistDbgLastMs >= TWIST_DEBUG_PERIOD_MS) {
-        _twistDbgLastMs = now;
-        long coolLeft = (now >= _twistCooldownUntil) ? 0 : (long)(_twistCooldownUntil - now);
-        unsigned long age = now - _twistStartMs;
+      #if TWIST_DEBUG
+        // Rate-limited debug print to keep logs readable
+        if (now - _twistDbgLastMs >= TWIST_DEBUG_PERIOD_MS) 
+        {
+          _twistDbgLastMs = now;
+          long coolLeft = (now >= _twistCooldownUntil) ? 0 : (long)(_twistCooldownUntil - now);
+          unsigned long age = now - _twistStartMs;
 
-        Serial.printf(
-          "TWIST dbg | t=%lu ms | axis=%s | nearG=%d | armed=%d | pend=%d | cool=%ld "
-          "| roll=%.1f ema=%.1f d=%.1f accum=%.1f | mag=%.2f | age=%lu\n",
-          now,
-    #if TWIST_AXIS_MODE == 1
-          "XZ",
-    #else
-          "YZ",
-    #endif
-          (int)nearG,
-          (int)_twistArmed,
-          (int)_twistPending,
-          coolLeft,
-          rollDeg, _rollEma,
-          shortestAngleDelta(_rollEma, _lastRoll), // this delta is zero right after update; still useful
-          _twistAccumDeg,
-          magnow,
-          age
-        );
-      }
-    #endif
+          Serial.printf(
+            "TWIST dbg | t=%lu ms | axis=%s | nearG=%d | armed=%d | pend=%d | cool=%ld "
+            "| roll=%.1f ema=%.1f d=%.1f accum=%.1f | mag=%.2f | age=%lu\n",
+            now,
+
+            #if TWIST_AXIS_MODE == 1
+              "XZ",
+            #else
+              "YZ",
+            #endif
+              (int)nearG,
+              (int)_twistArmed,
+              (int)_twistPending,
+              coolLeft,
+              rollDeg, _rollEma,
+              shortestAngleDelta(_rollEma, _lastRoll), // this delta is zero right after update; still useful
+              _twistAccumDeg,
+              magnow,
+              age
+            );
+          }
+      #endif
     }
-
-
-
+  }
 
   // With enough movement, run the shaken experience
   if ( millis() - shakentime > 5000 )
@@ -681,49 +698,6 @@ void AccelSensor::loop()
     Serial.println( magnow );
     */
   }
-
-  // ---- Wrist Twist Detector ----
-  {
-    unsigned long now = millis();
-
-    // Compute roll from gravity (deg)
-    float rollDeg = (180.0f / PI) * atan2f(event.acceleration.y, event.acceleration.z);
-    _rollEma += ROLL_EMA_ALPHA * (rollDeg - _rollEma);
-
-    // If cooldown expired, check for motion
-    if (now >= _twistCooldownUntil) {
-      bool nearG = (magnow >= TWIST_G_MIN) && (magnow <= TWIST_G_MAX);
-
-      if (!_twistArmed) {
-        if (nearG) {
-          _twistArmed = true;
-          _twistStartMs = now;
-          _twistAccumDeg = 0.0f;
-          _lastRoll = _rollEma;
-        }
-      }
-
-      if (_twistArmed) {
-        float delta = shortestAngleDelta(_rollEma, _lastRoll);
-        _twistAccumDeg += delta;
-        _lastRoll = _rollEma;
-
-        if ((now - _twistStartMs) <= TWIST_MAX_WINDOW_MS) {
-          if (fabsf(_twistAccumDeg) >= TWIST_MIN_ANGLE_DEG) {
-            _twistPending = true;
-            _twistArmed = false;
-            _twistCooldownUntil = now + TWIST_COOLDOWN_MS;
-          }
-        } else {
-          _twistArmed = false;
-          _twistAccumDeg = 0.0f;
-        }
-      }
-    } else {
-      _twistArmed = false;
-    }
-  }
-
 
 }  
 
