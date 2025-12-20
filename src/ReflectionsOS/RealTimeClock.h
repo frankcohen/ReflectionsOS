@@ -14,6 +14,8 @@
 #ifndef _RealTimeClock_
 #define _RealTimeClock_
 
+#include "RealTimeClock.h"
+
 #include "Arduino.h"
 #include <ESP32Time.h>
 #include <time.h>

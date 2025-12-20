@@ -19,7 +19,7 @@
 // DEBUG TOGGLES
 // ------------------------------------------------------------
 #define EYES_DEBUG_SERIAL  0   // 1 = enable Serial debug
-#define EYES_DEBUG_DOT        // 1 = enable on-screen debug dot
+#define EYES_DEBUG_DOT     0   // 1 = enable on-screen debug dot
 
 #define COLOR_DEBUG 0xF800
 
@@ -215,7 +215,7 @@ void Experience_Eyes::run()
     prevRightPupilX = rightPupilX;
   }
 
-#if EYES_DEBUG_DOT
+  #if EYES_DEBUG_DOT
   // ---------------- DEBUG DOT ----------------
   {
     static int prevDbgX = -1;
@@ -233,7 +233,7 @@ void Experience_Eyes::run()
     }
     else prevDbgX = -1;
   }
-#endif
+  #endif
 
 #if EYES_DEBUG_SERIAL
   // ---------------- SERIAL DEBUG ----------------

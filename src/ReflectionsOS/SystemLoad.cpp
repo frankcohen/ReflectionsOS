@@ -53,7 +53,7 @@ void SystemLoad::printHeapSpace( String message )
   */
   
   Serial.print( message );
-  Serial.print(F(", Heap: "));
+  Serial.print(F(" Heap: "));
   Serial.print( freeHeap );
   Serial.print(F(" , FreeBlock: "));
   Serial.print( largestBlock );
@@ -84,7 +84,13 @@ void SystemLoad::loop() {
     Serial.print( float( accumulatedTaskTime2 ) / float( interval) );
     Serial.print(F("% "));
     Serial.print( float( accumulatedTaskTime3 ) / float( interval) );
-    Serial.print(F("% "));
+    Serial.print(F("%"));
+
+    const int minute = realtimeclock.getMinute();
+    const int hour   = realtimeclock.getHour();
+    const int second = realtimeclock.getSecond();
+    Serial.printf(", RTC %02d:%02d:%02d", hour, minute, second);
+
     printHeapSpace( ", memory" );
 
     // Reset the accumulated values for the next interval
