@@ -643,6 +643,7 @@ void loop()
   if ( watchfacemain.isSleepy() )
   {
     Serial.println("Getting sleepy");
+    textmessageservice.stop();
     experienceservice.startExperience( ExperienceService::Sleep );
     smartdelay(10);
     return;
@@ -677,7 +678,11 @@ void loop()
 
   if ( ( recentGesture == GESTURE_SLEEP ) || battery.isBatteryLow() || watchfacemain.goToSleep() )
   {
-    Serial.println("Going to sleep for gesture or low battery");
+    if ( recentGesture == GESTURE_SLEEP ) Serial.println("Going to sleep for gesture");
+    if ( battery.isBatteryLow() ) Serial.println("Going to sleep for low battery");
+    if ( watchfacemain.goToSleep() ) Serial.println("Going to sleep for inactivity");
+
+    textmessageservice.stop();
     experienceservice.startExperience( ExperienceService::Sleep );
     waitForExperienceToStop();
     // Put cat into deep sleep  
@@ -697,7 +702,7 @@ void loop()
   // demoService();    // Demonstrates every experience, used to produce Beauty Videos of the watch
 
   // No new gestures (except for sleep) unless watchface is on MAIN
-  if ( ! watchfacemain.isMain() ) 
+  if ( ! watchfacemain.isMainOrTime() ) 
   {
     smartdelay(10);
     return;   

@@ -118,25 +118,43 @@ void WatchFaceMain::begin()
 
   movesOld = 0;
 
+  mainwaiter = millis();
+
   _runmode = true;
+
+  signaledSleepy = false;
 }
 
 void WatchFaceMain::clearSleepy()
 {
   sleepyTimer = millis();
+  sleepyTimer2 = millis();
+  signaledSleepy = false;
 }
 
 bool WatchFaceMain::isSleepy()
 {
-  if ( millis() - sleepyTimer < sleepyTime ) return false;
-  sleepyTimer = millis();
-  return true;
+  if ( millis() - sleepyTimer < sleepyTime )
+  {
+    return false;
+  }
+  else
+  {
+    if ( ! signaledSleepy )
+    {
+      signaledSleepy = true;
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }  
 }
 
 bool WatchFaceMain::goToSleep()
 {
   if ( millis() - sleepyTimer2 < sleepyTime2 ) return false;
-  sleepyTimer2 = millis();
   return true;
 }
 
@@ -389,6 +407,14 @@ bool WatchFaceMain::isMain()
   return false;
 }
 
+bool WatchFaceMain::isMainOrTime()
+{
+  if ( panel == MAIN ) return true;
+  if ( panel == DISPLAYING_TIME ) return true;
+  return false;
+}
+
+
 void WatchFaceMain::loop()
 {
   if ( video.getStatus() ) return;
@@ -487,11 +513,12 @@ void WatchFaceMain::main()
     needssetup = false;
     drawitall = true;
     blinking = false;
+    mainwaiter = millis();
     return;
   }
 
   // MAIN: Twist => Digital Time panel
-  if ( twistTriggered() )
+  if ( twistTriggered() && ( millis() - mainwaiter > 2000 ) )
   {
     changeTo( DISPLAYING_TIME, true, WatchFaceFlip1_video );
     return;
@@ -547,7 +574,7 @@ void WatchFaceMain::displaytime()
   }
 
   // DISPLAYING_TIME: Single tap => enter SETTING_TIME
-  if ( accel.getSingleTap() )
+  if ( accel.getDoubleTap() )
   {
     Serial.println("Displaying_Time got a single tap" );
     changeTo( SETTING_TIME, true, "none" );
@@ -587,6 +614,8 @@ void WatchFaceMain::settingtime()
     drawHourMinute( hour, minute );
     return;
   }
+
+  clearSleepy();
 
   // SETTING_TIME: Twist => back to MAIN
   /* Disabled so a Twist or accidental click won't interrupt setting time
@@ -683,13 +712,6 @@ void WatchFaceMain::confirmsettingtime()
     return;
   }
 
-  // CONFIRM_SETTING_TIME: Twist => back to MAIN (cancel)
-  if ( twistTriggered() )
-  {
-    changeTo( MAIN, true, WatchFaceFlip3_video );
-    return;
-  }
-
   // If user does nothing, return to MAIN
   if ( updateTimeLeft() )
   {
@@ -698,15 +720,13 @@ void WatchFaceMain::confirmsettingtime()
   }
 
   // CONFIRM_SETTING_TIME: Single tap accepts and sets RTC
-  if ( accel.getSingleTap() )
+  if ( accel.getSingleTap() || accel.getDoubleTap() )
   {
     Serial.printf("Accepted new time setting: %d:%02d\n", g_confirmHour, g_confirmMin);
     realtimeclock.setHourMinute(g_confirmHour, g_confirmMin);
     changeTo( MAIN, true, WatchFaceFlip3_video );
     return;
   }
-
-  // Double tap does nothing here (per new flow)
 
   textmessageservice.drawCenteredMesssage( F("Tap To"), F("Set Time") );
 }

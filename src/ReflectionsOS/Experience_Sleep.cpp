@@ -43,9 +43,6 @@ void Experience_Sleep::run()
 
 void Experience_Sleep::teardown() 
 {
-  Serial.println( F("Sleep TEARDOWN") );
-
   setTeardownComplete( true );  // Signal teardown complete
-
-  Serial.println( F("Sleep after sleep") );
+  Serial.println( F("Sleep TEARDOWN") );
 }

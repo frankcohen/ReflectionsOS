@@ -21,11 +21,13 @@
 #include "Logger.h"
 #include "Battery.h"
 #include "WatchFaceMain.h"
+#include "TextMessageService.h"
 
 extern Battery battery;  // External Battery class
 extern LOGGER logger;
 extern ExperienceStats experiencestats;
 extern WatchFaceMain watchfacemain;
+extern TextMessageService textmessageservice;
 
 class ExperienceService
 {

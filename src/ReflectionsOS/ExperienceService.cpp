@@ -195,23 +195,30 @@ void ExperienceService::operateExperience()
   switch ( currentState ) 
   {
     case SETUP:
-      watchfacemain.clearSleepy();
-
-      if ( currentExperience == NULL )
-      {
-        Serial.println( F("ExperienceService setup currentExperience is null"));
-        video.stopOnError( F( "currExp" ), F( "is null" ), F( " " ), F( " " ), F( " " ) );
-      }
-      
+    {
       currentExperience->setup();
       if ( currentExperience->isSetupComplete() )
       {
         currentState = RUN;
       }
 
-      break;
+      // Clear the sleep timer, unless this is the Sleep Experience
 
+      String exn = currentExperience->getExperienceName();
+      if ( exn != SleepName ) { watchfacemain.clearSleepy(); }
+
+      textmessageservice.stop();
+      
+      if ( currentExperience == NULL )
+      {
+        Serial.println( F("ExperienceService setup currentExperience is null"));
+        video.stopOnError( F( "currExp" ), F( "is null" ), F( " " ), F( " " ), F( " " ) );
+      }      
+    }
+    break;
+    
     case RUN:
+    {
       if ( currentExperience == NULL )
       {
         Serial.println( F("ExperienceService run currentExperience is null"));
@@ -223,21 +230,25 @@ void ExperienceService::operateExperience()
       // Single or double cancels the experience
       if ( accel.getSingleTapNoClear() || accel.getDoubleTapNoClear() )
       {
-        String exn = currentExperience->getExperienceName();
-        if ( ! ( exn == catsplayname || exn == PounceName ) )
+        // Experiences that should NOT exit on tap
+        String exn2 = currentExperience->getExperienceName();
+        if ( ! ( exn2 == catsplayname ||
+                exn2 == PounceName  ||
+                exn2 == SleepName ) )
         {
           Serial.println( "Experience tap exit" );
           currentExperience->setRunComplete( true );
           currentState = TEARDOWN;
           break;
         }
-      } 
+      }
 
       if ( currentExperience->isRunComplete() ) 
       {
         currentState = TEARDOWN;
       }
-      break;
+    }
+    break;
 
     case TEARDOWN:
 
