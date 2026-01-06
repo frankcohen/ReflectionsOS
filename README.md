@@ -21,7 +21,7 @@ I love working with a group of creative makers and the Arduino community. Please
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/HIWHx4NLKUU/0.jpg)](https://www.youtube.com/watch?v=HIWHx4NLKUU)
 
-[VladPlus](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/VladPlus/VladPlus%20Project%20Notes.md) is the latest version of the Reflections main board. Everything fits into a wrist watch case and I actually wear it on my wrist! Plus the software to drive experiences (codename ReflectionsOS) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the board.
+[JoJo](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/JoJo/JoJo%20Project%20Notes.md) is the latest version of the Reflections main board. Everything fits into a wrist watch case and I actually wear it on my wrist! Plus the [software]() to drive experiences (codename ReflectionsOS) is coming along nicely. See https://github.com/frankcohen/ReflectionsOS/tree/main/Experiments for experiments with the board.
 
 VladPlus Gerber files and schematic are at:
 [https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/VladPlus/VladPlus%20Project%20Notes.md](https://github.com/frankcohen/ReflectionsOS/blob/main/Devices/VladPlus/VladPlus%20Project%20Notes.md)
