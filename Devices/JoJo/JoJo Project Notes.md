@@ -1,8 +1,8 @@
-# VladPlus project notes, Reflections
+# JoJo project notes, Reflections
 
 Started: October 1, 2025
 
-Updated: October 17, 2025
+Updated: January 5, 2026
 
 JoJo is the 12th revision of the Reflections main board. 
 It is the successor to Vlad Plus, Vlad, Yertle, Cat In Hat, BlueFish, RedFish, CindyLou, Horton, ThingTwo, Hoober, Knox and Sox. JoJo fixes problems preventing GPS from capturing satellites consistently.

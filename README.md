@@ -1,5 +1,5 @@
 # ReflectionsOS
-ESP32 and Arduino-based Internet-enabled watch project and reference architecture to make your own entertaining experiences
+ESP32 and Arduino-based Internet-enabled watch project and reference architecture to make your own entertaining experiences. [See the software repository](https://github.com/frankcohen/ReflectionsOS/blob/main/src/SRC_readme.md).
 
 ![Reflections Mobile Experiences](Reflections_logo.jpg)
 
