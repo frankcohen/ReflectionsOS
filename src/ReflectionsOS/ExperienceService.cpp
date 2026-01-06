@@ -227,12 +227,14 @@ void ExperienceService::operateExperience()
 
       currentExperience->run();
 
+      /* Disabled to deal with overly sensitive accelerometers
       // Single or double cancels the experience
       if ( accel.getSingleTapNoClear() || accel.getDoubleTapNoClear() )
       {
         // Experiences that should NOT exit on tap
         String exn2 = currentExperience->getExperienceName();
         if ( ! ( exn2 == catsplayname ||
+                exn2 == PounceName  ||
                 exn2 == PounceName  ||
                 exn2 == SleepName ) )
         {
@@ -241,7 +243,10 @@ void ExperienceService::operateExperience()
           currentState = TEARDOWN;
           break;
         }
+
+        // Also add TextMessageService.stop() here
       }
+      */
 
       if ( currentExperience->isRunComplete() ) 
       {

@@ -18,8 +18,6 @@ Read the license in the license.txt file that comes with this code.
 #ifndef _config_
 #define _config_
 
-#define DISABLE_GPS 1   // Disable GPS module and all GPS-based services for customer shipments, until we prove Jojo board works
-
 /* Experience videos */
 
 #define OutOfTheBox_video "178e801340f79249dbb2b34b3e64eda4"     
@@ -154,6 +152,7 @@ Read the license in the license.txt file that comes with this code.
 #define RXPin         18
 #define TXPin         17
 #define GPSPower      21
+#define GPSBaud 9600
 
 // Real Time Clock (RTC)
 #define timeRegionOffset -1

@@ -107,12 +107,8 @@ void Hardware::prepareAfterWake()
 
   // Reapply your run-mode config
 
-  // Turn GPS module on
-  #if DISABLE_GPS == 0
-    pinMode(GPSPower, OUTPUT);
-    digitalWrite(GPSPower, HIGH);  // HIGH is on
-  #endif
-
+  pinMode(GPSPower, OUTPUT);     // Turn GPS module on
+  digitalWrite(GPSPower, HIGH);  // HIGH is on
 }
 
 void Hardware::powerUpComponents()
@@ -144,8 +140,9 @@ void Hardware::powerUpComponents()
   digitalWrite(AudioPower, LOW);    // HIGH is on
 
   // Turn GPS module on
+  Serial2.begin(GPSBaud, SERIAL_8N1, RXPin, TXPin);
   pinMode(GPSPower, OUTPUT);
-  digitalWrite(GPSPower, LOW);      // HIGH is on
+  digitalWrite(GPSPower, HIGH);      // HIGH is on
 
   uint32_t seed = esp_random();
   randomSeed( seed );
@@ -164,8 +161,8 @@ void Hardware::powerDownComponents()
   digitalWrite(AudioPower, LOW);    // HIGH is on
 
   // Turn GPS module off
-  pinMode(GPSPower, OUTPUT);
-  digitalWrite(GPSPower, HIGH);     // HIGH is on
+  //pinMode(GPSPower, OUTPUT);
+  //digitalWrite(GPSPower, LOW);     // HIGH is on
 }
 
 bool Hardware::getMounted()

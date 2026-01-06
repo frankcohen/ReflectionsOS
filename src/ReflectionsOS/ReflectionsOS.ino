@@ -356,7 +356,7 @@ static void smartdelay(unsigned long ms) {
 
     // Paint debug details over display
     //video.paintText( battery.getBatteryStats() );
-    //video.paintText( gps.getStats() );
+    video.paintText( gps.getStats() );
       
   } while (millis() - start < ms);
 }
