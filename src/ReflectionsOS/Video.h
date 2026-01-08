@@ -80,6 +80,8 @@ class Video
     
     void addReadTime( unsigned long rtime );
 
+    void displayTextMessage( String msg, String msg2, String msg3, String msg4 );
+
   private:
     void addCRLF(String &s, size_t lineLen);
 
@@ -104,6 +106,10 @@ class Video
 
     int x, y, w, h;
 
+    int16_t xp, yp;
+    uint16_t wp, hp;
+
+    void displayCentered( String msg, int yq );
 };
 
 #endif // _video_

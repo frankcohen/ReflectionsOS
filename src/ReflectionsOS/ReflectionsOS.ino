@@ -329,6 +329,7 @@ static void smartdelay(unsigned long ms) {
     steps.loop();
     timerservice.loop();
     audio.loop();
+    hardware.loop();    // Includes shipping mode shutdown
 
     // Experience operations
 
@@ -356,7 +357,7 @@ static void smartdelay(unsigned long ms) {
 
     // Paint debug details over display
     //video.paintText( battery.getBatteryStats() );
-    video.paintText( gps.getStats() );
+    //video.paintText( gps.getStats() );
       
   } while (millis() - start < ms);
 }
@@ -478,6 +479,8 @@ void setup()
   gps.on();
 
   systemload.printHeapSpace( "Setup done" );
+
+  pinMode(0, INPUT_PULLUP);
 
   logger.info(F("Setup complete"));
 }
