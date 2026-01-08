@@ -36,25 +36,37 @@ static int minuteDiffWrap(int a, int b)
 }
 
 // -----------------------------------------------------------------------------
-// Twist helper: require 2 consecutive non-zero readings within a gate interval
-// Returns true once per "recognized twist"
+// Twist helper (resettable)
 // -----------------------------------------------------------------------------
+static uint32_t g_twistLastPoll = 0;
+static uint32_t g_twistLastFire = 0;
+
+static void resetTwistDetector()
+{
+  // Prevent any immediate fire right after a panel change
+  g_twistLastPoll = millis();
+  g_twistLastFire = millis();
+}
+
+static void flushTwistDetector()
+{
+  // Drain any internal "2-hit" state in AccelSensor by reading it
+  (void)accel.getWristTwistDir();
+}
+
 static bool twistTriggered()
 {
-  static uint32_t lastPoll = 0;
-  static uint32_t lastFire = 0;
+  // Poll at a calm rate
+  if (millis() - g_twistLastPoll < 300) return false;
+  g_twistLastPoll = millis();
 
-  // Poll at a calm rate (Option A)
-  if (millis() - lastPoll < 300) return false;
-  lastPoll = millis();
+  // Extra cooldown
+  if (millis() - g_twistLastFire < 900) return false;
 
-  // Optional extra cooldown so MAIN doesn’t feel jumpy
-  if (millis() - lastFire < 900) return false;
-
-  int dir = accel.getWristTwistDir();   // already “2-hit confirmed” inside AccelSensor
+  int dir = accel.getWristTwistDir();
   if (dir != 0)
   {
-    lastFire = millis();
+    g_twistLastFire = millis();
     return true;
   }
   return false;
@@ -540,6 +552,16 @@ void WatchFaceMain::main()
   }
 }
 
+// -----------------------------------------------------------------------------
+// Digital Time: tap -> suppress twist window
+// -----------------------------------------------------------------------------
+
+static uint32_t g_lastTapMs = 0;
+static const uint32_t TAP_SUPPRESS_TWIST_MS = 500;
+
+// at top of file (near your other statics)
+static bool g_displayTimeDrained = false;
+
 void WatchFaceMain::displaytime()
 {
   if ( needssetup )
@@ -550,22 +572,33 @@ void WatchFaceMain::displaytime()
     noMovementTime = millis();
 
     g_displayTimeTapGateStart = millis();
+    g_displayTimeDrained = false;
+
+    // Drain stale events ONCE on entry (from MAIN / transition)
     (void)accel.getSingleTap();
     (void)accel.getDoubleTap();
+    g_displayTimeDrained = true;
 
     drawImageFromFile( wfMain_Time_Background, true, 0, 0 );
     textmessageservice.startShow( TextMessageExperiences::DigitalTime, "", "" );
     return;
   }
 
+  // Keep the 2 second settle, but DON'T drain during it.
   if ( millis() - g_displayTimeTapGateStart < DISPLAYTIME_TAP_GATE_MS )
   {
-    (void)accel.getSingleTap();
-    (void)accel.getDoubleTap();
     return;
   }
 
-  // DISPLAYING_TIME: Twist => back to MAIN
+  // After settle: Double tap => enter SETTING_TIME
+  if ( accel.getDoubleTap() )
+  {
+    Serial.println("Displaying_Time got a double tap" );
+    changeTo( SETTING_TIME, true, "none" );
+    return;
+  }
+
+  // After settle: Twist => back to MAIN
   if ( twistTriggered() )
   {
     Serial.println("Displaying_Time got a Twist" );
@@ -573,15 +606,7 @@ void WatchFaceMain::displaytime()
     return;
   }
 
-  // DISPLAYING_TIME: Single tap => enter SETTING_TIME
-  if ( accel.getDoubleTap() )
-  {
-    Serial.println("Displaying_Time got a single tap" );
-    changeTo( SETTING_TIME, true, "none" );
-    return;
-  }
-
-  // Double tap does nothing here (per new flow)
+  // Single tap does nothing here
 }
 
 void WatchFaceMain::settingtime()

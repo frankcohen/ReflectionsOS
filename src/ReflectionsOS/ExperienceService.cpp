@@ -227,28 +227,30 @@ void ExperienceService::operateExperience()
 
       currentExperience->run();
 
-      /* Disabled to deal with overly sensitive accelerometers
-      // Single or double cancels the experience
-      if ( accel.getSingleTapNoClear() || accel.getDoubleTapNoClear() )
+      // Single tap cancels the experience (less sensitive):
+      // - must be a confirmed single tap
+      // - must include Z contribution
+      // - must pass stillness gate
+      if ( accel.getSingleTapAbortCandidate() )
       {
         // Experiences that should NOT exit on tap
         String exn2 = currentExperience->getExperienceName();
         if ( ! ( exn2 == catsplayname ||
                 exn2 == PounceName  ||
-                exn2 == PounceName  ||
                 exn2 == SleepName ) )
         {
           Serial.println( "Experience tap exit" );
+          
+          textmessageservice.stop();          
+          
           currentExperience->setRunComplete( true );
           currentState = TEARDOWN;
+          
           break;
         }
-
-        // Also add TextMessageService.stop() here
       }
-      */
 
-      if ( currentExperience->isRunComplete() ) 
+      if ( currentExperience->isRunComplete() )
       {
         currentState = TEARDOWN;
       }

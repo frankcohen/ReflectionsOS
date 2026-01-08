@@ -81,6 +81,12 @@ in this section: esp32s3.name=ESP32S3 Dev Module
 
 */
 
+/*
+Reflections is a hardware and software platform for building entertaining mobile and wearable experiences.
+
+... (header unchanged for brevity in this snippet) ...
+*/
+
 #include "Arduino.h"
 #include "BLEsupport.h"
 #include "Utils.h"
@@ -137,7 +143,7 @@ Steps steps;
 TimerService timerservice;
 SystemLoad systemload;
 BLEsupport blesupport;
-ExperienceStats experiencestats(60000UL); // Create a global tracker with a 60 000 ms (1 min) reporting interval
+ExperienceStats experiencestats(60000UL); // Create a global tracker with a 60 000 ms (1 min) reporting interval
 ExperienceService experienceservice;
 
 int rowCount = 0;
@@ -157,7 +163,41 @@ bool tofstarted = false;
 bool accelstarted = false;
 bool blestarted = false;
 
-/* Test for a device number on the I2C bus, display error when not found */
+// -----------------------------------------------------------------------------
+// Experience pacing + time-setting gate
+//   - 5 second cooldown between experiences (measured after an experience ENDS)
+//   - Pounce ignores cooldown
+//   - Sleep gesture / low battery / inactivity sleep bypasses cooldown (immediate)
+//   - No experiences start while setting time (including Pounce and Sleep)
+// -----------------------------------------------------------------------------
+
+const unsigned long EXPERIENCE_COOLDOWN_MS = 5000; // 5 seconds between experiences (after one ends)
+bool wasExperienceActive = false;
+unsigned long lastExperienceEndedAt = 0;
+
+bool cooldownGate()
+{
+  return (millis() - lastExperienceEndedAt) >= EXPERIENCE_COOLDOWN_MS;
+}
+
+// If wearer is setting time, do not start experiences (unless explicitly allowed)
+bool canStartExperience(bool bypassCooldown = false, bool allowDuringTimeSetting = false)
+{
+  if (experienceservice.active()) return false;
+  if (!allowDuringTimeSetting && watchfacemain.isSettingTime()) return false;
+  if (!bypassCooldown && !cooldownGate()) return false;
+  return true;
+}
+
+// -----------------------------------------------------------------------------
+// Forward decls
+// -----------------------------------------------------------------------------
+
+void Core0Tasks(void *pvParameters);
+
+// -----------------------------------------------------------------------------
+// I2C assert
+// -----------------------------------------------------------------------------
 
 void assertI2Cdevice(byte deviceNum, String devName) {
   for (int i = 0; i < 10; i++) {
@@ -215,14 +255,12 @@ void BIUfaled( String text )
 }
 
 // Clears the NVS Flash memory
-
 void clearNVSMemory()
 {
   Serial.println( F("nvs_flash_init()") );
   nvs_flash_erase();
   esp_err_t ret = nvs_flash_init();
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-      // NVS partition was truncated and needs to be erased
       Serial.println( F("nvs_flash_erase()") );
       ESP_ERROR_CHECK(nvs_flash_erase());
       ret = nvs_flash_init();
@@ -236,11 +274,9 @@ void clearNVSMemory()
   Mounts the SD, connects to Wifi, replicates the disk image tar file,
   unpacks the tar, restarts
 */
-
 void BoardInitializationUtility()
 {
   // Check if otaversion.txt exists, if so skip initialization
-
   String mfd = F("/");
   mfd += NAND_BASE_DIR;
   mfd += OTA_VERSION_FILE_NAME;
@@ -250,16 +286,14 @@ void BoardInitializationUtility()
   Serial.println(F("Board Initialization Utility started"));
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
-
   printCentered("Initialize");
 
   // Start Wifi
-
-  wifi.reset();  // Optionally reset any previous connection settings
+  wifi.reset();
   printCentered(F("Wifi"));
   delay(1000);
 
-  if (!wifi.begin())  // Non-blocking, until guest uses it to connect
+  if (!wifi.begin())
   {
     BIUfaled("Wifi failed");
   }
@@ -284,7 +318,6 @@ void BoardInitializationUtility()
   storage.printStats();
 
   // Download cat-file-package.tar and any other files, then expand the tars
-
   if (!storage.replicateServerFiles())
   {
     BIUfaled(F("Replicate failed"));
@@ -299,16 +332,16 @@ void BoardInitializationUtility()
 
   digitalWrite(Display_SPI_BK, HIGH);  // Turn display backlight off
 
-  // Installation complete; enter deep sleep until user wakes device
-  hardware.prepareForSleep();
-  hardware.powerDownComponents();
-  esp_deep_sleep_start();
+  // Installation complete; enter Shipment Mode - draw essentially zero extra power in the box and not wake up from taps/motion
+  hardware.enterShippingMode();
+
+  // Should never return
+  while (true) { delay(1000); }
 }
 
 /*
   Cooperative multi-tasking functions
 */
-
 static void smartdelay(unsigned long ms) {
   unsigned long start = millis();
   unsigned long tasktime;
@@ -332,11 +365,10 @@ static void smartdelay(unsigned long ms) {
     hardware.loop();    // Includes shipping mode shutdown
 
     // Experience operations
-
     unsigned long fellow = millis();
 
     if ( experienceservice.getCurrentState() == ExperienceService::STOPPED )
-    {  
+    {
       watchfaceexperiences.loop();
       systemload.logtasktime(millis() - fellow, 1, "we");
     }
@@ -351,54 +383,42 @@ static void smartdelay(unsigned long ms) {
     textmessageservice.loop();
     systemload.logtasktime(millis() - fellow, 3, "tm");
 
-  	systemload.loop();
+    systemload.loop();
 
     systemload.logtasktime( millis() - tasktime, 0, " " );
 
-    // Paint debug details over display
-    //video.paintText( battery.getBatteryStats() );
-    //video.paintText( gps.getStats() );
-      
   } while (millis() - start < ms);
 }
 
-void setup() 
+void setup()
 {
   Serial.begin(115200);
   delay(200);
   Serial.setDebugOutput(true);
 
-  //utils.WireScan();   // Shows devices on the I2S bus, including compass, TOF, accelerometeer
-  //clearNVSMemory()    // Clear the non-volitile storage
-
   esp_sleep_wakeup_cause_t reason = esp_sleep_get_wakeup_cause();
-  if (reason == ESP_SLEEP_WAKEUP_EXT1) 
+  if (reason == ESP_SLEEP_WAKEUP_EXT1)
   {
     hardware.prepareAfterWake();
-
     Serial.println("Waking from deep sleep");
-  } 
-  else 
+  }
+  else
   {
     Serial.println(F(" "));
     Serial.println(F("Starting"));
     Serial.println(F("ReflectionsOS"));
   }
 
-  systemload.begin();  // System load monitor
+  systemload.begin();
   systemload.printHeapSpace( "Start" );
 
-  // Doing this here to get some color onto the display quickly
-  // for the usere to think the startup is quick
-
-  hardware.begin();  // Sets all the hardware pins
+  hardware.begin();
   haptic.begin();
   haptic.playEffect(14);  // 14 Strong Buzz
   video.begin();
   video.setPaused( true );
 
   // Core 1 services
-
   mjpegrunner.begin();
   systemload.printHeapSpace( "Video" );
 
@@ -416,14 +436,12 @@ void setup()
   logger.info(hostinfo);
 
   // Self-test: NAND, I2C, SPI
-
   assertI2Cdevice(24, "Acclerometer");
   assertI2Cdevice(48, "Compass");
   assertI2Cdevice(90, "Haptic");
   assertI2Cdevice(41, "TOF Accel");
 
   // Device initialization
-
   battery.begin();
   audio.begin();
   gps.begin();
@@ -433,38 +451,39 @@ void setup()
 
   systemload.printHeapSpace( F("Devices") );
 
-  BoardInitializationUtility();   // Installs needed video and other files
+  BoardInitializationUtility();
 
   // Support service initialization
-
   steps.begin();
   timerservice.begin();
 
   // Core 0 services
-
   tofstarted = false;
   accelstarted = false;
   blestarted = false;
 
-  // Create a new task for TOF processing, pin it to core 0
   xTaskCreatePinnedToCore(
-    Core0Tasks,    // Task function
-    "Core0Tasks",  // Name of the task
-    32768,         // Stack size (in words, not bytes)
-    NULL,          // Task input parameter
-    1,             // Priority of the task
-    NULL,          // Task handle
-    0              // Core where the task should run (core 0)
+    Core0Tasks,
+    "Core0Tasks",
+    32768,
+    NULL,
+    1,
+    NULL,
+    0
   );
-  
-  // Experience initialization
 
+  // Experience initialization
   textmessageservice.begin();
   experienceservice.begin();
   watchfaceexperiences.begin();
   watchfacemain.begin();
 
+  // Start first experience immediately at boot (no cooldown)
   experienceservice.startExperience( ExperienceService::Awake );
+
+  // Initialize pacing state so we don't artificially delay after boot
+  wasExperienceActive = experienceservice.active();
+  lastExperienceEndedAt = millis() - EXPERIENCE_COOLDOWN_MS;
 
   systemload.printHeapSpace( "Experience services" );
 
@@ -486,20 +505,17 @@ void setup()
 }
 
 /* Runs TOF and Accelerometer gesture sensors in core 0 */
-
 void Core0Tasks(void *pvParameters) {
 
-  int muck = 0;
-
   while (true) {
-    if ( ! tofstarted) 
+    if ( ! tofstarted)
     {
       tof.begin();
       tofstarted = true;
-    } 
-    else 
+    }
+    else
     {
-      tof.loop(); // Process and update gesture data
+      tof.loop();
     }
 
     if (!accelstarted) {
@@ -520,14 +536,12 @@ void Core0Tasks(void *pvParameters) {
       blesupport.loop();
     }
 
-    // Delay to prevent task from monopolizing the CPU
-    vTaskDelay(pdMS_TO_TICKS(10));  // Delay for 10 milliseconds
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
 }
 
-// Printing accelerometer and TOF messages here because this 
+// Printing accelerometer and TOF messages here because this
 // code runs in Core 1 otherwise the messages compete for the Serial monitor
-
 void printCore0TasksMessages()
 {
   if ( millis() - statstime > 1500 )
@@ -537,7 +551,7 @@ void printCore0TasksMessages()
     String mf = tof.getRecentMessage();
     String mf2 = tof.getRecentMessage2();
 
-    if ( mf != "" ) 
+    if ( mf != "" )
     {
       Serial.println( mf );
       Serial.println( mf2 );
@@ -546,7 +560,7 @@ void printCore0TasksMessages()
     mf = accel.getRecentMessage();
     mf2 = accel.getRecentMessage2();
 
-    if ( mf != "" ) 
+    if ( mf != "" )
     {
       Serial.println( mf );
       Serial.println( mf2 );
@@ -562,69 +576,36 @@ void waitForExperienceToStop()
   }
 }
 
-// Demonstrates every experience, used to produce Beauty Videos of the watch
-
-unsigned long demoTimer = millis();
-int demoIndex = 0;
-
-void demoService()
-{
-  // Wait 15 seconds after an experience before doing another experience
-  if ( ! experienceservice.timeToRunAnother() )
-  {
-    demoTimer = millis();
-    smartdelay(10);
-    return;
-  }
-
-  if ( millis() - demoTimer < 15000 )
-  {
-    smartdelay(10);
-    return;
-  }
-
-  demoTimer = millis();
-  demoIndex++;
-  if ( demoIndex > 13 ) demoIndex = 1;
-  if ( demoIndex == 1 ) experienceservice.startExperience( ExperienceService::CatsPlay );
-  if ( demoIndex == 2 ) experienceservice.startExperience( ExperienceService::GettingSleepy );
-  //if ( demoIndex == 2 ) experienceservice.startExperience( ExperienceService::Awake );
-  if ( demoIndex == 3 ) experienceservice.startExperience( ExperienceService::Chastise );
-  if ( demoIndex == 4 ) experienceservice.startExperience( ExperienceService::Pounce );
-  if ( demoIndex == 5 ) experienceservice.startExperience( ExperienceService::Sleep );
-  if ( demoIndex == 6 ) experienceservice.startExperience( ExperienceService::Shaken );
-  if ( demoIndex == 7 ) experienceservice.startExperience( ExperienceService::MysticCat );
-  if ( demoIndex == 8 ) experienceservice.startExperience( ExperienceService::Hover );
-  if ( demoIndex == 9 ) experienceservice.startExperience( ExperienceService::Shaken );
-  if ( demoIndex == 10 ) experienceservice.startExperience( ExperienceService::ShowTime );
-  if ( demoIndex == 11 ) experienceservice.startExperience( ExperienceService::Sand );
-  if ( demoIndex == 12 ) experienceservice.startExperience( ExperienceService::EasterEggFrank );
-  if ( demoIndex == 13 ) experienceservice.startExperience( ExperienceService::EasterEggTerri );
-  //if ( demoIndex == 10 ) experienceservice.startExperience( ExperienceService::EyesFollowFinger );
-  //if ( demoIndex == 12 ) experienceservice.startExperience( ExperienceService::ParallaxCat );
-
-  Serial.println("===================================================" );
-  Serial.print("demoIndex " );
-  Serial.println( demoIndex );
-  Serial.println("===================================================" );
-
-  smartdelay(10);
-  return;   
-}
-
 /*
   Main loop for controlling experiences and main watch face
 */
 
 unsigned long catTimer = millis();
 
-void loop() 
+void loop()
 {
-  printCore0TasksMessages();  // Messages coming from TOF and Accelerometer services (running in core 0)
+  printCore0TasksMessages();
 
-  // Pounce message received
+  // Track transition: active -> stopped, so we can pace the next start
+  bool nowActive = experienceservice.active();
+  if (wasExperienceActive && !nowActive)
+  {
+    lastExperienceEndedAt = millis(); // cooldown starts when an experience ends
+  }
+  wasExperienceActive = nowActive;
+
+  // If an experience is active, do nothing else
+  if ( experienceservice.active() )
+  {
+    smartdelay(10);
+    return;
+  }
+
+  // Pounce message received — ignores cooldown (but still blocked while setting time)
   if ( ( blesupport.isPounced() ) && ( millis() - pounceTimer > 10000 ))
   {
+    if (!canStartExperience(true, false)) { smartdelay(10); return; } // bypassCooldown=true
+
     pounceTimer = millis();
     Serial.println( "Pounce from an other device" );
     textmessageservice.deactivate();
@@ -635,16 +616,11 @@ void loop()
     return;
   }
 
-  if ( experienceservice.active() )
-  {
-    smartdelay(10);
-    return;
-  }
-  
   // Sleepy after minutes of WatchFaceMain in MAIN and no activity
-
   if ( watchfacemain.isSleepy() )
   {
+    if (!canStartExperience(false, false)) { smartdelay(10); return; }
+
     Serial.println("Getting sleepy");
     textmessageservice.stop();
     experienceservice.startExperience( ExperienceService::Sleep );
@@ -653,17 +629,20 @@ void loop()
   }
 
   // There's another cat nearby!
-  if ( ( blesupport.isCatNearby() > 0 ) && ( millis() - catTimer > ( 60000 * 3 ) ) 
-     && ( ! watchfacemain.isSettingTime() ) )   // && experienceservice.isRunningExperience() )
+  if ( ( blesupport.isCatNearby() > 0 ) &&
+       ( millis() - catTimer > ( 60000 * 3 ) ) &&
+       ( ! watchfacemain.isSettingTime() ) )
   {
+    if (!canStartExperience(false, false)) { smartdelay(10); return; }
+
     catTimer = millis();
     Serial.println( "Cats Play" );
     textmessageservice.deactivate();
     experienceservice.startExperience( ExperienceService::CatsPlay );
     smartdelay(10);
-    return;   
+    return;
   }
-  
+
   int recentGesture = tof.getGesture();
 
   if ( recentGesture != GESTURE_NONE )
@@ -677,10 +656,13 @@ void loop()
     else { Serial.println( ">>>Unknown" ); }
   }
 
- // Go to sleep when gestured or when the battery is low
-
+  // Go to sleep when gestured or when the battery is low or inactivity says so
   if ( ( recentGesture == GESTURE_SLEEP ) || battery.isBatteryLow() || watchfacemain.goToSleep() )
   {
+    // Sleep should happen immediately: bypass cooldown.
+    // Still blocked while setting time (your preference).
+    if (!canStartExperience(true, false)) { smartdelay(10); return; }
+
     if ( recentGesture == GESTURE_SLEEP ) Serial.println("Going to sleep for gesture");
     if ( battery.isBatteryLow() ) Serial.println("Going to sleep for low battery");
     if ( watchfacemain.goToSleep() ) Serial.println("Going to sleep for inactivity");
@@ -688,33 +670,46 @@ void loop()
     textmessageservice.stop();
     experienceservice.startExperience( ExperienceService::Sleep );
     waitForExperienceToStop();
-    // Put cat into deep sleep  
+
+    // Put cat into deep sleep
     hardware.prepareForSleep();
     hardware.powerDownComponents();
+
+    accel.configureWakeTapProfile();
+    delay(20);
+
     esp_deep_sleep_start();
+    return;
+  }
+
+  // From here onward: do not start ANY non-sleep experiences while setting time
+  if ( watchfacemain.isSettingTime() )
+  {
+    smartdelay(10);
     return;
   }
 
   if ( accel.isShaken() )
   {
+    if (!canStartExperience(false, false)) { smartdelay(10); return; }
+
     experienceservice.startExperience( ExperienceService::Shaken );
     smartdelay(10);
     return;
   }
 
-  // demoService();    // Demonstrates every experience, used to produce Beauty Videos of the watch
-
   // No new gestures (except for sleep) unless watchface is on MAIN
-  if ( ! watchfacemain.isMainOrTime() ) 
+  if ( ! watchfacemain.isMainOrTime() )
   {
     smartdelay(10);
-    return;   
+    return;
   }
 
   if ( recentGesture == GESTURE_RIGHT_LEFT || recentGesture == GESTURE_CIRCULAR || recentGesture == GESTURE_LEFT_RIGHT )
   {
     if ( experiencestats.isFrank() )
     {
+      if (!canStartExperience(false, false)) { smartdelay(10); return; }
       experienceservice.startExperience( ExperienceService::EasterEggFrank );
       smartdelay(10);
       return;
@@ -722,6 +717,7 @@ void loop()
 
     if ( experiencestats.isTerri() )
     {
+      if (!canStartExperience(false, false)) { smartdelay(10); return; }
       experienceservice.startExperience( ExperienceService::EasterEggTerri );
       smartdelay(10);
       return;
@@ -729,17 +725,20 @@ void loop()
   }
 
   if ( recentGesture == GESTURE_RIGHT_LEFT )
-  {  
+  {
+    if (!canStartExperience(false, false)) { smartdelay(10); return; }
+
     //experienceservice.startExperience( ExperienceService::EyesFollowFinger );
     experienceservice.startExperience( ExperienceService::MysticCat );
     smartdelay(10);
     return;
-  } 
-  
-  // Left to Right gives all experiences one-at-a-time
+  }
 
+  // Left to Right gives all experiences one-at-a-time
   if ( recentGesture == GESTURE_LEFT_RIGHT )
-  {    
+  {
+    if (!canStartExperience(false, false)) { smartdelay(10); return; }
+
     if ( nextUp == 0 )
     {
       nextUp++;
@@ -757,11 +756,10 @@ void loop()
     if ( nextUp == 2 )
     {
       nextUp++;
-      experienceservice.startExperience( ExperienceService::Chastise );    
+      experienceservice.startExperience( ExperienceService::Chastise );
       smartdelay(10);
       return;
     }
-
     if ( nextUp == 3 )
     {
       nextUp++;
@@ -769,7 +767,6 @@ void loop()
       smartdelay(10);
       return;
     }
-
     if ( nextUp == 4 )
     {
       nextUp++;
@@ -777,7 +774,6 @@ void loop()
       smartdelay(10);
       return;
     }
-
     if ( nextUp == 5 )
     {
       nextUp = 0;
@@ -785,11 +781,12 @@ void loop()
       smartdelay(10);
       return;
     }
-
   }
 
   if ( recentGesture == GESTURE_CIRCULAR )
-  {    
+  {
+    if (!canStartExperience(false, false)) { smartdelay(10); return; }
+
     if ( nextUp2 == 0 )
     {
       nextUp2 = 1;
@@ -808,38 +805,12 @@ void loop()
 
     if ( nextUp2 == 2 )
     {
-      nextUp2 = 0;      
+      nextUp2 = 0;
       experienceservice.startExperience( ExperienceService::Sand );
       smartdelay(10);
       return;
     }
-
-  };
-
-  // Automatic play of experiences on no activity for 4 minutes
-  /* Disabled for now. Need to understand where sleep interferes with this.
-  if ( ! lastActivityFlag )
-  {
-    if ( millis() - lastActivityTime > ( 4 * 60000 ) )
-    {
-      lastActivityFlag = false;
-      lastActivityTime = millis();
-
-      freeplayIndex++;
-      if ( freeplayIndex > 10 ) freeplayIndex = 1;
-      if ( freeplayIndex == 1 ) experienceservice.startExperience( ExperienceService::Chastise );
-      if ( freeplayIndex == 2 ) experienceservice.startExperience( ExperienceService::Pounce );
-      if ( freeplayIndex == 3 ) experienceservice.startExperience( ExperienceService::Shaken );
-      if ( freeplayIndex == 4 ) experienceservice.startExperience( ExperienceService::MysticCat );
-      if ( freeplayIndex == 5 ) experienceservice.startExperience( ExperienceService::Hover );
-      if ( freeplayIndex == 6 ) experienceservice.startExperience( ExperienceService::Shaken );
-      if ( freeplayIndex == 7 ) experienceservice.startExperience( ExperienceService::ShowTime );
-      if ( freeplayIndex == 8 ) experienceservice.startExperience( ExperienceService::Sand );
-      if ( freeplayIndex == 9 ) experienceservice.startExperience( ExperienceService::EyesFollowFinger );
-      if ( freeplayIndex == 10 ) experienceservice.startExperience( ExperienceService::ParallaxCat );
-    }
   }
-  */
 
   smartdelay(10);
 }
