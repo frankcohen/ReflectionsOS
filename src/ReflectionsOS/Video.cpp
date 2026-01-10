@@ -43,7 +43,7 @@ void Video::begin()
     while(1);
   }
 
-  gfx->fillScreen( COLOR_PANTONE_662 );
+  gfx->fillScreen( BLACK );
   delay(300);
 
   if ( battery.isBatteryLow() )
