@@ -37,6 +37,9 @@ class Hardware
     void prepareForSleep();
     void prepareAfterWake();
 
+    void enterShippingMode();
+    void setGPSAlwaysOff();    
+
   private:
     bool NANDMounted;
 

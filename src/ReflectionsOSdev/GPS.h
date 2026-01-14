@@ -19,6 +19,8 @@
 #include <HardwareSerial.h>
 #include "time.h"
 
+#define GPSBaud 9600
+
 class GPS
 {
   public:

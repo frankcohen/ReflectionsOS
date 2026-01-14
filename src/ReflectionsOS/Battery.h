@@ -13,23 +13,43 @@
 #define _BATTERY_
 
 #include <Arduino.h>
-#include <cfloat>    // for FLT_MAX
-#include <Preferences.h>
 #include "Logger.h"
 
-// -------- Thresholds in millivolts --------
-#define batterysleep   2500
-#define batterylow     2900
-#define batterymedium  3700
-#define batteryfull    4100  // mV at 100% charge
+extern LOGGER logger;
 
-// -------- Battery model --------
-// Set to the *actual* cell capacity of your watch battery.
-#ifndef BATTERY_CAPACITY_MAH
-#define BATTERY_CAPACITY_MAH 450
+// ===============================
+// Battery safety thresholds (mV)
+// ===============================
+// MUST sleep if recent minimum voltage falls below this.
+// Start conservative; tune after you observe sag.
+#ifndef BATTERY_SLEEP_MIN_MV
+#define BATTERY_SLEEP_MIN_MV 3700
 #endif
 
-extern LOGGER logger;
+// Optional: used for "battery low" UI tiers (leaves)
+#ifndef BATTERY_WARN_MV
+#define BATTERY_WARN_MV 3850
+#endif
+
+// Percent UI (not safety)
+#ifndef BATTERY_FULL_MV
+#define BATTERY_FULL_MV 4200
+#endif
+
+#ifndef BATTERY_EMPTY_MV
+#define BATTERY_EMPTY_MV 3400
+#endif
+
+// ===============================
+// ADC scaling
+// ===============================
+#ifndef BATTERY_ADC_TO_BATT_SCALE
+#define BATTERY_ADC_TO_BATT_SCALE 5.4014f
+#endif
+
+#ifndef Battery_Sensor
+#define Battery_Sensor 16
+#endif
 
 class Battery {
 public:
@@ -38,65 +58,63 @@ public:
   void begin();
   void loop();
 
-  /** Returns the last-measured battery voltage in mV */
-  uint16_t getVoltage();
+  // --- Core values (cached) ---
+  uint16_t getVoltageMv() const;          // last sampled battery voltage (mV)
+  uint16_t getMinRecentMv() const;        // min over ~20s
+  uint16_t getAvgRecentMv() const;        // avg over ~60s
+  int16_t  getDropRateMvPerMin() const;   // positive = dropping
+  uint32_t getOnBatterySeconds() const;
 
-  /** Returns true if voltage is below the low threshold */
-  bool isBatteryLow();
+  bool shouldSleepToProtectRTC() const;
 
-  /**
-   * Returns estimated battery percentage (0–100%)
-   * based on linear mapping between batterylow and batteryfull.
-   */
-  float getBatteryPercent();
-
-  /**
-   * Returns a simple level (1=low, 2=medium, 3=high, 4=full-ish) based on thresholds
-   */
-  int getBatteryLevel();
-
+  // Two-line display string for video.paintText() (split on '\n')
   String getBatteryStats();
 
-  bool isCharging();
+  // UI-only percent (not safety)
+  uint8_t getBatteryPercent() const;
 
-  /**
-   * Returns the average *milliwatts* consumed over approximately the last minute.
-   * Uses SoC change (from voltage) across the recent window and battery capacity.
-   * If there isn't enough data yet, returns 0.
-   * By default negative (net charging) values are clamped to 0; pass allowNegative=true to get negatives.
-   */
-  int getRecentAvgMilliwatts(bool allowNegative = false);
+  // ==========================================
+  // Compatibility methods used by your codebase
+  // ==========================================
+  /** Legacy: returns true when we should sleep to protect RTC (conservative). */
+  bool isBatteryLow();
+
+  /** Legacy: returns 1..4 "leaf level" (stable, based on avg voltage). */
+  int getBatteryLevel();
+
+  /** Legacy: old name used in your code (returns cached voltage). */
+  uint16_t getVoltage() { return getVoltageMv(); }
 
 private:
-  /** Reads the ADC and updates _voltageMv */
-  void readVoltage_();
+  void sample_();
 
-  /** Convert a millivolt reading to percent (0..100), clamped, no ADC read */
-  float percentFromMv_(uint16_t mv) const;
+  uint16_t minOverMs_(uint32_t windowMs) const;
+  uint16_t avgOverMs_(uint32_t windowMs) const;
+  bool     computeDeltaOverMs_(uint32_t windowMs, int32_t& outDeltaMv, uint32_t& outDtMs) const;
 
-  /** Push a (time,mV) sample into the ring buffer */
-  void pushSample_(uint16_t mv, uint32_t t_ms);
+private:
+  uint16_t _mvNow = 0;
+  uint16_t _rawAdcMv = 0;
 
-  /** Attempt to find a sample ~1 minute ago; returns index or 0xFF if none */
-  uint8_t findSampleAboutOneMinuteAgo_(uint32_t now_ms) const;
+  uint32_t _onBatteryStartMs = 0;
+  bool     _onBatteryStarted = false;
 
-  // --- existing ---
-  uint16_t _voltageMv;
-  unsigned long batck;
+  uint32_t _lastSampleMs = 0;
 
-  unsigned long batstatustime;
-
-  // --- new: lightweight 1‑minute power estimation buffer ---
-  struct PwrSample {
+  struct Sample {
     uint32_t t_ms;
     uint16_t mv;
   };
 
-  static const uint8_t kPwrCapacity = 16;      // ~1 minute at 4s cadence
-  PwrSample _pwr[kPwrCapacity];
-  uint8_t   _pwrHead;                          // points to next write slot
-  uint8_t   _pwrCount;                         // how many valid samples
-  unsigned long _pwrLastSampleMs;              // last time we sampled
+  static const uint16_t kCap = 180; // ~6 minutes at 2s cadence
+  Sample   _buf[kCap];
+  uint16_t _head = 0;
+  uint16_t _count = 0;
+
+  static const uint32_t kSampleEveryMs = 1000;
+  static const uint32_t kMinWindowMs   = 30000;
+  static const uint32_t kAvgWindowMs   = 60000;
+  static const uint32_t kTrendWindowMs = 300000;
 };
 
 #endif // _BATTERY_

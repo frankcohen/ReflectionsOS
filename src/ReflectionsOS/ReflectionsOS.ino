@@ -157,8 +157,6 @@ unsigned long afterCatsPlay = millis();
 int nextUp = 0;     // For picking the next experience from a left-to-right gesture
 int nextUp2 = 0;    // For picking between Eyes and Parallax experiences
 
-const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
-
 bool tofstarted = false;
 bool accelstarted = false;
 bool blestarted = false;
@@ -419,8 +417,6 @@ void setup()
   video.setPaused( true );
 
   // Core 1 services
-  mjpegrunner.begin();
-  systemload.printHeapSpace( "Video" );
 
   storage.begin();
   storage.setMounted( hardware.getMounted() );
@@ -441,6 +437,11 @@ void setup()
   assertI2Cdevice(90, "Haptic");
   assertI2Cdevice(41, "TOF Accel");
 
+  BoardInitializationUtility();
+
+  mjpegrunner.begin();
+  systemload.printHeapSpace( "Video" );
+
   // Device initialization
   battery.begin();
   audio.begin();
@@ -450,8 +451,6 @@ void setup()
   realtimeclock.begin();
 
   systemload.printHeapSpace( F("Devices") );
-
-  BoardInitializationUtility();
 
   // Support service initialization
   steps.begin();

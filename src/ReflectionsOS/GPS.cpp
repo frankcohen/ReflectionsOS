@@ -17,19 +17,15 @@
 GPS::GPS(){}
 
 void GPS::begin()
-{
+{ 
+  Serial2.begin(GPSBaud, SERIAL_8N1, RXPin, TXPin);
+
   // --- Send GPS commands ---
-  /* Not needed for now
   sendCommandToGPS("$PMTK101*32");      // Hot Start
   delay(200);
   sendCommandToGPS("$PGKC115,3*2F");    // Set GNSS mode to GPS + Beidou
   delay(200);
-  */
 
-  sendCommandToGPS( "$PMTK104*37");   // Acts as factory reset
-  delay(200);
-  sendCommandToGPS( "$PGKC115,3*2F"); // Search mode
-  delay(200);
 
   active = true;
   gpstime = millis();  
@@ -116,7 +112,7 @@ bool GPS::test()
   // waits up to 5 seconds to get data from the GPS module
 
   long time = millis();
-  while ( millis() < ( time + 5000 ) )
+  while ( millis() < time + 5000 )
   {
     while (Serial2.available())
       gps.encode(Serial2.read());
@@ -305,7 +301,6 @@ String GPS::getStats()
 
 void GPS::loop()
 {
-  /*
   if ( active )
   {
     while ( Serial2.available() ) 
@@ -313,7 +308,7 @@ void GPS::loop()
       gps.encode( Serial2.read() );
     }
 
-    if ( ( millis() - gpstime ) > ( 1000 * 10 ) )
+    if ( ( millis() - gpstime ) > 1000 * 10 )
     {
       gpstime = millis();
 
@@ -323,58 +318,4 @@ void GPS::loop()
       }
     }
   }
-  */
-
-  if (Serial2.available() ) gps.encode(Serial2.read());
-
-  /*
-
-  if ( ( millis() - gpstime ) > ( 1000 * 5 ) )
-  {
-    gpstime = millis();
-
-    static const double LONDON_LAT = 51.508131, LONDON_LON = -0.128002;
-
-    printInt(gps.satellites.value(), gps.satellites.isValid(), 5);
-    printFloat(gps.hdop.hdop(), gps.hdop.isValid(), 6, 1);
-    printFloat(gps.location.lat(), gps.location.isValid(), 11, 6);
-    printFloat(gps.location.lng(), gps.location.isValid(), 12, 6);
-    printInt(gps.location.age(), gps.location.isValid(), 5);
-    printDateTime(gps.date, gps.time);
-    printFloat(gps.altitude.meters(), gps.altitude.isValid(), 7, 2);
-    printFloat(gps.course.deg(), gps.course.isValid(), 7, 2);
-    printFloat(gps.speed.kmph(), gps.speed.isValid(), 6, 2);
-    printStr(gps.course.isValid() ? TinyGPSPlus::cardinal(gps.course.deg()) : "*** ", 6);
-
-    unsigned long distanceKmToLondon =
-      (unsigned long)TinyGPSPlus::distanceBetween(
-        gps.location.lat(),
-        gps.location.lng(),
-        LONDON_LAT, 
-        LONDON_LON) / 1000;
-    printInt(distanceKmToLondon, gps.location.isValid(), 9);
-
-    double courseToLondon =
-      TinyGPSPlus::courseTo(
-        gps.location.lat(),
-        gps.location.lng(),
-        LONDON_LAT, 
-        LONDON_LON);
-
-    printFloat(courseToLondon, gps.location.isValid(), 7, 2);
-
-    const char *cardinalToLondon = TinyGPSPlus::cardinal(courseToLondon);
-
-    printStr(gps.location.isValid() ? cardinalToLondon : "*** ", 6);
-
-    printInt(gps.charsProcessed(), true, 6);
-    printInt(gps.sentencesWithFix(), true, 10);
-    printInt(gps.failedChecksum(), true, 9);
-    Serial.println();
-    
-  }
-
-  */
-
-
 }

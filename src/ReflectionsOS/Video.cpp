@@ -48,12 +48,18 @@ void Video::begin()
 
   if ( battery.isBatteryLow() )
   {
-    gfx->setFont( &Minya16pt7b );
+    gfx->setFont(&Minya16pt7b);
     gfx->setTextSize(1);
-    gfx->setCursor( 45, 70 );
-    gfx->setTextColor( COLOR_TEXT_YELLOW );
-    gfx->println( F( "Battery low" ) );
-    while( battery.isBatteryLow() ) { delay(1000); }
+    gfx->setCursor(45, 70);
+    gfx->setTextColor(COLOR_TEXT_YELLOW);
+    gfx->println(F("Battery low"));
+
+    delay(3000);
+
+    // Go protect RTC immediately
+    hardware.prepareForSleep();
+    hardware.powerDownComponents();
+    esp_deep_sleep_start();
   }
 
   gfx->fillCircle( 120, 120, 5, COLOR_PANTONE_310 );

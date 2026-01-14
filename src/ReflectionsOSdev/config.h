@@ -152,7 +152,7 @@ Read the license in the license.txt file that comes with this code.
 #define RXPin         18
 #define TXPin         17
 #define GPSPower      21
-#define GPSBaud       9600
+#define GPSBaud 9600
 
 // Real Time Clock (RTC)
 #define timeRegionOffset -1

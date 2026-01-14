@@ -24,14 +24,13 @@
 
 #include "Utils.h"
 #include "Logger.h"
-
 #include "Video.h"
 
 extern Utils utils;
 extern LOGGER logger;
 extern Video video;
 
-#define WAIT_TIME       2000
+#define WAIT_TIME       250
 #define SAMPLE_RATE     200       // Sample every x milliseconds
 
 #define ACCEL_I2C_ADDR   LIS3DH_DEFAULT_ADDRESS   // 0x18 from Adafruit_LIS3DH
@@ -66,7 +65,12 @@ class AccelSensor
     void begin();
     void loop();
 
-    void configureSensorWakeOnMotion();
+    // Wake profile (call ONLY right before deep sleep)
+    void configureSensorWakeOnMotion();  // existing wake configurator
+    void configureWakeTapProfile();      // wrapper for clarity
+
+    // Runtime profile (use while awake; less sensitive, Z-only)
+    void configureRuntimeTapProfile();
 
     void setStatus( bool running );
     bool getStatus();
@@ -87,11 +91,18 @@ class AccelSensor
     void resetTaps();
     bool getSingleTapNoClear();
     bool getDoubleTapNoClear();
-    
+
+    // Tap-to-abort helper:
+    // - requires confirmed single tap
+    // - requires Z-axis contribution
+    // - requires stillness (reduces false abort while moving)
+    bool getSingleTapAbortCandidateNoClear();
+    bool getSingleTapAbortCandidate(); // consumes the pending single tap if it qualifies
+
     float getXreading();
     float getYreading();
     float getZreading();
-  
+
     String getRecentMessage();
     String getRecentMessage2();
 
@@ -106,7 +117,8 @@ class AccelSensor
   private:
 
     void handleClicks();
-    
+    void updateStillnessEstimate(float mag);
+
     Adafruit_LIS3DH lis;
 
     bool      started;
@@ -119,6 +131,12 @@ class AccelSensor
     bool      _pendingSingle;
     bool      _pendingDouble;
 
+    // Tap gating state (new)
+    bool          _lastClickHadZ;
+    unsigned long _lastClickMs;
+    float         _magEma;
+    float         _magDevEma;
+
     int shakencount;
     unsigned long shakentime;
     unsigned long shakentime2;
@@ -126,7 +144,7 @@ class AccelSensor
     unsigned long magtime;
     float magnow;
 
-    unsigned long last;        
+    unsigned long last;
     String    myMef;
     String    myMef2;
 
@@ -143,9 +161,9 @@ class AccelSensor
 
     unsigned long _twistDbgLastMs;
 
-    float _ax, _ay, _az;    
+    float _ax, _ay, _az;
     int _twistDirHits;
-    int _twistDirLast;    
+    int _twistDirLast;
 };
 
 #endif // ACCEL_SENSOR_H

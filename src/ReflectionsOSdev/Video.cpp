@@ -43,8 +43,8 @@ void Video::begin()
     while(1);
   }
 
-  gfx->fillScreen( COLOR_PANTONE_662 );
-  delay(800);
+  gfx->fillScreen( BLACK );
+  delay(300);
 
   if ( battery.isBatteryLow() )
   {
@@ -57,21 +57,21 @@ void Video::begin()
   }
 
   gfx->fillCircle( 120, 120, 5, COLOR_PANTONE_310 );
-  delay(800);
+  delay(300);
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
-  delay(800);
+  delay(300);
   gfx->fillCircle( 140, 120, 5, COLOR_PANTONE_102 );
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
-  delay(800);
+  delay(300);
   gfx->fillCircle( 120, 140, 5, COLOR_PANTONE_102 );
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
-  delay(800);
+  delay(300);
   gfx->fillCircle( 100, 120, 5, COLOR_PANTONE_102 );
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
-  delay(800);
+  delay(300);
   gfx->fillTriangle( 115, 102, 120, 90, 125, 102, COLOR_PANTONE_151);
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
-  delay(800);
+  delay(300);
 
   videoStatus = false;   // idle
   vidtimer = millis();
@@ -147,6 +147,26 @@ void Video::stopOnError( String msg1, String msg2, String msg3, String msg4, Str
 unsigned long Video::getVideoTime()
 {
   return millis() - videoStartTime;
+}
+
+void Video::displayCentered( String msg, int yq )
+{
+  gfx->setFont( &Minya16pt7b );
+  gfx->setTextSize(1);
+  gfx->getTextBounds( msg.c_str(), 0, 0, &xp, &yp, &wp, &hp);
+  gfx->setCursor( (gfx->width() - wp) / 2, 85 + ( hp * yq ) );
+  gfx->setTextColor( COLOR_TEXT_YELLOW );
+  gfx->println( msg );
+}
+
+void Video::displayTextMessage( String msg, String msg2, String msg3, String msg4 )
+{
+  gfx->begin();
+  gfx->fillScreen( COLOR_PANTONE_662 );
+  displayCentered( msg, 0 );
+  displayCentered( msg2, 1 );
+  displayCentered( msg3, 2 );
+  displayCentered( msg4, 3 );
 }
 
 void Video::addCRLF(String &s, size_t lineLen) 

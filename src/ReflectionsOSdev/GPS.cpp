@@ -327,6 +327,8 @@ void GPS::loop()
 
   if (Serial2.available() ) gps.encode(Serial2.read());
 
+  /*
+
   if ( ( millis() - gpstime ) > ( 1000 * 5 ) )
   {
     gpstime = millis();
@@ -372,6 +374,7 @@ void GPS::loop()
     
   }
 
+  */
 
 
 }
