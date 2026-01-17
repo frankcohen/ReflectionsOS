@@ -413,6 +413,7 @@ void setup()
   hardware.begin();
   haptic.begin();
   haptic.playEffect(14);  // 14 Strong Buzz
+  battery.begin();
   video.begin();
   video.setPaused( true );
 
@@ -443,7 +444,6 @@ void setup()
   systemload.printHeapSpace( "Video" );
 
   // Device initialization
-  battery.begin();
   audio.begin();
   gps.begin();
   compass.begin();

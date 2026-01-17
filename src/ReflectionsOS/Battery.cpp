@@ -17,10 +17,21 @@ Battery::Battery() {}
 void Battery::begin()
 {
   pinMode(Battery_Sensor, INPUT);
-  analogSetPinAttenuation(Battery_Sensor, ADC_11db);
+
+  // Set attenuation globally (works reliably on core 3.2.0)
+  analogSetAttenuation(ADC_11db);
+
+  // Prime/attach the ADC channel for this pin (prevents "not configured as analog channel")
+  (void)analogRead(Battery_Sensor);
 
   _lastSampleMs = millis();
   sample_(); // seed first reading
+
+  Serial.printf("Battery: now=%u mV min=%u mV avg=%u mV\n",
+                getVoltageMv(),
+                getMinRecentMv(),
+                getAvgRecentMv());
+  Serial.flush();
 
   _onBatteryStartMs = _lastSampleMs;
   _onBatteryStarted = true; // best-effort; replace with real VBUS detect later if available

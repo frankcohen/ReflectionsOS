@@ -57,6 +57,11 @@ void Video::begin()
     gfx->setTextColor(COLOR_TEXT_YELLOW);
     gfx->println(F("Battery low"));
 
+    digitalWrite(Display_SPI_BK, LOW);  // backlight on (active low)
+
+    Serial.printf("Battery low: sleeping now");
+    Serial.flush();
+
     delay(3000);
 
     // Go protect RTC immediately
