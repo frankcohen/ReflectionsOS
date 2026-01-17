@@ -179,33 +179,37 @@ uint32_t Battery::getOnBatterySeconds() const
 
 bool Battery::shouldSleepToProtectRTC() const
 {
-  // Latch so it doesn't flicker. Once true, it stays true until reboot/deep sleep.
   static bool sLatched = false;
 
-  // Grace period after boot/wake so startup load / early samples don't insta-latch.
   static const uint32_t kGraceMs = 30000; // 30s
-  static const uint32_t bootMs = millis();   // ok in Arduino context
+  static const uint32_t bootMs = millis();
+
+  // Panic cutoff: if we ever dip *this* low, sleep immediately.
+  // (Keep this below your normal threshold.)
+  static const uint16_t kPanicMv = 3200;
 
   if (sLatched) return true;
 
-  // During grace period, never request protective sleep.
+  const uint16_t vMin = getMinRecentMv();
+  if (vMin > 0 && vMin <= kPanicMv) {
+    sLatched = true;
+    return true;
+  }
+
   if (millis() - bootMs < kGraceMs) return false;
 
-  const uint16_t vMin = getMinRecentMv();
+  // Use average (less trigger-happy than min)
+  const uint16_t vAvg = getAvgRecentMv();
 
-  // Require consecutive low detections to avoid one-off dips.
   static uint8_t lowHits = 0;
 
-  if (vMin > 0 && vMin <= BATTERY_SLEEP_MIN_MV) {
+  if (vAvg > 0 && vAvg <= BATTERY_SLEEP_MIN_MV) {
     if (lowHits < 255) lowHits++;
   } else {
     lowHits = 0;
   }
 
-  // Latch after N confirmations
-  if (lowHits >= 3) {
-    sLatched = true;
-  }
+  if (lowHits >= 3) sLatched = true;
 
   return sLatched;
 }
@@ -246,13 +250,9 @@ String Battery::getBatteryStats()
   return line1 + "\n" + line2;
 }
 
-// =====================================================
-// Compatibility methods (so the rest of your code builds)
-// =====================================================
-
 bool Battery::isBatteryLow()
 {
-  // Conservative: use sag-based protection signal.
+  // Conservative: use avg-based protection signal plus a panic min.
   return shouldSleepToProtectRTC();
 }
 
@@ -261,14 +261,18 @@ int Battery::getBatteryLevel()
   // Stable leaves: use averaged voltage, not instantaneous sag.
   const uint16_t mv = getAvgRecentMv();
 
-  // 1..4 tiers (distinct thresholds)
-  const uint16_t t1 = BATTERY_SLEEP_MIN_MV; // <= 1 leaf
-  const uint16_t t2 = BATTERY_WARN_MV;      // <= 2 leaves
-  const uint16_t t3 = 4050;                 // <= 3 leaves
-  // > t3 => 4 leaves
+  const uint16_t emptyMv = BATTERY_EMPTY_MV;
+  const uint16_t lowMv   = BATTERY_LOW_MV;
+  const uint16_t medMv   = BATTERY_MED_MV;
 
-  if (mv <= t1) return 1;
-  if (mv <= t2) return 2;
-  if (mv <= t3) return 3;
+  // Defensive ordering check (in case someone misconfigures thresholds)
+  if (!(emptyMv <= lowMv && lowMv <= medMv)) {
+    // Fall back to safest "low" reading
+    return 1;
+  }
+
+  if (mv <= emptyMv) return 1;
+  if (mv <= lowMv)   return 2;
+  if (mv <= medMv)   return 3;
   return 4;
 }

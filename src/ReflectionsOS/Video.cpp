@@ -49,7 +49,6 @@ void Video::begin()
   gfx->fillScreen( BLACK );
   delay(300);
 
-/*
   if ( battery.isBatteryLow() )
   {
     gfx->setFont(&Minya16pt7b);
@@ -65,17 +64,11 @@ void Video::begin()
 
     delay(3000);
 
-    Serial.print("INT pin level: ");
-    Serial.println(digitalRead(INT_GPIO));
-    Serial.flush();
-
     // Go protect RTC immediately
     hardware.prepareForSleep();
     hardware.powerDownComponents();
     esp_deep_sleep_start();
   }
-
-  */
 
   gfx->fillCircle( 120, 120, 5, COLOR_PANTONE_310 );
   delay(300);

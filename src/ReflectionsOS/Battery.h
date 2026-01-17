@@ -40,6 +40,19 @@ extern LOGGER logger;
 #define BATTERY_EMPTY_MV 3300
 #endif
 
+// Leaf UI tiers (avg voltage)
+// 1 leaf: <= BATTERY_EMPTY_MV
+// 2 leaves: <= BATTERY_LOW_MV
+// 3 leaves: <= BATTERY_MED_MV
+// 4 leaves: >  BATTERY_MED_MV
+#ifndef BATTERY_LOW_MV
+#define BATTERY_LOW_MV 3600
+#endif
+
+#ifndef BATTERY_MED_MV
+#define BATTERY_MED_MV 3900
+#endif
+
 // ===============================
 // ADC scaling
 // ===============================
