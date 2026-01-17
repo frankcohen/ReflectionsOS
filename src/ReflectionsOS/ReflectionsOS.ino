@@ -395,10 +395,14 @@ void setup()
   Serial.setDebugOutput(true);
 
   esp_sleep_wakeup_cause_t reason = esp_sleep_get_wakeup_cause();
-  if (reason == ESP_SLEEP_WAKEUP_EXT1)
-  {
+  Serial.print("Wake cause: ");
+  Serial.println((int)reason);
+
+  if (reason == ESP_SLEEP_WAKEUP_EXT1) {
     hardware.prepareAfterWake();
-    Serial.println("Waking from deep sleep");
+    uint64_t st = esp_sleep_get_ext1_wakeup_status();
+    Serial.print("EXT1 wake mask: 0x");
+    Serial.println((uint32_t)st, HEX);   // or (unsigned long long)st if you prefer
   }
   else
   {
@@ -667,16 +671,18 @@ void loop()
     if ( watchfacemain.goToSleep() ) Serial.println("Going to sleep for inactivity");
 
     textmessageservice.stop();
-    experienceservice.startExperience( ExperienceService::Sleep );
+    experienceservice.startExperience(ExperienceService::Sleep);
     waitForExperienceToStop();
 
-    // Put cat into deep sleep
-    hardware.prepareForSleep();
-    hardware.powerDownComponents();
-
+    // Configure LIS3DH wake profile while system is fully "awake" (I2C stable)
     accel.configureWakeTapProfile();
-    delay(20);
+    delay(20); // let INT settle
 
+    // Now shut down the rest + enable holds
+    hardware.prepareForSleep();
+
+    Serial.println("Entering deep sleep now");
+    Serial.flush();
     esp_deep_sleep_start();
     return;
   }

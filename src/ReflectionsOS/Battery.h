@@ -23,12 +23,12 @@ extern LOGGER logger;
 // MUST sleep if recent minimum voltage falls below this.
 // Start conservative; tune after you observe sag.
 #ifndef BATTERY_SLEEP_MIN_MV
-#define BATTERY_SLEEP_MIN_MV 3700
+#define BATTERY_SLEEP_MIN_MV 3300
 #endif
 
 // Optional: used for "battery low" UI tiers (leaves)
 #ifndef BATTERY_WARN_MV
-#define BATTERY_WARN_MV 3850
+#define BATTERY_WARN_MV 3600
 #endif
 
 // Percent UI (not safety)
@@ -37,7 +37,7 @@ extern LOGGER logger;
 #endif
 
 #ifndef BATTERY_EMPTY_MV
-#define BATTERY_EMPTY_MV 3400
+#define BATTERY_EMPTY_MV 3300
 #endif
 
 // ===============================

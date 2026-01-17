@@ -182,10 +182,28 @@ bool Battery::shouldSleepToProtectRTC() const
   // Latch so it doesn't flicker. Once true, it stays true until reboot/deep sleep.
   static bool sLatched = false;
 
+  // Grace period after boot/wake so startup load / early samples don't insta-latch.
+  static const uint32_t kGraceMs = 30000; // 30s
+  static const uint32_t bootMs = millis();   // ok in Arduino context
+
+  if (sLatched) return true;
+
+  // During grace period, never request protective sleep.
+  if (millis() - bootMs < kGraceMs) return false;
+
   const uint16_t vMin = getMinRecentMv();
 
-  // Enter latch when we dip below threshold
-  if (!sLatched && vMin > 0 && vMin <= BATTERY_SLEEP_MIN_MV) {
+  // Require consecutive low detections to avoid one-off dips.
+  static uint8_t lowHits = 0;
+
+  if (vMin > 0 && vMin <= BATTERY_SLEEP_MIN_MV) {
+    if (lowHits < 255) lowHits++;
+  } else {
+    lowHits = 0;
+  }
+
+  // Latch after N confirmations
+  if (lowHits >= 3) {
     sLatched = true;
   }
 
