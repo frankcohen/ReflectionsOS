@@ -252,6 +252,7 @@ void Experience_Sand::readTilt(int16_t& gxQ, int16_t& gyQ) {
   gxQ = (int16_t)(gx * 256.0f);
   gyQ = (int16_t)(gy * 256.0f);
 
+  /*
   // Debug print (kept from your version)
   Serial.print("Experience_Sand ");
   Serial.print(gx);
@@ -261,6 +262,7 @@ void Experience_Sand::readTilt(int16_t& gxQ, int16_t& gyQ) {
   Serial.print(gxQ);
   Serial.print(" ");
   Serial.println(gxQ);
+  */
 }
 
 void Experience_Sand::applyOne(uint16_t i, int16_t axQ, int16_t ayQ) {

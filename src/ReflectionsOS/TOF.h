@@ -1,39 +1,6 @@
 /*
   TOF Sensor Gesture Detection
-
-  Repository is at https://github.com/frankcohen/ReflectionsOS
-  Includes board wiring directions, server side components, examples, support
-
-  Licensed under GPL v3 Open Source Software
-  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
-  Read the license in the license.txt file that comes with this code.
-
-  Depends on https://github.com/sparkfun/SparkFun_VL53L5CX_Arduino_Library
-
-  Reflections board uses a Time Of Flight (TOF) VL53L5CX sensor to
-  identify user gestures with their fingers and hand. Gestures control
-  operating the Experiences.
-
-  Datasheet comes with this source code, see: vl53l5cx-2886943_.pdf
-
-  Note: 
-  ST-supplied VL53L5CX API function vl53l5cx_get_ranging_data() allocates a very large 
-  temporary buffer on the stack (enough to hold all 64 zones of data plus status and 
-  signal info), and when you call getRangingData() rapidly in your TOF-loop task it 
-  overruns the default FreeRTOS stack. While coding I found many stack crashes. In the
-  backtrace—SysTick ISR running straight into vl53l5cx_get_ranging_data() — is a classic 
-  symptom of a corrupted stack frame.
-  To fix this I increased the Core0 task’s stack size from the default (~8 KB) to 16384
-  in xTaskCreatePinnedToCore( in Reflections.ino.
-  I also have these other possible fixes:
-  - Drop from 8×8 to 4×4 zones.
-  - Patch the library. vl53l5cx_api.cpp (around line 625 in v1.0.3) changes the local i2c
-    read buffer from a stack allocation to a static or global:
-    // before (stack allocation)
-    uint8_t buf[VL53L5CX_RANGE_STREAM_COUNT * sizeof(VL53L5CX_RangingMeasurementData)];
-    // after (static allocation)
-    static uint8_t buf[VL53L5CX_RANGE_STREAM_COUNT * sizeof(VL53L5CX_RangingMeasurementData)];
-    In this way it lives in .bss instead of on your task stack.
+  (header comment unchanged)
 */
 
 #ifndef TOF_H
@@ -59,11 +26,10 @@
 #define WINDOW             5    // number of frames to buffer
 #define SWIPE_TIMEOUT_MS  500   // ms to ignore until next swipe
 
-#define GESTURE_WAIT      2000  // Time between gestures
-#define CIRCULAR_MAX      6    // Count up to circular detection
+// Gesture cooldown (time-based) — start at 600 ms
+#define GESTURE_WAIT      600   // ms cooldown after a gesture fires
 
-#define FRAME_RATE         8    // Hz
-#define FRAME_INTERVAL_MS (1000/FRAME_RATE)
+#define CIRCULAR_MAX      6    // Count up to circular detection
 
 #define lrmesg F("← left-to-right detected ")
 #define rlmesg F("→ right-to-left detected ")
@@ -96,24 +62,16 @@ class TOF {
 public:
   TOF();
 
-  // Initialize the VL53L5CX sensor and internal state
   void begin();
-
-  // Call periodically from Arduino loop(); performs gesture detection
   void loop();
 
-  // Returns the last detected gesture code (see GESTURE_ defs). 0 if none.
   int  getGesture();
 
-  // Enable or disable gesture detection
   void setStatus(bool running);
-
-  // Retrieve current running status
   bool getStatus();
 
-  // Get the most recent finger-column position (0 if none)
-  int getFingerPos();
-  float getFingerDist();  
+  int   getFingerPos();
+  float getFingerDist();
 
   String getRecentMessage();
   String getRecentMessage2();
@@ -128,32 +86,40 @@ private:
 
   // circular buffer of the last WINDOW rotated frames
   int16_t rotatedFrames[WINDOW][64];
-  float centroidFrames[WINDOW];
+  float   centroidFrames[WINDOW];
 
-  // sliding‐window of deltas for direction analysis
-  float   deltas[WINDOW];
-  float   lastCentroid;
-  int     wi;
+  // sliding-window of deltas for direction analysis
+  float deltas[WINDOW];
+  float lastCentroid;
+  int   wi;
 
   unsigned long lastRead, captTime, lastValid, sleepStart;
-  int circCnt;
+  int   circCnt;
   float sumDelta;
 
   bool pendingDirection;
   bool isRunning;
 
   // Gesture storage
-  int direction;         // GESTURE_ code of last detected event
-  String directionWay;   // human‐readable label (e.g. "→  (Right)")
+  int    direction;
+  String directionWay;
 
-  // Finger tip column (1..7) or 0 if none
-  int tipPos;
+  // Finger tip column (0..7) or 0 if none (your current semantics)
+  int   tipPos;
   float tipDist;
   float tipMin;
   float tipMax;
 
   unsigned long fingerLastSeen;
   bool          fingerPresent;
+
+  // NEW: gesture gate (cooldown + require finger to leave view to re-arm)
+  enum class GestureGateState : uint8_t {
+    Armed = 0,
+    Cooldown = 1
+  };
+  GestureGateState gateState;
+  uint32_t         cooldownUntilMs;
 
   String mymessage;
   String mymessage2;

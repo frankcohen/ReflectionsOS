@@ -81,6 +81,9 @@ class TextMessageService
     void runMysticShow();
     void runDigitalTime();
 
+    void resetState_();
+    uint32_t showStartMs;
+
     String formatWithCommas(int value);
 
     int16_t x, y;

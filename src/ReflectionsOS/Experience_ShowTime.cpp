@@ -17,12 +17,16 @@
 void Experience_ShowTime::init()
 {
   vidflag = true;
+  timeflag = false;
+  tearflag = false;
+  timer = 0;
+
   setupComplete = false;
   runComplete = false;
   teardownComplete = false;
   stopped = false;
   idle = false;
-} 
+}
 
 void Experience_ShowTime::setup() 
 {
@@ -50,8 +54,13 @@ void Experience_ShowTime::run()
 {
   if ( timeflag )
   {
-    int sIndex = random(0, 34);
-    textmessageservice.startShow( TextMessageExperiences::ShowDigitalTimeFunMessages, timefunmessages[ sIndex ][ 0 ], timefunmessages[ sIndex ][ 1 ] );  
+    const int kMsgCount = (int)(sizeof(timefunmessages) / sizeof(timefunmessages[0]));
+    int sIndex = random(0, kMsgCount);
+    textmessageservice.startShow(
+      TextMessageExperiences::ShowDigitalTimeFunMessages,
+      timefunmessages[sIndex][0],
+      timefunmessages[sIndex][1]
+    );
     timeflag = false;
   }
   else

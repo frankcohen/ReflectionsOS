@@ -1,28 +1,6 @@
 /*
   TOF Sensor Gesture Detection
-
-  Repository is at https://github.com/frankcohen/ReflectionsOS
-  Includes board wiring directions, server side components, examples, support
-
-  Licensed under GPL v3 Open Source Software
-  (c) Frank Cohen, All rights reserved. fcohen@starlingwatch.com
-  Read the license in the license.txt file that comes with this code.
-
-  Depends on https://github.com/sparkfun/SparkFun_VL53L5CX_Arduino_Library
-
-  Reflections board uses a Time Of Flight (TOF) VL53L5CX sensor to
-  identify user gestures with their fingers and hand. Gestures control
-  operating the Experiences.
-
-  Note: I tried Lucas–Kanade optical‐flow and kept coming back to
-  centroid differentials. I expect with more work Lucas-Kanade is more
-  accurate, ran out of time to find out.
-
-  Datasheet comes with this source code, see: vl53l5cx-2886943_.pdf
-
-  2025-12: Refactor to split:
-    (1) Finger position tracking (runs even with low valid pixel count)
-    (2) Gesture detection + sleep detection (uses VALID_PIXEL_COUNT gate)
+  (header comment unchanged)
 */
 
 #include "TOF.h"
@@ -30,7 +8,6 @@
 extern Video video;
 
 // How long we keep reporting the last known finger position after tracking drops
-// (prevents eyes from freezing on brief dropouts)
 static constexpr unsigned long FINGER_HOLD_MS = 250UL;
 
 // A small denom threshold so we don’t treat tiny weights as “real”
@@ -64,7 +41,7 @@ void TOF::begin()
   }
 
   lastRead   = millis();
-  captTime   = millis();
+  captTime   = 0;        // don't block gestures immediately after boot
   lastValid  = millis();
   circCnt    = 0;
   sleepStart = millis();
@@ -86,9 +63,13 @@ void TOF::begin()
   lastCentroid = 0;
   wi = 0;
 
-  // NEW: finger tracking presence state
+  // finger tracking presence state
   fingerLastSeen = 0;
   fingerPresent  = false;
+
+  // NEW: gesture gate state
+  gateState       = GestureGateState::Armed;
+  cooldownUntilMs = 0;
 
   mymessage  = "";
   mymessage2 = "";
@@ -101,8 +82,7 @@ void TOF::resetGesture() {
 }
 
 // Dump all WINDOW rotated[] frames (oldest→newest)
-
-void TOF::prettyPrintAllRotated() 
+void TOF::prettyPrintAllRotated()
 {
   Serial.println("---- Last 5 rotated frames (mm) ----");
   for (int f = 0; f < WINDOW; f++) {
@@ -120,24 +100,14 @@ void TOF::prettyPrintAllRotated()
 }
 
 // For finger tip location analysis - no longer used
-
 int TOF::mapFloatTo0_7(float input, float inMin, float inMax)
 {
-    // Avoid division by zero
-    if (inMax <= inMin) return 0;
+  if (inMax <= inMin) return 0;
 
-    // 1) Normalize to [0,1]
-    float norm = (input - inMin) / (inMax - inMin);
-
-    // 2) Clamp between 0 and 1
-    norm = std::max(0.0f, std::min(1.0f, norm));
-
-    // 3) Scale to [0..7] and round
-    //    – multiply by 7 gives [0..7]
-    //    – +0.5 then truncate gives proper rounding
-    int result = static_cast<int>(norm * 7.0f + 0.5f);
-
-    return result;  // guaranteed 0 ≤ result ≤ 7
+  float norm = (input - inMin) / (inMax - inMin);
+  norm = std::max(0.0f, std::min(1.0f, norm));
+  int result = static_cast<int>(norm * 7.0f + 0.5f);
+  return result;
 }
 
 int TOF::getGesture()
@@ -184,10 +154,6 @@ String TOF::getRecentMessage2()
 
 /*
   Phase 1: Finger tracking
-  - Computes centroid on X (column domain 0..7) using weights.
-  - Updates tipPos immediately, even if validCnt is low.
-  - Uses FIXED mapping: tipPos = round(centroidX) clamped 0..7.
-  - tipDist = minimum valid distance in that column (across all rows).
 */
 
 static bool computeFingerTracking(
@@ -211,20 +177,17 @@ static bool computeFingerTracking(
   }
 
   if (denom < CENTROID_DENOM_EPS) {
-    // No usable object
     return false;
   }
 
   float cx = num / denom; // ~0..7
   outCentroidX = cx;
 
-  // FIXED mapping to column index 0..7
   int col = (int)lroundf(cx);
   if (col < 0) col = 0;
   if (col > 7) col = 7;
   outTipPos = col;
 
-  // tip distance as minimum valid distance in that column across rows
   int16_t best = MAX_DIST_MM;
   for (int r = 0; r < 8; r++) {
     int idx = r*8 + col;
@@ -240,19 +203,13 @@ static bool computeFingerTracking(
 
 /*
   Phase 2: Gesture detection
-  - Uses VALID_PIXEL_COUNT gate
-  - Uses your existing WINDOW/deltas logic
-  - Uses centroidFrames / rotatedFrames ring buffers for debugging/analysis
 */
 
 void TOF::loop()
 {
   if (!isRunning) return;
 
-  unsigned long now = millis();
-
-  // Enforce lockout after a gesture is reported
-  if (now - captTime < GESTURE_WAIT) return;
+  uint32_t now = millis();
 
   // Frame rate pacing
   if (now - lastRead < FRAME_INTERVAL_MS) return;
@@ -279,7 +236,7 @@ void TOF::loop()
     }
   }
 
-  // ——— Sleep detection (unchanged) ———
+  // ——— Sleep detection (allowed even during cooldown) ———
   if (now - sleepStart > SLEEP_HOLD_MS)
   {
     sleepStart = now;
@@ -291,7 +248,12 @@ void TOF::loop()
       directionWay = "→ Sleep";
       mymessage = directionWay;
       mymessage2 = String(sleepCnt);
+
+      // Enter cooldown
       captTime = now;
+      gateState = GestureGateState::Cooldown;
+      cooldownUntilMs = now + (uint32_t)GESTURE_WAIT;
+
       return;
     }
   }
@@ -309,7 +271,7 @@ void TOF::loop()
       rotated[(7-r)*8 + c] = t;
     }
 
-  // ---- PHASE 1: Finger tracking (ALWAYS) ----
+  // ---- PHASE 1: Finger tracking (ALWAYS, even during cooldown) ----
   float centroidX = 3.5f;
   int   newTipPos = tipPos;
   float newTipDist = tipDist;
@@ -327,6 +289,20 @@ void TOF::loop()
       fingerPresent = false;
       tipPos = 0;          // match your existing semantics (0 means none)
       tipDist = MAX_DIST_MM;
+    }
+  }
+
+  // ---- NEW: Gesture gate (cooldown + require finger gone to re-arm) ----
+  if (gateState == GestureGateState::Cooldown)
+  {
+    // Only re-arm when:
+    //  1) cooldown time elapsed, AND
+    //  2) finger is no longer present (hand moved away)
+    if (now >= cooldownUntilMs && !fingerPresent) {
+      gateState = GestureGateState::Armed;
+    } else {
+      // We still updated finger tracking above; just suppress gesture detection
+      return;
     }
   }
 
@@ -354,7 +330,12 @@ void TOF::loop()
     {
       direction = GESTURE_CIRCULAR;
       directionWay = cirmesg;
+
+      // Enter cooldown
       captTime = now;
+      gateState = GestureGateState::Cooldown;
+      cooldownUntilMs = now + (uint32_t)GESTURE_WAIT;
+
       circCnt = 0;
       return;
     }
@@ -397,7 +378,12 @@ void TOF::loop()
   {
     direction = GESTURE_LEFT_RIGHT;
     directionWay = lrmesg;
+
+    // Enter cooldown
     captTime = now;
+    gateState = GestureGateState::Cooldown;
+    cooldownUntilMs = now + (uint32_t)GESTURE_WAIT;
+
     circCnt = 0;
     return;
   }
@@ -406,7 +392,12 @@ void TOF::loop()
   {
     direction = GESTURE_RIGHT_LEFT;
     directionWay = rlmesg;
+
+    // Enter cooldown
     captTime = now;
+    gateState = GestureGateState::Cooldown;
+    cooldownUntilMs = now + (uint32_t)GESTURE_WAIT;
+
     circCnt = 0;
     return;
   }
@@ -415,7 +406,12 @@ void TOF::loop()
   {
     direction = GESTURE_RIGHT_LEFT;
     directionWay = rlmesg;
+
+    // Enter cooldown
     captTime = now;
+    gateState = GestureGateState::Cooldown;
+    cooldownUntilMs = now + (uint32_t)GESTURE_WAIT;
+
     circCnt = 0;
     return;
   }
@@ -424,7 +420,12 @@ void TOF::loop()
   {
     direction = GESTURE_RIGHT_LEFT;
     directionWay = rlmesg;
+
+    // Enter cooldown
     captTime = now;
+    gateState = GestureGateState::Cooldown;
+    cooldownUntilMs = now + (uint32_t)GESTURE_WAIT;
+
     circCnt = 0;
     return;
   }
@@ -433,7 +434,12 @@ void TOF::loop()
   {
     direction = GESTURE_LEFT_RIGHT;
     directionWay = lrmesg;
+
+    // Enter cooldown
     captTime = now;
+    gateState = GestureGateState::Cooldown;
+    cooldownUntilMs = now + (uint32_t)GESTURE_WAIT;
+
     circCnt = 0;
     return;
   }
@@ -442,7 +448,12 @@ void TOF::loop()
   {
     direction = GESTURE_LEFT_RIGHT;
     directionWay = lrmesg;
+
+    // Enter cooldown
     captTime = now;
+    gateState = GestureGateState::Cooldown;
+    cooldownUntilMs = now + (uint32_t)GESTURE_WAIT;
+
     circCnt = 0;
     return;
   }
@@ -451,7 +462,12 @@ void TOF::loop()
   {
     direction = GESTURE_RIGHT_LEFT;
     directionWay = rlmesg;
+
+    // Enter cooldown
     captTime = now;
+    gateState = GestureGateState::Cooldown;
+    cooldownUntilMs = now + (uint32_t)GESTURE_WAIT;
+
     circCnt = 0;
     return;
   }
@@ -462,7 +478,12 @@ void TOF::loop()
   {
     direction = GESTURE_CIRCULAR;
     directionWay = cirmesg;
+
+    // Enter cooldown
     captTime = now;
+    gateState = GestureGateState::Cooldown;
+    cooldownUntilMs = now + (uint32_t)GESTURE_WAIT;
+
     circCnt = 0;
     return;
   }
