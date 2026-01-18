@@ -756,9 +756,8 @@ void loop()
   if ( recentGesture == GESTURE_RIGHT_LEFT )
   {
     if (!canStartExperience(false, false)) { smartdelay(10); return; }
-
-    //experienceservice.startExperience( ExperienceService::MysticCat );
-    experienceservice.startExperience( ExperienceService::ShowTime );
+    
+    experienceservice.startExperience( ExperienceService::MysticCat );
     smartdelay(10);
     return;
   }
