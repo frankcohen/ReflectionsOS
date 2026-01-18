@@ -10,168 +10,238 @@
 */
 
 #include "RealTimeClock.h"
+#include <Preferences.h>
+#include <esp_sleep.h>
 
 // Global RTC instance used by ESP32Time
 ESP32Time rtc(0);
 
+// NVS storage keys
+static Preferences sPrefs;
+static const char* kRtcNs   = "rtc";
+static const char* kH12K    = "h12";     // uint8 1..12
+static const char* kMinK    = "min";     // uint8 0..59
+static const char* kAmPmK   = "ampm";    // uint8 0/1
+static const char* kSecK    = "sec";     // uint8 0..59 (optional)
+static const char* kMagicK  = "magic";   // uint32 marker
+
+static const uint32_t kMagic = 0xC0C0A11FUL;
+
+// How often to autosave to NVS
+static const uint32_t kSaveEveryMs = 120000UL; // 2 minutes
+
 RealTimeClock::RealTimeClock() {}
 
-void RealTimeClock::begin(int utcOffsetSeconds) 
+static bool isDeepSleepWake_()
+{
+  const esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
+
+  // Anything other than UNDEFINED generally implies we woke from deep sleep.
+  // (Your accel wake is usually EXT0/EXT1 depending on wiring.)
+  return (cause != ESP_SLEEP_WAKEUP_UNDEFINED);
+}
+
+void RealTimeClock::begin(int utcOffsetSeconds)
 {
   _utcOffsetSeconds = utcOffsetSeconds;
 
-  // ESP32Time uses rtc.offset (seconds)
-  rtc.offset = _utcOffsetSeconds;
+  // You don't care about date/timezone for the Cat's display.
+  // Keep offset at 0 so rtc.getHour()/getMinute() match what you set.
+  rtc.offset = 0;
+
+  // If we woke from deep sleep, do NOT overwrite RTC with NVS.
+  // This preserves your requirement that time continues through deep sleep.
+  if (!isDeepSleepWake_()) {
+    ensureClockValid_();
+  } else {
+    // Deep sleep wake: assume RTC kept counting.
+    // Still ensure we don't ever show --:-- by forcing valid if NVS exists
+    // and RTC looks nonsensical (rare).
+    // In practice rtc.getHour() is always 0..23, so just mark valid.
+    _hasValidClock = true;
+  }
 
   Serial.printf(
-    "RTC: %04d-%02d-%02d %02d:%02d:%02d (epoch %lu) offset %d\n",
-    rtc.getYear(), rtc.getMonth(), rtc.getDay(),
+    "RTC(begin): hour=%02d min=%02d sec=%02d epoch=%lu (deepWake=%d)\n",
     rtc.getHour(), rtc.getMinute(), rtc.getSecond(),
     (unsigned long)rtc.getEpoch(),
-    _utcOffsetSeconds
+    isDeepSleepWake_() ? 1 : 0
   );
 
   if (_lastBuzzedHour < 0) {
     _lastBuzzedHour = rtc.getHour();
     return;
   }
-
 }
 
-bool RealTimeClock::isValid() {
-  return rtc.getYear() >= MIN_VALID_YEAR;
+int RealTimeClock::getHour()   { return rtc.getHour(); }
+int RealTimeClock::getMinute() { return rtc.getMinute(); }
+int RealTimeClock::getSecond() { return rtc.getSecond(); }
+
+void RealTimeClock::getHour12AmPm_(int& outHour12, int& outAmPm) const
+{
+  int h24 = rtc.getHour(); // 0..23
+  outAmPm = (h24 >= 12) ? 1 : 0;
+
+  int h12 = h24 % 12;
+  if (h12 == 0) h12 = 12;
+
+  outHour12 = h12;
 }
 
-int RealTimeClock::getHour() {
-  return rtc.getHour();
-}
-
-int RealTimeClock::getMinute() {
-  return rtc.getMinute();
-}
-
-int RealTimeClock::getSecond() {
-  return rtc.getSecond();
-}
-
-String RealTimeClock::getTime() {
-  if (!isValid()) {
-    return String("--:--");
+String RealTimeClock::getTime()
+{
+  if (!_hasValidClock) {
+    ensureClockValid_();
   }
 
-  char buf[6];
-  snprintf(buf, sizeof(buf), "%2d:%02d", rtc.getHour(), rtc.getMinute());
+  int h12 = 12;
+  int ap  = 0;
+  getHour12AmPm_(h12, ap);
+
+  char buf[6]; // "h:mm" up to "12:59"
+  snprintf(buf, sizeof(buf), "%d:%02d", h12, rtc.getMinute());
   return String(buf);
 }
 
-// Manual setting: hour12 is 1-12, ampm: 0=AM, 1=PM
-void RealTimeClock::setTime(int hour12, int minute, int ampm) {
-  // Normalize inputs
+void RealTimeClock::setClock12_(int hour12, int minute, int ampm, int second)
+{
+  // Normalize
   if (hour12 < 1)  hour12 = 1;
   if (hour12 > 12) hour12 = 12;
   if (minute < 0)  minute = 0;
   if (minute > 59) minute = 59;
+  if (second < 0)  second = 0;
+  if (second > 59) second = 59;
   ampm = (ampm != 0) ? 1 : 0;
 
   // Convert to 24-hour
-  int hour24 = hour12 % 12;          // 12 -> 0
-  if (ampm == 1) hour24 += 12;       // PM adds 12
+  int hour24 = hour12 % 12;      // 12 -> 0
+  if (ampm == 1) hour24 += 12;   // PM adds 12
 
-  // Keep the existing date if RTC is valid, otherwise choose a sane default date
-  int year  = isValid() ? rtc.getYear()  : 2025;
-  int month = isValid() ? rtc.getMonth() : 1;
-  int day   = isValid() ? rtc.getDay()   : 1;
+  // Dummy date internally (never displayed)
+  const int year  = 2025;
+  const int month = 1;
+  const int day   = 1;
 
-  rtc.setTime(0, minute, hour24, day, month, year);
-
-  Serial.printf(
-    "RTC manually set to: %04d-%02d-%02d %02d:%02d:%02d (epoch %lu)\n",
-    rtc.getYear(), rtc.getMonth(), rtc.getDay(),
-    rtc.getHour(), rtc.getMinute(), rtc.getSecond(),
-    (unsigned long)rtc.getEpoch()
-  );
+  rtc.setTime(second, minute, hour24, day, month, year);
+  _hasValidClock = true;
 }
 
-void RealTimeClock::setEpoch(time_t epoch) {
-  rtc.setTime(epoch);
-
-  Serial.printf(
-    "RTC setEpoch: %04d-%02d-%02d %02d:%02d:%02d (epoch %lu)\n",
-    rtc.getYear(), rtc.getMonth(), rtc.getDay(),
-    rtc.getHour(), rtc.getMinute(), rtc.getSecond(),
-    (unsigned long)rtc.getEpoch()
-  );
+void RealTimeClock::setDefaultClock_()
+{
+  // Requirement: if no NVS clock, default to 12:00 (midnight)
+  // midnight = 12:00 AM
+  setClock12_(12, 0, 0, 0);
 }
 
-time_t RealTimeClock::getEpoch() {
-  return (time_t)rtc.getEpoch();
+bool RealTimeClock::loadClockFromNVS()
+{
+  sPrefs.begin(kRtcNs, true);
+  const uint32_t magic = sPrefs.getULong(kMagicK, 0);
+  const uint8_t  h12   = sPrefs.getUChar(kH12K, 0);
+  const uint8_t  m     = sPrefs.getUChar(kMinK, 255);
+  const uint8_t  ap    = sPrefs.getUChar(kAmPmK, 2);
+  const uint8_t  s     = sPrefs.getUChar(kSecK, 0);
+  sPrefs.end();
+
+  if (magic != kMagic) return false;
+  if (h12 < 1 || h12 > 12) return false;
+  if (m > 59) return false;
+  if (ap > 1) return false;
+  if (s > 59) return false;
+
+  setClock12_(h12, m, ap, s);
+  return true;
+}
+
+void RealTimeClock::saveClockToNVS()
+{
+  if (!_hasValidClock) return;
+
+  int h12 = 12;
+  int ap  = 0;
+  getHour12AmPm_(h12, ap);
+
+  const uint8_t m = (uint8_t)rtc.getMinute();
+  const uint8_t s = (uint8_t)rtc.getSecond();
+
+  sPrefs.begin(kRtcNs, false);
+  sPrefs.putULong(kMagicK, kMagic);
+  sPrefs.putUChar(kH12K, (uint8_t)h12);
+  sPrefs.putUChar(kMinK, m);
+  sPrefs.putUChar(kAmPmK, (uint8_t)ap);
+  sPrefs.putUChar(kSecK, s);
+  sPrefs.end();
+}
+
+void RealTimeClock::ensureClockValid_()
+{
+  // If RTC is already running and we've previously validated, do nothing.
+  if (_hasValidClock) return;
+
+  // Try NVS first
+  if (loadClockFromNVS()) {
+    _hasValidClock = true;
+    return;
+  }
+
+  // No NVS clock: default to 12:00 and persist it
+  setDefaultClock_();
+  saveClockToNVS();
+  _hasValidClock = true;
+}
+
+void RealTimeClock::setTime(int hour12, int minute, int ampm)
+{
+  setClock12_(hour12, minute, ampm, 0);
+
+  Serial.printf("RTC setTime: %s (%02d:%02d:%02d 24h)\n",
+                getTime().c_str(),
+                rtc.getHour(), rtc.getMinute(), rtc.getSecond());
+
+  saveClockToNVS();
 }
 
 void RealTimeClock::setHourMinute(int hour12, int minute)
 {
-  // Normalize inputs
-  if (hour12 < 1)  hour12 = 1;
-  if (hour12 > 12) hour12 = 12;
-  if (minute < 0)  minute = 0;
-  if (minute > 59) minute = 59;
+  // Preserve current AM/PM
+  int currentH12 = 12;
+  int currentAp  = 0;
+  getHour12AmPm_(currentH12, currentAp);
 
-  // Preserve current AM/PM from displayed time
-  int currentHour24 = rtc.getHour();
-  int ampm = (currentHour24 >= 12) ? 1 : 0;
+  setClock12_(hour12, minute, currentAp, rtc.getSecond());
 
-  // Convert to local 24-hour
-  int localHour24 = hour12 % 12;
-  if (ampm == 1) localHour24 += 12;
+  Serial.printf("RTC setHourMinute: %s (%02d:%02d:%02d 24h)\n",
+                getTime().c_str(),
+                rtc.getHour(), rtc.getMinute(), rtc.getSecond());
 
-  // Preserve date
-  int year  = isValid() ? rtc.getYear()  : 2025;
-  int month = isValid() ? rtc.getMonth() : 1;
-  int day   = isValid() ? rtc.getDay()   : 1;
-  int sec   = isValid() ? rtc.getSecond() : 0;
-
-  // ---- KEY FIX ----
-  // Convert local time → UTC before setting
-  int utcHour24 = localHour24 - (rtc.offset / 3600);
-  if (utcHour24 < 0)  utcHour24 += 24;
-  if (utcHour24 > 23) utcHour24 -= 24;
-
-  rtc.setTime(sec, minute, utcHour24, day, month, year);
-
-  Serial.printf(
-    "RTC setHourMinute (local %02d:%02d -> UTC %02d:%02d) epoch %lu offset %ld\n",
-    localHour24, minute,
-    utcHour24, minute,
-    (unsigned long)rtc.getEpoch(),
-    (long)rtc.offset
-  );
+  saveClockToNVS();
 }
 
-// -----------------------------------------------------------------------------
-// Pacific TZ helper (PST/PDT) using POSIX TZ rules:
-// PST8PDT,M3.2.0/2,M11.1.0/2
-//  - DST starts: 2nd Sunday in March at 02:00
-//  - DST ends:   1st Sunday in November at 02:00
-// -----------------------------------------------------------------------------
-static bool pacificIsDST(time_t utcEpoch)
+void RealTimeClock::setEpoch(time_t epoch)
 {
-  // Ensure TZ rules are set (safe to call repeatedly)
-  setenv("TZ", "PST8PDT,M3.2.0/2,M11.1.0/2", 1);
-  tzset();
+  // If you ever set epoch (NTP, etc.), accept it.
+  // We still only *persist* the clock components.
+  rtc.setTime(epoch);
+  _hasValidClock = true;
+  saveClockToNVS();
 
-  struct tm localTm;
-  localtime_r(&utcEpoch, &localTm);
-  return (localTm.tm_isdst > 0);
+  Serial.printf("RTC setEpoch: epoch=%lu time=%s\n",
+                (unsigned long)rtc.getEpoch(),
+                getTime().c_str());
 }
 
-/*
-  This will eventually change to include GPS support to determine the time zone and standard time
-*/
+time_t RealTimeClock::getEpoch()
+{
+  return (time_t)rtc.getEpoch();
+}
 
 bool RealTimeClock::syncWithNTP(const char* ntpServer, uint32_t timeoutMs)
 {
   Serial.printf("Starting NTP sync with %s (timeout %lums)\n", ntpServer, timeoutMs);
 
-  // 1) Get UTC time from NTP. Keep TZ logic separate.
+  // Request UTC epoch from NTP
   configTime(0, 0, ntpServer);
 
   uint32_t start = millis();
@@ -180,7 +250,7 @@ bool RealTimeClock::syncWithNTP(const char* ntpServer, uint32_t timeoutMs)
   while (millis() - start < timeoutMs)
   {
     time(&nowUtc);
-    if (nowUtc > 1609459200) // sanity: > 2021-01-01
+    if (nowUtc > 1609459200) // > 2021-01-01 sanity
       break;
 
     delay(100);
@@ -192,39 +262,38 @@ bool RealTimeClock::syncWithNTP(const char* ntpServer, uint32_t timeoutMs)
     return false;
   }
 
-  // 2) Determine PST vs PDT for this date/time
-  bool isDst = pacificIsDST(nowUtc);
-  long pacificOffset = isDst ? -25200L : -28800L;   // PDT or PST
-
-  // Keep your class state aligned with what ESP32Time uses
-  _utcOffsetSeconds = (int)pacificOffset;
-  rtc.offset = pacificOffset;
-
-  // 3) Set RTC to the UTC epoch; ESP32Time will display with rtc.offset
+  // Set RTC to the acquired epoch.
+  // Cat doesn't care about date; we just use it as a time base.
   rtc.setTime(nowUtc);
+  _hasValidClock = true;
 
-  // Friendly debug print: show UTC and local
-  struct tm localTm;
-  localtime_r(&nowUtc, &localTm);
+  Serial.printf("NTP acquired epoch=%lu time=%s\n",
+                (unsigned long)nowUtc,
+                getTime().c_str());
 
-  Serial.printf("NTP acquired UTC epoch: %lu\n", (unsigned long)nowUtc);
-  Serial.printf("Pacific: %s offset %ld\n", isDst ? "PDT" : "PST", pacificOffset);
-  Serial.printf("Local: %04d-%02d-%02d %02d:%02d:%02d\n",
-                localTm.tm_year + 1900, localTm.tm_mon + 1, localTm.tm_mday,
-                localTm.tm_hour, localTm.tm_min, localTm.tm_sec);
+  // Persist the clock components
+  saveClockToNVS();
 
   return true;
 }
 
 void RealTimeClock::loop()
 {
-  /* Haptic buzz on the hour */
-  const int hourNow = getHour();   // use your existing API
+  // Haptic buzz on hour change
+  const int hourNow = rtc.getHour();
+  if (_lastBuzzedHour < 0) _lastBuzzedHour = hourNow;
+
   if (hourNow != _lastBuzzedHour)
   {
-    haptic.playEffect( 72 );  //   72 − Transition Ramp Down Medium Smooth 1 – 100 to 0%
+    haptic.playEffect(72);
     _lastBuzzedHour = hourNow;
   }
 
+  // Requirement: save every 2 minutes
+  static uint32_t lastSaveMs = 0;
+  const uint32_t nowMs = millis();
+  if (nowMs - lastSaveMs >= kSaveEveryMs) {
+    lastSaveMs = nowMs;
+    saveClockToNVS();
+  }
 }
-

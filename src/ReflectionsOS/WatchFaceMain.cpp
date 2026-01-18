@@ -170,6 +170,11 @@ bool WatchFaceMain::goToSleep()
   return true;
 }
 
+long WatchFaceMain::getSleepCountdown()
+{
+  return millis() - sleepyTimer2;
+}
+
 void WatchFaceMain::setDrawItAll()
 {
   drawitall = true;

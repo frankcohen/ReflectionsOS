@@ -385,6 +385,10 @@ static void smartdelay(unsigned long ms) {
 
     systemload.logtasktime( millis() - tasktime, 0, " " );
 
+    // Debug messages on the display
+    String bmsg = battery.getDischargeOverlayText();
+    if (bmsg.length()) video.paintText(bmsg);    
+
   } while (millis() - start < ms);
 }
 
@@ -648,16 +652,35 @@ void loop()
 
   int recentGesture = tof.getGesture();
 
-  if ( recentGesture != GESTURE_NONE )
+  if (recentGesture != GESTURE_NONE)
   {
-    Serial.print( "Gesture: " );
-    if ( recentGesture == GESTURE_LEFT_RIGHT ) Serial.println( ">>>GESTURE_LEFT_RIGHT" );
-    if ( recentGesture == GESTURE_RIGHT_LEFT ) Serial.println( ">>>GESTURE_RIGHT_LEFT" );
-    if ( recentGesture == GESTURE_CIRCULAR ) Serial.println( ">>>GESTURE_CIRCULAR" );
-    if ( recentGesture == GESTURE_SLEEP ) { Serial.println( ">>>GESTURE_SLEEP" ); }
-    if ( recentGesture == GESTURE_NONE ) { smartdelay(10); return; }
-    else { Serial.println( ">>>Unknown" ); }
+    Serial.print("Gesture: ");
+
+    switch (recentGesture)
+    {
+      case GESTURE_LEFT_RIGHT:
+        Serial.println(">>>GESTURE_LEFT_RIGHT");
+        break;
+
+      case GESTURE_RIGHT_LEFT:
+        Serial.println(">>>GESTURE_RIGHT_LEFT");
+        break;
+
+      case GESTURE_CIRCULAR:
+        Serial.println(">>>GESTURE_CIRCULAR");
+        break;
+
+      case GESTURE_SLEEP:
+        Serial.println(">>>GESTURE_SLEEP");
+        break;
+
+      default:
+        Serial.printf(">>>Unknown (%d)\n", recentGesture);
+        break;
+    }
   }
+
+  battery.setSleepCountdownMs( watchfacemain.getSleepCountdown() );
 
   // Go to sleep when gestured or when the battery is low or inactivity says so
   if ( ( recentGesture == GESTURE_SLEEP ) || battery.isBatteryLow() || watchfacemain.goToSleep() )
@@ -683,6 +706,7 @@ void loop()
 
     Serial.println("Entering deep sleep now");
     Serial.flush();
+    realtimeclock.saveClockToNVS();
     esp_deep_sleep_start();
     return;
   }
@@ -733,8 +757,8 @@ void loop()
   {
     if (!canStartExperience(false, false)) { smartdelay(10); return; }
 
-    //experienceservice.startExperience( ExperienceService::EyesFollowFinger );
-    experienceservice.startExperience( ExperienceService::MysticCat );
+    //experienceservice.startExperience( ExperienceService::MysticCat );
+    experienceservice.startExperience( ExperienceService::ShowTime );
     smartdelay(10);
     return;
   }

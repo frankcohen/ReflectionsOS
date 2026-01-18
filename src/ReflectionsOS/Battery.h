@@ -20,18 +20,14 @@ extern LOGGER logger;
 // ===============================
 // Battery safety thresholds (mV)
 // ===============================
-// MUST sleep if recent minimum voltage falls below this.
-// Start conservative; tune after you observe sag.
 #ifndef BATTERY_SLEEP_MIN_MV
 #define BATTERY_SLEEP_MIN_MV 3300
 #endif
 
-// Optional: used for "battery low" UI tiers (leaves)
 #ifndef BATTERY_WARN_MV
 #define BATTERY_WARN_MV 3600
 #endif
 
-// Percent UI (not safety)
 #ifndef BATTERY_FULL_MV
 #define BATTERY_FULL_MV 4200
 #endif
@@ -41,10 +37,6 @@ extern LOGGER logger;
 #endif
 
 // Leaf UI tiers (avg voltage)
-// 1 leaf: <= BATTERY_EMPTY_MV
-// 2 leaves: <= BATTERY_LOW_MV
-// 3 leaves: <= BATTERY_MED_MV
-// 4 leaves: >  BATTERY_MED_MV
 #ifndef BATTERY_LOW_MV
 #define BATTERY_LOW_MV 3600
 #endif
@@ -71,9 +63,13 @@ public:
   void begin();
   void loop();
 
+  // Optional: set from power manager / ReflectionsOS when you know the countdown.
+  // Pass 0xFFFFFFFF to mean "unknown/disabled".
+  void setSleepCountdownMs(uint32_t remainingMs);
+
   // --- Core values (cached) ---
   uint16_t getVoltageMv() const;          // last sampled battery voltage (mV)
-  uint16_t getMinRecentMv() const;        // min over ~20s
+  uint16_t getMinRecentMv() const;        // min over ~30s
   uint16_t getAvgRecentMv() const;        // avg over ~60s
   int16_t  getDropRateMvPerMin() const;   // positive = dropping
   uint32_t getOnBatterySeconds() const;
@@ -89,14 +85,17 @@ public:
   // ==========================================
   // Compatibility methods used by your codebase
   // ==========================================
-  /** Legacy: returns true when we should sleep to protect RTC (conservative). */
   bool isBatteryLow();
-
-  /** Legacy: returns 1..4 "leaf level" (stable, based on avg voltage). */
-  int getBatteryLevel();
-
-  /** Legacy: old name used in your code (returns cached voltage). */
+  int  getBatteryLevel();
   uint16_t getVoltage() { return getVoltageMv(); }
+
+  // ==========================================
+  // Display helper for smartdelay()
+  // ==========================================
+  // Returns "" if it's not time to refresh yet.
+  // Otherwise returns a single-line overlay like:
+  // "BAT 3955mV L4 110m" or "BAT 3955mV L4 --m"
+  String getDischargeOverlayText();
 
 private:
   void sample_();
@@ -114,12 +113,23 @@ private:
 
   uint32_t _lastSampleMs = 0;
 
+  // Sleep countdown injected by the rest of the system (Battery doesn't compute it)
+  uint32_t _sleepCountdownMs = 0xFFFFFFFFUL; // unknown by default
+
+  // Debug heartbeat timing
+  uint32_t _lastDebugMs = 0;
+  static const uint32_t kDebugEveryMs = 30000; // 30 seconds
+  
+  // Display overlay timing
+  uint32_t _lastOverlayMs = 0;
+  static const uint32_t kOverlayEveryMs = 20; // 2 ms
+  
   struct Sample {
     uint32_t t_ms;
     uint16_t mv;
   };
 
-  static const uint16_t kCap = 180; // ~6 minutes at 2s cadence
+  static const uint16_t kCap = 180; // ~3 minutes at 1s cadence
   Sample   _buf[kCap];
   uint16_t _head = 0;
   uint16_t _count = 0;

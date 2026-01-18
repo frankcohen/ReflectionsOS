@@ -14,6 +14,19 @@
 
 Battery::Battery() {}
 
+static void formatMmSs_(uint32_t totalSeconds, char out[6])
+{
+  uint32_t mm = totalSeconds / 60UL;
+  uint32_t ss = totalSeconds % 60UL;
+  if (mm > 99) mm = 99;
+  snprintf(out, 6, "%02lu:%02lu", (unsigned long)mm, (unsigned long)ss);
+}
+
+void Battery::setSleepCountdownMs(uint32_t remainingMs)
+{
+  _sleepCountdownMs = remainingMs;
+}
+
 void Battery::begin()
 {
   pinMode(Battery_Sensor, INPUT);
@@ -40,10 +53,68 @@ void Battery::begin()
 void Battery::loop()
 {
   const uint32_t now = millis();
+
+  // ---- Sampling cadence ----
   if (now - _lastSampleMs >= kSampleEveryMs) {
     _lastSampleMs = now;
     sample_();
   }
+
+  // ---- Debug heartbeat every 2 minutes ----
+  if (now - _lastDebugMs >= kDebugEveryMs) {
+    _lastDebugMs = now;
+
+    const uint16_t vNow  = getVoltageMv();
+    const uint16_t vMin  = getMinRecentMv();
+    const uint16_t vAvg  = getAvgRecentMv();
+    const int16_t  drop  = getDropRateMvPerMin();
+    const uint32_t onSec = getOnBatterySeconds();
+    const uint16_t raw   = _rawAdcMv;
+
+    const int leafs = getBatteryLevel(); // 1..4
+
+    char onBuf[6];
+    formatMmSs_(onSec, onBuf);
+
+    char sleepBuf[6] = "--:--";
+    if (_sleepCountdownMs != 0xFFFFFFFFUL) {
+      const uint32_t sleepSec = _sleepCountdownMs / 1000UL;
+      formatMmSs_(sleepSec, sleepBuf);
+    }
+
+    Serial.printf(
+      "BatteryStats: raw=%u now=%u mV min=%u mV avg=%u mV drop=%d mV/min leafs=%d on=%s sleep_in=%s %s\n",
+      raw, vNow, vMin, vAvg, (int)drop, leafs, onBuf, sleepBuf,
+      (shouldSleepToProtectRTC() ? "SLEEP!" : "")
+    );
+    Serial.flush();
+  }
+}
+
+String Battery::getDischargeOverlayText()
+{
+  const uint32_t nowMs = millis();
+  if (nowMs - _lastOverlayMs < kOverlayEveryMs) return String();
+  _lastOverlayMs = nowMs;
+
+  const uint16_t vAvg  = getAvgRecentMv();
+  const int      leafs = getBatteryLevel();     // 1..4
+  const int16_t  drop  = getDropRateMvPerMin(); // positive = dropping
+
+  // If discharging (drop > 0), estimate minutes to BATTERY_EMPTY_MV.
+  if (vAvg <= BATTERY_EMPTY_MV) {
+    return " EMPTY " + String(vAvg) + "mV L" + String(leafs);
+  }
+
+  if (drop > 0) {
+    const uint16_t deltaMv = (uint16_t)(vAvg - BATTERY_EMPTY_MV);
+    const uint32_t minsLeft = (deltaMv + (uint16_t)(drop - 1)) / (uint32_t)drop; // ceil divide
+
+    return " " + String(vAvg) + "mV L" + String(leafs) + " " + String(minsLeft) + "m";
+  }
+
+  // Not discharging (USB attached / recovery / noise): show level but no estimate.
+  return " " + String(vAvg) + "mV L" + String(leafs) + " --m";
 }
 
 void Battery::sample_()
@@ -185,7 +256,6 @@ bool Battery::shouldSleepToProtectRTC() const
   static const uint32_t bootMs = millis();
 
   // Panic cutoff: if we ever dip *this* low, sleep immediately.
-  // (Keep this below your normal threshold.)
   static const uint16_t kPanicMv = 3200;
 
   if (sLatched) return true;
@@ -230,9 +300,6 @@ uint8_t Battery::getBatteryPercent() const
 
 String Battery::getBatteryStats()
 {
-  // IMPORTANT: Do NOT call sample_() here.
-  // Sampling is controlled by Battery::loop() cadence to avoid over-sampling/noise.
-
   const uint16_t vNow = _mvNow;
   const uint16_t vMin = getMinRecentMv();
   const uint16_t vAvg = getAvgRecentMv();
@@ -240,9 +307,6 @@ String Battery::getBatteryStats()
   const uint32_t sec  = getOnBatterySeconds();
   const uint16_t raw  = _rawAdcMv;
 
-  // Two compact lines for your display:
-  // Line 1: raw + now + min
-  // Line 2: avg + slope + elapsed + sleep flag
   String line1 = " " + String(raw) + " " + String(vNow) + " " + String(vMin);
   String line2 = "  " + String(vAvg) + " " + String(drop) + " " + String(sec/60) + " " +
                  String(shouldSleepToProtectRTC() ? "SLEEP!" : "--");
@@ -252,22 +316,18 @@ String Battery::getBatteryStats()
 
 bool Battery::isBatteryLow()
 {
-  // Conservative: use avg-based protection signal plus a panic min.
   return shouldSleepToProtectRTC();
 }
 
 int Battery::getBatteryLevel()
 {
-  // Stable leaves: use averaged voltage, not instantaneous sag.
   const uint16_t mv = getAvgRecentMv();
 
   const uint16_t emptyMv = BATTERY_EMPTY_MV;
   const uint16_t lowMv   = BATTERY_LOW_MV;
   const uint16_t medMv   = BATTERY_MED_MV;
 
-  // Defensive ordering check (in case someone misconfigures thresholds)
   if (!(emptyMv <= lowMv && lowMv <= medMv)) {
-    // Fall back to safest "low" reading
     return 1;
   }
 
