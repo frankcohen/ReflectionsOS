@@ -231,7 +231,7 @@ void printCentered( String text )
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 }
 
-void BIUfaled( String text )
+void BIUfailed( String text )
 {
   gfx->fillScreen( COLOR_RED );
   gfx->setFont( &ScienceFair14pt7b );
@@ -250,6 +250,39 @@ void BIUfaled( String text )
   Serial.println( text );
   Serial.println( F("Stopping") );
   while (1);
+}
+
+// Checks for low battery and goes to deep sleep
+
+static void bootBatteryLowGate()
+{
+  if ( ! battery.isBatteryLow() ) return;
+
+  // Match your prior Video::begin() behavior
+  gfx->setFont(&Minya16pt7b);
+  gfx->setTextSize(1);
+  gfx->setCursor(45, 85);
+  gfx->setTextColor(COLOR_TEXT_YELLOW);
+  gfx->println(F("Battery low"));
+
+  digitalWrite(Display_SPI_BK, LOW);  // backlight on (active low)
+
+  Serial.printf( "Battery low at boot: now=%d mV\n", battery.getVoltageMv() );
+  Serial.flush();
+
+  delay(3000);
+
+  // Go protect RTC immediately
+  hardware.prepareForSleep();
+  hardware.powerDownComponents();
+
+  // Optional: if you want to preserve last-known clock even on low battery
+  realtimeclock.saveClockToNVS();
+
+  esp_deep_sleep_start();
+
+  // Should never return
+  while (true) { delay(1000); }
 }
 
 // Clears the NVS Flash memory
@@ -293,7 +326,7 @@ void BoardInitializationUtility()
 
   if (!wifi.begin())
   {
-    BIUfaled("Wifi failed");
+    BIUfailed("Wifi failed");
   }
 
   delay(1000);
@@ -306,7 +339,7 @@ void BoardInitializationUtility()
   else
   {
     Serial.println(F("Could not sync to network time over wifi"));
-    BIUfaled( F( "NTP failed" ) );
+    BIUfailed( F( "NTP failed" ) );
   }
 
   delay(1000);
@@ -318,7 +351,7 @@ void BoardInitializationUtility()
   // Download cat-file-package.tar and any other files, then expand the tars
   if (!storage.replicateServerFiles())
   {
-    BIUfaled(F("Replicate failed"));
+    BIUfailed(F("Replicate failed"));
   }
 
   Serial.println("After: ");
@@ -386,8 +419,8 @@ static void smartdelay(unsigned long ms) {
     systemload.logtasktime( millis() - tasktime, 0, " " );
 
     // Debug messages on the display
-    String bmsg = battery.getDischargeOverlayText();
-    if (bmsg.length()) video.paintText(bmsg);    
+    //String bmsg = battery.getDischargeOverlayText();
+    //if (bmsg.length()) video.paintText(bmsg);    
 
   } while (millis() - start < ms);
 }
@@ -421,9 +454,12 @@ void setup()
   hardware.begin();
   haptic.begin();
   haptic.playEffect(14);  // 14 Strong Buzz
+
   battery.begin();
-  video.begin();
+  video.begin();          // needed so we can show "Battery low" reliably
   video.setPaused( true );
+
+  bootBatteryLowGate();   // single battery-low policy point for ALL wakes
 
   // Core 1 services
 
@@ -656,6 +692,10 @@ void loop()
   {
     Serial.print("Gesture: ");
 
+      experienceservice.startExperience( ExperienceService::Pensive );
+      smartdelay(10);
+      return;
+
     switch (recentGesture)
     {
       case GESTURE_LEFT_RIGHT:
@@ -757,7 +797,9 @@ void loop()
   {
     if (!canStartExperience(false, false)) { smartdelay(10); return; }
     
-    experienceservice.startExperience( ExperienceService::MysticCat );
+    //experienceservice.startExperience( ExperienceService::MysticCat );
+    
+    experienceservice.startExperience( ExperienceService::Pensive );
     smartdelay(10);
     return;
   }
@@ -766,6 +808,11 @@ void loop()
   if ( recentGesture == GESTURE_LEFT_RIGHT )
   {
     if (!canStartExperience(false, false)) { smartdelay(10); return; }
+
+      experienceservice.startExperience( ExperienceService::Pensive );
+      smartdelay(10);
+      return;
+
 
     if ( nextUp == 0 )
     {
@@ -818,7 +865,7 @@ void loop()
     if ( nextUp2 == 0 )
     {
       nextUp2 = 1;
-      experienceservice.startExperience( ExperienceService::EyesFollowFinger );
+      experienceservice.startExperience( ExperienceService::Pensive );
       smartdelay(10);
       return;
     }
@@ -833,8 +880,16 @@ void loop()
 
     if ( nextUp2 == 2 )
     {
-      nextUp2 = 0;
+      nextUp2 = 3;
       experienceservice.startExperience( ExperienceService::Sand );
+      smartdelay(10);
+      return;
+    }
+
+    if ( nextUp2 == 3 )
+    {
+      nextUp2 = 0;
+      experienceservice.startExperience( ExperienceService::EyesFollowFinger );
       smartdelay(10);
       return;
     }

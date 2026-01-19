@@ -14,6 +14,7 @@
 #include <Arduino.h>
 #include <driver/gpio.h>
 #include <esp_sleep.h>
+#include "driver/rtc_io.h"
 
 extern LOGGER logger;   // Defined in ReflectionsOfFrank.ino
 extern Video video;
@@ -219,6 +220,9 @@ void Hardware::prepareForSleep()
 
 void Hardware::prepareAfterWake()
 {
+  rtc_gpio_pulldown_dis((gpio_num_t)ACCEL_INT1_PIN);
+  rtc_gpio_pullup_dis((gpio_num_t)ACCEL_INT1_PIN);
+
   // Release global hold first
   disableDeepSleepHolds();
 

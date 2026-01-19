@@ -14,13 +14,37 @@
 
 Battery::Battery() {}
 
+static void formatMmSs_(uint32_t totalSeconds, char out[6])
+{
+  uint32_t mm = totalSeconds / 60UL;
+  uint32_t ss = totalSeconds % 60UL;
+  if (mm > 99) mm = 99;
+  snprintf(out, 6, "%02lu:%02lu", (unsigned long)mm, (unsigned long)ss);
+}
+
+void Battery::setSleepCountdownMs(uint32_t remainingMs)
+{
+  _sleepCountdownMs = remainingMs;
+}
+
 void Battery::begin()
 {
   pinMode(Battery_Sensor, INPUT);
-  analogSetPinAttenuation(Battery_Sensor, ADC_11db);
+
+  // Set attenuation globally (works reliably on core 3.2.0)
+  analogSetAttenuation(ADC_11db);
+
+  // Prime/attach the ADC channel for this pin (prevents "not configured as analog channel")
+  (void)analogRead(Battery_Sensor);
 
   _lastSampleMs = millis();
   sample_(); // seed first reading
+
+  Serial.printf("Battery: now=%u mV min=%u mV avg=%u mV\n",
+                getVoltageMv(),
+                getMinRecentMv(),
+                getAvgRecentMv());
+  Serial.flush();
 
   _onBatteryStartMs = _lastSampleMs;
   _onBatteryStarted = true; // best-effort; replace with real VBUS detect later if available
@@ -29,10 +53,68 @@ void Battery::begin()
 void Battery::loop()
 {
   const uint32_t now = millis();
+
+  // ---- Sampling cadence ----
   if (now - _lastSampleMs >= kSampleEveryMs) {
     _lastSampleMs = now;
     sample_();
   }
+
+  // ---- Debug heartbeat every 2 minutes ----
+  if (now - _lastDebugMs >= kDebugEveryMs) {
+    _lastDebugMs = now;
+
+    const uint16_t vNow  = getVoltageMv();
+    const uint16_t vMin  = getMinRecentMv();
+    const uint16_t vAvg  = getAvgRecentMv();
+    const int16_t  drop  = getDropRateMvPerMin();
+    const uint32_t onSec = getOnBatterySeconds();
+    const uint16_t raw   = _rawAdcMv;
+
+    const int leafs = getBatteryLevel(); // 1..4
+
+    char onBuf[6];
+    formatMmSs_(onSec, onBuf);
+
+    char sleepBuf[6] = "--:--";
+    if (_sleepCountdownMs != 0xFFFFFFFFUL) {
+      const uint32_t sleepSec = _sleepCountdownMs / 1000UL;
+      formatMmSs_(sleepSec, sleepBuf);
+    }
+
+    Serial.printf(
+      "BatteryStats: raw=%u now=%u mV min=%u mV avg=%u mV drop=%d mV/min leafs=%d on=%s sleep_in=%s %s\n",
+      raw, vNow, vMin, vAvg, (int)drop, leafs, onBuf, sleepBuf,
+      (shouldSleepToProtectRTC() ? "SLEEP!" : "")
+    );
+    Serial.flush();
+  }
+}
+
+String Battery::getDischargeOverlayText()
+{
+  const uint32_t nowMs = millis();
+  if (nowMs - _lastOverlayMs < kOverlayEveryMs) return String();
+  _lastOverlayMs = nowMs;
+
+  const uint16_t vAvg  = getAvgRecentMv();
+  const int      leafs = getBatteryLevel();     // 1..4
+  const int16_t  drop  = getDropRateMvPerMin(); // positive = dropping
+
+  // If discharging (drop > 0), estimate minutes to BATTERY_EMPTY_MV.
+  if (vAvg <= BATTERY_EMPTY_MV) {
+    return " EMPTY " + String(vAvg) + "mV L" + String(leafs);
+  }
+
+  if (drop > 0) {
+    const uint16_t deltaMv = (uint16_t)(vAvg - BATTERY_EMPTY_MV);
+    const uint32_t minsLeft = (deltaMv + (uint16_t)(drop - 1)) / (uint32_t)drop; // ceil divide
+
+    return " " + String(vAvg) + "mV L" + String(leafs) + " " + String(minsLeft) + "m";
+  }
+
+  // Not discharging (USB attached / recovery / noise): show level but no estimate.
+  return " " + String(vAvg) + "mV L" + String(leafs) + " --m";
 }
 
 void Battery::sample_()
@@ -168,23 +250,36 @@ uint32_t Battery::getOnBatterySeconds() const
 
 bool Battery::shouldSleepToProtectRTC() const
 {
-  // Latch so it doesn't flicker when hovering near the threshold.
-  // NOTE: "static" inside a const method is fine; it's module-global.
   static bool sLatched = false;
 
+  static const uint32_t kGraceMs = 30000; // 30s
+  static const uint32_t bootMs = millis();
+
+  // Panic cutoff: if we ever dip *this* low, sleep immediately.
+  static const uint16_t kPanicMv = 3200;
+
+  if (sLatched) return true;
+
   const uint16_t vMin = getMinRecentMv();
-
-  // Enter latch when we dip below threshold
-  if (!sLatched && vMin > 0 && vMin <= BATTERY_SLEEP_MIN_MV) {
+  if (vMin > 0 && vMin <= kPanicMv) {
     sLatched = true;
+    return true;
   }
 
-  // Optional: allow unlatch only if voltage is clearly healthy again
-  // (Useful during testing; in production you can omit this and keep it latched.)
-  const uint16_t kReleaseMv = BATTERY_SLEEP_MIN_MV + 120;
-  if (sLatched && vMin > kReleaseMv) {
-    sLatched = false;
+  if (millis() - bootMs < kGraceMs) return false;
+
+  // Use average (less trigger-happy than min)
+  const uint16_t vAvg = getAvgRecentMv();
+
+  static uint8_t lowHits = 0;
+
+  if (vAvg > 0 && vAvg <= BATTERY_SLEEP_MIN_MV) {
+    if (lowHits < 255) lowHits++;
+  } else {
+    lowHits = 0;
   }
+
+  if (lowHits >= 3) sLatched = true;
 
   return sLatched;
 }
@@ -205,9 +300,6 @@ uint8_t Battery::getBatteryPercent() const
 
 String Battery::getBatteryStats()
 {
-  // Force a fresh sample so overlay reflects “now”
-  sample_();
-
   const uint16_t vNow = _mvNow;
   const uint16_t vMin = getMinRecentMv();
   const uint16_t vAvg = getAvgRecentMv();
@@ -215,40 +307,32 @@ String Battery::getBatteryStats()
   const uint32_t sec  = getOnBatterySeconds();
   const uint16_t raw  = _rawAdcMv;
 
-  // Two compact lines for your display:
-  // Line 1: raw + now + min
-  // Line 2: avg + slope + elapsed + sleep flag
   String line1 = " " + String(raw) + " " + String(vNow) + " " + String(vMin);
-  String line2 = "  " + String(vAvg) + " " + String(drop) + " " + String(sec/60) + " " + String(shouldSleepToProtectRTC() ? "SLEEP!" : "--");
+  String line2 = "  " + String(vAvg) + " " + String(drop) + " " + String(sec/60) + " " +
+                 String(shouldSleepToProtectRTC() ? "SLEEP!" : "--");
 
   return line1 + "\n" + line2;
 }
 
-// =====================================================
-// Compatibility methods (so the rest of your code builds)
-// =====================================================
-
 bool Battery::isBatteryLow()
 {
-  // Conservative: use sag-based protection signal.
   return shouldSleepToProtectRTC();
 }
 
 int Battery::getBatteryLevel()
 {
-  // Stable leaves: use averaged voltage, not instantaneous sag.
   const uint16_t mv = getAvgRecentMv();
 
-  // 1..4 tiers based on UI thresholds (NOT the old 2500/2900/3700 constants).
-  // These defaults make leaves meaningful for a LiPo.
-  // You can tune later without affecting safety.
-  const uint16_t t1 = BATTERY_SLEEP_MIN_MV; // <= this is 1 leaf
-  const uint16_t t2 = BATTERY_WARN_MV;      // <= this is 2 leaves
-  const uint16_t t3 = 3850;                 // <= this is 3 leaves (good-ish)
-  // >= t3 => 4 leaves
+  const uint16_t emptyMv = BATTERY_EMPTY_MV;
+  const uint16_t lowMv   = BATTERY_LOW_MV;
+  const uint16_t medMv   = BATTERY_MED_MV;
 
-  if (mv <= t1) return 1;
-  if (mv <= t2) return 2;
-  if (mv <= t3) return 3;
+  if (!(emptyMv <= lowMv && lowMv <= medMv)) {
+    return 1;
+  }
+
+  if (mv <= emptyMv) return 1;
+  if (mv <= lowMv)   return 2;
+  if (mv <= medMv)   return 3;
   return 4;
 }

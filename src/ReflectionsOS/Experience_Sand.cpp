@@ -48,8 +48,6 @@ void Experience_Sand::setup() {
   for (uint16_t i=0;i<MAX_PARTICLES;++i) live_[i]=0;
   for (uint8_t k=0;k<MAX_ISLANDS;++k) islands_[k] = { W/2, H/2, 0 };
 
-  if (gfx) gfx->fillScreen( COLOR_PANTONE_662 ); // deep blue background
-
   // Reset bubbles and seed inside the round screen
   for (uint16_t i=0;i<MAX_PARTICLES;++i) live_[i]=0;
   seedInitial();
@@ -69,6 +67,8 @@ void Experience_Sand::setup() {
   sandtime = millis();
   dur      = random(1, 5);   // used below (35s .. 37.5s)
   pace     = millis();
+
+  gfx->fillScreen( COLOR_PANTONE_662 );
 
   setSetupComplete(true);  // Signal that setup is complete
 }

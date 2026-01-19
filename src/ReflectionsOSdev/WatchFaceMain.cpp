@@ -170,6 +170,11 @@ bool WatchFaceMain::goToSleep()
   return true;
 }
 
+long WatchFaceMain::getSleepCountdown()
+{
+  return millis() - sleepyTimer2;
+}
+
 void WatchFaceMain::setDrawItAll()
 {
   drawitall = true;
@@ -431,6 +436,9 @@ void WatchFaceMain::loop()
 {
   if ( video.getStatus() ) return;
 
+  // If we are not on MAIN, allow the next MAIN entry to be primed again
+  if (panel != MAIN) _mainEntryPrimed = false;
+
   switch ( panel )
   {
     case STARTUP:
@@ -474,13 +482,6 @@ void WatchFaceMain::loop()
       break;
   }
 
-  // Timeout any panel - except for the main - with no change in 20 seconds
-  if ( ( ( millis() - noMovementTime ) > 20000 ) && ( panel != MAIN ) )
-  {
-    changeTo( MAIN, true, WatchFaceFlip3_video );
-    return;
-  }
-
   // Force a redraw periodically, to move the minutes hand
   if ( millis() - minuteRedrawtimer > 100000 )
   {
@@ -519,6 +520,25 @@ void WatchFaceMain::startup()
 
 void WatchFaceMain::main()
 {
+  // PRIME MAIN ON ENTRY (covers returning from an Experience where needssetup may be false)
+  if (!_mainEntryPrimed)
+  {
+    _mainEntryPrimed = true;
+
+    // Start the MAIN settle window
+    mainwaiter = millis();
+
+    // Drain any latched tap events so MAIN doesn't immediately react
+    (void)accel.getSingleTap();
+    (void)accel.getDoubleTap();
+    (void)accel.getSingleTap();
+    (void)accel.getDoubleTap();
+
+    // Reset + drain twist state so MAIN doesn't immediately flip to Digital Time
+    resetTwistDetector();
+    flushTwistDetector();
+  }
+
   if ( needssetup )
   {
     Serial.println( F("MAIN") );
@@ -536,7 +556,7 @@ void WatchFaceMain::main()
     return;
   }
 
-  // Single tap does nothing on MAIN (per your flow)
+  // Single tap does nothing on MAIN
 
   if ( ( millis() - maintimer > 50 ) && ( ! video.getStatus() ) )
   {

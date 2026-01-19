@@ -12,9 +12,6 @@
 #ifndef SYSTEMLOAD_H
 #define SYSTEMLOAD_H
 
-#include "RealTimeClock.h"
-extern RealTimeClock realtimeclock;
-
 #include <Arduino.h>
 
 #include "config.h"

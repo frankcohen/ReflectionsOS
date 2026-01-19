@@ -49,27 +49,6 @@ void Video::begin()
   gfx->fillScreen( BLACK );
   delay(300);
 
-  if ( battery.isBatteryLow() )
-  {
-    gfx->setFont(&Minya16pt7b);
-    gfx->setTextSize(1);
-    gfx->setCursor(45, 85);
-    gfx->setTextColor(COLOR_TEXT_YELLOW);
-    gfx->println(F("Battery low"));
-
-    digitalWrite(Display_SPI_BK, LOW);  // backlight on (active low)
-
-    Serial.printf("Battery low: sleeping now");
-    Serial.flush();
-
-    delay(3000);
-
-    // Go protect RTC immediately
-    hardware.prepareForSleep();
-    hardware.powerDownComponents();
-    esp_deep_sleep_start();
-  }
-
   gfx->fillCircle( 120, 120, 5, COLOR_PANTONE_310 );
   delay(300);
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on

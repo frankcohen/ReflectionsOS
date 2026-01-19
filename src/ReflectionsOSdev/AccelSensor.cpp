@@ -15,6 +15,8 @@
 
 #include "AccelSensor.h"
 
+#include "driver/rtc_io.h"
+
 // -------------------------------
 // Tap-to-abort tuning (runtime)
 // -------------------------------
@@ -244,7 +246,8 @@ float AccelSensor::getXreading() { return started ? _ax : 0; }
 float AccelSensor::getYreading() { return started ? _ay : 0; }
 float AccelSensor::getZreading() { return started ? _az : 0; }
 
-void AccelSensor::configureSensorWakeOnMotion() {
+void AccelSensor::configureSensorWakeOnMotion()
+{
   // Keep a known ODR so timing math is stable
   lis.setDataRate(LIS3DH_DATARATE_400_HZ);
 
@@ -261,14 +264,26 @@ void AccelSensor::configureSensorWakeOnMotion() {
   // Wake uses DOUBLE-click (your existing design)
   lis.setClick(2, CLICKTHRESHHOLD, timeLimit, timeLatency, timeWindow);
 
-  write8(LIS3DH_REG_CLICKCFG, 0x2A);   // enable double-click on X, Y, Z
-  write8(LIS3DH_REG_CTRL3, 0x80);      // Route click interrupt to INT1 pin (I1_CLICK)
+  // Enable double-click on X, Y, Z (per your prior config)
+  write8(LIS3DH_REG_CLICKCFG, 0x2A);
 
-  // Clear any pending click (read the click-source register)
-  lis.getClick();
+  // Route click interrupt to INT1 pin (I1_CLICK)
+  write8(LIS3DH_REG_CTRL3, 0x80);
 
-  // Arm the ESP32-S3 EXT1 wake on a HIGH at GPIO14 only
-  uint64_t wakeMask = (1ULL << ACCEL_INT1_PIN);
+  // Clear any pending click (read click-source register).
+  // Do it twice with a tiny gap to avoid going to sleep with INT already asserted.
+  (void)lis.getClick();
+  delay(5);
+  (void)lis.getClick();
+
+  // ---- IMPORTANT: define the INT pin level during deep sleep ----
+  // Your boards have no external pull resistors on INT1/INT2, so the line can float.
+  // EXT1 wake uses the RTC domain; use RTC pulls (more reliable than pinMode pulls).
+  rtc_gpio_pullup_dis((gpio_num_t)ACCEL_INT1_PIN);
+  rtc_gpio_pulldown_en((gpio_num_t)ACCEL_INT1_PIN);
+
+  // Arm the ESP32-S3 EXT1 wake on a HIGH at ACCEL_INT1_PIN only
+  const uint64_t wakeMask = (1ULL << ACCEL_INT1_PIN);
   esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_HIGH);
 }
 

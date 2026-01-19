@@ -81,7 +81,7 @@ class Video
     void addReadTime( unsigned long rtime );
 
     void displayTextMessage( String msg, String msg2, String msg3, String msg4 );
-
+void drawSpiralDownwardText(const GFXfont* font, const char* text, float progress01, uint16_t color, uint16_t backColor);
   private:
     void addCRLF(String &s, size_t lineLen);
 

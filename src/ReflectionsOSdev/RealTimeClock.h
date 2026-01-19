@@ -17,55 +17,61 @@
 #include "Haptic.h"
 extern Haptic haptic;
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include <ESP32Time.h>
 #include <time.h>
-
-// Configuration constants
-#define MIN_VALID_YEAR 2023
 
 class RealTimeClock {
 public:
   RealTimeClock();
-  
-  // Configure RTC behavior (timezone offset, logging, etc.)
-  void begin(int utcOffsetSeconds = -28800); // default PST (UTC-8)
+
+  // Initialize clock behavior.
+  // On cold boot/WAKE: load from NVS, else default to 12:00 AM.
+  // On deep-sleep wake: do NOT overwrite RTC from NVS (clock continued).
+  void begin(int utcOffsetSeconds = 0);
+
   void loop();
 
-  // Basic accessors
-  int  getHour();
-  int  getMinute();
-  int  getSecond();
+  // Basic accessors (24-hour values from ESP32Time; date ignored)
+  int getHour();
+  int getMinute();
+  int getSecond();
 
-  // Format time as "HH:MM" (24-hour). If not valid, returns "--:--"
+  // 12-hour display string "h:mm" (never returns "--:--")
   String getTime();
 
-  // Validity check (simple, based on year)
-  bool isValid();
-
-  // Manual setting (hour: 1-12, ampm: 0=AM, 1=PM)
+  // Manual setting: hour12 is 1-12, ampm: 0=AM, 1=PM
   void setTime(int hour12, int minute, int ampm);
 
+  // Manual setting: set hour+minute, preserve current AM/PM
   void setHourMinute(int hour12, int minute);
 
-  // For BoardInitializationUtility: set from epoch or struct tm
+  // Epoch helpers (optional use). We still save the clock components to NVS.
   void setEpoch(time_t epoch);
   time_t getEpoch();
 
-  void setTimeStruct(const struct tm& t);
+  // Save/restore clock components to NVS
+  void saveClockToNVS();
+  bool loadClockFromNVS();
 
-  /**
-     * @brief Synchronize RTC from an NTP server.
-     * @param ntpServer  Hostname of NTP server (default "pool.ntp.org")
-     * @param timeoutMs  How long (ms) to wait for a valid time (default 5 000)
-     * @return true if sync succeeded, false on timeout
-  */
+  // True once we've ensured the RTC has a reasonable clock value
+  bool hasValidClock() const { return _hasValidClock; }
+
+  // Optional; used by BoardInitializationUtility
   bool syncWithNTP(const char* ntpServer = "pool.ntp.org", uint32_t timeoutMs = 5000);
 
 private:
-  int _utcOffsetSeconds = -28800;
+  void ensureClockValid_();
+  void setDefaultClock_();          // sets RTC to 12:00 AM (dummy date internally)
+  void setClock12_(int hour12, int minute, int ampm, int second = 0);
 
-  int _lastBuzzedHour = -1;  
+  // Convert current RTC hour -> 12-hour + ampm
+  void getHour12AmPm_(int& outHour12, int& outAmPm) const;
+
+private:
+  int  _utcOffsetSeconds = 0;       // kept for compatibility; not used for display in 12h mode
+  int  _lastBuzzedHour = -1;
+  bool _hasValidClock = false;
 };
 
 #endif // _RealTimeClock_

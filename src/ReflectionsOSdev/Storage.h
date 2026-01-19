@@ -33,12 +33,15 @@ get TAR over Wifi, Bluetooth, mostly SD utils like print to, eventually send mes
 #include "SD.h"
 
 #include <WiFi.h>
-#include <HTTPClient.h>
+
 #include <WiFiClientSecure.h>
+#include <HTTPClient.h>
 
 #include "Minya_Nouvelle_Rg30pt7b.h"
 
 #include "esp_heap_caps.h"
+
+#include "esp_crt_bundle.h"
 
 class Storage
 {
@@ -75,10 +78,16 @@ class Storage
     void setMounted( bool mounted );
     bool extract_files( String tarfilename );
     void sizeNAND();    
+    bool getServerFiles();
 
     void printStats();
 
   private:
+    void ensureCloudClient();
+
+    WiFiClientSecure cloudClient;
+    bool cloudClientInit = false;
+  
     String _fileName;
     boolean SDMounted = false;
 

@@ -64,6 +64,7 @@ class ExperienceService
       EasterEggFrank,
       EasterEggTerri,
       Sand,
+      Pensive,
       ExperienceCount   // Used to iterate through the list,  add new elements above
     };
 

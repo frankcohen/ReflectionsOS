@@ -48,7 +48,8 @@ enum TextMessageExperiences
 {
     ShowDigitalTimeFunMessages,       // Shows time with funny message above and below
     MysticalAnswer,
-    DigitalTime                       // Cat opens mouth to reveal the time
+    DigitalTime,                      // Cat opens mouth to reveal the time
+    SpiralDownwardText
 };
 
 class TextMessageService
@@ -75,11 +76,16 @@ class TextMessageService
     void updateTimer( int minutesleft );
 
     void drawCenteredMesssage( String msg, String msg2 );
+    
+    void startSpiralDownwardTextShow(String text, const GFXfont* font, uint16_t speedMsPerChar);
 
   private:
     void runShowDigitalTimeFunMessages();
     void runMysticShow();
     void runDigitalTime();
+
+    void resetState_();
+    uint32_t showStartMs;
 
     String formatWithCommas(int value);
 
@@ -99,6 +105,12 @@ class TextMessageService
 
     struct tm timeinfo;
     String theTime;
+
+    String spiralText;
+    const GFXfont* spiralFont;
+    uint16_t spiralSpeedMsPerChar;
+    uint32_t spiralStartMs;
+    float spiralProgress;   // 0..1
 };
 
 #endif // _TEXTMESSAGESERVICE_

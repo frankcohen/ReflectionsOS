@@ -64,7 +64,10 @@ class WatchFaceMain : public WatchFaceBase
     bool goToSleep();
     void clearSleepy();
     bool isSettingTime();
-    
+    long getSleepCountdown();
+
+    bool _mainEntryPrimed = false;
+
     enum Panel { 
       STARTUP, 
       MAIN, 
@@ -171,7 +174,8 @@ class WatchFaceMain : public WatchFaceBase
     unsigned long mainwaiter;
 
     bool signaledSleepy;
-    
+
+    uint32_t _ignoreInputUntilMs = 0;    
 };
 
 #endif // WATCHFACE_H

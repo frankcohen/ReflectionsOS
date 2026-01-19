@@ -48,8 +48,6 @@ void Experience_Sand::setup() {
   for (uint16_t i=0;i<MAX_PARTICLES;++i) live_[i]=0;
   for (uint8_t k=0;k<MAX_ISLANDS;++k) islands_[k] = { W/2, H/2, 0 };
 
-  if (gfx) gfx->fillScreen( COLOR_PANTONE_662 ); // deep blue background
-
   // Reset bubbles and seed inside the round screen
   for (uint16_t i=0;i<MAX_PARTICLES;++i) live_[i]=0;
   seedInitial();
@@ -69,6 +67,8 @@ void Experience_Sand::setup() {
   sandtime = millis();
   dur      = random(1, 5);   // used below (35s .. 37.5s)
   pace     = millis();
+
+  gfx->fillScreen( COLOR_PANTONE_662 );
 
   setSetupComplete(true);  // Signal that setup is complete
 }
@@ -252,6 +252,7 @@ void Experience_Sand::readTilt(int16_t& gxQ, int16_t& gyQ) {
   gxQ = (int16_t)(gx * 256.0f);
   gyQ = (int16_t)(gy * 256.0f);
 
+  /*
   // Debug print (kept from your version)
   Serial.print("Experience_Sand ");
   Serial.print(gx);
@@ -261,6 +262,7 @@ void Experience_Sand::readTilt(int16_t& gxQ, int16_t& gyQ) {
   Serial.print(gxQ);
   Serial.print(" ");
   Serial.println(gxQ);
+  */
 }
 
 void Experience_Sand::applyOne(uint16_t i, int16_t axQ, int16_t ayQ) {

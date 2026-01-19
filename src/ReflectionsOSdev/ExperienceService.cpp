@@ -39,6 +39,7 @@ the #include list and class instantiation method below.
 #include "Experience_EasterEggFrank.h"
 #include "Experience_EasterEggTerri.h"
 #include "Experience_Sand.h"
+#include "Experience_Pensive.h"
 
 ExperienceService::ExperienceService() : currentExperience(nullptr), currentState(STOPPED) 
 {
@@ -48,7 +49,7 @@ ExperienceService::ExperienceService() : currentExperience(nullptr), currentStat
         "Experience_Eyes", "Experience_Parallax", "Experience_Hover", "Experience_CatsPlay",
         "Experience_MysticCat", "Experience_Shaken", "Experience_GettingSleepy", "Experience_Pounce",
         "Experience_EasterEggFrank", "Experience_EasterEggTerri",
-        "Experience_Sand"
+        "Experience_Sand", "Experience_Pensive"
     };
 
     // Loop over the experience names, dynamically creating each experience and adding to the vector
@@ -85,6 +86,8 @@ ExperienceService::ExperienceService() : currentExperience(nullptr), currentStat
             makeExp = new Experience_EasterEggTerri();
         } else if (strcmp(expName, "Experience_Sand") == 0) {
             makeExp = new Experience_Sand();
+        } else if (strcmp(expName, "Experience_Pensive") == 0) {
+            makeExp = new Experience_Pensive();
         }
 
         if (makeExp == nullptr) {
@@ -116,6 +119,7 @@ String ExperienceService::experienceNameToString( int experience )
     case EasterEggFrank: return F("EasterEggFrank");
     case EasterEggTerri: return F("EasterEggTerri");
     case Sand: return F("Sand");
+    case Pensive: return F("Pensive");
     default: return F("Unknown Experience");
   }
 }

@@ -157,8 +157,6 @@ unsigned long afterCatsPlay = millis();
 int nextUp = 0;     // For picking the next experience from a left-to-right gesture
 int nextUp2 = 0;    // For picking between Eyes and Parallax experiences
 
-const char *root_ca = ssl_cert;  // Shared instance of the server side SSL certificate, found in secrets.h
-
 bool tofstarted = false;
 bool accelstarted = false;
 bool blestarted = false;
@@ -233,7 +231,7 @@ void printCentered( String text )
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 }
 
-void BIUfaled( String text )
+void BIUfailed( String text )
 {
   gfx->fillScreen( COLOR_RED );
   gfx->setFont( &ScienceFair14pt7b );
@@ -252,6 +250,39 @@ void BIUfaled( String text )
   Serial.println( text );
   Serial.println( F("Stopping") );
   while (1);
+}
+
+// Checks for low battery and goes to deep sleep
+
+static void bootBatteryLowGate()
+{
+  if ( ! battery.isBatteryLow() ) return;
+
+  // Match your prior Video::begin() behavior
+  gfx->setFont(&Minya16pt7b);
+  gfx->setTextSize(1);
+  gfx->setCursor(45, 85);
+  gfx->setTextColor(COLOR_TEXT_YELLOW);
+  gfx->println(F("Battery low"));
+
+  digitalWrite(Display_SPI_BK, LOW);  // backlight on (active low)
+
+  Serial.printf( "Battery low at boot: now=%d mV\n", battery.getVoltageMv() );
+  Serial.flush();
+
+  delay(3000);
+
+  // Go protect RTC immediately
+  hardware.prepareForSleep();
+  hardware.powerDownComponents();
+
+  // Optional: if you want to preserve last-known clock even on low battery
+  realtimeclock.saveClockToNVS();
+
+  esp_deep_sleep_start();
+
+  // Should never return
+  while (true) { delay(1000); }
 }
 
 // Clears the NVS Flash memory
@@ -295,7 +326,7 @@ void BoardInitializationUtility()
 
   if (!wifi.begin())
   {
-    BIUfaled("Wifi failed");
+    BIUfailed("Wifi failed");
   }
 
   delay(1000);
@@ -308,7 +339,7 @@ void BoardInitializationUtility()
   else
   {
     Serial.println(F("Could not sync to network time over wifi"));
-    BIUfaled( F( "NTP failed" ) );
+    BIUfailed( F( "NTP failed" ) );
   }
 
   delay(1000);
@@ -320,7 +351,7 @@ void BoardInitializationUtility()
   // Download cat-file-package.tar and any other files, then expand the tars
   if (!storage.replicateServerFiles())
   {
-    BIUfaled(F("Replicate failed"));
+    BIUfailed(F("Replicate failed"));
   }
 
   Serial.println("After: ");
@@ -387,8 +418,9 @@ static void smartdelay(unsigned long ms) {
 
     systemload.logtasktime( millis() - tasktime, 0, " " );
 
-    // Various debug shown on the display
-    video.paintText( battery.getBatteryStats() );
+    // Debug messages on the display
+    //String bmsg = battery.getDischargeOverlayText();
+    //if (bmsg.length()) video.paintText(bmsg);    
 
   } while (millis() - start < ms);
 }
@@ -400,10 +432,14 @@ void setup()
   Serial.setDebugOutput(true);
 
   esp_sleep_wakeup_cause_t reason = esp_sleep_get_wakeup_cause();
-  if (reason == ESP_SLEEP_WAKEUP_EXT1)
-  {
+  Serial.print("Wake cause: ");
+  Serial.println((int)reason);
+
+  if (reason == ESP_SLEEP_WAKEUP_EXT1) {
     hardware.prepareAfterWake();
-    Serial.println("Waking from deep sleep");
+    uint64_t st = esp_sleep_get_ext1_wakeup_status();
+    Serial.print("EXT1 wake mask: 0x");
+    Serial.println((uint32_t)st, HEX);   // or (unsigned long long)st if you prefer
   }
   else
   {
@@ -418,12 +454,14 @@ void setup()
   hardware.begin();
   haptic.begin();
   haptic.playEffect(14);  // 14 Strong Buzz
-  video.begin();
+
+  battery.begin();
+  video.begin();          // needed so we can show "Battery low" reliably
   video.setPaused( true );
 
+  bootBatteryLowGate();   // single battery-low policy point for ALL wakes
+
   // Core 1 services
-  mjpegrunner.begin();
-  systemload.printHeapSpace( "Video" );
 
   storage.begin();
   storage.setMounted( hardware.getMounted() );
@@ -444,8 +482,12 @@ void setup()
   assertI2Cdevice(90, "Haptic");
   assertI2Cdevice(41, "TOF Accel");
 
+  BoardInitializationUtility();
+
+  mjpegrunner.begin();
+  systemload.printHeapSpace( "Video" );
+
   // Device initialization
-  battery.begin();
   audio.begin();
   gps.begin();
   compass.begin();
@@ -453,8 +495,6 @@ void setup()
   realtimeclock.begin();
 
   systemload.printHeapSpace( F("Devices") );
-
-  BoardInitializationUtility();
 
   // Support service initialization
   steps.begin();
@@ -648,26 +688,42 @@ void loop()
 
   int recentGesture = tof.getGesture();
 
-  if ( recentGesture != GESTURE_NONE )
+  if (recentGesture != GESTURE_NONE)
   {
-    Serial.print( "Gesture: " );
-    if ( recentGesture == GESTURE_LEFT_RIGHT ) Serial.println( ">>>GESTURE_LEFT_RIGHT" );
-    if ( recentGesture == GESTURE_RIGHT_LEFT ) Serial.println( ">>>GESTURE_RIGHT_LEFT" );
-    if ( recentGesture == GESTURE_CIRCULAR ) Serial.println( ">>>GESTURE_CIRCULAR" );
-    if ( recentGesture == GESTURE_SLEEP ) { Serial.println( ">>>GESTURE_SLEEP" ); }
-    if ( recentGesture == GESTURE_NONE ) { smartdelay(10); return; }
-    else { Serial.println( ">>>Unknown" ); }
-  }
+    Serial.print("Gesture: ");
 
 /*
-  if (battery.shouldSleepToProtectRTC()) {
-    // stop high-draw stuff, flush display if needed
-    esp_deep_sleep_start();
-  }
+      experienceservice.startExperience( ExperienceService::Pensive );
+      smartdelay(10);
+      return;
 */
 
+    switch (recentGesture)
+    {
+      case GESTURE_LEFT_RIGHT:
+        Serial.println(">>>GESTURE_LEFT_RIGHT");
+        break;
 
-/*
+      case GESTURE_RIGHT_LEFT:
+        Serial.println(">>>GESTURE_RIGHT_LEFT");
+        break;
+
+      case GESTURE_CIRCULAR:
+        Serial.println(">>>GESTURE_CIRCULAR");
+        break;
+
+      case GESTURE_SLEEP:
+        Serial.println(">>>GESTURE_SLEEP");
+        break;
+
+      default:
+        Serial.printf(">>>Unknown (%d)\n", recentGesture);
+        break;
+    }
+  }
+
+  battery.setSleepCountdownMs( watchfacemain.getSleepCountdown() );
+
   // Go to sleep when gestured or when the battery is low or inactivity says so
   if ( ( recentGesture == GESTURE_SLEEP ) || battery.isBatteryLow() || watchfacemain.goToSleep() )
   {
@@ -680,20 +736,22 @@ void loop()
     if ( watchfacemain.goToSleep() ) Serial.println("Going to sleep for inactivity");
 
     textmessageservice.stop();
-    experienceservice.startExperience( ExperienceService::Sleep );
+    experienceservice.startExperience(ExperienceService::Sleep);
     waitForExperienceToStop();
 
-    // Put cat into deep sleep
-    hardware.prepareForSleep();
-    hardware.powerDownComponents();
-
+    // Configure LIS3DH wake profile while system is fully "awake" (I2C stable)
     accel.configureWakeTapProfile();
-    delay(20);
+    delay(20); // let INT settle
 
+    // Now shut down the rest + enable holds
+    hardware.prepareForSleep();
+
+    Serial.println("Entering deep sleep now");
+    Serial.flush();
+    realtimeclock.saveClockToNVS();
     esp_deep_sleep_start();
     return;
   }
-*/
 
   // From here onward: do not start ANY non-sleep experiences while setting time
   if ( watchfacemain.isSettingTime() )
@@ -740,9 +798,10 @@ void loop()
   if ( recentGesture == GESTURE_RIGHT_LEFT )
   {
     if (!canStartExperience(false, false)) { smartdelay(10); return; }
-
-    //experienceservice.startExperience( ExperienceService::EyesFollowFinger );
-    experienceservice.startExperience( ExperienceService::MysticCat );
+    
+    //experienceservice.startExperience( ExperienceService::MysticCat );
+    
+    experienceservice.startExperience( ExperienceService::Pensive );
     smartdelay(10);
     return;
   }
@@ -751,6 +810,11 @@ void loop()
   if ( recentGesture == GESTURE_LEFT_RIGHT )
   {
     if (!canStartExperience(false, false)) { smartdelay(10); return; }
+
+      experienceservice.startExperience( ExperienceService::Pensive );
+      smartdelay(10);
+      return;
+
 
     if ( nextUp == 0 )
     {

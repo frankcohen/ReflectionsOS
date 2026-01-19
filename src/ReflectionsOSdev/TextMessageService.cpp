@@ -18,12 +18,14 @@ TextMessageService::TextMessageService(){}
 
 void TextMessageService::begin()
 { 
-  waitTime = millis();
   activated = false;
-  theTime = F("0 o'clock");
-
   stepDelay = 100;
+
+  resetState_();  
 }
+
+void TextMessageService::runSpiralDownwardText()
+
 
 /*
   Displays msytic cat messages
@@ -92,25 +94,25 @@ void TextMessageService::runMysticShow()
 
 void TextMessageService::startShow( int shownum, String msg1, String msg2 )
 { 
+  Serial.printf("TMS startShow num=%d msg1='%s' msg2='%s'\n",
+              showNum, theMsg1.c_str(), theMsg2.c_str());
+              
+  resetState_();
+
   showNum = shownum;
   showStep = 0;
   activated = true;
   waitTime = millis();
-  stepDelay = 100;
+  showStartMs = waitTime;
+  stepDelay = 70;
   theMsg1 = msg1;
   theMsg2 = msg2;
 }
 
 void TextMessageService::deactivate()
 {
-  showNum = ShowDigitalTimeFunMessages;
-  showStep = 0;
   activated = false;
-  waitTime = millis();
-  stepDelay = 100;
-  fadeset = 1;
-  theMsg1 = " ";
-  theMsg2 = " ";
+  resetState_();
 }
 
 /* Show the current time with a funny message above and below */
@@ -373,7 +375,7 @@ boolean TextMessageService::fadeInCenteredText( String text, int16_t y, uint16_t
 
     fadestep = 1;
     steps = 128; // One step per color intensity value
-    stepDelay = ( duration / steps ) / 4; // Delay between steps in milliseconds
+    stepDelay = max<uint16_t>(1, (duration / steps) / 4);
     return false;
   }
   else
@@ -410,8 +412,8 @@ boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_
 
     fadestep = 128;
     steps = 128;
-    stepDelay = ( duration / steps ) / 4;
-    
+    stepDelay = max<uint16_t>(1, (duration / steps) / 4);
+
     return false;
   }
   else
@@ -436,31 +438,61 @@ boolean TextMessageService::fadeOutCenteredText( String text, int16_t y, uint16_
   return false;
 }
 
+void TextMessageService::resetState_()
+{
+  showNum = ShowDigitalTimeFunMessages;
+  showStep = 0;
+  fadeset = true;
+  fadestep = 0;
+  steps = 128;
+  stepDelay = 1;          // never 0
+  waitTime = millis();
+  showStartMs = waitTime;
+  theMsg1 = "";
+  theMsg2 = "";
+  theTime = "";
+}
+
 // TextMessageService loop
 
 void TextMessageService::loop()
 {
-  // Run the Show Time text animation
+  if (!activated) return;
 
-  if ( activated )
-  {    
-    if ( ( millis() - waitTime ) > stepDelay )
+  static uint32_t last=0;
+  if (millis()-last>500){
+    last=millis();
+
+    /*
+    Serial.printf("TMS active=%d step=%d fadeset=%d fadestep=%d stepDelay=%u\n",
+                  activated, showStep, fadeset, fadestep, stepDelay);
+    */
+  }
+
+  // Hard fail-safe so active() can never wedge the app forever
+  const uint32_t kShowTimeoutMs = 14000;
+  if ((millis() - showStartMs) > kShowTimeoutMs)
+  {
+    Serial.println(F("TextMessageService: show timeout; deactivating"));
+    deactivate();
+    return;
+  }
+
+  if ((millis() - waitTime) > stepDelay)
+  {
+    waitTime = millis();
+
+    switch (showNum)
     {
-      waitTime = millis();
-
-      switch ( showNum ) 
-      {
-        case ShowDigitalTimeFunMessages:  // Fun messages fade around digital time
-          runShowDigitalTimeFunMessages();
-          break;
-        case MysticalAnswer:  // Answers questions
-          runMysticShow();
-          break;
-        case DigitalTime:     // Watch face main digital time
-          runDigitalTime();
-          break;
-      }
+      case ShowDigitalTimeFunMessages:
+        runShowDigitalTimeFunMessages();
+        break;
+      case MysticalAnswer:
+        runMysticShow();
+        break;
+      case DigitalTime:
+        runDigitalTime();
+        break;
     }
-  }    
-
+  }
 }
