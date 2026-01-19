@@ -692,10 +692,6 @@ void loop()
   {
     Serial.print("Gesture: ");
 
-      experienceservice.startExperience( ExperienceService::Pensive );
-      smartdelay(10);
-      return;
-
     switch (recentGesture)
     {
       case GESTURE_LEFT_RIGHT:
@@ -797,9 +793,7 @@ void loop()
   {
     if (!canStartExperience(false, false)) { smartdelay(10); return; }
     
-    //experienceservice.startExperience( ExperienceService::MysticCat );
-    
-    experienceservice.startExperience( ExperienceService::Pensive );
+    experienceservice.startExperience( ExperienceService::MysticCat );
     smartdelay(10);
     return;
   }
