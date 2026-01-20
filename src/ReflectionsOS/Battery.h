@@ -63,10 +63,6 @@ public:
   void begin();
   void loop();
 
-  // Optional: set from power manager / ReflectionsOS when you know the countdown.
-  // Pass 0xFFFFFFFF to mean "unknown/disabled".
-  void setSleepCountdownMs(uint32_t remainingMs);
-
   // --- Core values (cached) ---
   uint16_t getVoltageMv() const;          // last sampled battery voltage (mV)
   uint16_t getMinRecentMv() const;        // min over ~30s
@@ -74,7 +70,7 @@ public:
   int16_t  getDropRateMvPerMin() const;   // positive = dropping
   uint32_t getOnBatterySeconds() const;
 
-  bool shouldSleepToProtectRTC() const;
+  bool shouldSleepToProtectRTC();
 
   // Two-line display string for video.paintText() (split on '\n')
   String getBatteryStats();
@@ -138,6 +134,10 @@ private:
   static const uint32_t kMinWindowMs   = 30000;
   static const uint32_t kAvgWindowMs   = 60000;
   static const uint32_t kTrendWindowMs = 300000;
+
+  bool _protectRtcLatched = false;
+  uint8_t _lowHits = 0;
+  uint32_t _bootMs = 0;  
 };
 
 #endif // _BATTERY_

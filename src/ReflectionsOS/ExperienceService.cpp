@@ -206,11 +206,6 @@ void ExperienceService::operateExperience()
         currentState = RUN;
       }
 
-      // Clear the sleep timer, unless this is the Sleep Experience
-
-      String exn = currentExperience->getExperienceName();
-      if ( exn != SleepName ) { watchfacemain.clearSleepy(); }
-
       textmessageservice.stop();
       
       if ( currentExperience == NULL )
@@ -227,6 +222,12 @@ void ExperienceService::operateExperience()
       {
         Serial.println( F("ExperienceService run currentExperience is null"));
         video.stopOnError( F( "currExp" ), F( "is null" ), F( " " ), F( " " ), F( " " ) );
+      }
+
+      // Clear the sleep timer, unless this is the Sleep Experience
+      if (currentExperience && currentExperience->getExperienceName() != SleepName) 
+      {
+        sleepservice.notifyExperienceActivity();
       }
 
       currentExperience->run();

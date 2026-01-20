@@ -41,6 +41,8 @@ void ExperienceStats::begin(unsigned long currentMs)
     names_.push_back(name);
     counts_.push_back(cnt);
   }
+
+  terrifrank = 0;
 }
 
 void ExperienceStats::record(const String& name) 
@@ -93,8 +95,9 @@ void ExperienceStats::update(unsigned long currentMs) {
 
 bool ExperienceStats::isTerri()
 {
-  // Only return true when totalCalls is a multiple of 100, and it hasn't been triggered already
-  if ((totalCalls_ % 100) == 0 && totalCalls_ != lastTerriCall) {
+  // Only return true when totalCalls is a multiple of 30, and it hasn't been triggered already
+  if ((totalCalls_ % 30) == 0 && totalCalls_ != lastTerriCall) 
+  {
     lastTerriCall = totalCalls_;  // Update the lastTerriCall to avoid multiple triggers
     prefs_.putULong("lastTerriCall", lastTerriCall);  // Persist lastTerriCall
     return true;
@@ -104,8 +107,8 @@ bool ExperienceStats::isTerri()
 
 bool ExperienceStats::isFrank()
 {
-  // Only return true when totalCalls is a multiple of 150, and it hasn't been triggered already
-  if ((totalCalls_ % 150) == 0 && totalCalls_ != lastFrankCall) {
+  // Only return true when totalCalls is a multiple of 50, and it hasn't been triggered already
+  if ((totalCalls_ % 50) == 0 && totalCalls_ != lastFrankCall) {
     lastFrankCall = totalCalls_;  // Update the lastFrankCall to avoid multiple triggers
     prefs_.putULong("lastFrankCall", lastFrankCall);  // Persist lastFrankCall
     return true;

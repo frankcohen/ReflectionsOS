@@ -27,6 +27,7 @@
 #include "esp_sleep.h"
 #include "GPS.h"
 #include "Haptic.h"
+#include "SleepService.h"
 
 #include <PNGdec.h>
 #include <Arduino_GFX_Library.h>
@@ -44,10 +45,9 @@ extern TextMessageService textmessageservice;
 extern Steps steps;
 extern TimerService timerservice;
 extern GPS gps;
+extern SleepService sleepservice;
 
 #define nomov 1500                  // Hourglass timeout duration
-#define sleepyTime (60 * 1000 * 2)  // 6 minutes until feeling sleepy
-#define sleepyTime2 (60 * 1000 * 4) // 8 minutes to fall alseep
 #define tiltspeed 1200              // Speed to update set-time values
 
 class WatchFaceMain : public WatchFaceBase 
@@ -60,11 +60,7 @@ class WatchFaceMain : public WatchFaceBase
     void setDrawItAll();
     bool isMain();
     bool isMainOrTime();
-    bool isSleepy();
-    bool goToSleep();
-    void clearSleepy();
     bool isSettingTime();
-    long getSleepCountdown();
     
     enum Panel { 
       STARTUP, 
@@ -164,15 +160,9 @@ class WatchFaceMain : public WatchFaceBase
 
     unsigned long minuteRedrawtimer;
 
-    unsigned long sleepyTimer;
-    unsigned long sleepyTimer2;
-
     unsigned long movesOld;
 
-    unsigned long mainwaiter;
-
-    bool signaledSleepy;
-    
+    unsigned long mainwaiter;    
 };
 
 #endif // WATCHFACE_H

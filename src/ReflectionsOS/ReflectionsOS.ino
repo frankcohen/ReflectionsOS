@@ -120,6 +120,7 @@ Reflections is a hardware and software platform for building entertaining mobile
 #include "ScienceFair14pt7b.h"
 #include "ExperienceStats.h"
 #include "ExperienceService.h"
+#include "SleepService.h"
 
 MjpegRunner mjpegrunner;
 Video video;
@@ -145,6 +146,7 @@ SystemLoad systemload;
 BLEsupport blesupport;
 ExperienceStats experiencestats(60000UL); // Create a global tracker with a 60 000 ms (1 min) reporting interval
 ExperienceService experienceservice;
+SleepService sleepservice;
 
 int rowCount = 0;
 unsigned long statstime = millis();
@@ -394,6 +396,7 @@ static void smartdelay(unsigned long ms) {
     timerservice.loop();
     audio.loop();
     hardware.loop();    // Includes shipping mode shutdown
+    sleepservice.loop();
 
     // Experience operations
     unsigned long fellow = millis();
@@ -448,10 +451,13 @@ void setup()
     Serial.println(F("ReflectionsOS"));
   }
 
+  sleepservice.begin(true);     // start armed
+
   systemload.begin();
   systemload.printHeapSpace( "Start" );
 
   hardware.begin();
+
   haptic.begin();
   haptic.playEffect(14);  // 14 Strong Buzz
 
@@ -516,6 +522,7 @@ void setup()
   );
 
   // Experience initialization
+  experiencestats.begin();
   textmessageservice.begin();
   experienceservice.begin();
   watchfaceexperiences.begin();
@@ -543,6 +550,9 @@ void setup()
   systemload.printHeapSpace( "Setup done" );
 
   pinMode(0, INPUT_PULLUP);
+
+  // After boot is done and you’re ready to start counting inactivity:
+  sleepservice.notifyExperienceActivity();
 
   logger.info(F("Setup complete"));
 }
@@ -637,61 +647,17 @@ void loop()
   }
   wasExperienceActive = nowActive;
 
-  // If an experience is active, do nothing else
-  if ( experienceservice.active() )
-  {
-    smartdelay(10);
-    return;
-  }
-
-  // Pounce message received — ignores cooldown (but still blocked while setting time)
-  if ( ( blesupport.isPounced() ) && ( millis() - pounceTimer > 10000 ))
-  {
-    if (!canStartExperience(true, false)) { smartdelay(10); return; } // bypassCooldown=true
-
-    pounceTimer = millis();
-    Serial.println( "Pounce from an other device" );
-    textmessageservice.deactivate();
-    experienceservice.startExperience( ExperienceService::Pounce );
-    waitForExperienceToStop();
-    Serial.println( "Pounce done" );
-    smartdelay(10);
-    return;
-  }
-
-  // Sleepy after minutes of WatchFaceMain in MAIN and no activity
-  if ( watchfacemain.isSleepy() )
-  {
-    if (!canStartExperience(false, false)) { smartdelay(10); return; }
-
-    Serial.println("Getting sleepy");
-    textmessageservice.stop();
-    experienceservice.startExperience( ExperienceService::Sleep );
-    smartdelay(10);
-    return;
-  }
-
-  // There's another cat nearby!
-  if ( ( blesupport.isCatNearby() > 0 ) &&
-       ( millis() - catTimer > ( 60000 * 3 ) ) &&
-       ( ! watchfacemain.isSettingTime() ) )
-  {
-    if (!canStartExperience(false, false)) { smartdelay(10); return; }
-
-    catTimer = millis();
-    Serial.println( "Cats Play" );
-    textmessageservice.deactivate();
-    experienceservice.startExperience( ExperienceService::CatsPlay );
-    smartdelay(10);
-    return;
-  }
-
+  // ------------------------------------------------------------
+  // IMPORTANT: Always sample TOF gestures BEFORE any early returns
+  // ------------------------------------------------------------
   int recentGesture = tof.getGesture();
 
   if (recentGesture != GESTURE_NONE)
   {
-    Serial.print("Gesture: ");
+    // Any TOF gesture counts as activity (resets 5 min + 3 min timers)
+    sleepservice.notifyWatchFaceActivity();
 
+    Serial.print("Gesture: ");
     switch (recentGesture)
     {
       case GESTURE_LEFT_RIGHT:
@@ -716,18 +682,41 @@ void loop()
     }
   }
 
-  battery.setSleepCountdownMs( watchfacemain.getSleepCountdown() );
-
-  // Go to sleep when gestured or when the battery is low or inactivity says so
-  if ( ( recentGesture == GESTURE_SLEEP ) || battery.isBatteryLow() || watchfacemain.goToSleep() )
+  // If an experience is active, do nothing else
+  if ( experienceservice.active() )
   {
-    // Sleep should happen immediately: bypass cooldown.
-    // Still blocked while setting time (your preference).
-    if (!canStartExperience(true, false)) { smartdelay(10); return; }
+    smartdelay(10);
+    return;
+  }
 
-    if ( recentGesture == GESTURE_SLEEP ) Serial.println("Going to sleep for gesture");
-    if ( battery.isBatteryLow() ) Serial.println("Going to sleep for low battery");
-    if ( watchfacemain.goToSleep() ) Serial.println("Going to sleep for inactivity");
+  // Pounce message received — ignores cooldown (but still blocked while setting time)
+  if ( ( blesupport.isPounced() ) && ( millis() - pounceTimer > 10000 ))
+  {
+    if (!canStartExperience(true, false)) { smartdelay(10); return; } // bypassCooldown=true
+
+    pounceTimer = millis();
+    Serial.println( "Pounce from an other device" );
+    textmessageservice.deactivate();
+    experienceservice.startExperience( ExperienceService::Pounce );
+    waitForExperienceToStop();
+    Serial.println( "Pounce done" );
+    smartdelay(10);
+    return;
+  }
+
+  if ( sleepservice.gettingSleepy() ) 
+  {
+    waitForExperienceToStop();
+    Serial.println( sleepservice.getReasonForSleep() );
+    textmessageservice.stop();
+    experienceservice.startExperience( ExperienceService::Sleep );
+    smartdelay(10);
+    return;
+  }
+
+  if (sleepservice.shouldDeepSleep()) 
+  {
+    Serial.println( sleepservice.getReasonForSleep() );
 
     textmessageservice.stop();
     experienceservice.startExperience(ExperienceService::Sleep);
@@ -736,14 +725,41 @@ void loop()
     // Configure LIS3DH wake profile while system is fully "awake" (I2C stable)
     accel.configureWakeTapProfile();
     delay(20); // let INT settle
-
-    // Now shut down the rest + enable holds
     hardware.prepareForSleep();
 
     Serial.println("Entering deep sleep now");
     Serial.flush();
     realtimeclock.saveClockToNVS();
+
+    hardware.powerDownComponents();
     esp_deep_sleep_start();
+    return;
+  }
+
+  // There's another cat nearby!
+  if ( ( blesupport.isCatNearby() > 0 ) &&
+       ( millis() - catTimer > ( 60000 * 3 ) ) &&
+       ( ! watchfacemain.isSettingTime() ) )
+  {
+    if (!canStartExperience(false, false)) { smartdelay(10); return; }
+
+    catTimer = millis();
+    Serial.println( "Cats Play" );
+    textmessageservice.deactivate();
+    experienceservice.startExperience( ExperienceService::CatsPlay );
+    smartdelay(10);
+    return;
+  }
+
+  // Go to sleep when gestured
+  if ( recentGesture == GESTURE_SLEEP )
+  {
+    // Sleep should happen immediately: bypass cooldown.
+    // Still blocked while setting time (your preference).
+    if (!canStartExperience(true, false)) { smartdelay(10); return; }
+
+    sleepservice.notifyUserWantsSleep();  // sets reason + makes shouldDeepSleep() true
+    smartdelay(10);
     return;
   }
 
@@ -774,7 +790,6 @@ void loop()
   {
     if ( experiencestats.isFrank() )
     {
-      if (!canStartExperience(false, false)) { smartdelay(10); return; }
       experienceservice.startExperience( ExperienceService::EasterEggFrank );
       smartdelay(10);
       return;
@@ -782,7 +797,6 @@ void loop()
 
     if ( experiencestats.isTerri() )
     {
-      if (!canStartExperience(false, false)) { smartdelay(10); return; }
       experienceservice.startExperience( ExperienceService::EasterEggTerri );
       smartdelay(10);
       return;
@@ -802,11 +816,6 @@ void loop()
   if ( recentGesture == GESTURE_LEFT_RIGHT )
   {
     if (!canStartExperience(false, false)) { smartdelay(10); return; }
-
-      experienceservice.startExperience( ExperienceService::Pensive );
-      smartdelay(10);
-      return;
-
 
     if ( nextUp == 0 )
     {
@@ -844,6 +853,13 @@ void loop()
       return;
     }
     if ( nextUp == 5 )
+    {
+      nextUp++;
+      experienceservice.startExperience( ExperienceService::Pensive );
+      smartdelay(10);
+      return;
+    }
+    if ( nextUp == 6 )
     {
       nextUp = 0;
       experienceservice.startExperience( ExperienceService::ShowTime );

@@ -59,6 +59,9 @@ private:
 
     unsigned long lastTerriCall;
     unsigned long lastFrankCall;
+
+    int terrifrank;
+
 };
 
 #endif // EXPERIENCESTATS_H

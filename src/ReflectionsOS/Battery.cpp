@@ -22,11 +22,6 @@ static void formatMmSs_(uint32_t totalSeconds, char out[6])
   snprintf(out, 6, "%02lu:%02lu", (unsigned long)mm, (unsigned long)ss);
 }
 
-void Battery::setSleepCountdownMs(uint32_t remainingMs)
-{
-  _sleepCountdownMs = remainingMs;
-}
-
 void Battery::begin()
 {
   pinMode(Battery_Sensor, INPUT);
@@ -48,6 +43,10 @@ void Battery::begin()
 
   _onBatteryStartMs = _lastSampleMs;
   _onBatteryStarted = true; // best-effort; replace with real VBUS detect later if available
+
+  _bootMs = millis();
+  _protectRtcLatched = false;
+  _lowHits = 0;
 }
 
 void Battery::loop()
@@ -248,40 +247,32 @@ uint32_t Battery::getOnBatterySeconds() const
   return (millis() - _onBatteryStartMs) / 1000UL;
 }
 
-bool Battery::shouldSleepToProtectRTC() const
+bool Battery::shouldSleepToProtectRTC()
 {
-  static bool sLatched = false;
+  if (_protectRtcLatched) return true;
 
   static const uint32_t kGraceMs = 30000; // 30s
-  static const uint32_t bootMs = millis();
-
-  // Panic cutoff: if we ever dip *this* low, sleep immediately.
   static const uint16_t kPanicMv = 3200;
-
-  if (sLatched) return true;
 
   const uint16_t vMin = getMinRecentMv();
   if (vMin > 0 && vMin <= kPanicMv) {
-    sLatched = true;
+    _protectRtcLatched = true;
     return true;
   }
 
-  if (millis() - bootMs < kGraceMs) return false;
+  if (millis() - _bootMs < kGraceMs) return false;
 
-  // Use average (less trigger-happy than min)
   const uint16_t vAvg = getAvgRecentMv();
 
-  static uint8_t lowHits = 0;
-
   if (vAvg > 0 && vAvg <= BATTERY_SLEEP_MIN_MV) {
-    if (lowHits < 255) lowHits++;
+    if (_lowHits < 255) _lowHits++;
   } else {
-    lowHits = 0;
+    _lowHits = 0;
   }
 
-  if (lowHits >= 3) sLatched = true;
+  if (_lowHits >= 3) _protectRtcLatched = true;
 
-  return sLatched;
+  return _protectRtcLatched;
 }
 
 uint8_t Battery::getBatteryPercent() const

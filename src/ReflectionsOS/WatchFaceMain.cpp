@@ -125,54 +125,12 @@ void WatchFaceMain::begin()
   temptimer = millis();
 
   minuteRedrawtimer = millis();
-  sleepyTimer = millis();
-  sleepyTimer2 = millis();
 
   movesOld = 0;
 
   mainwaiter = millis();
 
   _runmode = true;
-
-  signaledSleepy = false;
-}
-
-void WatchFaceMain::clearSleepy()
-{
-  sleepyTimer = millis();
-  sleepyTimer2 = millis();
-  signaledSleepy = false;
-}
-
-bool WatchFaceMain::isSleepy()
-{
-  if ( millis() - sleepyTimer < sleepyTime )
-  {
-    return false;
-  }
-  else
-  {
-    if ( ! signaledSleepy )
-    {
-      signaledSleepy = true;
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  }  
-}
-
-bool WatchFaceMain::goToSleep()
-{
-  if ( millis() - sleepyTimer2 < sleepyTime2 ) return false;
-  return true;
-}
-
-long WatchFaceMain::getSleepCountdown()
-{
-  return millis() - sleepyTimer2;
 }
 
 void WatchFaceMain::setDrawItAll()
@@ -510,7 +468,7 @@ void WatchFaceMain::changeTo( int panelnum, bool setup, String videoname )
   textmessageservice.stop();
   if ( videoname != "none" ) video.startVideo( videoname );
   noMovementTime = millis();
-  clearSleepy();
+  sleepservice.notifyWatchFaceActivity();
 }
 
 void WatchFaceMain::startup()
@@ -519,7 +477,7 @@ void WatchFaceMain::startup()
   needssetup = true;
   blinking = false;
   textmessageservice.deactivate();
-  clearSleepy();
+  sleepservice.notifyWatchFaceActivity();
 }
 
 void WatchFaceMain::main()
@@ -645,16 +603,7 @@ void WatchFaceMain::settingtime()
     return;
   }
 
-  clearSleepy();
-
-  // SETTING_TIME: Twist => back to MAIN
-  /* Disabled so a Twist or accidental click won't interrupt setting time
-  if ( twistTriggered() )
-  {
-    changeTo( MAIN, true, WatchFaceFlip3_video );
-    return;
-  }
-  */
+  sleepservice.notifyWatchFaceActivity();
 
   // Hourglass timeout drives confirm panel
   if ( updateTimeLeft() )
@@ -754,6 +703,7 @@ void WatchFaceMain::confirmsettingtime()
   {
     Serial.printf("Accepted new time setting: %d:%02d\n", g_confirmHour, g_confirmMin);
     realtimeclock.setHourMinute(g_confirmHour, g_confirmMin);
+    haptic.playEffect( 76 );  // Transition Ramp Down Long Sharp 1 – 100 to 0%
     changeTo( MAIN, true, WatchFaceFlip3_video );
     return;
   }
