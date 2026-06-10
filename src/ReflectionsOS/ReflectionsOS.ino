@@ -163,6 +163,51 @@ bool tofstarted = false;
 bool accelstarted = false;
 bool blestarted = false;
 
+#if DEMO_CAT_MODE
+const char* stuntCatVideos[] = {
+  OutOfTheBox_video,
+  Chastise_video,
+  CatsPlayFound_video,
+  Pounce_video,
+  CatsPlay1_video,
+  CatsPlay2_video,
+  CatsPlay3_video,
+  CatsPlay4_video,
+  CatsPlay5_video,
+  CatsPlay6_video,
+  CatsPlay7_video,
+  CatsPlay8_video,
+  EyesFollowFinger_video,
+  MysticCat_video,
+  ParallaxCat_video,
+  Sleep_video,
+  Shaken_video,
+  Swipe_video,
+  EasterEggTerri_video,
+  EasterEggFrank_video,
+  ShowTime_video,
+  SetTime_video,
+  Getting_Sleepy_video
+};
+
+const size_t stuntCatVideoCount = sizeof(stuntCatVideos) / sizeof(stuntCatVideos[0]);
+
+enum StuntCatState
+{
+  STUNT_SHOW_TITLE,
+  STUNT_WAIT_BEFORE_TITLE_END,
+  STUNT_START_VIDEO,
+  STUNT_PLAYING_VIDEO,
+  STUNT_WAIT_BETWEEN_VIDEOS
+};
+
+StuntCatState stuntCatState = STUNT_SHOW_TITLE;
+size_t stuntCatIndex = 0;
+unsigned long stuntCatStateTimer = 0;
+unsigned long stuntCatWaitMs = 0;
+const unsigned long STUNT_CAT_TITLE_MS = 3000;
+#endif
+
 // -----------------------------------------------------------------------------
 // Experience pacing + time-setting gate
 //   - 5 second cooldown between experiences (measured after an experience ENDS)
@@ -194,6 +239,9 @@ bool canStartExperience(bool bypassCooldown = false, bool allowDuringTimeSetting
 // -----------------------------------------------------------------------------
 
 void Core0Tasks(void *pvParameters);
+#if DEMO_CAT_MODE
+void stuntCatLoop();
+#endif
 
 // -----------------------------------------------------------------------------
 // I2C assert
@@ -214,6 +262,29 @@ void assertI2Cdevice(byte deviceNum, String devName) {
   video.stopOnError(devName, F("not found"), "", "", "");
 }
 
+bool isCatsPlayVideo(const char* filename)
+{
+  return
+    strcmp(filename, CatsPlay1_video) == 0 ||
+    strcmp(filename, CatsPlay2_video) == 0 ||
+    strcmp(filename, CatsPlay3_video) == 0 ||
+    strcmp(filename, CatsPlay4_video) == 0 ||
+    strcmp(filename, CatsPlay5_video) == 0 ||
+    strcmp(filename, CatsPlay6_video) == 0 ||
+    strcmp(filename, CatsPlay7_video) == 0 ||
+    strcmp(filename, CatsPlay8_video) == 0;
+}
+
+unsigned long getIntermissionDelay(const char* filename)
+{
+  if (isCatsPlayVideo(filename))
+  {
+    return 2000;   // 2 seconds after CatsPlay1_video through CatsPlay8_video
+  }
+
+  return random(5000, 13001);   // Random 5–13 seconds for all other videos
+}
+
 int16_t in_x, in_y;
 uint16_t in_w, in_h;
 
@@ -232,6 +303,90 @@ void printCentered( String text )
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
 }
+
+void printCenteredScienceFairLine( const char* text, int y )
+{
+  gfx->setFont( &ScienceFair14pt7b );
+  gfx->setTextColor( COLOR_TEXT_YELLOW );
+
+  int16_t x1, y1;
+  uint16_t w, h;
+  gfx->getTextBounds( text, 0, y, &x1, &y1, &w, &h );
+  gfx->setCursor( ( gfx->width() - w ) / 2, y );
+  gfx->println( text );
+}
+
+void printDemoTitleScreen()
+{
+  gfx->fillScreen( COLOR_BLUE );
+
+#if PEGASUS_LOFT_MODE
+  // Use the same ScienceFair font as printCentered().
+  printCenteredScienceFairLine( "Cheshire Cat", 48 );
+  printCenteredScienceFairLine( "at Pegasus Loft", 78 );
+  printCenteredScienceFairLine( "Inaugural", 112 );
+  printCenteredScienceFairLine( "#1 of 200", 142 );
+  printCenteredScienceFairLine( "Terri Hardin", 176 );
+  printCenteredScienceFairLine( "Frank Cohen", 206 );
+#else
+  printCenteredScienceFairLine( "Stunt Cat", 120 );
+#endif
+
+  digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
+}
+
+#if DEMO_CAT_MODE
+void stuntCatLoop()
+{
+  switch ( stuntCatState )
+  {
+    case STUNT_SHOW_TITLE:
+      printDemoTitleScreen();
+      stuntCatStateTimer = millis();
+      stuntCatState = STUNT_WAIT_BEFORE_TITLE_END;
+      break;
+
+    case STUNT_WAIT_BEFORE_TITLE_END:
+      if ( millis() - stuntCatStateTimer >= STUNT_CAT_TITLE_MS )
+      {
+        stuntCatState = STUNT_START_VIDEO;
+      }
+      break;
+
+    case STUNT_START_VIDEO:
+      video.startVideo( stuntCatVideos[ stuntCatIndex ] );
+      stuntCatState = STUNT_PLAYING_VIDEO;
+      break;
+
+    case STUNT_PLAYING_VIDEO:
+      if ( ! video.getStatus() )
+      {
+        const char* finishedVideo = stuntCatVideos[ stuntCatIndex ];
+
+        stuntCatIndex++;
+        if ( stuntCatIndex >= stuntCatVideoCount )
+        {
+          stuntCatIndex = 0;
+        }
+
+        stuntCatWaitMs = getIntermissionDelay( finishedVideo );
+        stuntCatStateTimer = millis();
+        stuntCatState = STUNT_WAIT_BETWEEN_VIDEOS;
+      }
+      break;
+
+    case STUNT_WAIT_BETWEEN_VIDEOS:
+      if ( millis() - stuntCatStateTimer >= stuntCatWaitMs )
+      {
+        stuntCatState = STUNT_START_VIDEO;
+      }
+      break;
+  }
+
+  smartdelay( 10 );
+}
+
+#endif
 
 void BIUfailed( String text )
 {
@@ -258,6 +413,12 @@ void BIUfailed( String text )
 
 static void bootBatteryLowGate()
 {
+#if DEMO_CAT_ALWAYS_ON
+  // Gallery/collector display mode is USB-powered and sealed in a case.
+  // Never enter deep sleep at boot; power-on/reset must always start the show.
+  return;
+#endif
+
   if ( ! battery.isBatteryLow() ) return;
 
   // Match your prior Video::begin() behavior
@@ -365,8 +526,15 @@ void BoardInitializationUtility()
 
   digitalWrite(Display_SPI_BK, HIGH);  // Turn display backlight off
 
+#if DEMO_CAT_ALWAYS_ON
+  // In gallery/collector display mode, do not enter shipping/deep sleep after
+  // provisioning. The piece may be sealed in a case with no reachable wake
+  // button. Restart so USB power immediately brings the display back up.
+  ESP.restart();
+#else
   // Installation complete; enter Shipment Mode - draw essentially zero extra power in the box and not wake up from taps/motion
   hardware.enterShippingMode();
+#endif
 
   // Should never return
   while (true) { delay(1000); }
@@ -395,12 +563,20 @@ static void smartdelay(unsigned long ms) {
     steps.loop();
     timerservice.loop();
     audio.loop();
+#if !DEMO_CAT_ALWAYS_ON
     hardware.loop();    // Includes shipping mode shutdown
+#endif
+#if !DEMO_CAT_MODE
     sleepservice.loop();
+#endif
 
     // Experience operations
     unsigned long fellow = millis();
 
+#if DEMO_CAT_MODE
+    // Demo mode: do not run interactive watch faces, experiences, text messages,
+    // or inactivity sleep logic. The demo responds only to wake/reset and rest.
+#else
     if ( experienceservice.getCurrentState() == ExperienceService::STOPPED )
     {
       watchfaceexperiences.loop();
@@ -416,6 +592,7 @@ static void smartdelay(unsigned long ms) {
     fellow = millis();
     textmessageservice.loop();
     systemload.logtasktime(millis() - fellow, 3, "tm");
+#endif
 
     systemload.loop();
 
@@ -434,6 +611,8 @@ void setup()
   delay(200);
   Serial.setDebugOutput(true);
 
+  randomSeed( micros() );
+
   esp_sleep_wakeup_cause_t reason = esp_sleep_get_wakeup_cause();
   Serial.print("Wake cause: ");
   Serial.println((int)reason);
@@ -451,7 +630,11 @@ void setup()
     Serial.println(F("ReflectionsOS"));
   }
 
+#if DEMO_CAT_ALWAYS_ON
+  sleepservice.begin(false);    // gallery/demo mode: never sleep from inactivity
+#else
   sleepservice.begin(true);     // start armed
+#endif
 
   systemload.begin();
   systemload.printHeapSpace( "Start" );
@@ -529,7 +712,9 @@ void setup()
   watchfacemain.begin();
 
   // Start first experience immediately at boot (no cooldown)
+#if !DEMO_CAT_MODE
   experienceservice.startExperience( ExperienceService::Awake );
+#endif
 
   // Initialize pacing state so we don't artificially delay after boot
   wasExperienceActive = experienceservice.active();
@@ -551,8 +736,10 @@ void setup()
 
   pinMode(0, INPUT_PULLUP);
 
+#if !DEMO_CAT_ALWAYS_ON
   // After boot is done and you’re ready to start counting inactivity:
   sleepservice.notifyExperienceActivity();
+#endif
 
   logger.info(F("Setup complete"));
 }
@@ -638,6 +825,11 @@ unsigned long catTimer = millis();
 void loop()
 {
   printCore0TasksMessages();
+
+#if DEMO_CAT_MODE
+  stuntCatLoop();
+  return;
+#endif
 
   // Track transition: active -> stopped, so we can pace the next start
   bool nowActive = experienceservice.active();
@@ -806,7 +998,7 @@ void loop()
   if ( recentGesture == GESTURE_RIGHT_LEFT )
   {
     if (!canStartExperience(false, false)) { smartdelay(10); return; }
-    
+
     experienceservice.startExperience( ExperienceService::MysticCat );
     smartdelay(10);
     return;

@@ -18,6 +18,36 @@ Read the license in the license.txt file that comes with this code.
 #ifndef _config_
 #define _config_
 
+/* Collector/demo display modes
+   Select exactly one of these modes.
+
+   STUNT_CAT_MODE:
+     1 = Michelle Sarrow / Stunt Cat collector demo mode
+
+   PEGASUS_LOFT_MODE:
+     1 = Jorge's Pegasus Loft inaugural display mode, serial #1 of 200
+
+   When either mode is 1, ReflectionsOS boots into a watchable/demo loop
+   that cycles all configured Cheshire Cat experience videos instead of
+   running the normal interactive watch behavior.
+*/
+#define STUNT_CAT_MODE 0
+#define PEGASUS_LOFT_MODE 0
+
+#if STUNT_CAT_MODE && PEGASUS_LOFT_MODE
+#error "Select only one collector/demo display mode"
+#endif
+
+#define DEMO_CAT_MODE (STUNT_CAT_MODE || PEGASUS_LOFT_MODE)
+
+/*
+   For cased gallery/display installs, the watch must come on whenever USB
+   power is applied and must not require the wake button. This disables
+   inactivity deep sleep, low-battery boot sleep, and REST/shipping sleep while
+   in a collector/demo display mode.
+*/
+#define DEMO_CAT_ALWAYS_ON  DEMO_CAT_MODE
+
 /* Experience videos */
 
 #define OutOfTheBox_video "178e801340f79249dbb2b34b3e64eda4"     
