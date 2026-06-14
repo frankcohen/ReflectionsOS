@@ -28,6 +28,7 @@
 #include "GPS.h"
 #include "Haptic.h"
 #include "SleepService.h"
+#include "Hardware.h"
 
 #include <PNGdec.h>
 #include <Arduino_GFX_Library.h>
@@ -46,8 +47,9 @@ extern Steps steps;
 extern TimerService timerservice;
 extern GPS gps;
 extern SleepService sleepservice;
+extern Hardware hardware;
 
-#define nomov 1500                  // Hourglass timeout duration
+#define nomov 1500                  // Hourglass timeout duration (4 stages)
 #define tiltspeed 1200              // Speed to update set-time values
 
 class WatchFaceMain : public WatchFaceBase 
@@ -61,13 +63,16 @@ class WatchFaceMain : public WatchFaceBase
     bool isMain();
     bool isMainOrTime();
     bool isSettingTime();
+    bool isTwistSetTimeArmed();
+    bool shouldIgnoreTofGestures();
     
     enum Panel { 
       STARTUP, 
       MAIN, 
       
       DISPLAYING_TIME, 
-      SETTING_TIME,
+      SETTING_TIME,      // Set Hour
+      SETTING_MINUTE,
       CONFIRM_SETTING_TIME,
 
       DISPLAYING_MOVES,
@@ -86,6 +91,7 @@ class WatchFaceMain : public WatchFaceBase
 
     void displaytime();
     void settingtime();
+    void settingminute();
     void confirmsettingtime();
 
     void displayingmoves();
@@ -109,6 +115,7 @@ class WatchFaceMain : public WatchFaceBase
     bool changing( bool hourflag );
 
     void drawHourMinute( int hourc, int minutec );
+    void drawSetTimePanel( String title, int hourc, int minutec, String help1, String help2 );
 
     int panel;
 

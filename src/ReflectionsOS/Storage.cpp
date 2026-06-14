@@ -129,16 +129,20 @@ bool Storage::replicateServerFiles()
   globalFileCount = 1;
   globalFileCountOld = 0;
 
-  if (WiFi.status() != 3)
+  if (WiFi.status() != WL_CONNECTED)
   {
     Serial.println(F("Wifi not connected, skipping replication"));
     return false;
   }
 
   Serial.println(F("Replicating Server Files"));
-  getServerFiles();
-  Serial.println("Replicate done");
-  return true;
+
+  bool ok = getServerFiles();
+
+  if (ok) Serial.println(F("Replicate done"));
+  else Serial.println(F("Replicate FAILED"));
+
+  return ok;
 }
 
 // Extracts TAR files to local storage
@@ -571,87 +575,154 @@ static int readHttpHeaders(WiFiClient& c, bool& chunked, bool& connectionClose, 
   return contentLength;
 }
 
-static bool streamFixedBodyToFile(WiFiClient& c, int len, File& f, uint32_t timeoutMs = 60000)
+static bool streamExpectedBodyToFile(WiFiClient& c, size_t expectedLen, File& f, size_t overallStart, size_t overallTotal, uint32_t timeoutMs = 120000)
 {
-  uint8_t buff[1024];
-  int bytesReceived = 0;
+  uint8_t buff[256];
+
+  size_t bytesReceived = 0;
   int prevBucket = -1;
-  int total = len;
 
   uint32_t t0 = millis();
-  while (len > 0 && c.connected())
+  uint32_t lastFlush = millis();
+
+  while (bytesReceived < expectedLen)
   {
     size_t avail = c.available();
+
     if (!avail)
     {
-      if (millis() - t0 > timeoutMs) return false;
-      delay(1);
+      if (!c.connected())
+      {
+        Serial.println(F("streamExpectedBodyToFile: connection closed before complete."));
+        Serial.printf("Range received %u of %u bytes\n", (unsigned)bytesReceived, (unsigned)expectedLen);
+        return false;
+      }
+
+      if (millis() - t0 > timeoutMs)
+      {
+        Serial.println(F("streamExpectedBodyToFile: timeout waiting for body bytes."));
+        Serial.printf("Range received %u of %u bytes\n", (unsigned)bytesReceived, (unsigned)expectedLen);
+        return false;
+      }
+
+      delay(5);
+      yield();
       continue;
     }
 
     int toRead = (avail > sizeof(buff)) ? (int)sizeof(buff) : (int)avail;
-    if (toRead > len) toRead = len;
+    size_t remaining = expectedLen - bytesReceived;
+    if ((size_t)toRead > remaining) toRead = (int)remaining;
 
     int r = c.readBytes(buff, toRead);
-    if (r <= 0) { delay(1); continue; }
 
-    f.write(buff, r);
-    len -= r;
+    if (r <= 0)
+    {
+      delay(5);
+      yield();
+      continue;
+    }
+
+    size_t written = f.write(buff, r);
+
+    if (written != (size_t)r)
+    {
+      Serial.printf("File write failed: wanted %d wrote %d\n", r, (int)written);
+      return false;
+    }
+
     bytesReceived += r;
     t0 = millis();
 
-    int pct = (bytesReceived * 100) / total;
-    int bucket = pct / 10;
-    if (bucket != prevBucket)
+    if (millis() - lastFlush > 10000)
     {
-      prevBucket = bucket;
-      Serial.printf("Download %d%%\n", pct);
+      f.flush();
+      lastFlush = millis();
+      Serial.printf("Flush at overall byte %u\n", (unsigned)(overallStart + bytesReceived));
+    }
+
+    if (overallTotal > 0)
+    {
+      int pct = (int)(((overallStart + bytesReceived) * 100ULL) / overallTotal);
+      int bucket = pct / 5;
+
+      if (bucket != prevBucket)
+      {
+        prevBucket = bucket;
+        Serial.printf("Download %d%%, %u/%u bytes\n", pct, (unsigned)(overallStart + bytesReceived), (unsigned)overallTotal);
+      }
+    }
+
+    delay(1);
+    yield();
+  }
+
+  f.flush();
+  return true;
+}
+
+static int parseContentRangeTotal(const String& contentRange)
+{
+  // Expected form: bytes 0-0/12605440
+  int slash = contentRange.lastIndexOf('/');
+  if (slash < 0) return -1;
+
+  String total = contentRange.substring(slash + 1);
+  total.trim();
+
+  if (total == "*") return -1;
+  return total.toInt();
+}
+
+static int readHttpHeadersForRange(WiFiClient& c, bool& chunked, String& contentRange)
+{
+  chunked = false;
+  contentRange = "";
+  int contentLength = -1;
+
+  while (c.connected())
+  {
+    String h = c.readStringUntil('\n');
+    if (h == "\r" || h.length() == 0) break;
+
+    h.trim();
+
+    if (h.startsWith("Content-Length:") || h.startsWith("content-length:"))
+    {
+      String v = h.substring(strlen("Content-Length:"));
+      v.trim();
+      contentLength = v.toInt();
+    }
+    else if (h.startsWith("Transfer-Encoding:") || h.startsWith("transfer-encoding:"))
+    {
+      if (h.indexOf("chunked") >= 0 || h.indexOf("Chunked") >= 0) chunked = true;
+    }
+    else if (h.startsWith("Content-Range:") || h.startsWith("content-range:"))
+    {
+      contentRange = h.substring(strlen("Content-Range:"));
+      contentRange.trim();
     }
   }
 
-  Serial.printf("Downloaded %d bytes\n", bytesReceived);
-  return (len == 0);
+  return contentLength;
 }
 
-// -------------------------
-// getServerFiles(): direct download
-// -------------------------
-
-bool Storage::getServerFiles()
+static int getRemoteFileSizeByHead(const char* thefile)
 {
-  Serial.println("getServerFiles(): direct download (single TLS) starting...");
-  Serial.printf("Heap free=%u largest=%u\n", ESP.getFreeHeap(), ESP.getMaxAllocHeap());
-
-  const char* thefile = "cat-file-package.tar";
-
   WiFiClientSecure client;
   client.setCACert(CLOUDCITY_INTERMEDIATE_CA);
-  client.setTimeout(120000); // important: allow slow first-byte
+  client.setTimeout(120000);
   client.setNoDelay(true);
 
   if (!client.connect(CLOUD_HOST, CLOUD_PORT))
   {
-    Serial.println("TLS connect failed (download).");
-    return false;
+    Serial.println(F("TLS connect failed (HEAD)."));
+    return -1;
   }
 
-  // SD destination
-  String path = "/";
-  path += thefile;
-  if (SD.exists(path)) SD.remove(path);
-
-  File f = SD.open(path, FILE_WRITE);
-  if (!f)
-  {
-    Serial.println("SD.open() failed.");
-    client.stop();
-    return false;
-  }
-
-  // Build request with NO String allocations
   char req[256];
   int n = snprintf(req, sizeof(req),
-                   "GET /api/download?name=%s HTTP/1.1\r\n"
+                   "HEAD /api/download?name=%s HTTP/1.1\r\n"
                    "Host: %s\r\n"
                    "User-Agent: ESP32\r\n"
                    "Accept: */*\r\n"
@@ -659,56 +730,241 @@ bool Storage::getServerFiles()
                    "\r\n",
                    thefile, CLOUD_HOST);
 
-  Serial.println("---- REQUEST ----");
-  Serial.write((const uint8_t*)req, n);
-  Serial.println("-----------------");
+  int wn = client.write((const uint8_t*)req, n);
+  client.flush();
+  Serial.printf("HEAD wrote %d/%d bytes\n", wn, n);
+
+  if (!waitForFirstByte(client, 120000))
+  {
+    Serial.println(F("No response bytes from server after HEAD request."));
+    client.stop();
+    return -1;
+  }
+
+  int code = readHttpStatusLine(client, 120000);
+  Serial.printf("HEAD status=%d\n", code);
+
+  bool chunked = false;
+  bool closeConn = false;
+  String loc;
+  int len = readHttpHeaders(client, chunked, closeConn, loc);
+
+  while (client.available()) client.read();
+  client.stop();
+
+  if (code != 200 || chunked || len <= 0)
+  {
+    Serial.printf("HEAD unsupported: status=%d chunked=%d contentLength=%d\n", code, (int)chunked, len);
+    return -1;
+  }
+
+  return len;
+}
+
+static int getRemoteFileSizeByRangeProbe(const char* thefile)
+{
+  WiFiClientSecure client;
+  client.setCACert(CLOUDCITY_INTERMEDIATE_CA);
+  client.setTimeout(120000);
+  client.setNoDelay(true);
+
+  if (!client.connect(CLOUD_HOST, CLOUD_PORT))
+  {
+    Serial.println(F("TLS connect failed (range probe)."));
+    return -1;
+  }
+
+  char req[320];
+  int n = snprintf(req, sizeof(req),
+                   "GET /api/download?name=%s HTTP/1.1\r\n"
+                   "Host: %s\r\n"
+                   "User-Agent: ESP32\r\n"
+                   "Accept: */*\r\n"
+                   "Range: bytes=0-0\r\n"
+                   "Connection: close\r\n"
+                   "\r\n",
+                   thefile, CLOUD_HOST);
 
   int wn = client.write((const uint8_t*)req, n);
   client.flush();
-  Serial.printf("Wrote %d/%d bytes\n", wn, n);
+  Serial.printf("Range probe wrote %d/%d bytes\n", wn, n);
 
-  // If the server is going to respond, we should see a first byte relatively soon.
-  // This log tells us definitively if it’s “no response at all”.
   if (!waitForFirstByte(client, 120000))
   {
-    Serial.println("No response bytes from server after request (120s).");
-    f.close();
+    Serial.println(F("No response bytes from server after range probe."));
     client.stop();
-    return false;
+    return -1;
   }
 
-  int dcode = readHttpStatusLine(client, 120000);
-  Serial.printf("download status=%d\n", dcode);
-  if (dcode != 200)
+  int code = readHttpStatusLine(client, 120000);
+  Serial.printf("Range probe status=%d\n", code);
+
+  bool chunked = false;
+  String contentRange;
+  int len = readHttpHeadersForRange(client, chunked, contentRange);
+
+  while (client.available()) client.read();
+  client.stop();
+
+  if (code != 206 || chunked)
   {
-    f.close();
-    client.stop();
-    return false;
+    Serial.printf("Range probe unsupported: status=%d chunked=%d contentLength=%d contentRange=%s\n", code, (int)chunked, len, contentRange.c_str());
+    return -1;
   }
 
-  bool dchunked = false, dclose = false;
-  String dloc;
-  int dlen = readHttpHeaders(client, dchunked, dclose, dloc);
-  if (dchunked || dlen < 0)
+  int total = parseContentRangeTotal(contentRange);
+  Serial.printf("Range probe total size=%d\n", total);
+  return total;
+}
+
+static bool downloadRangeToFile(const char* thefile, const String& path, size_t startByte, size_t endByte, size_t totalBytes)
+{
+  WiFiClientSecure client;
+  client.setCACert(CLOUDCITY_INTERMEDIATE_CA);
+  client.setTimeout(120000);
+  client.setNoDelay(true);
+
+  if (!client.connect(CLOUD_HOST, CLOUD_PORT))
   {
-    Serial.printf("download unsupported headers: chunked=%d contentLength=%d\n", (int)dchunked, dlen);
-    f.close();
+    Serial.println(F("TLS connect failed (range download)."));
+    return false;
+  }
+
+  char req[360];
+  int n = snprintf(req, sizeof(req),
+                   "GET /api/download?name=%s HTTP/1.1\r\n"
+                   "Host: %s\r\n"
+                   "User-Agent: ESP32\r\n"
+                   "Accept: */*\r\n"
+                   "Range: bytes=%u-%u\r\n"
+                   "Connection: close\r\n"
+                   "\r\n",
+                   thefile, CLOUD_HOST, (unsigned)startByte, (unsigned)endByte);
+
+  Serial.printf("Range request bytes=%u-%u\n", (unsigned)startByte, (unsigned)endByte);
+
+  int wn = client.write((const uint8_t*)req, n);
+  client.flush();
+  Serial.printf("Range wrote %d/%d bytes\n", wn, n);
+
+  if (!waitForFirstByte(client, 120000))
+  {
+    Serial.println(F("No response bytes from server after range request."));
     client.stop();
     return false;
   }
 
-  Serial.printf("Downloading %d bytes to %s\n", dlen, path.c_str());
-  bool ok = streamFixedBodyToFile(client, dlen, f, 120000);
+  int code = readHttpStatusLine(client, 120000);
+  Serial.printf("range status=%d\n", code);
+
+  bool chunked = false;
+  String contentRange;
+  int contentLength = readHttpHeadersForRange(client, chunked, contentRange);
+
+  if (code != 206 || chunked || contentLength <= 0)
+  {
+    Serial.printf("range unsupported headers: status=%d chunked=%d contentLength=%d contentRange=%s\n", code, (int)chunked, contentLength, contentRange.c_str());
+    client.stop();
+    return false;
+  }
+
+  size_t expectedLen = endByte - startByte + 1;
+  if ((size_t)contentLength != expectedLen)
+  {
+    Serial.printf("range length mismatch: expected %u got %d contentRange=%s\n", (unsigned)expectedLen, contentLength, contentRange.c_str());
+    client.stop();
+    return false;
+  }
+
+  File f = SD.open(path, startByte == 0 ? FILE_WRITE : FILE_APPEND);
+  if (!f)
+  {
+    Serial.print(F("SD.open failed for "));
+    Serial.println(path);
+    client.stop();
+    return false;
+  }
+
+  bool ok = streamExpectedBodyToFile(client, expectedLen, f, startByte, totalBytes, 120000);
 
   f.close();
   while (client.available()) client.read();
   client.stop();
 
-  if (!ok)
+  return ok;
+}
+
+// -------------------------
+// getServerFiles(): ranged download
+// -------------------------
+
+bool Storage::getServerFiles()
+{
+  Serial.println(F("getServerFiles(): ranged TLS download starting..."));
+  Serial.printf("Heap free=%u largest=%u\n", ESP.getFreeHeap(), ESP.getMaxAllocHeap());
+
+  const char* thefile = "cat-file-package.tar";
+  const size_t chunkSize = 262144;  // 256 KB range requests are safer than one 12+ MB TLS stream.
+
+  int totalLen = getRemoteFileSizeByHead(thefile);
+  if (totalLen <= 0)
   {
-    Serial.println("getServerFiles(): FAILED (stream)");
+    Serial.println(F("HEAD did not provide file size; trying range probe."));
+    totalLen = getRemoteFileSizeByRangeProbe(thefile);
+  }
+
+  if (totalLen <= 0)
+  {
+    Serial.println(F("Unable to determine remote file size."));
     return false;
   }
+
+  String path = "/";
+  path += thefile;
+
+  if (SD.exists(path))
+  {
+    Serial.print(F("Removing existing "));
+    Serial.println(path);
+    SD.remove(path);
+  }
+
+  Serial.printf("Downloading %d bytes to %s in %u byte ranges\n", totalLen, path.c_str(), (unsigned)chunkSize);
+
+  size_t startByte = 0;
+  while (startByte < (size_t)totalLen)
+  {
+    size_t endByte = startByte + chunkSize - 1;
+    if (endByte >= (size_t)totalLen) endByte = (size_t)totalLen - 1;
+
+    if (!downloadRangeToFile(thefile, path, startByte, endByte, (size_t)totalLen))
+    {
+      Serial.printf("getServerFiles(): FAILED range %u-%u\n", (unsigned)startByte, (unsigned)endByte);
+      return false;
+    }
+
+    startByte = endByte + 1;
+    delay(100);
+    yield();
+  }
+
+  File downloaded = SD.open(path, FILE_READ);
+  if (!downloaded)
+  {
+    Serial.println(F("Downloaded file missing after range download."));
+    return false;
+  }
+
+  size_t actualSize = downloaded.size();
+  downloaded.close();
+
+  if (actualSize != (size_t)totalLen)
+  {
+    Serial.printf("Downloaded size mismatch: expected %d got %u\n", totalLen, (unsigned)actualSize);
+    return false;
+  }
+
+  Serial.printf("Downloaded %u bytes total\n", (unsigned)actualSize);
 
   if (String(thefile).endsWith(TAR_FILENAME))
   {
@@ -722,7 +978,7 @@ bool Storage::getServerFiles()
     }
   }
 
-  Serial.println("getServerFiles(): OK");
+  Serial.println(F("getServerFiles(): OK"));
   return true;
 }
 

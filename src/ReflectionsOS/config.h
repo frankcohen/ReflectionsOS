@@ -32,7 +32,12 @@ Read the license in the license.txt file that comes with this code.
    running the normal interactive watch behavior.
 */
 #define STUNT_CAT_MODE 0
+
 #define PEGASUS_LOFT_MODE 0
+
+// When true, BoardInitializationUtility always downloads/unpacks the Cloud City assets.
+// Set back to 0 after rebuilding NAND, otherwise every boot reinitializes assets.
+#define FORCE_BOARD_INITIALIZATION 0
 
 #if STUNT_CAT_MODE && PEGASUS_LOFT_MODE
 #error "Select only one collector/demo display mode"
@@ -91,6 +96,7 @@ Read the license in the license.txt file that comes with this code.
 #define videoname_end ".mjpeg"
 
 // WatchFace_Main
+
 #define wfMainBackground "Face_Main_background.jpg"
 #define wfMainBattery "Battery_"   
 #define wfMainBattery2 ".png"
@@ -119,7 +125,7 @@ Read the license in the license.txt file that comes with this code.
 
 #define wfMain_Health_Background "Face_Main_Health_Background.jpg"     
 
-#define wfMain_SetTime_Background_Shortie "Face_Main_SetTime_Background_Shortie.jpg"     
+#define wfMain_SetTime_Background_Shortie "Face_Main_SetTime_Background_Shortie2.jpg"     
 
 #define wfMain_Time_Background "Face_Main_Blue_Dot_Background.jpg"
 #define wfMain_Time_Background_Shortie "Face_Main_Time_Background_Shortie.jpg"   
@@ -142,7 +148,7 @@ Read the license in the license.txt file that comes with this code.
 
 // OTA uses this to know when to update the firmware
 #define VERSION_NUMBER 2
-#define OTA_VERSION_FILE_NAME "/otaversion.txt"
+#define OTA_VERSION_FILE_NAME "otaversion.txt"
 #define OTA_BIN_FILE_NAME "/ota.bin"
 
 #define MJPEG_FILENAME ".mjpeg"

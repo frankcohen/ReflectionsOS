@@ -229,8 +229,11 @@ bool cooldownGate()
 bool canStartExperience(bool bypassCooldown = false, bool allowDuringTimeSetting = false)
 {
   if (experienceservice.active()) return false;
+  if (video.getStatus()) return false;
+
   if (!allowDuringTimeSetting && watchfacemain.isSettingTime()) return false;
   if (!bypassCooldown && !cooldownGate()) return false;
+
   return true;
 }
 
@@ -470,12 +473,30 @@ void clearNVSMemory()
 */
 void BoardInitializationUtility()
 {
-  // Check if otaversion.txt exists, if so skip initialization
+  // Check if otaversion.txt exists, if so skip initialization, unless forced in config.h.
   String mfd = F("/");
   mfd += NAND_BASE_DIR;
+  mfd += F("/");
   mfd += OTA_VERSION_FILE_NAME;
 
+  Serial.print(F("Init marker path = "));
+  Serial.println(mfd);
+  Serial.print(F("Init marker exists = "));
+  Serial.println(SD.exists(mfd) ? F("YES") : F("NO"));
+
+
+#if FORCE_BOARD_INITIALIZATION
+  Serial.println(F("FORCE_BOARD_INITIALIZATION enabled"));
+
+  if (SD.exists(mfd))
+  {
+    Serial.print(F("Removing initialization marker "));
+    Serial.println(mfd);
+    SD.remove(mfd);
+  }
+#else
   if (SD.exists(mfd)) return;
+#endif
 
   Serial.println(F("Board Initialization Utility started"));
 
@@ -516,6 +537,20 @@ void BoardInitializationUtility()
   {
     BIUfailed(F("Replicate failed"));
   }
+
+
+Serial.println();
+Serial.println("===== REFLECTIONS DIRECTORY =====");
+
+String p = "/";
+p += NAND_BASE_DIR;
+
+storage.listDir(SD, p.c_str(), 2, true);
+
+Serial.println("===== END DIRECTORY =====");
+Serial.println();
+
+
 
   Serial.println("After: ");
   storage.printStats();
@@ -839,10 +874,34 @@ void loop()
   }
   wasExperienceActive = nowActive;
 
-  // ------------------------------------------------------------
-  // IMPORTANT: Always sample TOF gestures BEFORE any early returns
-  // ------------------------------------------------------------
   int recentGesture = tof.getGesture();
+
+  if ( watchfacemain.shouldIgnoreTofGestures() )
+  {
+    if ( recentGesture != GESTURE_NONE )
+    {
+      Serial.println(F("Ignoring TOF gesture during twist/set-time guard"));
+    }
+
+    recentGesture = GESTURE_NONE;
+  }
+
+  if ( watchfacemain.isTwistSetTimeArmed() )
+  {
+    // Clear TOF gestures while the user is twisting/holding for Set Time.
+    // This prevents the twist motion from being misread as Gesture Sleep.
+    if ( recentGesture != GESTURE_NONE )
+    {
+      Serial.println(F("Ignoring TOF gesture during twist-hold Set Time entry"));
+    }
+
+    recentGesture = GESTURE_NONE;
+  }
+
+
+
+
+
 
   if (recentGesture != GESTURE_NONE)
   {
@@ -874,8 +933,20 @@ void loop()
     }
   }
 
-  // If an experience is active, do nothing else
+  // If an experience is active, do nothing else. This prevents low battery,
+  // BLE pounce, BLE nearby, and other triggers from interrupting a running
+  // experience.
   if ( experienceservice.active() )
+  {
+    smartdelay(10);
+    return;
+  }
+
+  // Set Time is a protected utility mode. Nothing else, including BLE Pounce,
+  // BLE Cats Play, sleep/low-battery experience, shake, or TOF experiences, may
+  // interrupt it. WatchFaceMain::isSettingTime() remains true until the
+  // return-to-main transition video has finished.
+  if ( watchfacemain.isSettingTime() )
   {
     smartdelay(10);
     return;
@@ -951,13 +1022,6 @@ void loop()
     if (!canStartExperience(true, false)) { smartdelay(10); return; }
 
     sleepservice.notifyUserWantsSleep();  // sets reason + makes shouldDeepSleep() true
-    smartdelay(10);
-    return;
-  }
-
-  // From here onward: do not start ANY non-sleep experiences while setting time
-  if ( watchfacemain.isSettingTime() )
-  {
     smartdelay(10);
     return;
   }

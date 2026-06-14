@@ -20,7 +20,7 @@
 #include "SPI.h"
 #include "Wire.h"
 #include "Logger.h"
-#include <esp32-hal-adc.h>    // defines analogSetWidth, analogSetPinAttenuation, ADC_11db, etc.
+#include <esp32-hal-adc.h>
 #include "Video.h"
 
 class Hardware
@@ -41,8 +41,7 @@ class Hardware
     void setGPSAlwaysOff();
 
   private:
-    bool NANDMounted;
-
+    bool NANDMounted = false;
 };
 
 #endif // _HARDWARE_
