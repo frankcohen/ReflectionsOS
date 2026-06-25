@@ -199,7 +199,7 @@ void Hardware::powerUpComponents()
   digitalWrite(LED_Pin, LOW);
 
   pinMode( TOFPower, OUTPUT);           // Power control for TOF sensor
-  digitalWrite( TOFPower, LOW );         // HIGH = TOF on
+  digitalWrite( TOFPower, LOW );         // LOW = TOF on
 
   // Speaker amp power
   pinMode(AudioPower, OUTPUT);
@@ -262,18 +262,16 @@ bool Hardware::getMounted()
 // This intentionally disables firmware wake sources. Wake is EN / USB / power reset.
 static void startLowestPowerDeepSleep()
 {
-  holdLowPowerPins();
+  printShippingPinStates();
 
-  // Disable accelerometer and any other firmware wake sources.
-  // EN / CHIP_PU reset is not controlled by this API and will still wake/reset the board.
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
 
   Serial.println(F("Entering ESP deep sleep now"));
   Serial.flush();
   delay(500);
+
   esp_deep_sleep_start();
 
-  // never returns
   while (true) { delay(1000); }
 }
 
