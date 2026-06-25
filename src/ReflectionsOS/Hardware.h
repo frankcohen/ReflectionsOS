@@ -38,6 +38,7 @@ class Hardware
     void prepareAfterWake();
 
     void enterShippingMode();
+    void enterLowBatteryShippingMode();
     void setGPSAlwaysOff();
 
   private:

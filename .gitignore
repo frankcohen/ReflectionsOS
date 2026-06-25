@@ -12,3 +12,28 @@ src/ReflectionsOS/secrets.h
 src/ReflectionsOS/secrets.h
 src/ReflectionsOS/secrets.h.bak.h
 src/ReflectionsOS/secrets.h
+src/ReflectionsOSdev.zip
+src/TAS 2/config.h
+src/TAS 2/Hardware.cpp
+src/TAS 2/Hardware.h
+src/TAS 2/license.txt
+src/TAS 2/partitions.csv
+src/TAS 2/README.md
+src/TAS 2/TAS.ino
+src/TAS.zip
+src/TAS/BehaviorRuntime.cpp
+src/TAS/BehaviorRuntime.h
+src/TAS/config.h
+src/TAS/Hardware.cpp
+src/TAS/Hardware.h
+src/TAS/license.txt
+src/TAS/MjpegPlayer.cpp
+src/TAS/MjpegPlayer.h
+src/TAS/NAMING_REFACTOR_NOTES.txt
+src/TAS/partitions.csv
+src/TAS/README.md
+src/TAS/TAS.ino
+src/TAS/TASBehaviorRuntime.cpp
+src/TAS/TASBehaviorRuntime.h
+src/TAS/TASMjpegPlayer.cpp
+src/TAS/TASMjpegPlayer.h

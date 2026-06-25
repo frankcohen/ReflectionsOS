@@ -53,15 +53,139 @@ static const float SETTIME_TILT_THRESHOLD = 3.0f;
 static const float SETTIME_NEUTRAL_THRESHOLD = 1.4f;
 static const uint32_t SETTIME_INITIAL_STABLE_MS = 300;
 static const uint32_t SETTIME_REPEAT_MS = 300;
+static const uint32_t SETTIME_HOUR_REPEAT_MS = 375;  // Hours change 25% slower than minutes
 
 static uint32_t g_ignoreTofUntil = 0;
 
-bool WatchFaceMain::shouldIgnoreTofGestures()
+// -----------------------------------------------------------------------------
+// Orientation-driven twist / TOF gating
+// -----------------------------------------------------------------------------
+// The normal/upright orientation is captured when the MAIN watch face starts.
+// TOF gestures are only allowed when the watch is within about +/- 10 degrees
+// of that upright orientation.
+//
+// Twist behavior:
+//   - Leave upright: arm the gesture.
+//   - Return to upright before Set Time hold completes: show Digital Time.
+//   - Hold more than 90 degrees away from upright for 2 seconds: enter Set Time.
 
+static float g_uprightX = 0;
+static float g_uprightY = 0;
+static float g_uprightZ = 0;
+static bool g_uprightCaptured = false;
+
+// TOF has its own captured upright orientation. This keeps the TOF gate
+// independent from the orientation gesture state machine.
+static float g_tofUprightX = 0;
+static float g_tofUprightY = 0;
+static float g_tofUprightZ = 0;
+static bool g_tofUprightCaptured = false;
+
+static uint32_t g_setTimePast90StartedAt = 0;
+
+static const float ORIENTATION_UPRIGHT_DOT_THRESHOLD = 0.985f;  // cos(10 degrees)
+static const float ORIENTATION_ARM_DOT_THRESHOLD     = 0.50f;   // about 60 degrees away
+static const float ORIENTATION_SETTIME_DOT_THRESHOLD = 0.00f;   // more than 90 degrees away
+static const uint32_t ORIENTATION_SETTIME_HOLD_MS = 2000;
+
+static bool readAccelUnitVector(float &x, float &y, float &z)
 {
+  x = accel.getXreading();
+  y = accel.getYreading();
+  z = accel.getZreading();
 
-  return g_twistHoldArmed || (millis() < g_ignoreTofUntil) || isSettingTime();
+  float mag = sqrt((x * x) + (y * y) + (z * z));
+  if (mag < 0.01f) return false;
 
+  x /= mag;
+  y /= mag;
+  z /= mag;
+
+  return true;
+}
+
+static void captureUprightOrientation()
+{
+  float x, y, z;
+  if (!readAccelUnitVector(x, y, z))
+  {
+    g_uprightCaptured = false;
+    Serial.println(F("MAIN: unable to capture upright orientation"));
+    return;
+  }
+
+  g_uprightX = x;
+  g_uprightY = y;
+  g_uprightZ = z;
+  g_uprightCaptured = true;
+
+  Serial.printf("MAIN: upright captured x=%0.2f y=%0.2f z=%0.2f\n", x, y, z);
+}
+
+static void captureTofUprightOrientation()
+{
+  float x, y, z;
+  if (!readAccelUnitVector(x, y, z))
+  {
+    g_tofUprightCaptured = false;
+    Serial.println(F("TOF: unable to capture upright orientation"));
+    return;
+  }
+
+  g_tofUprightX = x;
+  g_tofUprightY = y;
+  g_tofUprightZ = z;
+  g_tofUprightCaptured = true;
+
+  Serial.printf("TOF: upright captured x=%0.2f y=%0.2f z=%0.2f\n", x, y, z);
+}
+
+static float currentDotFromUpright()
+{
+  if (!g_uprightCaptured) return 1.0f;
+
+  float x, y, z;
+  if (!readAccelUnitVector(x, y, z)) return 1.0f;
+
+  return (x * g_uprightX) + (y * g_uprightY) + (z * g_uprightZ);
+}
+
+static bool isCurrentOrientationNearlyUprightForTof()
+{
+  // If TOF upright has not been captured yet, allow TOF rather than
+  // accidentally disabling all TOF gestures at startup.
+  if (!g_tofUprightCaptured) return true;
+
+  float x, y, z;
+  if (!readAccelUnitVector(x, y, z)) return false;
+
+  float dot =
+    (x * g_tofUprightX) +
+    (y * g_tofUprightY) +
+    (z * g_tofUprightZ);
+
+  // Within roughly +/- 10 degrees of the captured MAIN/upright position.
+  // cos(10 degrees) = 0.9848
+  return dot >= ORIENTATION_UPRIGHT_DOT_THRESHOLD;
+}
+
+static void resetOrientationGestureState()
+{
+  g_twistHoldArmed = false;
+  g_setTimePast90StartedAt = 0;
+}
+
+bool WatchFaceMain::isNearlyUprightForTof()
+{
+  return isCurrentOrientationNearlyUprightForTof();
+}
+
+bool WatchFaceMain::shouldIgnoreTofGestures()
+{
+  return
+    g_twistHoldArmed ||
+    isSettingTime() ||
+    !isNearlyUprightForTof();
 }
 
 static void resetSetTimeTiltGate()
@@ -72,7 +196,7 @@ static void resetSetTimeTiltGate()
 }
 
 // Returns -1 for left tilt, +1 for right tilt, 0 for no step.
-static int getSetTimeTiltStep()
+static int getSetTimeTiltStep(uint32_t repeatMs)
 {
   const uint32_t now = millis();
   const float xraw = accel.getXreading();
@@ -111,7 +235,7 @@ static int getSetTimeTiltStep()
   }
 
   // Auto-repeat while still tilted.
-  if (now - g_setTimeTiltLastStepAt >= SETTIME_REPEAT_MS)
+  if (now - g_setTimeTiltLastStepAt >= repeatMs)
   {
     g_setTimeTiltLastStepAt = now;
     return dir;
@@ -595,7 +719,7 @@ void WatchFaceMain::startup()
   needssetup = true;
   blinking = false;
   textmessageservice.deactivate();
-  g_twistHoldArmed = false;
+  resetOrientationGestureState();
   sleepservice.notifyWatchFaceActivity();
 }
 
@@ -608,61 +732,94 @@ void WatchFaceMain::main()
     drawitall = true;
     blinking = false;
     mainwaiter = millis();
-    g_twistHoldArmed = false;
+    resetOrientationGestureState();
+    captureUprightOrientation();
+    captureTofUprightOrientation();
+
+    Serial.println(F("MAIN: flushing TOF after wake/main entry"));
+    uint32_t tofFlushUntil = millis() + 1500;
+    while (millis() < tofFlushUntil)
+    {
+      (void)tof.getGesture();
+      delay(20);
+    }
+    Serial.println(F("MAIN: TOF flush complete"));
     return;
   }
 
-  // MAIN: Twist-and-hold entry.
-  // - Twist and release/reverse before 3 seconds => Digital Time.
-  // - Twist and hold for 3 seconds => Set Time.
+  // MAIN: Orientation-driven twist behavior.
+  // - TOF gestures are only honored while nearly upright.
+  // - Leaving upright arms the gesture.
+  // - Returning to upright before Set Time hold completes shows Digital Time.
+  // - Holding more than 90 degrees away from upright for 2 seconds enters Set Time.
   if ( millis() - mainwaiter > 2000 )
   {
+    if ( ! g_uprightCaptured ) captureUprightOrientation();
+
+    float dot = currentDotFromUpright();
+    bool nearlyUpright = dot >= ORIENTATION_UPRIGHT_DOT_THRESHOLD;
+    bool awayEnoughToArm = dot <= ORIENTATION_ARM_DOT_THRESHOLD;
+    bool past90 = dot <= ORIENTATION_SETTIME_DOT_THRESHOLD;
+
     if ( ! g_twistHoldArmed )
     {
-      if ( twistTriggered() )
+      if ( awayEnoughToArm )
       {
-        Serial.println( F("MAIN: twist hold armed") );
+        Serial.printf( "MAIN: twist/orientation armed dot=%0.2f\n", dot );
         g_twistHoldArmed = true;
         g_twistHoldStartedAt = millis();
+        g_setTimePast90StartedAt = 0;
         g_ignoreTofUntil = millis() + 4000;
         noMovementTime = millis();
       }
     }
     else
     {
-      // A second/reverse twist before the hold timer expires is the normal
-      // Digital Time gesture.
-      if ( twistTriggered() )
+      // The user rotated away and then returned upright: normal Digital Time.
+      if ( nearlyUpright )
       {
-        Serial.println( F("MAIN: short twist -> Digital Time") );
-        g_twistHoldArmed = false;
-        g_ignoreTofUntil = millis() + 3000;
+        Serial.println( F("MAIN: returned upright -> Digital Time") );
+        resetOrientationGestureState();
+        g_ignoreTofUntil = millis() + 2000;
         changeTo( DISPLAYING_TIME, true, WatchFaceFlip1_video );
         return;
       }
 
-      // Held twist for 3 seconds becomes Set Time.
-      if ( millis() - g_twistHoldStartedAt >= TWIST_HOLD_SET_TIME_MS )
+      // The user is holding the device more than 90 degrees from upright.
+      if ( past90 )
       {
-        Serial.println( F("MAIN: twist held -> Set Time") );
+        if ( g_setTimePast90StartedAt == 0 )
+        {
+          Serial.printf( "MAIN: past 90 degrees, Set Time hold started dot=%0.2f\n", dot );
+          g_setTimePast90StartedAt = millis();
+        }
 
-        haptic.playEffect(58);
-        delay(200);
-        haptic.playEffect(14);
+        if ( millis() - g_setTimePast90StartedAt >= ORIENTATION_SETTIME_HOLD_MS )
+        {
+          Serial.println( F("MAIN: held past 90 degrees -> Set Time") );
 
-        g_twistHoldArmed = false;
-        g_ignoreTofUntil = millis() + 3000;        
-        g_setTimeProtected = true;
+          haptic.playEffect( 66 );   // strong/long buzz: Set Time accepted
 
-        textmessageservice.stop();
-        drawImageFromFile( wfMain_Time_Background, true, 0, 0 );
-        panel = SETTING_TIME;
-        needssetup = true;
-        textmessageservice.stop();
-        noMovementTime = millis();
-        sleepservice.notifyWatchFaceActivity();
+          resetOrientationGestureState();
+          g_ignoreTofUntil = millis() + 3000;
+          g_setTimeProtected = true;
 
-        return;
+          textmessageservice.stop();
+          drawImageFromFile( wfMain_Time_Background, true, 0, 0 );
+          panel = SETTING_TIME;
+          needssetup = true;
+          textmessageservice.stop();
+          noMovementTime = millis();
+          sleepservice.notifyWatchFaceActivity();
+
+          return;
+        }
+      }
+      else
+      {
+        // Still away from upright, but not past 90 degrees. Keep armed, but do
+        // not count toward Set Time until it is past 90 again.
+        g_setTimePast90StartedAt = 0;
       }
     }
   }
@@ -774,7 +931,7 @@ void WatchFaceMain::settingtime()
     return;
   }
 
-  int step = getSetTimeTiltStep();
+  int step = getSetTimeTiltStep(SETTIME_HOUR_REPEAT_MS);
   if ( step != 0 )
   {
     hour += step;
@@ -834,7 +991,7 @@ void WatchFaceMain::settingminute()
     return;
   }
 
-  int step = getSetTimeTiltStep();
+  int step = getSetTimeTiltStep(SETTIME_REPEAT_MS);
   if ( step != 0 )
   {
     minute += step;
@@ -895,7 +1052,7 @@ static void clearSetTimeExitNoise()
 
   resetSetTimeTiltGate();
 
-  g_twistHoldArmed = false;
+  resetOrientationGestureState();
 
   textmessageservice.stop();
   textmessageservice.deactivate();

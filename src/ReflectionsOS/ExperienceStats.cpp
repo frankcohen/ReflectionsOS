@@ -95,24 +95,41 @@ void ExperienceStats::update(unsigned long currentMs) {
 
 bool ExperienceStats::isTerri()
 {
-  // Only return true when totalCalls is a multiple of 30, and it hasn't been triggered already
-  if ((totalCalls_ % 30) == 0 && totalCalls_ != lastTerriCall) 
+  // Terri Easter Egg schedule:
+  //   100, 250, 400, 550, ...
+  // That is every 150 experiences, starting at experience 100.
+  //
+  // lastTerriCall prevents the same experience count from triggering Terri
+  // repeatedly while the main loop keeps checking isTerri().
+  if ( totalCalls_ >= 100 &&
+       ( ( totalCalls_ - 100 ) % 150 ) == 0 &&
+       totalCalls_ != lastTerriCall )
   {
-    lastTerriCall = totalCalls_;  // Update the lastTerriCall to avoid multiple triggers
-    prefs_.putULong("lastTerriCall", lastTerriCall);  // Persist lastTerriCall
+    lastTerriCall = totalCalls_;
+    prefs_.putULong( "lastTerriCall", lastTerriCall );
     return true;
   }
+
   return false;
 }
 
 bool ExperienceStats::isFrank()
 {
-  // Only return true when totalCalls is a multiple of 50, and it hasn't been triggered already
-  if ((totalCalls_ % 50) == 0 && totalCalls_ != lastFrankCall) {
-    lastFrankCall = totalCalls_;  // Update the lastFrankCall to avoid multiple triggers
-    prefs_.putULong("lastFrankCall", lastFrankCall);  // Persist lastFrankCall
+  // Frank Easter Egg schedule:
+  //   150, 300, 450, 600, ...
+  // Frank runs 50 experiences after Terri, then the 150-experience cycle repeats.
+  //
+  // lastFrankCall prevents the same experience count from triggering Frank
+  // repeatedly while the main loop keeps checking isFrank().
+  if ( totalCalls_ >= 150 &&
+       ( ( totalCalls_ - 150 ) % 150 ) == 0 &&
+       totalCalls_ != lastFrankCall )
+  {
+    lastFrankCall = totalCalls_;
+    prefs_.putULong( "lastFrankCall", lastFrankCall );
     return true;
   }
+
   return false;
 }
 

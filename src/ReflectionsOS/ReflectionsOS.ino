@@ -155,6 +155,7 @@ unsigned long catNearBy = millis();
 unsigned long afterTimer = millis();
 unsigned long gestureTimer = millis();
 unsigned long afterCatsPlay = millis();
+unsigned long lowBatteryCheckTimer = millis();
 
 int nextUp = 0;     // For picking the next experience from a left-to-right gesture
 int nextUp2 = 0;    // For picking between Eyes and Parallax experiences
@@ -438,14 +439,16 @@ static void bootBatteryLowGate()
 
   delay(3000);
 
-  // Go protect RTC immediately
-  hardware.prepareForSleep();
-  hardware.powerDownComponents();
-
-  // Optional: if you want to preserve last-known clock even on low battery
+  // Preserve the last-known clock before removing power from peripherals.
+  // NVS is internal ESP32 flash, not the external NAND/SD rail.
   realtimeclock.saveClockToNVS();
 
-  esp_deep_sleep_start();
+  Serial.println(F("Low battery at boot: entering Deep Sleep / Shipping Mode"));
+  Serial.flush();
+
+  // Boot-time low battery uses the lowest-power shipping sleep path.
+  // Wake is by EN/Wake button, USB, or power reset.
+  hardware.enterLowBatteryShippingMode();
 
   // Should never return
   while (true) { delay(1000); }
@@ -634,8 +637,8 @@ static void smartdelay(unsigned long ms) {
     systemload.logtasktime( millis() - tasktime, 0, " " );
 
     // Debug messages on the display
-    //String bmsg = battery.getDischargeOverlayText();
-    //if (bmsg.length()) video.paintText(bmsg);    
+    String bmsg = battery.getDischargeOverlayText();
+    if (bmsg.length()) video.paintText(bmsg);    
 
   } while (millis() - start < ms);
 }
@@ -952,6 +955,22 @@ void loop()
     return;
   }
 
+#if !DEMO_CAT_ALWAYS_ON
+  // Runtime low battery: do not interrupt an active experience or Set Time.
+  // Once the Cat is idle/interactive, request the normal Sleep / Nap path,
+  // which plays Sleep_video and wakes later from accelerometer tap/shake.
+  if ( millis() - lowBatteryCheckTimer > 30000 )
+  {
+    lowBatteryCheckTimer = millis();
+
+    if ( battery.isBatteryLow() )
+    {
+      Serial.println(F("Runtime low battery detected"));
+      sleepservice.notifyLowBattery();
+    }
+  }
+#endif
+
   // Pounce message received — ignores cooldown (but still blocked while setting time)
   if ( ( blesupport.isPounced() ) && ( millis() - pounceTimer > 10000 ))
   {
@@ -985,16 +1004,19 @@ void loop()
     experienceservice.startExperience(ExperienceService::Sleep);
     waitForExperienceToStop();
 
-    // Configure LIS3DH wake profile while system is fully "awake" (I2C stable)
-    accel.configureWakeTapProfile();
-    delay(20); // let INT settle
-    hardware.prepareForSleep();
-
-    Serial.println("Entering deep sleep now");
-    Serial.flush();
+    // Sleep / Nap Mode: preserve time, then configure accelerometer tap wake,
+    // then power down peripherals without disabling the accelerometer EXT1 wake source.
     realtimeclock.saveClockToNVS();
 
-    hardware.powerDownComponents();
+    // Configure LIS3DH wake profile while system is fully awake and I2C is stable.
+    accel.configureWakeTapProfile();
+    delay(20); // let INT settle
+
+    hardware.prepareForSleep();
+
+    Serial.println("Entering Sleep / Nap deep sleep now");
+    Serial.flush();
+
     esp_deep_sleep_start();
     return;
   }
