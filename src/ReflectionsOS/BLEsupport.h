@@ -63,6 +63,10 @@ class BLEsupport {
     void begin();
     void loop();
 
+    void pauseForLightSleep();
+    void resumeAfterLightSleep();
+    bool isRunning();
+
     bool isCatNearby();
     bool isPounced();
     void sendPounce();
@@ -79,7 +83,9 @@ class BLEsupport {
     void setupServer();
     void handleServerConnections();
     int mynum;
-    unsigned long mytime;    
+    unsigned long mytime;
+    bool _running;
+    bool _sleeping;
 };
 
 #endif // BLE_SUPPORT_H

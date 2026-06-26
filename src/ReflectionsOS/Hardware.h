@@ -34,8 +34,14 @@ class Hardware
     void powerDownComponents();
     void powerUpComponents();
 
+    void enterNapDeepSleep();
+
+
     void prepareForSleep();
     void prepareAfterWake();
+    void restoreFromLightSleep();
+
+    void prepareForLightSleep();
 
     void enterShippingMode();
     void enterLowBatteryShippingMode();

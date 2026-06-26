@@ -24,6 +24,7 @@
 static const NimBLEAdvertisedDevice* advDevice;
 static bool doConnect;
 static NimBLEServer* pServer;
+static bool g_blePausedForSleep = false;
 
 class ClientCallbacks : public NimBLEClientCallbacks {
     void onConnect(NimBLEClient* pClient) override 
@@ -34,7 +35,7 @@ class ClientCallbacks : public NimBLEClientCallbacks {
     void onDisconnect(NimBLEClient* pClient, int reason) override 
     {
         //Serial.printf("%s Disconnected, reason = %d\n", pClient->getPeerAddress().toString().c_str(), reason);
-        NimBLEDevice::getScan()->start(scanTimeMs, false, true);
+        if (!g_blePausedForSleep) NimBLEDevice::getScan()->start(scanTimeMs, false, true);
     }
 } clientCallbacks;
 
@@ -59,7 +60,7 @@ class ScanCallbacks : public NimBLEScanCallbacks {
     void onScanEnd(const NimBLEScanResults& results, int reason) override 
     {
         //Serial.printf("Scan Ended, reason: %d, device count: %d; Restarting scan\n", reason, results.getCount());
-        NimBLEDevice::getScan()->start( 5000, false, true);
+        if (!g_blePausedForSleep) NimBLEDevice::getScan()->start( 5000, false, true);
     }
 } scanCallbacks;
 
@@ -89,7 +90,7 @@ class MyServerCallbacks : public NimBLEServerCallbacks {
     void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason ) override {
         //Serial.println("Client Disconnected. Restarting advertising.");
         // Restart advertising after a disconnect
-        NimBLEDevice::getAdvertising()->start();
+        if (!g_blePausedForSleep) NimBLEDevice::getAdvertising()->start();
     }
 } srvCallbacks;
 
@@ -143,10 +144,21 @@ class CharacteristicCallbacksServer : public NimBLECharacteristicCallbacks
     }
 } chrCallbacksServer;
 
-BLEsupport::BLEsupport() {}
+BLEsupport::BLEsupport()
+  : _running(false),
+    _sleeping(false)
+{}
 
 void BLEsupport::begin() 
 {
+    if (_running) return;
+
+    Serial.println(F("BLE full start"));
+
+    advDevice = nullptr;
+    pServer = nullptr;
+    doConnect = false;
+
     NimBLEDevice::init( wifi.getDeviceName().c_str() );
     NimBLEDevice::setPower(3);  // 3dbm
 
@@ -160,18 +172,21 @@ void BLEsupport::begin()
     pScan->start( 5000 );
     Serial.printf("Scanning for server\n");
 
-    doConnect = false;
-
     s_devicename = wifi.getDeviceName().c_str();
     s_pounce = false;
     s_heading = 0;
     s_latitude = 0;
     s_longitude = 0;
+    s_rssi = 0;
+    s_when = 0;
 
     pounced = false;
 
     mytime = millis();
     mynum = 0;
+
+    _running = true;
+    _sleeping = false;
 
     Serial.println( "BLE setup finished" );
 }
@@ -379,8 +394,67 @@ int BLEsupport::getRSSI()
     return s_rssi;
 }
 
+
+void BLEsupport::pauseForLightSleep()
+{
+    if (!_running || _sleeping) return;
+
+    Serial.println(F("BLE pause for light sleep"));
+
+    // IMPORTANT: Do not call NimBLEDevice::deinit(true) here. The NimBLE host
+    // task can crash if it is deinitialized while FreeRTOS/BLE callbacks are
+    // still unwinding around the light-sleep transition. For Sleep / Nap mode,
+    // stop GAP activity and suppress callback restarts instead.
+    g_blePausedForSleep = true;
+
+    NimBLEScan* scan = NimBLEDevice::getScan();
+    if (scan) scan->stop();
+
+    NimBLEAdvertising* advertising = NimBLEDevice::getAdvertising();
+    if (advertising) advertising->stop();
+
+    doConnect = false;
+    pounced = false;
+    s_pounce = false;
+    s_when = 0;
+
+    _sleeping = true;
+}
+
+void BLEsupport::resumeAfterLightSleep()
+{
+    if (!_running)
+    {
+        Serial.println(F("BLE restart after light sleep"));
+        _sleeping = false;
+        g_blePausedForSleep = false;
+        begin();
+        return;
+    }
+
+    if (!_sleeping) return;
+
+    Serial.println(F("BLE resume after light sleep"));
+
+    _sleeping = false;
+    g_blePausedForSleep = false;
+
+    NimBLEAdvertising* advertising = NimBLEDevice::getAdvertising();
+    if (advertising) advertising->start();
+
+    NimBLEScan* scan = NimBLEDevice::getScan();
+    if (scan) scan->start(scanTimeMs, false, true);
+}
+
+bool BLEsupport::isRunning()
+{
+    return _running;
+}
+
 void BLEsupport::loop() 
 {
+    if (!_running || _sleeping) return;
+
     if ( millis() - mytime > 5000 )
     {
         mytime = millis();
@@ -397,7 +471,7 @@ void BLEsupport::loop()
             {
                 Serial.printf("Failed to connect, starting scan\n");
             }
-            NimBLEDevice::getScan()->start(scanTimeMs, false, true);
+            if (!g_blePausedForSleep) NimBLEDevice::getScan()->start(scanTimeMs, false, true);
         }
 
     }

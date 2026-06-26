@@ -276,6 +276,37 @@ static void startLowestPowerDeepSleep()
 }
 
 // ----------------------------------------
+// Sleep with low power draw from TOF gesture, no activity, low battery, etc.
+// ----------------------------------------
+
+void Hardware::enterNapDeepSleep()
+{
+  Serial.println(F("Sleep / Nap deep sleep started"));
+
+  Serial.println(F("Stopping sensors for Sleep / Nap deep sleep"));
+  tof.setStatus(false);
+  accel.setStatus(false);
+  delay(100);
+
+  powerDownComponents();
+
+  printShippingPinStates();
+
+  // Do NOT disable wake sources here.
+  // AccelSensor::configureWakeTapProfile() already configured LIS3DH
+  // and enabled EXT1 wake on ACCEL_INT1_PIN.
+  Serial.println(F("Entering Sleep / Nap deep sleep now"));
+  Serial.flush();
+  delay(500);
+
+  esp_deep_sleep_start();
+
+  Serial.println(F("Hardware - impossible to be here error"));
+  Serial.flush();
+  while (true) { delay(1000); }
+}
+
+// ----------------------------------------
 // Shipping mode entry: REST -> message -> lowest-power deep sleep
 // ----------------------------------------
 void Hardware::enterShippingMode()
@@ -306,6 +337,65 @@ void Hardware::enterLowBatteryShippingMode()
   powerDownComponents();
 
   startLowestPowerDeepSleep();
+}
+
+
+// ----------------------------------------
+// Light Sleep / Nap helpers.
+// Used by TOF sleep gesture and inactivity sleep.
+// This is intentionally less aggressive than Shipping Mode:
+// - Keeps NAND/SD powered so files remain available immediately after wake.
+// - Keeps accelerometer powered so INT1 can wake ESP32 from light sleep.
+// - Turns off the high-drain user-facing peripherals.
+// - Does NOT use GPIO holds; bench testing showed holds increased shipping drain.
+// ----------------------------------------
+void Hardware::prepareForLightSleep()
+{
+  Serial.println(F("Preparing for Sleep / Nap light sleep"));
+
+  // Backlight OFF. Keep display controller out of reset so wake is fast.
+  pinMode(Display_SPI_BK, OUTPUT);
+  digitalWrite(Display_SPI_BK, HIGH);
+
+  pinMode(Display_SPI_CS, OUTPUT);
+  digitalWrite(Display_SPI_CS, HIGH);
+
+  // TOF OFF while napping. Wake is by accelerometer tap/shake.
+  pinMode(TOFPower, OUTPUT);
+  digitalWrite(TOFPower, HIGH);
+
+  // Speaker amp OFF.
+  pinMode(AudioPower, OUTPUT);
+  digitalWrite(AudioPower, LOW);
+
+  // GPS OFF always.
+  setGPSAlwaysOff();
+
+  // LED OFF.
+  pinMode(LED_Pin, OUTPUT);
+  digitalWrite(LED_Pin, LOW);
+
+  Serial.printf(
+    "Light sleep pins: NAND_SPI_PWR=%d TOFPower=%d AudioPower=%d GPSPower=%d BK=%d RST=%d CS=%d DC=%d\n",
+    digitalRead(NAND_SPI_PWR),
+    digitalRead(TOFPower),
+    digitalRead(AudioPower),
+    digitalRead(GPSPower),
+    digitalRead(Display_SPI_BK),
+    digitalRead(Display_SPI_RST),
+    digitalRead(Display_SPI_CS),
+    digitalRead(Display_SPI_DC)
+  );
+}
+
+void Hardware::restoreFromLightSleep()
+{
+  Serial.println(F("Restoring from Sleep / Nap light sleep"));
+
+  // Reapply normal run-mode power states. This powers TOF and audio back up.
+  powerUpComponents();
+
+  // Backlight remains controlled by video/watchface code.
 }
 
 // ----------------------------------------

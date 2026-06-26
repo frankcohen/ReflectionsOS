@@ -1004,20 +1004,19 @@ void loop()
     experienceservice.startExperience(ExperienceService::Sleep);
     waitForExperienceToStop();
 
-    // Sleep / Nap Mode: preserve time, then configure accelerometer tap wake,
-    // then power down peripherals without disabling the accelerometer EXT1 wake source.
     realtimeclock.saveClockToNVS();
-
-    // Configure LIS3DH wake profile while system is fully awake and I2C is stable.
+    
     accel.configureWakeTapProfile();
-    delay(20); // let INT settle
+    delay(20);
 
-    hardware.prepareForSleep();
+    accel.resetTaps();
+    (void)accel.getSingleTap();
+    (void)accel.getDoubleTap();
 
-    Serial.println("Entering Sleep / Nap deep sleep now");
+    hardware.enterNapDeepSleep();
+
+    Serial.println(F("ReflectionsOS.ino - impossible to be here error"));
     Serial.flush();
-
-    esp_deep_sleep_start();
     return;
   }
 
