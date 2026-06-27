@@ -236,6 +236,54 @@ void TOF::loop()
     }
   }
 
+  /* for debug 
+
+  directionWay = F( "Bleep, sleepCnt = " );
+  directionWay += sleepCnt;
+  mymessage = directionWay;
+  mymessage2 = String(sleepCnt);
+
+  static uint32_t lastSleepDebugMs = 0;
+  if (millis() - lastSleepDebugMs >= 2000)
+  {
+      lastSleepDebugMs = millis();
+
+      Serial.printf("\nSleep Debug: sleepCnt=%d\n", sleepCnt);
+      Serial.printf("Sleep range: %d..%d mm\n\n",
+                    SLEEP_MIN_DISTANCE,
+                    SLEEP_MAX_DISTANCE);
+
+      for (int row = 0; row < 8; row++)
+      {
+          for (int col = 0; col < 8; col++)
+          {
+              int16_t d = rd.distance_mm[row * 8 + col];
+
+              char marker = '.';
+              if (d >= SLEEP_MIN_DISTANCE &&
+                  d <= SLEEP_MAX_DISTANCE)
+              {
+                  marker = 'X';
+              }
+
+              if (d == 0)
+              {
+                  Serial.print("----\t");
+              }
+              else
+              {
+                  Serial.printf("%c%3d\t", marker, d);
+              }
+          }
+
+          Serial.println();
+      }
+
+      Serial.println();
+  }
+*/
+
+
   // ——— Sleep detection (allowed even during cooldown) ———
   if (now - sleepStart > SLEEP_HOLD_MS)
   {
@@ -245,7 +293,7 @@ void TOF::loop()
     {
       resetGesture();
       direction = GESTURE_SLEEP;
-      directionWay = "→ Sleep";
+      directionWay = F( "→ Sleep" );
       mymessage = directionWay;
       mymessage2 = String(sleepCnt);
 

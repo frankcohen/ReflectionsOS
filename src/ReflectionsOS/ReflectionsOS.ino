@@ -637,8 +637,8 @@ static void smartdelay(unsigned long ms) {
     systemload.logtasktime( millis() - tasktime, 0, " " );
 
     // Debug messages on the display
-    String bmsg = battery.getDischargeOverlayText();
-    if (bmsg.length()) video.paintText(bmsg);    
+    //String bmsg = battery.getDischargeOverlayText();
+    //if (bmsg.length()) video.paintText(bmsg);    
 
   } while (millis() - start < ms);
 }
@@ -900,11 +900,6 @@ void loop()
 
     recentGesture = GESTURE_NONE;
   }
-
-
-
-
-
 
   if (recentGesture != GESTURE_NONE)
   {

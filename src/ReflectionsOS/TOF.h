@@ -36,9 +36,9 @@
 #define cirmesg F("→← circular detected ")
 
 // Sleep detection thresholds
-#define SLEEP_MIN_DISTANCE    5                   // mm
-#define SLEEP_MAX_DISTANCE   12                   // mm
-#define SLEEP_COVERAGE_COUNT 43                   // # pixels in [0,15] → “covered”
+#define SLEEP_MIN_DISTANCE    8                   // mm
+#define SLEEP_MAX_DISTANCE   15                   // mm
+#define SLEEP_COVERAGE_COUNT 36                   // # pixels in [8,13] → “covered”
 #define SLEEP_HOLD_MS      1500UL                 // ms of coverage to declare Sleep
 
 #define MAX_SCANTIME 1000                         // Maximum time to form a gesture
