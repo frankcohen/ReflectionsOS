@@ -882,36 +882,27 @@ void loop()
 
   recentGesture = tof.getGesture();
 
-  if (recentGesture != GESTURE_NONE)
+  switch (recentGesture)
   {
-    // Any TOF gesture counts as activity (resets 5 min + 3 min timers)
-    sleepservice.notifyWatchFaceActivity();
+    case GESTURE_LEFT_RIGHT:
+      recentGestureName = F( ">>>GESTURE_LEFT_RIGHT" );
+      break;
 
-    Serial.print( F( "Gesture: " ) );
-    switch (recentGesture)
-    {
-      case GESTURE_LEFT_RIGHT:
-        recentGestureName = F( ">>>GESTURE_LEFT_RIGHT" );
-        break;
+    case GESTURE_RIGHT_LEFT:
+      recentGestureName = F( ">>>GESTURE_RIGHT_LEFT" );
+      break;
 
-      case GESTURE_RIGHT_LEFT:
-        recentGestureName = F( ">>>GESTURE_RIGHT_LEFT" );
-        break;
+    case GESTURE_CIRCULAR:
+      recentGestureName = F( ">>>GESTURE_CIRCULAR" );
+      break;
 
-      case GESTURE_CIRCULAR:
-        recentGestureName = F( ">>>GESTURE_CIRCULAR" );
-        break;
+    case GESTURE_SLEEP:
+      recentGestureName = F( ">>>GESTURE_SLEEP" );
+      break;
 
-      case GESTURE_SLEEP:
-        recentGestureName = F( ">>>GESTURE_SLEEP" );
-        break;
-
-      default:
-        recentGestureName = F( ">>>Unknown " );
-        break;
-    }
-
-    Serial.println( recentGestureName );
+    default:
+      recentGestureName = F( ">>>Unknown " );
+      break;
   }
 
   if ( accel.isSetTimeTwisting() )
@@ -925,6 +916,15 @@ void loop()
 
       recentGesture = GESTURE_NONE;
     }
+  }
+
+  if (recentGesture != GESTURE_NONE)
+  {
+    // Any TOF gesture counts as activity (resets 5 min + 3 min timers)
+    sleepservice.notifyWatchFaceActivity();
+
+    Serial.print( F( "Gesture: " ) );
+    Serial.println( recentGestureName );
   }
 
   // If an experience is active, do nothing else. This prevents low battery,

@@ -50,6 +50,7 @@ extern Video video;
 #define TWIST_G_MIN           9.0f    // minimum gravity magnitude
 #define TWIST_G_MAX           10.8f   // maximum gravity magnitude
 #define ROLL_EMA_ALPHA        0.15f   // smoothing for roll angle
+#define SETTIME_TWIST_MIN_START_DEG 40.0f
 
 // ===== Wrist Twist Debug & Options =====
 #define TWIST_DEBUG           0     // 1 = print debug, 0 = silent

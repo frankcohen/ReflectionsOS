@@ -350,7 +350,6 @@ void AccelSensor::updateSetTimeTwistGesture(unsigned long now)
   int stepDir = (dStep > 0.0f) ? 1 : ((dStep < 0.0f) ? -1 : 0);
 
   if ((_setTimeTwistState == SETTIME_TWIST_FORWARD ||
-      _setTimeTwistState == SETTIME_TWIST_HOLDING ||
       _setTimeTwistState == SETTIME_TWIST_RETURN) &&
       !moving)
   {
@@ -397,7 +396,8 @@ void AccelSensor::updateSetTimeTwistGesture(unsigned long now)
         break;
       }
 
-      if ((now - _setTimeTwistForwardMoveStartedAt) >= SETTIME_TWIST_START_MOVE_MS)
+      float fromIdle = shortestSetTimeTwistDelta_(angleDeg, _setTimeTwistIdleAngleDeg);      
+      if ((now - _setTimeTwistForwardMoveStartedAt) >= SETTIME_TWIST_START_MOVE_MS && fabsf(fromIdle) >= SETTIME_TWIST_MIN_START_DEG )
       {
         _setTimeTwistState = SETTIME_TWIST_FORWARD;
         _setTimeTwistStartAngleDeg = _setTimeTwistIdleAngleDeg;
@@ -479,13 +479,11 @@ void AccelSensor::updateSetTimeTwistGesture(unsigned long now)
       if ((now - _setTimeTwistHoldStartedAt) >= SETTIME_TWIST_HOLD_MS)
       {
         Serial.println(F("ACCEL: twist held 3 seconds -> Set Time"));
-        resetSetTimeTwistGesture();
-        suppressSetTimeTwistFor( SETTIME_TWIST_COOLDOWN_MS );
-
+        _setTimeTwistSetTimePending = true;
         _setTimeTwistDigitalTimePending = false;
         _setTimeTwistReturnConfirmed = false;
-        _setTimeTwistSetTimePending = true;
-        break;
+        suppressSetTimeTwistFor( SETTIME_TWIST_COOLDOWN_MS );
+        return;
       }
 
       const float HOLD_RETURN_STEP_DEG = 6.0f;
