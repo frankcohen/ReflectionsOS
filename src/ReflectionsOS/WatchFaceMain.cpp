@@ -29,13 +29,6 @@ static int g_lastSigMin  = -1;
 // the return-to-main transition video has finished.
 static bool g_setTimeProtected = false;
 
-// Twist-and-hold entry: first twist arms a 3s window.
-// Reverse/second twist before 3s means normal Digital Time.
-// Holding the twist for 3s means Set Time.
-static bool g_twistHoldArmed = false;
-static uint32_t g_twistHoldStartedAt = 0;
-static const uint32_t TWIST_HOLD_SET_TIME_MS = 1800;
-
 // Digital Time tap gate: clear taps for 2 seconds on entry
 static uint32_t g_displayTimeTapGateStart = 0;
 static const uint32_t DISPLAYTIME_TAP_GATE_MS = 2000;
@@ -59,200 +52,9 @@ static const uint32_t SETTIME_HOUR_REPEAT_MS = 800;   // slower hour changes to 
 
 static uint32_t g_ignoreTofUntil = 0;
 
-// -----------------------------------------------------------------------------
-// Orientation-driven twist / TOF gating
-// -----------------------------------------------------------------------------
-// The normal/upright orientation is captured when the MAIN watch face starts.
-// TOF gestures are only allowed when the watch is within about +/- 10 degrees
-// of that upright orientation.
-//
-// Twist behavior:
-//   - Leave upright: arm the gesture.
-//   - Return to upright before Set Time hold completes: show Digital Time.
-//   - Hold more than 90 degrees away from upright for 2 seconds: enter Set Time.
-
-static float g_uprightX = 0;
-static float g_uprightY = 0;
-static float g_uprightZ = 0;
-static bool g_uprightCaptured = false;
-
-// TOF has its own captured upright orientation. This keeps the TOF gate
-// independent from the orientation gesture state machine.
-static float g_tofUprightX = 0;
-static float g_tofUprightY = 0;
-static float g_tofUprightZ = 0;
-static bool g_tofUprightCaptured = false;
-
-// Wrist-roll Set Time gesture.
-// This no longer depends on absolute orientation. It starts from whatever
-// angle the watch is currently at, accumulates wrist rotation over time,
-// and only treats it as intentional after at least 90 degrees of rotation.
-//
-// Flow:
-//   - rotate wrist at least 90 degrees: gesture is recognized
-//   - hold that rotated position for 3 seconds: enter Set Time
-//   - return/release before 3 seconds: show Digital Time
-static bool g_twistTracking = false;
-static bool g_twistPast90 = false;
-static float g_twistIdleAngleDeg = 0.0f;
-static float g_twistStartAngleDeg = 0.0f;
-static float g_twistLastAngleDeg = 0.0f;
-static float g_twistAccumDeg = 0.0f;
-static float g_twistHoldAngleDeg = 0.0f;
-static uint32_t g_twistMotionStartedAt = 0;
-static uint32_t g_twistLastMotionAt = 0;
-static uint32_t g_twistHoldStartedAt2 = 0;
-
-static const float ORIENTATION_UPRIGHT_DOT_THRESHOLD = 0.985f;  // cos(10 degrees), for TOF only
-
-static const float WRIST_TWIST_START_DEG = 12.0f;
-static const float WRIST_TWIST_REQUIRED_DEG = 120.0f;
-static const float WRIST_TWIST_RETURN_TO_START_DEG = 35.0f;
-static const float WRIST_TWIST_HOLD_TOLERANCE_DEG = 18.0f;
-static const float WRIST_TWIST_MOTION_EPS_DEG = 1.5f;
-static const uint32_t WRIST_TWIST_SETTIME_HOLD_MS = 3000;
-static const uint32_t WRIST_TWIST_PRE90_TIMEOUT_MS = 1800;
-static const uint32_t WRIST_TWIST_TOTAL_TIMEOUT_MS = 7000;
-
-static bool readAccelUnitVector(float &x, float &y, float &z)
-{
-  x = accel.getXreading();
-  y = accel.getYreading();
-  z = accel.getZreading();
-
-  float mag = sqrt((x * x) + (y * y) + (z * z));
-  if (mag < 0.01f) return false;
-
-  x /= mag;
-  y /= mag;
-  z /= mag;
-
-  return true;
-}
-
-static float shortestAngleDeltaDeg(float a_deg, float b_deg)
-{
-  float d = a_deg - b_deg;
-  while (d > 180.0f) d -= 360.0f;
-  while (d < -180.0f) d += 360.0f;
-  return d;
-}
-
-static bool readWristTwistAngleDeg(float &angleDeg)
-{
-  float x = accel.getXreading();
-  float y = accel.getYreading();
-  float z = accel.getZreading();
-
-  float mag = sqrt((x * x) + (y * y) + (z * z));
-  if (mag < 0.01f) return false;
-
-#if TWIST_AXIS_MODE == 1
-  angleDeg = (180.0f / PI) * atan2f(x, z);
-#else
-  angleDeg = (180.0f / PI) * atan2f(y, z);
-#endif
-
-  return true;
-}
-
-static void captureUprightOrientation()
-{
-  float x, y, z;
-  if (!readAccelUnitVector(x, y, z))
-  {
-    g_uprightCaptured = false;
-    Serial.println(F("MAIN: unable to capture upright orientation"));
-    return;
-  }
-
-  g_uprightX = x;
-  g_uprightY = y;
-  g_uprightZ = z;
-  g_uprightCaptured = true;
-
-  Serial.printf("MAIN: upright captured x=%0.2f y=%0.2f z=%0.2f\n", x, y, z);
-}
-
-static void captureTofUprightOrientation()
-{
-  float x, y, z;
-  if (!readAccelUnitVector(x, y, z))
-  {
-    g_tofUprightCaptured = false;
-    Serial.println(F("TOF: unable to capture upright orientation"));
-    return;
-  }
-
-  g_tofUprightX = x;
-  g_tofUprightY = y;
-  g_tofUprightZ = z;
-  g_tofUprightCaptured = true;
-
-  Serial.printf("TOF: upright captured x=%0.2f y=%0.2f z=%0.2f\n", x, y, z);
-}
-
-static float currentDotFromUpright()
-{
-  if (!g_uprightCaptured) return 1.0f;
-
-  float x, y, z;
-  if (!readAccelUnitVector(x, y, z)) return 1.0f;
-
-  return (x * g_uprightX) + (y * g_uprightY) + (z * g_uprightZ);
-}
-
-static bool isCurrentOrientationNearlyUprightForTof()
-{
-  // If TOF upright has not been captured yet, allow TOF rather than
-  // accidentally disabling all TOF gestures at startup.
-  if (!g_tofUprightCaptured) return true;
-
-  float x, y, z;
-  if (!readAccelUnitVector(x, y, z)) return false;
-
-  float dot =
-    (x * g_tofUprightX) +
-    (y * g_tofUprightY) +
-    (z * g_tofUprightZ);
-
-  // Within roughly +/- 10 degrees of the captured MAIN/upright position.
-  // cos(10 degrees) = 0.9848
-  return dot >= ORIENTATION_UPRIGHT_DOT_THRESHOLD;
-}
-
 static void resetOrientationGestureState()
 {
-  g_twistHoldArmed = false;
-  g_ignoreTofUntil = 0;
-  g_twistTracking = false;
-  g_twistPast90 = false;
-  g_twistStartAngleDeg = 0.0f;
-  g_twistLastAngleDeg = 0.0f;
-  g_twistAccumDeg = 0.0f;
-  g_twistHoldAngleDeg = 0.0f;
-  g_twistMotionStartedAt = 0;
-  g_twistLastMotionAt = 0;
-  g_twistHoldStartedAt2 = 0;
-
-  float a;
-  if (readWristTwistAngleDeg(a))
-  {
-    g_twistIdleAngleDeg = a;
-  }
-}
-
-bool WatchFaceMain::isNearlyUprightForTof()
-{
-  return isCurrentOrientationNearlyUprightForTof();
-}
-
-bool WatchFaceMain::shouldIgnoreTofGestures()
-{
-  return
-    g_twistTracking ||
-    g_twistHoldArmed ||
-    isSettingTime();
+  accel.resetSetTimeTwistGesture();
 }
 
 static void resetSetTimeTiltGate()
@@ -813,145 +615,47 @@ void WatchFaceMain::main()
     blinking = false;
     mainwaiter = millis();
     resetOrientationGestureState();
-    captureUprightOrientation();
-    captureTofUprightOrientation();
 
-    Serial.println(F("MAIN: flushing TOF after wake/main entry"));
-    uint32_t tofFlushUntil = millis() + 1500;
-    while (millis() < tofFlushUntil)
-    {
-      (void)tof.getGesture();
-      delay(20);
-    }
-    Serial.println(F("MAIN: TOF flush complete"));
+    Serial.println(F("MAIN: TOF flush"));
+    tof.getGesture();
     return;
   }
 
-  // MAIN: Wrist-roll twist behavior.
-  // - Starts from whatever angle the watch is currently at.
-  // - Accumulates wrist rotation over time.
-  // - At 90+ degrees rotation, the gesture is recognized.
-  // - Hold the rotated position for 3 seconds => Set Time.
-  // - Return/release before 3 seconds => Digital Time.
+  // MAIN: consume high-level twist events from AccelSensor.
   if ( millis() - mainwaiter > 2000 )
   {
-    float angleDeg;
-    if ( readWristTwistAngleDeg( angleDeg ) )
+    if ( accel.getSetTimeTwistSetTime() )
     {
-      const uint32_t now = millis();
+      Serial.println(F("MAIN: Accel twist event -> Set Time"));
 
-      if ( ! g_twistTracking )
-      {
-        float dFromIdle = shortestAngleDeltaDeg( angleDeg, g_twistIdleAngleDeg );
+      haptic.playEffect(66);
+      delay(120);
+      haptic.playEffect(14);
 
-        if ( fabsf( dFromIdle ) >= WRIST_TWIST_START_DEG )
-        {
-          Serial.printf( "MAIN: wrist twist tracking started angle=%0.1f d=%0.1f\n", angleDeg, dFromIdle );
+      g_ignoreTofUntil = millis() + 3000;
+      g_setTimeProtected = true;
 
-          g_twistTracking = true;
-          g_twistHoldArmed = true;     // also suppresses TOF while the twist gesture is in progress
-          g_twistPast90 = false;
-          g_twistStartAngleDeg = g_twistIdleAngleDeg;
-          g_twistLastAngleDeg = angleDeg;
-          g_twistAccumDeg = dFromIdle;
-          g_twistMotionStartedAt = now;
-          g_twistLastMotionAt = now;
-          g_twistHoldStartedAt2 = 0;
-          noMovementTime = now;
-        }
-        else
-        {
-          // While idle, continuously track the current resting wrist angle.
-          g_twistIdleAngleDeg = angleDeg;
-        }
-      }
-      else
-      {
-        float d = shortestAngleDeltaDeg( angleDeg, g_twistLastAngleDeg );
+      textmessageservice.stop();
+      drawImageFromFile( wfMain_Time_Background, true, 0, 0 );
 
-        if ( fabsf( d ) >= WRIST_TWIST_MOTION_EPS_DEG )
-        {
-          g_twistAccumDeg += d;
-          g_twistLastMotionAt = now;
-        }
+      panel = SETTING_TIME;
+      needssetup = true;
+      textmessageservice.stop();
+      noMovementTime = millis();
+      sleepservice.notifyWatchFaceActivity();
 
-        g_twistLastAngleDeg = angleDeg;
-
-        float fromStart = shortestAngleDeltaDeg( angleDeg, g_twistStartAngleDeg );
-        float absAccum = fabsf( g_twistAccumDeg );
-        float absFromStart = fabsf( fromStart );
-
-        // If the user started a small movement but never reached 90 degrees,
-        // cancel it quietly rather than letting random motion arm Set Time.
-        if ( ! g_twistPast90 &&
-             ( now - g_twistLastMotionAt > WRIST_TWIST_PRE90_TIMEOUT_MS ) &&
-             ( absAccum < WRIST_TWIST_REQUIRED_DEG ) )
-        {
-          Serial.println( F("MAIN: wrist twist cancelled before 90 degrees") );
-          resetOrientationGestureState();
-        }
-        else if ( now - g_twistMotionStartedAt > WRIST_TWIST_TOTAL_TIMEOUT_MS )
-        {
-          Serial.println( F("MAIN: wrist twist timed out") );
-          resetOrientationGestureState();
-        }
-        else if ( ! g_twistPast90 && absAccum >= WRIST_TWIST_REQUIRED_DEG )
-        {
-          Serial.printf( "MAIN: wrist twist reached 90 degrees accum=%0.1f fromStart=%0.1f\n", g_twistAccumDeg, fromStart );
-
-          g_twistPast90 = true;
-          g_twistHoldAngleDeg = angleDeg;
-          g_twistHoldStartedAt2 = now;
-          noMovementTime = now;
-        }
-        else if ( g_twistPast90 )
-        {
-          float driftFromHold = fabsf( shortestAngleDeltaDeg( angleDeg, g_twistHoldAngleDeg ) );
-
-          // Returning toward the starting position before the 3 second hold
-          // completes is the intentional Digital Time gesture.
-          if ( absFromStart <= WRIST_TWIST_RETURN_TO_START_DEG )
-          {
-            Serial.println( F("MAIN: wrist twist released before hold -> Digital Time") );
-            resetOrientationGestureState();
-            g_ignoreTofUntil = now + 2000;
-            changeTo( DISPLAYING_TIME, true, WatchFaceFlip1_video );
-            return;
-          }
-
-          // If the user keeps moving while still rotated, restart the hold timer
-          // at the new position instead of accidentally accepting Set Time.
-          if ( driftFromHold > WRIST_TWIST_HOLD_TOLERANCE_DEG )
-          {
-            g_twistHoldAngleDeg = angleDeg;
-            g_twistHoldStartedAt2 = now;
-            noMovementTime = now;
-          }
-          else if ( now - g_twistHoldStartedAt2 >= WRIST_TWIST_SETTIME_HOLD_MS )
-          {
-            Serial.println( F("MAIN: wrist twist held 3 seconds -> Set Time") );
-
-            haptic.playEffect( 66 );   // strong/long buzz: Set Time accepted
-            delay(120);
-            haptic.playEffect( 14 );
-
-            resetOrientationGestureState();
-            g_ignoreTofUntil = millis() + 3000;
-            g_setTimeProtected = true;
-
-            textmessageservice.stop();
-            drawImageFromFile( wfMain_Time_Background, true, 0, 0 );
-            panel = SETTING_TIME;
-            needssetup = true;
-            textmessageservice.stop();
-            noMovementTime = millis();
-            sleepservice.notifyWatchFaceActivity();
-
-            return;
-          }
-        }
-      }
+      return;
     }
+
+    if ( accel.getSetTimeTwistDigitalTime() )
+    {
+      Serial.println(F("MAIN: Accel twist event -> Digital Time"));
+      g_ignoreTofUntil = millis() + 2000;
+      changeTo( DISPLAYING_TIME, true, WatchFaceFlip1_video );
+      haptic.playEffect(66);
+      return;
+    }
+
   }
 
   // Single tap does nothing on MAIN (per your flow)
@@ -1116,7 +820,6 @@ void WatchFaceMain::settingminute()
     sleepservice.notifyWatchFaceActivity();
 
     haptic.playEffect( 76 );
-
     changeTo( MAIN, true, WatchFaceFlip3_video );
     return;
   }
@@ -1166,11 +869,6 @@ void WatchFaceMain::drawSetTimePanel( String title, int hourc, int minutec, Stri
   gfx->println( title );
 
   digitalWrite(Display_SPI_BK, LOW);
-}
-
-bool WatchFaceMain::isTwistSetTimeArmed()
-{
-  return g_twistHoldArmed;
 }
 
 static void clearSetTimeExitNoise()

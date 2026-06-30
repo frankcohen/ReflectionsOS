@@ -58,6 +58,18 @@ extern Video video;
 #define TWIST_BYPASS_GRAVITY  0     // 1 = ignore gravity gate (self-test mode)
 #define TWIST_DEBUG_PERIOD_MS 200   // min ms between debug lines
 
+// -------- Set Time / Digital Time twist gesture tunables --------
+#define SETTIME_TWIST_MOVE_EPS_DEG       1.3f
+#define SETTIME_TWIST_START_MOVE_MS      180UL
+#define SETTIME_TWIST_RETURN_MOVE_MS     180UL
+#define SETTIME_TWIST_STOP_MS            200UL
+#define SETTIME_TWIST_DIGITAL_DEG        80.0f
+#define SETTIME_TWIST_REQUIRED_DEG       130.0f
+#define SETTIME_TWIST_HOLD_MS            3000UL
+#define SETTIME_TWIST_TRACK_TIMEOUT_MS   9000UL
+#define SETTIME_TWIST_COOLDOWN_MS        3000UL
+#define SETTIME_TWIST_NO_MOVE_TIMEOUT_MS 500UL
+
 class AccelSensor
 {
   public:
@@ -114,6 +126,15 @@ class AccelSensor
     //   0 = no significant twist
     int getWristTwistDir();
 
+    // Higher-level twist gesture used by WatchFaceMain Set Time.
+    // AccelSensor owns the accelerometer physics; WatchFaceMain owns UI meaning.
+    bool isSetTimeTwisting();
+    bool getSetTimeTwistDigitalTime();   // consumes event
+    bool getSetTimeTwistSetTime();       // consumes event
+    void resetSetTimeTwistGesture();
+    void suppressSetTimeTwistFor(uint32_t ms);
+    void printSetTimeTwistDebug();
+
   private:
 
     void handleClicks();
@@ -164,6 +185,36 @@ class AccelSensor
     float _ax, _ay, _az;
     int _twistDirHits;
     int _twistDirLast;
+
+    enum SetTimeTwistState
+    {
+      SETTIME_TWIST_IDLE = 0,
+      SETTIME_TWIST_FORWARD,
+      SETTIME_TWIST_HOLDING,
+      SETTIME_TWIST_RETURN,
+      SETTIME_TWIST_COOLDOWN
+    };
+
+    void updateSetTimeTwistGesture(unsigned long now);
+    float setTimeTwistAngleDeg_() const;
+    static float shortestSetTimeTwistDelta_(float a_deg, float b_deg);
+
+    SetTimeTwistState _setTimeTwistState;
+    float _setTimeTwistIdleAngleDeg;
+    float _setTimeTwistStartAngleDeg;
+    float _setTimeTwistLastAngleDeg;
+    int _setTimeTwistForwardDir;
+    bool _setTimeTwistReachedDigital;
+    bool _setTimeTwistReturnConfirmed;
+    unsigned long _setTimeTwistStartedAt;
+    unsigned long _setTimeTwistHoldStartedAt;
+    unsigned long _setTimeTwistCooldownUntil;
+    unsigned long _setTimeTwistForwardMoveStartedAt;
+    unsigned long _setTimeTwistReturnMoveStartedAt;
+    unsigned long _setTimeTwistStoppedStartedAt;
+    bool _setTimeTwistDigitalTimePending;
+    bool _setTimeTwistSetTimePending;
+    unsigned long _setTimeTwistNoMoveStartedAt;
 };
 
 #endif // ACCEL_SENSOR_H

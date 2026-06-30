@@ -63,9 +63,6 @@ class WatchFaceMain : public WatchFaceBase
     bool isMain();
     bool isMainOrTime();
     bool isSettingTime();
-    bool isTwistSetTimeArmed();
-    bool shouldIgnoreTofGestures();
-    bool isNearlyUprightForTof();
     
     enum Panel { 
       STARTUP, 

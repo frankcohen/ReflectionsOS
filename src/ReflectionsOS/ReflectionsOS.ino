@@ -507,7 +507,6 @@ void BoardInitializationUtility()
   printCentered("Initialize");
 
   // Start Wifi
-  wifi.reset();
   printCentered(F("Wifi"));
   delay(1000);
 
@@ -859,75 +858,72 @@ void waitForExperienceToStop()
 */
 
 unsigned long catTimer = millis();
+int recentGesture = GESTURE_NONE;
+String recentGestureName = F( "GESTURE_NONE" );
+static uint32_t lastTwistDebugMs = 0;
 
 void loop()
 {
   printCore0TasksMessages();
 
-#if DEMO_CAT_MODE
-  stuntCatLoop();
-  return;
-#endif
+  #if DEMO_CAT_MODE
+    stuntCatLoop();
+    return;
+  #endif
 
   // Track transition: active -> stopped, so we can pace the next start
   bool nowActive = experienceservice.active();
   if (wasExperienceActive && !nowActive)
   {
+    Serial.println( F( "Cooldown starts" ) );
     lastExperienceEndedAt = millis(); // cooldown starts when an experience ends
   }
   wasExperienceActive = nowActive;
 
-  int recentGesture = tof.getGesture();
-
-  if ( watchfacemain.shouldIgnoreTofGestures() )
-  {
-    if ( recentGesture != GESTURE_NONE )
-    {
-      Serial.println(F("Ignoring TOF gesture during twist/set-time guard"));
-    }
-
-    recentGesture = GESTURE_NONE;
-  }
-
-  if ( watchfacemain.isTwistSetTimeArmed() )
-  {
-    // Clear TOF gestures while the user is twisting/holding for Set Time.
-    // This prevents the twist motion from being misread as Gesture Sleep.
-    if ( recentGesture != GESTURE_NONE )
-    {
-      Serial.println(F("Ignoring TOF gesture during twist-hold Set Time entry"));
-    }
-
-    recentGesture = GESTURE_NONE;
-  }
+  recentGesture = tof.getGesture();
 
   if (recentGesture != GESTURE_NONE)
   {
     // Any TOF gesture counts as activity (resets 5 min + 3 min timers)
     sleepservice.notifyWatchFaceActivity();
 
-    Serial.print("Gesture: ");
+    Serial.print( F( "Gesture: " ) );
     switch (recentGesture)
     {
       case GESTURE_LEFT_RIGHT:
-        Serial.println(">>>GESTURE_LEFT_RIGHT");
+        recentGestureName = F( ">>>GESTURE_LEFT_RIGHT" );
         break;
 
       case GESTURE_RIGHT_LEFT:
-        Serial.println(">>>GESTURE_RIGHT_LEFT");
+        recentGestureName = F( ">>>GESTURE_RIGHT_LEFT" );
         break;
 
       case GESTURE_CIRCULAR:
-        Serial.println(">>>GESTURE_CIRCULAR");
+        recentGestureName = F( ">>>GESTURE_CIRCULAR" );
         break;
 
       case GESTURE_SLEEP:
-        Serial.println(">>>GESTURE_SLEEP");
+        recentGestureName = F( ">>>GESTURE_SLEEP" );
         break;
 
       default:
-        Serial.printf(">>>Unknown (%d)\n", recentGesture);
+        recentGestureName = F( ">>>Unknown " );
         break;
+    }
+
+    Serial.println( recentGestureName );
+  }
+
+  if ( accel.isSetTimeTwisting() )
+  {
+    if ( recentGesture != GESTURE_NONE )
+    {
+      Serial.print(F("Ignoring TOF gesture during twist/set-time guard, "));
+      Serial.print( recentGestureName );
+      Serial.print( F( " " ) );
+      Serial.println( recentGesture );
+
+      recentGesture = GESTURE_NONE;
     }
   }
 
@@ -950,7 +946,8 @@ void loop()
     return;
   }
 
-#if !DEMO_CAT_ALWAYS_ON
+  #if !DEMO_CAT_ALWAYS_ON
+  
   // Runtime low battery: do not interrupt an active experience or Set Time.
   // Once the Cat is idle/interactive, request the normal Sleep / Nap path,
   // which plays Sleep_video and wakes later from accelerometer tap/shake.
@@ -964,7 +961,8 @@ void loop()
       sleepservice.notifyLowBattery();
     }
   }
-#endif
+
+  #endif
 
   // Pounce message received — ignores cooldown (but still blocked while setting time)
   if ( ( blesupport.isPounced() ) && ( millis() - pounceTimer > 10000 ))
@@ -1033,11 +1031,16 @@ void loop()
   // Go to sleep when gestured
   if ( recentGesture == GESTURE_SLEEP )
   {
-    // Sleep should happen immediately: bypass cooldown.
-    // Still blocked while setting time (your preference).
+    if ( ! watchfacemain.isMain() )
+    {
+      Serial.println(F("Ignoring TOF sleep because not on MAIN"));
+      smartdelay(10);
+      return;
+    }
+
     if (!canStartExperience(true, false)) { smartdelay(10); return; }
 
-    sleepservice.notifyUserWantsSleep();  // sets reason + makes shouldDeepSleep() true
+    sleepservice.notifyUserWantsSleep();
     smartdelay(10);
     return;
   }
