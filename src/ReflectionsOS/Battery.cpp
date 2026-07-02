@@ -116,6 +116,20 @@ String Battery::getDischargeOverlayText()
   return " " + String(vAvg) + "mV L" + String(leafs) + " --m";
 }
 
+uint16_t Battery::getVoltageNow()
+{
+  // raw mV at ADC pin
+  uint32_t raw = analogReadMilliVolts(Battery_Sensor);
+  if (raw > 65535) raw = 65535;
+  _rawAdcMv = (uint16_t)raw;
+
+  // scaled to battery terminal mV estimate
+  float scaled = (float)_rawAdcMv * BATTERY_ADC_TO_BATT_SCALE;
+  if (scaled < 0) scaled = 0;
+  if (scaled > 65535) scaled = 65535;
+  return (uint16_t)(scaled + 0.5f);
+}
+
 void Battery::sample_()
 {
   // raw mV at ADC pin

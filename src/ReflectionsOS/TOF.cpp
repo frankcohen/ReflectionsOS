@@ -44,8 +44,10 @@ void TOF::begin()
   captTime   = 0;        // don't block gestures immediately after boot
   lastValid  = millis();
   circCnt    = 0;
+  
   sleepStart = millis();
-
+  sleepGoodFrames = 0;
+  
   tipPos  = 0;
   tipDist = 0;
 
@@ -236,12 +238,34 @@ void TOF::loop()
     }
   }
 
-  /* for debug 
+  int centerSleepCnt = 0;
 
-  directionWay = F( "Bleep, sleepCnt = " );
-  directionWay += sleepCnt;
-  mymessage = directionWay;
-  mymessage2 = String(sleepCnt);
+  for (int r = 2; r <= 5; r++)
+  {
+    for (int c = 2; c <= 5; c++)
+    {
+      int i = r * 8 + c;
+      int16_t d = rd.distance_mm[i];
+
+      if (d >= SLEEP_MIN_DISTANCE && d <= SLEEP_MAX_DISTANCE)
+        centerSleepCnt++;
+    }
+  }
+
+  // Instead of checking every SLEEP_HOLD_MS, count stable frames:
+
+  if ( gateState == GestureGateState::Armed && sleepCnt >= SLEEP_COVERAGE_COUNT && centerSleepCnt >= 10 )
+  {
+    if (sleepGoodFrames < 255) sleepGoodFrames++;
+  }
+  else
+  {
+    sleepGoodFrames = 0;
+  }
+
+  // Print sleep debug to the serial monitor
+
+  /*
 
   static uint32_t lastSleepDebugMs = 0;
   if (millis() - lastSleepDebugMs >= 2000)
@@ -249,9 +273,11 @@ void TOF::loop()
       lastSleepDebugMs = millis();
 
       Serial.printf("\nSleep Debug: sleepCnt=%d\n", sleepCnt);
-      Serial.printf("Sleep range: %d..%d mm\n\n",
+      Serial.printf("Sleep range: %d..%d mm\n",
                     SLEEP_MIN_DISTANCE,
                     SLEEP_MAX_DISTANCE);
+      Serial.print( F( "sleepGoodFrames " ) );
+      Serial.println( sleepGoodFrames );
 
       for (int row = 0; row < 8; row++)
       {
@@ -280,16 +306,14 @@ void TOF::loop()
       }
 
       Serial.println();
-  }
-*/
+  }  
 
-
-  // ——— Sleep detection (allowed even during cooldown) ———
   if (now - sleepStart > SLEEP_HOLD_MS)
   {
     sleepStart = now;
 
-    if (sleepCnt >= SLEEP_COVERAGE_COUNT)
+    if ( sleepCnt >= SLEEP_COVERAGE_COUNT && centerSleepCnt >= 10 &&
+      gateState == GestureGateState::Armed && sleepGoodFrames >= 8 )
     {
       resetGesture();
       direction = GESTURE_SLEEP;
@@ -301,10 +325,13 @@ void TOF::loop()
       captTime = now;
       gateState = GestureGateState::Cooldown;
       cooldownUntilMs = now + (uint32_t)GESTURE_WAIT;
+      sleepGoodFrames = 0;
 
       return;
     }
   }
+
+  */
 
   // Rotate + flip into rotated[]
   int16_t rotated[64];

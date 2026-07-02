@@ -123,6 +123,8 @@ private:
 
   String mymessage;
   String mymessage2;
+
+  uint8_t sleepGoodFrames;  
 };
 
 #endif // TOF_H

@@ -653,6 +653,7 @@ void setup()
   esp_sleep_wakeup_cause_t reason = esp_sleep_get_wakeup_cause();
   Serial.print("Wake cause: ");
   Serial.println((int)reason);
+  Serial.printf("Battery early=%u mV\n", battery.getVoltageNow());
 
   if (reason == ESP_SLEEP_WAKEUP_EXT1) {
     hardware.prepareAfterWake();

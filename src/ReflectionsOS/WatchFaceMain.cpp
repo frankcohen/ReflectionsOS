@@ -274,7 +274,7 @@ void WatchFaceMain::updateTimerNotice()
 // Battery indicator grows/loses leaves
 void WatchFaceMain::updateBattery()
 {
-  if ( ( millis() - battimer ) > ( 2 * 60000 ) )
+  if ( drawitall || ( millis() - battimer ) > ( 2 * 60000 ) )
   {
     battimer = millis();
 

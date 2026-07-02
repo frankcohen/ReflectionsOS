@@ -78,6 +78,8 @@ public:
   // UI-only percent (not safety)
   uint8_t getBatteryPercent() const;
 
+  uint16_t getVoltageNow();
+
   // ==========================================
   // Compatibility methods used by your codebase
   // ==========================================
