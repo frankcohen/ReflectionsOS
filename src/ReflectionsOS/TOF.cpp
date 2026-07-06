@@ -308,6 +308,9 @@ void TOF::loop()
       Serial.println();
   }  
 
+  */
+
+
   if (now - sleepStart > SLEEP_HOLD_MS)
   {
     sleepStart = now;
@@ -331,7 +334,7 @@ void TOF::loop()
     }
   }
 
-  */
+  
 
   // Rotate + flip into rotated[]
   int16_t rotated[64];

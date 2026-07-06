@@ -50,6 +50,10 @@ class Wifi
 
       char deviceName[20];
       sprintf(deviceName, "Reflections-%02X", lastByte);
+
+      Serial.print( F("Device name: " ) );
+      Serial.println( deviceName );
+
       return std::string(deviceName);
     }
 

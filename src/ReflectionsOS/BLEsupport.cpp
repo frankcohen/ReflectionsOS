@@ -320,6 +320,9 @@ bool BLEsupport::connectToServer() {
 
             s_heading = compass.getHeading();
 
+            //Serial.print( "BLE heading = " );
+            //Serial.println( s_heading );
+
             String mydata;
             if ( pounced ) { mydata="true"; } else { mydata = "false"; }
             mydata += ":";
@@ -331,7 +334,7 @@ bool BLEsupport::connectToServer() {
             Serial.print( ", ");
             Serial.println( mydata.length() );
             */
-
+            
             if ( pChr->writeValue( mydata.c_str() ) ) 
             {
                 //Serial.printf("Wrote data to: %s\n", pChr->getUUID().toString().c_str());

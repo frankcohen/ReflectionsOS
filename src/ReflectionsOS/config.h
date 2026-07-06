@@ -53,6 +53,39 @@ Read the license in the license.txt file that comes with this code.
 */
 #define DEMO_CAT_ALWAYS_ON  DEMO_CAT_MODE
 
+
+//
+// Simulator Color Palette
+//
+
+// Background
+#define COLOR_BACKGROUND        0x0B2D66    // Deep Blue
+
+// Character
+#define COLOR_HEAD              0x5FE3D7    // Aquamarine
+#define COLOR_EYE               0xFFD54A    // Golden Yellow
+#define COLOR_PUPIL             0x000000    // Black
+
+// Behavior Labels
+#define COLOR_WAKE              0x6CFF6C    // Bright Spring Green
+#define COLOR_TAP               0xFF8A1E    // Rich Orange
+#define COLOR_SHAKE             0xFF4B4B    // Bright Red
+#define COLOR_IDLE              0x73E8FF    // Soft Aqua
+#define COLOR_SLEEP             0xB77CFF    // Lavender Purple
+
+// Status / Debug
+#define COLOR_ERROR             0xFF2FCF    // Magenta
+#define COLOR_SUCCESS           0x00FF99    // Bright Mint
+#define COLOR_WARNING           0xFFC107    // Amber
+#define COLOR_INFO              0x66CCFF    // Sky Blue
+
+// General UI
+#define COLOR_TEXT              0xFFFFFF    // White
+#define COLOR_TEXT_DIM          0xB0B0B0    // Light Gray
+#define COLOR_OUTLINE           0x0A0A0A    // Nearly Black
+#define COLOR_SHADOW            0x202020    // Dark Gray
+
+
 /* Experience videos */
 
 #define OutOfTheBox_video "178e801340f79249dbb2b34b3e64eda4"     
