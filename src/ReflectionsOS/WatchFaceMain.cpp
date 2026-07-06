@@ -618,6 +618,19 @@ void WatchFaceMain::main()
 
     Serial.println(F("MAIN: TOF flush"));
     tof.getGesture();
+    accel.resetSetTimeTwistGesture();
+    accel.suppressSetTimeTwistFor(300);
+
+    return;
+  }
+
+  // If the TOF sensor is being covered for Sleep, do not allow a stale or
+  // walking-induced accelerometer twist to steal the interaction and switch
+  // to Digital Time. TOF Sleep has priority on MAIN.
+  if ( tof.isSleepCoverInProgress() )
+  {
+    accel.resetSetTimeTwistGesture();
+    accel.suppressSetTimeTwistFor(300);
     return;
   }
 

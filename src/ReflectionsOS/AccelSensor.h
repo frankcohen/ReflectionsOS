@@ -25,10 +25,12 @@
 #include "Utils.h"
 #include "Logger.h"
 #include "Video.h"
+#include "Haptic.h"
 
 extern Utils utils;
 extern LOGGER logger;
 extern Video video;
+extern Haptic haptic;
 
 #define WAIT_TIME       250
 #define SAMPLE_RATE     200       // Sample every x milliseconds
@@ -67,9 +69,11 @@ extern Video video;
 #define SETTIME_TWIST_DIGITAL_DEG        80.0f
 #define SETTIME_TWIST_REQUIRED_DEG       130.0f
 #define SETTIME_TWIST_HOLD_MS            3000UL
-#define SETTIME_TWIST_TRACK_TIMEOUT_MS   9000UL
+#define SETTIME_TWIST_TRACK_TIMEOUT_MS   6000UL
 #define SETTIME_TWIST_COOLDOWN_MS        3000UL
 #define SETTIME_TWIST_NO_MOVE_TIMEOUT_MS 500UL
+#define SETTIME_TWIST_RETURN_TO_START_DEG 25.0f
+#define SETTIME_TWIST_SETTIME_RETURN_TIMEOUT_MS 5000UL
 
 class AccelSensor
 {
@@ -193,6 +197,7 @@ class AccelSensor
       SETTIME_TWIST_FORWARD,
       SETTIME_TWIST_HOLDING,
       SETTIME_TWIST_RETURN,
+      SETTIME_TWIST_SETTIME_RETURN,
       SETTIME_TWIST_COOLDOWN
     };
 
@@ -216,6 +221,7 @@ class AccelSensor
     bool _setTimeTwistDigitalTimePending;
     bool _setTimeTwistSetTimePending;
     unsigned long _setTimeTwistNoMoveStartedAt;
+    bool _setTimeTwistHoldHapticSent;
 };
 
 #endif // ACCEL_SENSOR_H

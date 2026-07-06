@@ -66,6 +66,7 @@ public:
   void loop();
 
   int  getGesture();
+  bool isSleepCoverInProgress();
 
   void setStatus(bool running);
   bool getStatus();

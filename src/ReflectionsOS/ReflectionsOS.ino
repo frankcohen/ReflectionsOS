@@ -862,6 +862,7 @@ unsigned long catTimer = millis();
 int recentGesture = GESTURE_NONE;
 String recentGestureName = F( "GESTURE_NONE" );
 static uint32_t lastTwistDebugMs = 0;
+static bool experienceCooldownActive = false;
 
 void loop()
 {
@@ -876,10 +877,17 @@ void loop()
   bool nowActive = experienceservice.active();
   if (wasExperienceActive && !nowActive)
   {
-    Serial.println( F( "Cooldown starts" ) );
+    Serial.println( F( "Experience cooldown starts" ) );
     lastExperienceEndedAt = millis(); // cooldown starts when an experience ends
+    experienceCooldownActive = true;
   }
   wasExperienceActive = nowActive;
+
+  if (experienceCooldownActive && cooldownGate())
+  {
+    Serial.println( F( "Experience cooldown ended" ) );
+    experienceCooldownActive = false;
+  }
 
   recentGesture = tof.getGesture();
 
@@ -910,12 +918,19 @@ void loop()
   {
     if ( recentGesture != GESTURE_NONE )
     {
-      Serial.print(F("Ignoring TOF gesture during twist/set-time guard, "));
-      Serial.print( recentGestureName );
-      Serial.print( F( " " ) );
-      Serial.println( recentGesture );
+      if ( recentGesture == GESTURE_SLEEP && watchfacemain.isMainOrTime() && !watchfacemain.isSettingTime() && !experienceservice.active() )
+      {
+        Serial.println(F("TOF sleep allowed during accel twist guard on MAIN/TIME"));
+      }
+      else
+      {
+        Serial.print(F("Ignoring TOF gesture during twist/set-time guard, "));
+        Serial.print( recentGestureName );
+        Serial.print( F( " " ) );
+        Serial.println( recentGesture );
 
-      recentGesture = GESTURE_NONE;
+        recentGesture = GESTURE_NONE;
+      }
     }
   }
 
@@ -933,6 +948,11 @@ void loop()
   // experience.
   if ( experienceservice.active() )
   {
+    if ( recentGesture != GESTURE_NONE )
+    {
+      Serial.print(F("Ignoring TOF gesture because experience is active, "));
+      Serial.println(recentGestureName);
+    }
     smartdelay(10);
     return;
   }
@@ -943,6 +963,11 @@ void loop()
   // return-to-main transition video has finished.
   if ( watchfacemain.isSettingTime() )
   {
+    if ( recentGesture != GESTURE_NONE )
+    {
+      Serial.print(F("Ignoring TOF gesture because Set Time is active/protected, "));
+      Serial.println(recentGestureName);
+    }
     smartdelay(10);
     return;
   }
@@ -1032,15 +1057,21 @@ void loop()
   // Go to sleep when gestured
   if ( recentGesture == GESTURE_SLEEP )
   {
-    if ( ! watchfacemain.isMain() )
+    if ( ! watchfacemain.isMainOrTime() )
     {
-      Serial.println(F("Ignoring TOF sleep because not on MAIN"));
+      Serial.println(F("Ignoring TOF sleep because watchface is not MAIN or Digital Time"));
       smartdelay(10);
       return;
     }
 
-    if (!canStartExperience(true, false)) { smartdelay(10); return; }
+    if (!canStartExperience(true, false))
+    {
+      Serial.println(F("Ignoring TOF sleep because canStartExperience blocked it"));
+      smartdelay(10);
+      return;
+    }
 
+    Serial.println(F("TOF sleep accepted"));
     sleepservice.notifyUserWantsSleep();
     smartdelay(10);
     return;

@@ -119,6 +119,15 @@ int TOF::getGesture()
   return prevd;
 }
 
+bool TOF::isSleepCoverInProgress()
+{
+  // Used by WatchFaceMain to give the TOF Sleep gesture priority over
+  // accelerometer twist gestures while the user is intentionally covering
+  // the sensor. Two frames at 8 Hz is enough to identify a cover-in-progress
+  // without waiting for the full Sleep hold to complete.
+  return (gateState == GestureGateState::Armed) && (sleepGoodFrames >= 2);
+}
+
 void TOF::setStatus(bool running) {
   isRunning = running;
   if (isRunning) {
@@ -306,10 +315,8 @@ void TOF::loop()
       }
 
       Serial.println();
-  }  
-
+  }
   */
-
 
   if (now - sleepStart > SLEEP_HOLD_MS)
   {
@@ -323,6 +330,7 @@ void TOF::loop()
       directionWay = F( "→ Sleep" );
       mymessage = directionWay;
       mymessage2 = String(sleepCnt);
+      Serial.printf("TOF sleep detected sleepCnt=%d centerSleepCnt=%d goodFrames=%u\n", sleepCnt, centerSleepCnt, sleepGoodFrames);
 
       // Enter cooldown
       captTime = now;
@@ -334,7 +342,6 @@ void TOF::loop()
     }
   }
 
-  
 
   // Rotate + flip into rotated[]
   int16_t rotated[64];
@@ -371,6 +378,7 @@ void TOF::loop()
   }
 
   // ---- NEW: Gesture gate (cooldown + require finger gone to re-arm) ----
+  static bool tofCooldownLoggedWaitingClear = false;
   if (gateState == GestureGateState::Cooldown)
   {
     // Only re-arm when:
@@ -378,7 +386,14 @@ void TOF::loop()
     //  2) finger is no longer present (hand moved away)
     if (now >= cooldownUntilMs && !fingerPresent) {
       gateState = GestureGateState::Armed;
+      tofCooldownLoggedWaitingClear = false;
+      Serial.println(F("TOF cooldown ended; gesture gate rearmed"));
     } else {
+      if (now >= cooldownUntilMs && fingerPresent && !tofCooldownLoggedWaitingClear)
+      {
+        tofCooldownLoggedWaitingClear = true;
+        Serial.println(F("TOF cooldown elapsed; waiting for finger/cover to clear before rearming"));
+      }
       // We still updated finger tracking above; just suppress gesture detection
       return;
     }
