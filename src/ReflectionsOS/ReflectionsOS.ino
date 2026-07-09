@@ -333,7 +333,12 @@ void printDemoTitleScreen()
   printCenteredScienceFairLine( "Terri Hardin", 176 );
   printCenteredScienceFairLine( "Frank Cohen", 206 );
 #else
-  printCenteredScienceFairLine( "Stunt Cat", 120 );
+  printCenteredScienceFairLine( "Cheshire Cat", 48 );
+  printCenteredScienceFairLine( "at Sarrow Designs", 78 );
+  printCenteredScienceFairLine( "Inaugural", 112 );
+  printCenteredScienceFairLine( "#56 of 200", 142 );
+  printCenteredScienceFairLine( "Terri Hardin", 176 );
+  printCenteredScienceFairLine( "Frank Cohen", 206 );
 #endif
 
   digitalWrite(Display_SPI_BK, LOW);  // Turn display backlight on
@@ -476,15 +481,16 @@ void clearNVSMemory()
 */
 void BoardInitializationUtility()
 {
-  // Check if otaversion.txt exists, if so skip initialization, unless forced in config.h.
+  // Check if boardinit.txt exists, if so skip initialization, unless forced in config.h.
+  // Note: otaversion.txt belongs to the downloaded asset package and is not a BIU marker.
   String mfd = F("/");
   mfd += NAND_BASE_DIR;
   mfd += F("/");
-  mfd += OTA_VERSION_FILE_NAME;
+  mfd += BOARD_INIT_MARKER_FILE_NAME;
 
-  Serial.print(F("Init marker path = "));
+  Serial.print(F("BIU marker path = "));
   Serial.println(mfd);
-  Serial.print(F("Init marker exists = "));
+  Serial.print(F("BIU marker exists = "));
   Serial.println(SD.exists(mfd) ? F("YES") : F("NO"));
 
 
@@ -493,7 +499,7 @@ void BoardInitializationUtility()
 
   if (SD.exists(mfd))
   {
-    Serial.print(F("Removing initialization marker "));
+    Serial.print(F("Removing BIU marker "));
     Serial.println(mfd);
     SD.remove(mfd);
   }
@@ -529,6 +535,17 @@ void BoardInitializationUtility()
   }
 
   delay(1000);
+
+#if RUN_BOARD_INIT_BENCHMARKS
+  printCentered(F("Benchmark"));
+  storage.runBoardInitBenchmarks("cat-file-package.tar");
+  Serial.println(F("Board Initialization Utility benchmark mode complete. Stopping before replicate."));
+  while (true)
+  {
+    delay(1000);
+  }
+#endif
+
   printCentered(F("Replicate"));
   delay(1000);
 
@@ -538,6 +555,15 @@ void BoardInitializationUtility()
   if (!storage.replicateServerFiles())
   {
     BIUfailed(F("Replicate failed"));
+  }
+
+  // Mark board initialization complete before restart/shipping mode. If the restart path
+  // ever crashes, the next boot will not re-replicate assets endlessly.
+  Serial.print(F("Writing BIU marker "));
+  Serial.println(mfd);
+  if (!storage.writeFile(SD, mfd.c_str(), "boardinit=complete\n"))
+  {
+    BIUfailed(F("Marker failed"));
   }
 
 

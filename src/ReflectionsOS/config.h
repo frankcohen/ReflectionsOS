@@ -39,6 +39,11 @@ Read the license in the license.txt file that comes with this code.
 // Set back to 0 after rebuilding NAND, otherwise every boot reinitializes assets.
 #define FORCE_BOARD_INITIALIZATION 0
 
+// Board Initialization Utility benchmark mode.
+// 0 = normal operation.
+// 1 = connect to WiFi, run network/SD speed tests, then stop before replicate/extract.
+#define RUN_BOARD_INIT_BENCHMARKS 0
+
 #if STUNT_CAT_MODE && PEGASUS_LOFT_MODE
 #error "Select only one collector/demo display mode"
 #endif
@@ -182,6 +187,7 @@ Read the license in the license.txt file that comes with this code.
 // OTA uses this to know when to update the firmware
 #define VERSION_NUMBER 2
 #define OTA_VERSION_FILE_NAME "otaversion.txt"
+#define BOARD_INIT_MARKER_FILE_NAME "boardinit.txt"
 #define OTA_BIN_FILE_NAME "/ota.bin"
 
 #define MJPEG_FILENAME ".mjpeg"

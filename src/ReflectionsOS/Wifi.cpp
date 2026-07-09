@@ -16,23 +16,70 @@ This file is for operating the video display.
 
 Wifi::Wifi() {}
 
+static const __FlashStringHelper *wifiStatusName( wl_status_t status )
+{
+  switch ( status )
+  {
+    case WL_IDLE_STATUS: return F("WL_IDLE_STATUS");
+    case WL_NO_SSID_AVAIL: return F("WL_NO_SSID_AVAIL");
+    case WL_SCAN_COMPLETED: return F("WL_SCAN_COMPLETED");
+    case WL_CONNECTED: return F("WL_CONNECTED");
+    case WL_CONNECT_FAILED: return F("WL_CONNECT_FAILED");
+    case WL_CONNECTION_LOST: return F("WL_CONNECTION_LOST");
+    case WL_DISCONNECTED: return F("WL_DISCONNECTED");
+    default: return F("WL_UNKNOWN_STATUS");
+  }
+}
+
 bool Wifi::begin()
 { 
-  //Serial.println("Wifi begin");
+  Serial.println(F("Wifi begin"));
+  Serial.print(F("Connecting to SSID: "));
+  Serial.println(SECRET_SSID);
 
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect(false, false);
+  delay(100);
   WiFi.begin( SECRET_SSID, SECRET_PASS);
 
-  bool again = true;
+  const unsigned long wifiTimeoutMs = 20000;
+  const unsigned long statusPrintMs = 1000;
+  unsigned long started = millis();
+  unsigned long lastStatusPrint = 0;
 
-  // Wait for connection
-  while ( again )
+  // Wait for connection, but never hang forever.
+  while ( WiFi.status() != WL_CONNECTED )
   {
-    int Wifistatus = WiFi.status();
-    if ( Wifistatus == WL_CONNECTED) again = false;
-    delay(1000);
+    unsigned long now = millis();
+
+    if ( ( now - lastStatusPrint ) >= statusPrintMs )
+    {
+      wl_status_t status = WiFi.status();
+      Serial.print(F("WiFi waiting, status="));
+      Serial.print((int) status);
+      Serial.print(F(" "));
+      Serial.println(wifiStatusName(status));
+      lastStatusPrint = now;
+    }
+
+    if ( ( now - started ) >= wifiTimeoutMs )
+    {
+      wl_status_t status = WiFi.status();
+      Serial.print(F("WiFi connection timed out after ms="));
+      Serial.println(wifiTimeoutMs);
+      Serial.print(F("Final WiFi status="));
+      Serial.print((int) status);
+      Serial.print(F(" "));
+      Serial.println(wifiStatusName(status));
+      Serial.println(F("Check SECRET_SSID/SECRET_PASS in secrets.h and confirm the network is 2.4 GHz."));
+      WiFi.disconnect(false, false);
+      return false;
+    }
+
+    delay(100);
   }
 
-  if ( again ) return false;
+  Serial.println(F("WiFi connected"));
 
   // Once connected, print the IP address
   Serial.print(F("Connected to WiFi, "));

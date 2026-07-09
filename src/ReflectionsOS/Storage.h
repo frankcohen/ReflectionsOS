@@ -80,6 +80,13 @@ class Storage
     void sizeNAND();    
     bool getServerFiles();
 
+    // Board Initialization Utility diagnostics
+    bool benchmarkHttpDownloadDiscard(const char* thefile = "cat-file-package.tar");
+    bool benchmarkHttpDownloadToSD(const char* thefile = "cat-file-package.tar", const char* path = "/biu-net-to-sd-test.bin");
+    bool benchmarkSDWrite(const char* path = "/biu-sd-write-test.bin", size_t bytesToWrite = 12574720);
+    bool benchmarkSDRead(const char* path = "/biu-sd-write-test.bin");
+    void runBoardInitBenchmarks(const char* thefile = "cat-file-package.tar");
+
     void printStats();
 
   private:
