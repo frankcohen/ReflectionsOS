@@ -69,6 +69,7 @@ public:
   bool isSleepCoverInProgress();
 
   void setStatus(bool running);
+  bool stopRangingSafely(const char *reason = nullptr);
   bool getStatus();
 
   int   getFingerPos();
@@ -100,6 +101,8 @@ private:
 
   bool pendingDirection;
   bool isRunning;
+  bool tofReady;
+  bool rangingStarted;
 
   // Gesture storage
   int    direction;

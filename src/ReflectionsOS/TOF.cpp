@@ -21,14 +21,21 @@ static inline int16_t clamp16(int16_t v, int16_t lo, int16_t hi)
   return v;
 }
 
-TOF::TOF() {}
+TOF::TOF() : isRunning(false), tofReady(false), rangingStarted(false) {}
 
 void TOF::begin()
 {
+  tofReady = false;
+  rangingStarted = false;
+  isRunning = false;
+
   if (!tof.begin()) {
     Serial.println("TOF failed");
     video.stopOnError("TOF failed", "to start", " ", " ", " ");
+    return;
   }
+
+  tofReady = true;
 
   // Configure sensor
   tof.setRangingFrequency(FRAME_RATE);
@@ -38,7 +45,11 @@ void TOF::begin()
   {
     Serial.println("TOF failed to start ranging. Stopping");
     video.stopOnError("TOF failed", "to start", "ranging", " ", " ");
+    return;
   }
+
+  rangingStarted = true;
+  isRunning = true;
 
   lastRead   = millis();
   captTime   = 0;        // don't block gestures immediately after boot
@@ -54,8 +65,6 @@ void TOF::begin()
   // Old min/max scaling no longer used for tip mapping (kept for compatibility)
   tipMin = 10;
   tipMax = 0;
-
-  isRunning = false;
 
   pendingDirection = false;
   direction        = GESTURE_NONE;
@@ -128,13 +137,58 @@ bool TOF::isSleepCoverInProgress()
   return (gateState == GestureGateState::Armed) && (sleepGoodFrames >= 2);
 }
 
-void TOF::setStatus(bool running) {
-  isRunning = running;
-  if (isRunning) {
-    tof.startRanging();
-  } else {
-    tof.stopRanging();
+bool TOF::stopRangingSafely(const char *reason) {
+  if (reason && reason[0]) {
+    Serial.print(F("TOF stop requested: "));
+    Serial.println(reason);
   }
+
+  isRunning = false;
+
+  if (!tofReady) {
+    Serial.println(F("TOF stop skipped: sensor was not initialized"));
+    rangingStarted = false;
+    return true;
+  }
+
+  if (!rangingStarted) {
+    Serial.println(F("TOF stop skipped: ranging was not active"));
+    return true;
+  }
+
+  bool stopped = tof.stopRanging();
+  if (!stopped) {
+    Serial.println(F("TOF stopRanging returned false; continuing shutdown"));
+  }
+
+  rangingStarted = false;
+  return stopped;
+}
+
+void TOF::setStatus(bool running) {
+  if (running) {
+    if (!tofReady) {
+      Serial.println(F("TOF start skipped: sensor was not initialized"));
+      isRunning = false;
+      rangingStarted = false;
+      return;
+    }
+
+    if (!rangingStarted) {
+      if (!tof.startRanging()) {
+        Serial.println(F("TOF startRanging failed"));
+        isRunning = false;
+        rangingStarted = false;
+        return;
+      }
+      rangingStarted = true;
+    }
+
+    isRunning = true;
+    return;
+  }
+
+  stopRangingSafely("setStatus(false)");
 }
 
 bool TOF::getStatus() {
